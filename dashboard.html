@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Dashboard</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<style>
+body {
+    font-family: 'Inter', sans-serif;
+    margin:0;
+    background:#f5f7fa;
+}
+
+/* HEADER */
+.header {
+    background:#0F6E56;
+    color:white;
+    padding:15px 20px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.header span {
+    font-size:14px;
+}
+
+/* SEARCH BAR */
+.search-bar {
+    background:white;
+    padding:15px;
+    display:flex;
+    gap:10px;
+    border-bottom:1px solid #eee;
+}
+
+.search-bar input {
+    padding:10px;
+    border-radius:8px;
+    border:1px solid #ddd;
+    width:250px;
+}
+
+/* SECTION */
+.section {
+    display:none;
+    padding:20px;
+}
+
+/* TABLE */
+table {
+    width:100%;
+    border-collapse:collapse;
+    background:white;
+    margin-top:10px;
+}
+
+th {
+    background:#0F6E56;
+    color:white;
+}
+
+th, td {
+    padding:10px;
+    border-bottom:1px solid #eee;
+    text-align:left;
+}
+
+/* STATUS COLORS */
+.status {
+    font-weight:500;
+}
+
+.pending { color:#e67e22; }
+.completed { color:#27ae60; }
+.inprogress { color:#2980b9; }
+
+button {
+    padding:8px 12px;
+    border:none;
+    background:#0F6E56;
+    color:white;
+    border-radius:6px;
+    cursor:pointer;
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">
+    <div>
+        <strong>Dashboard</strong> |
+        <span id="userInfo"></span>
+    </div>
+    <button onclick="logout()">Logout</button>
+</div>
+
+<!-- 🔍 SEARCH -->
+<div class="search-bar">
+    <input id="searchId" placeholder="Enter Employee ID">
+    <button onclick="searchEmployee()">Search</button>
+    <button onclick="loadData()">Refresh</button>
+</div>
+
+<!-- HR -->
+<div id="hrSection" class="section">
+    <h3>HR Dashboard</h3>
+    <table id="hrTable"></table>
+</div>
+
+<!-- MANAGER -->
+<div id="managerSection" class="section">
+    <h3>Manager Dashboard</h3>
+    <table id="managerTable"></table>
+</div>
+
+<!-- RM -->
+<div id="rmSection" class="section">
+    <h3>RM Dashboard</h3>
+    <table id="rmTable"></table>
+</div>
+
+<!-- PMO -->
+<div id="pmoSection" class="section">
+    <h3>PMO Dashboard</h3>
+    <table id="pmoTable"></table>
+</div>
+
+<script>
+
+/* ================= USER SESSION ================= */
+
+const user = JSON.parse(localStorage.getItem("user"));
+
+if(!user){
+    window.location.href = "login.html";
+}
+
+const { role, email, location } = user;
+
+document.getElementById("userInfo").innerText =
+    `${email} (${role} - ${location})`;
+
+/* ================= ROLE SWITCH ================= */
+
+function showSection(){
+    if(role === "HR"){
+        hrSection.style.display = "block";
+    }
+    else if(role === "MANAGER"){
+        managerSection.style.display = "block";
+    }
+    else if(role === "RM"){
+        rmSection.style.display = "block";
+    }
+    else if(role === "PMO"){
+        pmoSection.style.display = "block";
+    }
+}
+
+showSection();
+
+/* ================= LOAD DATA ================= */
+
+function loadData(){
+
+    fetch("http://localhost:5000/employees", {
+        headers: { "Authorization": "admin123" }
+    })
+    .then(res => res.json())
+    .then(data => {
+
+        if(!data.success){
+            alert("Error loading data");
+            return;
+        }
+
+        let rows = data.data;
+
+        // 🔥 ROLE FILTERING
+        if(role === "MANAGER"){
+            rows = rows.filter(r => r.status.includes("Hiring Manager"));
+        }
+
+        if(role === "RM"){
+            rows = rows.filter(r => r.rm === email);
+        }
+
+        if(role === "PMO"){
+            rows = rows.filter(r => r.pmo === email);
+        }
+
+        renderTable(getTableId(), rows);
+    });
+}
+
+/* ================= SEARCH ================= */
+
+function searchEmployee(){
+
+    const id = searchId.value.trim();
+
+    if(!id){
+        alert("Enter Employee ID");
+        return;
+    }
+
+    fetch(`http://localhost:5000/employee/${id}`)
+    .then(res => res.json())
+    .then(data => {
+
+        if(!data.success){
+            alert("Employee not found");
+            return;
+        }
+
+        renderTable(getTableId(), [data.data]);
+    });
+}
+
+/* ================= TABLE ================= */
+
+function getTableId(){
+    if(role === "HR") return "hrTable";
+    if(role === "MANAGER") return "managerTable";
+    if(role === "RM") return "rmTable";
+    if(role === "PMO") return "pmoTable";
+}
+
+function renderTable(id, rows){
+
+    if(!rows.length){
+        document.getElementById(id).innerHTML = "<tr><td>No Data</td></tr>";
+        return;
+    }
+
+    let table = "<tr>";
+
+    Object.keys(rows[0]).forEach(col=>{
+        table += `<th>${col}</th>`;
+    });
+
+    table += "</tr>";
+
+    rows.forEach(r=>{
+
+        table += "<tr>";
+
+        Object.entries(r).forEach(([key, val])=>{
+
+            // 🎯 STATUS COLOR
+            if(key === "status"){
+                let cls = "status";
+
+                if(val.includes("Pending")) cls += " pending";
+                else if(val.includes("Completed")) cls += " completed";
+                else cls += " inprogress";
+
+                table += `<td class="${cls}">${val}</td>`;
+            }
+            else{
+                table += `<td>${val || ""}</td>`;
+            }
+
+        });
+
+        table += "</tr>";
+    });
+
+    document.getElementById(id).innerHTML = table;
+}
+
+/* ================= LOGOUT ================= */
+
+function logout(){
+    localStorage.clear();
+    window.location.href = "login.html";
+}
+
+/* ================= INIT ================= */
+loadData();
+
+</script>
+
+</body>
+</html>

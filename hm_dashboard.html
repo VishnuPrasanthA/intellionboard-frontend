@@ -1,0 +1,1419 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>HM Dashboard</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background:#f4f7fb;
+    padding:20px;
+}
+
+/* HEADER */
+.header {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:15px;
+}
+
+/* CARD */
+.card {
+    background:#ffffff;
+    padding:20px;
+    border-radius:12px;
+    box-shadow:0 4px 12px rgba(0,0,0,0.06);
+    margin-bottom:15px;
+}
+
+/* STATS */
+.stats {
+    display:flex;
+    gap:15px;
+    flex-wrap:wrap;
+}
+
+.card-box{
+    flex:1;
+    min-width:150px;
+    background:#ffffff;
+    color:#0F6E56;
+    padding:15px;
+    border-radius:12px;
+    text-align:center;
+    box-shadow:0 2px 6px rgba(0,0,0,0.04), 0 6px 16px rgba(0,0,0,0.06);
+    transition: all 0.25s ease;
+}
+.card-box:hover{
+    transform:translateY(-4px);
+    box-shadow:0 6px 14px rgba(0,0,0,0.08);
+}
+
+/* ================= MODERN TABLE FIX ================= */
+
+/* TABLE WRAPPER */
+.table-container{
+    background:#fff;
+    border-radius:16px;
+    padding:16px;
+    box-shadow:0 8px 25px rgba(0,0,0,0.06);
+    overflow: visible;
+    overflow-x: auto;
+}
+
+/* TABLE BASE */
+table{
+    width:100%;
+    border-collapse:separate !important; /* 🔥 IMPORTANT */
+    border-spacing:0 12px !important;  
+    overflow: visible;  /* space between rows */
+}
+
+/* HEADER */
+thead th{
+    text-align:left;
+    padding:12px;
+    font-size:12px;
+    text-transform:uppercase;
+    color:#6b7280;
+    border:none;
+    letter-spacing:0.5px;
+}
+
+/* ROW = CARD */
+tbody tr{
+    background:#ffffff;
+    box-shadow:0 4px 12px rgba(0,0,0,0.06);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* HOVER EFFECT */
+tbody tr:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 28px rgba(0,0,0,0.12);
+}
+td {
+    position: relative;
+    overflow: visible;
+}
+tbody tr {
+    overflow: visible !important;
+}
+
+input[type="text"] {
+    width: 160px;
+    padding: 6px 8px;
+    font-size: 13px;
+}
+
+/* CELLS */
+tbody td {
+    padding:14px;
+    font-size:14px;
+    border-bottom:1px solid #f1f5f9;
+}
+
+/* ROUNDED CORNERS FIX */
+tbody tr td:first-child{
+    border-top-left-radius:12px;
+    border-bottom-left-radius:12px;
+}
+tbody tr td:last-child{
+    border-top-right-radius:12px;
+    border-bottom-right-radius:12px;
+}
+
+/* LEFT STATUS BORDER */
+tbody tr.pending-row td:first-child {
+    border-left:4px solid #f39c12;
+}
+tbody tr.completed-row td:first-child {
+    border-left:4px solid #1D9E75;
+}
+tbody tr.inprogress-row td:first-child {
+    border-left:4px solid #3498db;
+}
+.badge.pmo {
+    background:#eef2ff;
+    color:#4338ca;
+}
+* {
+    transition: all 0.2s ease;
+}
+.suggest-box {
+    z-index: 99999; /* increase */
+    position: absolute;
+    top: 38px;
+    left: 0;
+    width: 100%;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    max-height: 180px;          /* 🔥 scroll limit */
+    overflow-y: auto;
+    min-width: 220px;
+    scroll-behavior: smooth;           /* 🔥 enable scroll */
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    display: none;
+}
+
+/* SCROLLBAR (optional but clean) */
+.suggest-box::-webkit-scrollbar {
+    width: 6px;
+}
+.suggest-box::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 6px;
+}
+
+.suggest-item {
+    padding: 10px 12px;
+    cursor: pointer;
+    font-size: 13px;
+    border-bottom: 1px solid #f1f1f1;
+    transition: all 0.2s ease;
+}
+
+/* REMOVE last border */
+.suggest-item:last-child {
+    border-bottom: none;
+}
+
+/* HOVER EFFECT */
+.suggest-item:hover {
+    background: #f4f7fb;
+    color: #0F6E56;
+    font-weight: 500;
+}
+
+/* BADGES */
+.badge{
+    padding:6px 12px;
+    border-radius:20px;
+    font-size:12px;
+    font-weight:600;
+    display:inline-block;
+}
+
+.badge.pending{
+    background:#fff4e5;
+    color:#b4690e;
+}
+
+.badge.completed{
+    background:#e6f7ef;
+    color:#0f6e56;
+}
+
+.badge.inprogress{
+    background:#e6f0ff;
+    color:#1d4ed8;
+}
+
+/* BUTTONS */
+button {
+    padding:6px 12px;
+    border:none;
+    border-radius:6px;
+    cursor:pointer;
+    transition: all 0.2s ease;
+}
+
+button:hover {
+    transform: translateY(-1px);
+    opacity: 0.9;
+}
+input:focus, select:focus {
+    outline: none;
+    border:1px solid #0F6E56;
+    box-shadow:0 0 0 2px rgba(15,110,86,0.15);
+}
+
+.assign-btn { background:#0F6E56; color:white; }
+.reject-btn { background:#d9534f; color:white; }
+
+/* INPUTS */
+select,
+input[type="text"],
+input[type="search"] {
+    padding:6px 8px;
+}
+
+/* ================= ANALYTICS ================= */
+
+.analytics-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+    align-items: stretch;
+}
+
+.analytics-card {
+    background: linear-gradient(180deg, #ffffff, #fbfbfb);
+    padding: 16px;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    height: 300px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: all 0.25s ease;
+}
+
+.analytics-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+}
+
+.analytics-card canvas {
+    width: 100% !important;
+    height: 220px !important;
+}
+
+/* HEATMAP */
+.analytics-card .heatmap-grid {
+    flex: 1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-content: center;
+    justify-content: center;
+}
+
+.heatmap-item{
+    width: 110px;
+    height: 80px;
+    border-radius:8px;
+    color:white;
+    font-weight:600;
+    font-size:13px;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    flex-direction:column;
+    text-align:center;
+}
+.heatmap-item:hover{
+    transform:scale(1.08);
+    box-shadow:0 10px 20px rgba(0,0,0,0.2);
+}
+
+/* TOAST */
+.toast {
+    position:fixed;
+    top:20px;
+    right:20px;
+    background:#0F6E56;
+    color:#fff;
+    padding:10px 20px;
+    border-radius:6px;
+    display:none;
+}
+
+/* RESPONSIVE */
+@media (max-width: 600px) {
+    .card-box {
+        min-width: 100%;
+    }
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="card">
+
+<div class="header">
+<h2>Hiring Manager Dashboard</h2>
+<div>
+<input id="searchBox" placeholder="Search..." onkeyup="searchHM()">
+<span id="userDisplay"></span>
+<button onclick="logout()" style="background:#d9534f;color:white;">Logout</button>
+
+</div>
+</div>
+
+<div class="stats">
+<div class="card-box"><h3 id="total_emp">0</h3>Total</div>
+<div class="card-box"><h3 id="pending_emp">0</h3>Pending</div>
+<div class="card-box"><h3 id="pmo_emp">0</h3>PMO</div>
+<div class="card-box"><h3 id="completed_emp">0</h3>Completed</div>
+<div class="card-box"><h3 id="developer_emp">0</h3>Non-QA (Excluded)</div>
+</div>
+
+</div>
+
+<div class="card analytics-row">
+
+    <div class="analytics-card">
+        <h4>QA vs Non-QA</h4>
+        <canvas id="statusChart"></canvas>
+    </div>
+
+    <div class="analytics-card">
+        <h4>RM Distribution</h4>
+        <canvas id="rmChart"></canvas>
+    </div>
+
+    <div class="analytics-card">
+        <h4>RM Utilization</h4>
+        <div id="heatmap" class="heatmap-grid"></div>
+    </div>
+
+</div>
+
+<div class="card">
+<div id="tableContainer"></div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+
+let dataStore = [];
+let hm = "";
+let statusChartInstance = null;
+let rmChartInstance = null;
+let rmMap = {};
+let pmoMap = {};
+let mappingLoaded = false;
+window.onload = () => {
+    hm = localStorage.getItem("user_name");
+
+    if(!hm){
+        location.href="login.html";
+        return;
+    }
+
+    userDisplay.innerText = hm;
+    loadData();
+};
+
+let rms = [];
+
+async function preloadRMOptions(){
+
+    if(!dataStore.length) return;
+
+    let account = dataStore[0].account;
+
+    let res = await fetch(`http://localhost:5000/reporting-managers?account=${account}`);
+    let json = await res.json();
+
+    rms = json.data || [];
+}
+/* LOAD */
+async function loadData(){
+
+    // 🔥 Better loading UI
+    tableContainer.innerHTML = `<div style="padding:20px;text-align:center;">⏳ Loading data...</div>`;
+
+    try{
+        // 🔥 Add timeout (important)
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 8000);
+
+        let res = await fetch(
+            `http://localhost:5000/hm-dashboard/${encodeURIComponent(hm)}`,
+            { signal: controller.signal }
+        );
+
+        clearTimeout(timeout);
+
+        if(!res.ok){
+            throw new Error(`API error: ${res.status}`);
+        }
+
+        let json = await res.json();
+
+        let raw = Array.isArray(json) ? json : (json.data || []);
+
+        // 🔥 Normalize safely
+        dataStore = raw.map(r => ({
+
+            emp_id: (r.emp_id || r.employee_id || "N/A").toString(),
+
+            emp_name: (r.emp_name || r.name || "N/A").toString(),
+
+            role: (r.role || "").toString().trim(),
+
+            doj: r.doj || r.date_of_joining || "-",
+
+            status: (r.status || "pending").toString().toLowerCase().trim(),
+
+            account: (r.account || r.account_name || "").toString().trim(),
+
+            rm: (r.rm || "").toString().trim(),
+
+            pmo: (r.pmo || "").toString().trim(),
+
+            location: (r.location || "").toString().trim()
+
+        }));
+
+        // 🔥 Sort by latest DOJ (optional but useful)
+        dataStore.sort((a,b) => {
+            if(a.doj === "-" || b.doj === "-") return 0;
+            return new Date(b.doj) - new Date(a.doj);
+        });
+
+        // 🔥 Empty state UI
+        if(!dataStore.length){
+            tableContainer.innerHTML = `
+                <div style="padding:20px;text-align:center;color:#999;">
+                    📭 No data available
+                </div>`;
+            return;
+        }
+
+        // 🔥 Preload mappings BEFORE rendering
+        await preloadMappings();
+
+        // 🔥 Render everything
+        renderTable(dataStore);
+        updateStats(dataStore);
+        renderCharts(dataStore);
+        renderHeatmap(dataStore);
+        await preloadRMOptions();
+
+    }catch(err){
+
+        console.error("LOAD DATA ERROR:", err);
+
+        // 🔥 Better error UI
+        tableContainer.innerHTML = `
+            <div style="padding:20px;text-align:center;color:red;">
+                ❌ Failed to load data <br>
+                <small>${err.message || "Unknown error"}</small>
+            </div>`;
+    }
+}
+/* LOAD RM/PMO MAPPING ONCE */
+async function preloadMappings(){
+
+    if(mappingLoaded) return;
+
+    try{
+        let res = await fetch("http://localhost:5000/rm-pmo-mapping");
+
+        if(!res.ok) throw new Error("Mapping API failed");
+
+        let json = await res.json();
+
+        rmMap = json.rm || {};
+        pmoMap = json.pmo || {};
+
+        mappingLoaded = true;
+
+    }catch(err){
+        console.error("Mapping Load Error:", err);
+    }
+}
+
+
+/* 🔥 UPDATED TABLE FUNCTION */
+async function renderTable(d){
+
+    if(!Array.isArray(d) || d.length === 0){
+        tableContainer.innerHTML = `
+            <div class="table-container">
+                <p style="text-align:center; padding:20px; color:#6b7280;">
+                    No records found
+                </p>
+            </div>`;
+        return;
+    }
+
+    const escapeHTML = (str) => {
+        return String(str || "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    };
+
+    const getRowClass = (status) => {
+        const s = (status || "").toLowerCase();
+        if(s.includes("completed")) return "completed-row";
+        if(s.includes("pmo")) return "inprogress-row";
+        return "pending-row";
+    };
+
+    let html = `
+    <div class="table-container">
+    <table>
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Role</th>
+        <th>DOJ</th>
+        <th>Status</th>
+        <th>Account</th>
+        <th>RM</th>
+        <th>Buddy</th>
+        <th>PMO</th>
+        <th>Action</th>
+    </tr>
+    </thead>
+    <tbody>
+    `;
+
+    html += d.map(r => {
+
+        const empId = escapeHTML(r.emp_id);
+        const empName = escapeHTML(r.emp_name);
+        const role = escapeHTML(r.role || "-");
+        const doj = (r.doj && r.doj !== "-") ? escapeHTML(r.doj) : "-";
+        const account = escapeHTML(r.account || "-");
+
+        // =========================
+        // RM VALUE
+        // =========================
+        const rmValue = escapeHTML(r.rm || "");
+
+        // =========================
+        // BUDDY VALUE
+        // =========================
+        const buddyValue = escapeHTML(r.buddy || "");
+
+        // =========================
+        // PMO VALUE (STRICT)
+        // =========================
+        const pmoValue = escapeHTML(r.pmo || "");
+
+        // =========================
+        // LOCK LOGIC
+        // =========================
+        const isAssigned = (r.status || "").toLowerCase().includes("pmo");
+
+        return `
+        <tr class="${getRowClass(r.status)}" data-emp="${empId}">
+            
+            <td>${empId}</td>
+            <td>${empName}</td>
+            <td>${role}</td>
+            <td>${doj}</td>
+            <td>${badge(r.status)}</td>
+
+            <td>${account}</td>
+
+            <!-- RM (FIXED with dropdown support) -->
+            <td style="position:relative;">
+                <input 
+                    type="text"
+                    placeholder="Enter RM ID"
+                    id="rm_${empId}"
+                    value="${rmValue}"
+                    ${isAssigned ? "disabled" : ""}
+                    oninput="debouncedSearchRM('${empId}')"
+                    autocomplete="off"
+                >
+                <div id="rm_suggest_${empId}" class="suggest-box"></div>
+                <div id="rm_info_${empId}" class="rm-popup"></div>
+            </td>
+
+            <!-- BUDDY (FIXED with dropdown support) -->
+            <td style="position:relative;">
+                <input 
+                    type="text"
+                    placeholder="Enter Buddy ID"
+                    id="buddy_${empId}"
+                    value="${buddyValue}"
+                    ${isAssigned ? "disabled" : ""}
+                    oninput="debouncedSearchBuddy('${empId}')"
+                    autocomplete="off"
+                >
+                <div id="buddy_suggest_${empId}" class="suggest-box"></div>
+                <div id="buddy_info_${empId}" class="rm-popup"></div>
+            </td>
+
+            <!-- PMO -->
+            <td>
+                <span class="badge pmo">
+                    ${pmoValue || "AUTO"}
+                </span>
+            </td>
+
+            <!-- ACTION -->
+            <td>
+                <button 
+                    class="assign-btn"
+                    onclick="assign('${empId}')"
+                    ${isAssigned ? "disabled style='opacity:0.5;cursor:not-allowed'" : ""}
+                >
+                    ${isAssigned ? "Assigned" : "Assign"}
+                </button>
+            </td>
+
+        </tr>`;
+    }).join("");
+
+    html += `</tbody></table></div>`;
+
+    tableContainer.innerHTML = html;
+}
+// track latest query per row
+
+let rmSearchTimeout = {};
+let buddySearchTimeout = {};
+
+function debouncedSearchRM(empId){
+    clearTimeout(rmSearchTimeout[empId]);
+    rmSearchTimeout[empId] = setTimeout(() => {
+        searchRM(empId);
+    }, 300);
+}
+
+function debouncedSearchBuddy(empId){
+    clearTimeout(buddySearchTimeout[empId]);
+    buddySearchTimeout[empId] = setTimeout(() => {
+        searchBuddy(empId);
+    }, 300);
+}
+
+async function searchRM(empId){
+
+    const input = document.getElementById(`rm_${empId}`);
+    const box = document.getElementById(`rm_suggest_${empId}`);
+
+    if(!input || !box) return;
+
+    const query = (input.value || "").trim();
+
+    // 🔹 Hide if too short
+    if(query.length < 2){
+        box.style.display = "none";
+        box.innerHTML = "";
+        return;
+    }
+
+    // ==============================
+    // 🔥 FIX 1: per-row debounce (IMPORTANT)
+    // ==============================
+    if(!window.rmSearchTimeout) window.rmSearchTimeout = {};
+    clearTimeout(rmSearchTimeout[empId]);
+
+    rmSearchTimeout[empId] = setTimeout(async () => {
+
+        try{
+            const row = dataStore.find(x => x.emp_id == empId);
+            const account = (row?.account || "").trim();
+
+            // ==============================
+            // 🔥 FIX 2: track latest query per row
+            // ==============================
+            if(!window.rmLastQueryMap) window.rmLastQueryMap = {};
+            rmLastQueryMap[empId] = query;
+
+            const res = await fetch(
+                `http://localhost:5000/search-rm?q=${encodeURIComponent(query)}&account=${encodeURIComponent(account)}`
+            );
+
+            if(!res.ok){
+                throw new Error("API error: " + res.status);
+            }
+
+            const data = await res.json();
+
+            // 🔥 Ignore outdated response
+            if(rmLastQueryMap[empId] !== query) return;
+
+            const list = data?.data || [];
+
+            // ==============================
+            // EMPTY STATE
+            // ==============================
+            if(list.length === 0){
+                box.innerHTML = `<div class="suggest-item">No results</div>`;
+                box.style.display = "block";
+                return;
+            }
+
+            // ==============================
+            // SAFE HTML ESCAPE
+            // ==============================
+            const escapeHTML = (str) =>
+                String(str || "")
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;")
+                    .replace(/'/g, "&#39;");
+
+            let html = "";
+
+            list.forEach(r => {
+
+                const rmId = (r.emp_id || r.id || "").toString();
+                const name = escapeHTML(r.name || "Unknown");
+                const email = escapeHTML(r.email || "");
+
+                html += `
+                <div class="suggest-item"
+                    onclick="selectRM('${empId}','${rmId}','${name}','${email}')">
+                    <strong>${rmId}</strong> - ${name}
+                    <div style="font-size:11px;color:#888;">${email}</div>
+                </div>`;
+            });
+
+            box.innerHTML = html;
+            box.style.display = "block";
+            box.scrollTop = 0;
+
+        }catch(e){
+
+            console.error("RM Search Error:", e);
+
+            box.innerHTML = `<div class="suggest-item">⚠️ Error loading results</div>`;
+            box.style.display = "block";
+        }
+
+    }, 300);
+}
+function updateStats(d){
+
+    // Safe guards
+    if(!Array.isArray(d)) return;
+
+    // Normalize helpers
+    const getStatus = (s) => (s || "").toLowerCase().trim();
+    const getRole = (r) => (r || "").toLowerCase().trim();
+
+    // Define QA detection (more realistic)
+    const isQA = (role) => {
+        return ["qa","tester","test","sdet","quality"].some(k => role.includes(k));
+    };
+
+    // Counters
+    let total = d.length;
+    let pending = 0;
+    let pmo = 0;
+    let completed = 0;
+    let nonQA = 0;
+
+    d.forEach(x => {
+        const status = getStatus(x.status);
+        const role = getRole(x.role);
+
+        if(status === "hiring" || status.includes("pending")) pending++;
+        else if(status.includes("pmo")) pmo++;
+        else if(status.includes("completed")) completed++;
+
+        if(!isQA(role)) nonQA++;
+    });
+
+    // Update DOM safely
+    document.getElementById("total_emp").innerText = total;
+    document.getElementById("pending_emp").innerText = pending;
+    document.getElementById("pmo_emp").innerText = pmo;
+    document.getElementById("completed_emp").innerText = completed;
+    document.getElementById("developer_emp").innerText = nonQA;
+}
+let rmLastQueryMap = {};
+let buddyLastQueryMap = {}; // track latest query per row
+
+async function searchBuddy(empId){
+
+    const input = document.getElementById(`buddy_${empId}`);
+    const box = document.getElementById(`buddy_suggest_${empId}`);
+
+    if(!input || !box) return;
+
+    const query = (input.value || "").trim();
+
+    // 🔹 Hide if too short
+    if(query.length < 2){
+        box.style.display = "none";
+        box.innerHTML = "";
+        return;
+    }
+
+    // ==============================
+    // 🔥 FIX 1: Proper per-row debounce
+    // ==============================
+    if(!window.buddySearchTimeout) window.buddySearchTimeout = {};
+
+    clearTimeout(buddySearchTimeout[empId]);
+
+    buddySearchTimeout[empId] = setTimeout(async () => {
+
+        try{
+
+            const row = dataStore.find(x => x.emp_id == empId);
+
+            if(!row){
+                box.style.display = "none";
+                return;
+            }
+
+            const account = (row.account || "").trim().toLowerCase();
+            const location = (row.location || "").trim().toLowerCase();
+
+            // ==============================
+            // 🔥 FIX 2: Race condition protection
+            // ==============================
+            if(!window.buddyLastQueryMap) window.buddyLastQueryMap = {};
+            buddyLastQueryMap[empId] = query;
+
+            const url = `http://localhost:5000/search-buddy?q=${encodeURIComponent(query)}&account=${encodeURIComponent(account)}&location=${encodeURIComponent(location)}&emp_id=${empId}`;
+
+            const res = await fetch(url);
+
+            if(!res.ok){
+                throw new Error("API error: " + res.status);
+            }
+
+            const data = await res.json();
+
+            // 🔥 Ignore outdated response
+            if(buddyLastQueryMap[empId] !== query) return;
+
+            const list = data?.data || [];
+
+            // ==============================
+            // EMPTY STATE
+            // ==============================
+            if(list.length === 0){
+                box.innerHTML = `<div class="suggest-item">No results</div>`;
+                box.style.display = "block";
+                return;
+            }
+
+            // ==============================
+            // SAFE HTML ESCAPE
+            // ==============================
+            const escapeHTML = (str) =>
+                String(str || "")
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;")
+                    .replace(/'/g, "&#39;");
+
+            let html = "";
+
+            list.forEach(b => {
+
+                const buddyId = (b.emp_id || "").toString();
+                const name = escapeHTML(b.name || "Unknown");
+                const email = escapeHTML(b.email || "");
+
+                html += `
+                <div class="suggest-item"
+                    onclick="selectBuddy('${empId}','${buddyId}','${encodeURIComponent(name)}','${encodeURIComponent(email)}')">
+
+                    <strong>${buddyId}</strong> - ${name}
+
+                    ${email ? `<div style="font-size:11px;color:#888;">${email}</div>` : ""}
+
+                </div>`;
+            });
+
+            box.innerHTML = html;
+            box.style.display = "block";
+            box.scrollTop = 0;
+
+        }catch(e){
+
+            console.error("Buddy Search Error:", e);
+
+            box.innerHTML = `<div class="suggest-item">⚠️ Error loading results</div>`;
+            box.style.display = "block";
+        }
+
+    }, 300);
+}
+function selectBuddy(empId, id, name, email){
+
+    name = decodeURIComponent(name);
+    email = decodeURIComponent(email);
+
+    document.getElementById(`buddy_${empId}`).value = id + " - " + name;
+
+    document.getElementById(`buddy_suggest_${empId}`).style.display = "none";
+
+    console.log("Selected Buddy:", id, name, email);
+}
+function selectRM(empId, rmId, name, email){
+
+    document.getElementById(`rm_${empId}`).value = rmId;
+
+    let box = document.getElementById(`rm_suggest_${empId}`);
+    box.innerHTML = "";
+
+    // show info (reuse your popup)
+    let info = document.getElementById(`rm_info_${empId}`);
+    info.style.display = "block";
+    info.innerHTML = `<b>${name}</b><br>${email}`;
+
+    setTimeout(()=>{
+        info.style.display = "none";
+        info.innerHTML="";
+    },3000);
+}
+/* BADGE */
+function badge(s){
+
+    // 🔹 Normalize safely
+    const status = (s || "").toLowerCase().trim();
+
+    // 🔹 Completed
+    if(status.includes("completed") || status.includes("done")){
+        return `<span class="badge completed">Completed</span>`;
+    }
+
+    // 🔹 PMO
+    if(status.includes("pmo")){
+        return `<span class="badge pmo">PMO</span>`;
+    }
+
+    // 🔹 In Progress (covers multiple real cases)
+    if(
+        status.includes("progress") ||
+        status.includes("in-progress") ||
+        status.includes("ongoing") ||
+        status.includes("active")
+    ){
+        return `<span class="badge inprogress">In Progress</span>`;
+    }
+
+    // 🔹 Hiring / Pending
+    if(
+        status.includes("hiring") ||
+        status.includes("pending") ||
+        status.includes("new") ||
+        status.includes("initiated")
+    ){
+        return `<span class="badge pending">Pending</span>`;
+    }
+
+    // 🔹 Fallback (unknown status)
+    return `<span class="badge pending">${status || "Pending"}</span>`;
+}
+
+async function fetchRMDetails(empId, type){
+
+    let inputId = type === "rm" ? `rm_${empId}` : `buddy_${empId}`;
+    let infoId  = type === "rm" ? `rm_info_${empId}` : `buddy_info_${empId}`;
+
+    let empVal = document.getElementById(inputId).value;
+
+    if(empVal.length < 3) return;
+
+    try{
+        let res = await fetch(`http://localhost:5000/employee/${empVal}`);
+        if(!res.ok) return;
+
+        let data = await res.json();
+
+        document.getElementById(infoId).innerHTML = `
+            <b>${data.name}</b><br>${data.email}
+        `;
+
+        setTimeout(()=>{
+            document.getElementById(infoId).innerHTML="";
+        },3000);
+
+    }catch{}
+}
+
+/* ACTIONS */
+function assign(id){
+
+    const rmInput = document.getElementById(`rm_${id}`);
+    const buddyInput = document.getElementById(`buddy_${id}`);
+
+    if(!rmInput || !buddyInput){
+        toast("❌ Input fields not found");
+        return;
+    }
+
+    let rmRaw = (rmInput.value || "").trim();
+    let buddyRaw = (buddyInput.value || "").trim();
+
+    // 🔹 Extract IDs safely
+    let rmId = rmRaw.includes(" - ") ? rmRaw.split(" - ")[0].trim() : rmRaw;
+    let buddyId = buddyRaw ? buddyRaw.split(" - ")[0].trim() : "";
+
+    // 🔴 VALIDATIONS
+    if(!rmId){
+        toast("⚠️ RM ID is mandatory");
+        return;
+    }
+
+    if(rmId.length < 2){
+        toast("⚠️ Invalid RM ID");
+        return;
+    }
+
+    if(buddyId && rmId === buddyId){
+        toast("⚠️ RM and Buddy cannot be same");
+        return;
+    }
+
+    // 🔥 STATUS-BASED CHECK (FIXED)
+    const row = dataStore.find(x => x.emp_id == id);
+    if(row && (row.status || "").toLowerCase().includes("pmo")){
+        toast("⚠️ Already assigned. Cannot reassign.");
+        return;
+    }
+
+    // 🔹 Disable button
+    const btn = document.querySelector(`tr[data-emp="${id}"] .assign-btn`);
+    if(btn){
+        btn.disabled = true;
+        btn.innerText = "Assigning...";
+        btn.style.opacity = "0.6";
+    }
+
+    // 🔹 API CALL
+    fetch(`http://localhost:5000/assign-manager/${id}`, {
+        method: "PUT",
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            rm_id: rmId,
+            buddy_id: buddyId || null
+        })
+    })
+    .then(async (res) => {
+
+        let data = {};
+        try{
+            data = await res.json();
+        }catch{}
+
+        if(!res.ok){
+            throw new Error(data.error || data.message || "Assignment failed");
+        }
+
+        return data;
+    })
+    .then(() => {
+
+        toast("✅ Assigned successfully");
+
+        // 🔥 UPDATE LOCAL STATE CORRECTLY (FIXED)
+        const row = dataStore.find(x => x.emp_id == id);
+        if(row){
+            row.rm = rmRaw;        // keep UI display value
+            row.pmo = buddyRaw;    // keep UI display value
+            row.status = "Pending PMO Approval"; // 🔥 source of truth
+        }
+
+        // 🔥 Re-render (this will auto-disable based on status)
+        renderTable(dataStore);
+
+        // 🔥 Update analytics
+        updateStats(dataStore);
+        renderCharts(dataStore);
+        renderHeatmap(dataStore);
+
+    })
+    .catch(err => {
+
+        console.error("Assign Error:", err);
+        toast("❌ " + err.message);
+
+        // 🔴 Re-enable on failure ONLY
+        if(btn){
+            btn.disabled = false;
+            btn.innerText = "Assign";
+            btn.style.opacity = "1";
+        }
+    });
+}
+/* STATS */
+const centerTextPlugin = {
+    id: 'centerText',
+    beforeDraw(chart) {
+
+        const { ctx, width, height } = chart;
+
+        const dataset = chart?.data?.datasets?.[0]?.data;
+
+        if(!Array.isArray(dataset) || dataset.length === 0) return;
+
+        const total = dataset.reduce((a, b) => a + b, 0);
+
+        if(total === 0) return;
+
+        ctx.save();
+
+        ctx.font = "bold 22px Segoe UI";
+        ctx.fillStyle = "#0F6E56";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+
+        ctx.fillText(total, width / 2, height / 2);
+
+        ctx.restore();
+    }
+};
+/* CHARTS */
+function renderCharts(d){
+
+    // =========================
+    // 🔹 Safety check
+    // =========================
+    if(!Array.isArray(d) || d.length === 0){
+        console.warn("No data for charts");
+        return;
+    }
+
+    // =========================
+    // 🔹 Destroy old charts safely
+    // =========================
+    if(statusChartInstance instanceof Chart){
+        statusChartInstance.destroy();
+        statusChartInstance = null;
+    }
+
+    if(rmChartInstance instanceof Chart){
+        rmChartInstance.destroy();
+        rmChartInstance = null;
+    }
+
+    // =========================
+    // 🔹 DOM references (FIXED)
+    // =========================
+    const statusCanvas = document.getElementById("statusChart");
+    const rmCanvas = document.getElementById("rmChart");
+
+    if(!statusCanvas || !rmCanvas){
+        console.error("Chart canvas elements not found");
+        return;
+    }
+
+    // =========================
+    // 🔹 Role normalization
+    // =========================
+    const normalizeRole = (r) => (r || "").toLowerCase().trim();
+
+    const isQA = (role) => {
+        return ["qa","tester","test","sdet","quality"]
+            .some(k => role.includes(k));
+    };
+
+    // =========================
+    // 🔹 QA vs Non-QA calculation
+    // =========================
+    let qa = 0;
+    let nonQA = 0;
+
+    d.forEach(x => {
+        const role = normalizeRole(x.role);
+
+        if(isQA(role)) qa++;
+        else nonQA++;
+    });
+
+    // prevent empty chart crash
+    if(qa === 0 && nonQA === 0){
+        qa = 0;
+        nonQA = 1;
+    }
+
+    // =========================
+    // 🔹 Doughnut Chart
+    // =========================
+    statusChartInstance = new Chart(statusCanvas, {
+        type: 'doughnut',
+        data: {
+            labels: ["QA Profiles", "Non-QA"],
+            datasets: [{
+                data: [qa, nonQA],
+                backgroundColor: ["#0F6E56", "#dcdcdc"],
+                borderWidth: 0,
+                hoverOffset: 18
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            cutout: '65%',
+            plugins: {
+                legend: {
+                    position: 'top'
+                }
+            }
+        },
+        plugins: [centerTextPlugin]
+    });
+
+    // =========================
+    // 🔹 RM Distribution Map
+    // =========================
+    const map = {};
+
+    d.forEach(x => {
+        const rm = (x.rm || "").trim();
+
+        if(rm){
+            map[rm] = (map[rm] || 0) + 1;
+        }
+    });
+
+    const sorted = Object.entries(map)
+        .sort((a, b) => b[1] - a[1]);
+
+    const labels = sorted.map(x => x[0]);
+    const values = sorted.map(x => x[1]);
+
+    // fallback
+    if(labels.length === 0){
+        labels.push("No RM Assigned");
+        values.push(0);
+    }
+
+    // =========================
+    // 🔹 RM Bar Chart
+    // =========================
+    rmChartInstance = new Chart(rmCanvas, {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [{
+                label: "Employees per RM",
+                data: values,
+                backgroundColor: "#0F6E56"
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        precision: 0,
+                        stepSize: 1
+                    }
+                }
+            }
+        }
+    });
+}
+/* HEATMAP */
+function renderHeatmap(d){
+
+    const container = document.getElementById("heatmap");
+
+    if(!container) return;
+
+    // 🔹 Empty state
+    if(!Array.isArray(d) || d.length === 0){
+        container.innerHTML = `<div style="color:#888;">No data available</div>`;
+        return;
+    }
+
+    // 🔹 Build RM count map
+    let map = {};
+
+    d.forEach(x => {
+        const rm = (x.rm || "").trim();
+        if(rm){
+            map[rm] = (map[rm] || 0) + 1;
+        }
+    });
+
+    const entries = Object.entries(map);
+
+    // 🔹 No RM data
+    if(entries.length === 0){
+        container.innerHTML = `<div style="color:#888;">No RM data</div>`;
+        return;
+    }
+
+    // 🔹 Sort (highest load first)
+    entries.sort((a,b) => b[1] - a[1]);
+
+    // 🔹 Normalize intensity (dynamic scaling)
+    const max = Math.max(...entries.map(e => e[1]));
+
+    // 🔹 Safe HTML escape
+    const escapeHTML = (str) =>
+        (str || "").replace(/[&<>"']/g, m => ({
+            "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"
+        }[m]));
+
+    let html = "";
+
+    entries.forEach(([rm, count]) => {
+
+        // 🔥 Better intensity scaling (0.3 → 1 range)
+        let intensity = max > 0 ? (count / max) : 0;
+        let opacity = 0.3 + (intensity * 0.7);
+
+        html += `
+        <div 
+            class="heatmap-item"
+            title="RM: ${escapeHTML(rm)} | Assigned: ${count}"
+            style="background: rgba(15,110,86,${opacity})"
+        >
+            <div>${escapeHTML(rm)}</div>
+            <small>${count}</small>
+        </div>`;
+    });
+
+    container.innerHTML = html;
+}
+
+/* SEARCH */
+function searchHM(){
+
+    const input = document.getElementById("searchBox");
+
+    if(!input) return;
+
+    const v = (input.value || "").toLowerCase().trim();
+
+    // 🔹 If empty → reset table
+    if(!v){
+        renderTable(dataStore);
+        return;
+    }
+
+    const safe = (val) => (val || "").toString().toLowerCase();
+
+    const filtered = dataStore.filter(x => {
+
+        return (
+            safe(x.emp_id).includes(v) ||
+            safe(x.emp_name).includes(v) ||
+            safe(x.role).includes(v) ||
+            safe(x.status).includes(v) ||
+            safe(x.account).includes(v) ||
+            safe(x.rm).includes(v) ||
+            safe(x.pmo).includes(v) ||
+            safe(x.location).includes(v)
+        );
+    });
+
+    renderTable(filtered);
+}
+
+/* TOAST */
+function toast(msg){
+    let t=document.getElementById("toast");
+    t.innerText=msg;
+    t.style.display="block";
+    setTimeout(()=>t.style.display="none",2000);
+}
+
+function logout(){
+    localStorage.removeItem("user_name");
+    window.location.href = "login.html";
+}
+
+</script>
+
+</body>
+</html>

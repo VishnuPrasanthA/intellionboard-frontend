@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Account PMO Dashboard</title>
+
+<style>
+
+/* =========================================================
+   ROOT THEME (NEXT-GEN)
+========================================================= */
+
+:root{
+
+    --primary:#19d3a2;
+    --primary-dark:#10b88b;
+
+    --blue:#59b8ff;
+    --purple:#9f74ff;
+    --orange:#ffb84d;
+    --red:#ff6f6f;
+    --green:#34d47f;
+
+    --text:#172b42;
+    --muted:#7d8da5;
+
+    --glass:rgba(255,255,255,0.68);
+    --border:rgba(255,255,255,0.42);
+
+    --bg1:#f5fbff;
+    --bg2:#eef5ff;
+
+    --shadow:0 16px 38px rgba(15,23,42,.10);
+
+    --radius:22px;
+}
+
+/* =========================================================
+   GLOBAL
+========================================================= */
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    font-family:"Segoe UI", sans-serif;
+    background:linear-gradient(135deg,var(--bg1),var(--bg2));
+    color:var(--text);
+    min-height:100vh;
+}
+
+/* =========================================================
+   HEADER (GLASS)
+========================================================= */
+
+.header{
+    position:sticky;
+    top:12px;
+    margin:12px;
+    padding:14px 18px;
+    border-radius:26px;
+
+    background:var(--glass);
+    backdrop-filter:blur(16px);
+
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+
+    box-shadow:var(--shadow);
+}
+
+.header h1{
+    font-size:18px;
+    font-weight:900;
+    color:var(--primary-dark);
+}
+
+/* =========================================================
+   SEARCH
+========================================================= */
+
+.search-box{
+    padding:10px 14px;
+    border-radius:12px;
+    border:1px solid #dce3ea;
+    min-width:220px;
+    outline:none;
+}
+
+/* =========================================================
+   BUTTONS
+========================================================= */
+
+.btn{
+    border:none;
+    padding:10px 16px;
+    border-radius:12px;
+    cursor:pointer;
+    font-weight:700;
+}
+
+.btn-primary{
+    background:var(--primary);
+    color:white;
+}
+
+.btn:hover{
+    transform:translateY(-2px);
+}
+
+/* =========================================================
+   PAGE
+========================================================= */
+
+.page{
+    padding:20px;
+}
+
+/* =========================================================
+   AI PANEL
+========================================================= */
+
+.ai-box{
+    background:linear-gradient(135deg,#19d3a2,#59b8ff);
+    color:white;
+    padding:20px;
+    border-radius:20px;
+    margin-bottom:20px;
+}
+
+/* =========================================================
+   KPI ROW
+========================================================= */
+
+.kpi-row{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:14px;
+    margin-bottom:20px;
+}
+
+.kpi-card{
+    background:white;
+    padding:18px;
+    border-radius:18px;
+    box-shadow:var(--shadow);
+}
+
+.kpi-value{
+    font-size:26px;
+    font-weight:900;
+    color:var(--primary-dark);
+}
+
+.kpi-title{
+    font-size:12px;
+    color:var(--muted);
+}
+
+/* =========================================================
+   TABLE
+========================================================= */
+
+.card{
+    background:white;
+    padding:18px;
+    border-radius:20px;
+    box-shadow:var(--shadow);
+    margin-bottom:20px;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+th,td{
+    padding:12px;
+    font-size:12px;
+    border-bottom:1px solid #eee;
+}
+
+th{
+    text-align:left;
+    color:var(--muted);
+}
+
+/* =========================================================
+   CHAT BOT FLOAT
+========================================================= */
+
+.fab{
+    position:fixed;
+    bottom:20px;
+    right:20px;
+
+    width:60px;
+    height:60px;
+
+    border-radius:50%;
+    background:var(--primary);
+    color:white;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    font-size:26px;
+
+    cursor:pointer;
+}
+
+.chat-box{
+    position:fixed;
+    bottom:90px;
+    right:20px;
+
+    width:320px;
+    height:420px;
+
+    background:white;
+    border-radius:20px;
+
+    box-shadow:var(--shadow);
+
+    display:none;
+    flex-direction:column;
+}
+
+.chat-header{
+    background:var(--primary);
+    color:white;
+    padding:12px;
+    border-radius:20px 20px 0 0;
+    font-weight:800;
+}
+
+.chat-body{
+    flex:1;
+    padding:10px;
+    overflow:auto;
+    font-size:12px;
+}
+
+.chat-input{
+    display:flex;
+    border-top:1px solid #eee;
+}
+
+.chat-input input{
+    flex:1;
+    padding:10px;
+    border:none;
+    outline:none;
+}
+
+.chat-input button{
+    background:var(--primary);
+    color:white;
+    border:none;
+    padding:10px;
+}
+
+.user-msg{
+    text-align:right;
+    margin:6px 0;
+    color:var(--primary-dark);
+}
+
+.ai-msg{
+    text-align:left;
+    margin:6px 0;
+    color:#333;
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- HEADER -->
+<div class="header">
+
+    <h1>🚀 Account PMO Dashboard</h1>
+
+    <div>
+
+        <input class="search-box"
+            placeholder="Search Employee..."
+            onkeyup="searchEmployees()">
+
+        <button class="btn btn-primary"
+            onclick="loadDashboard()">
+            Refresh
+        </button>
+
+    </div>
+
+</div>
+
+<div class="page">
+
+    <!-- AI BOX -->
+    <div class="ai-box">
+
+        🤖 AI PMO Insight:
+        <div id="aiInsights">Loading...</div>
+
+    </div>
+
+    <!-- KPI -->
+    <div class="kpi-row">
+
+        <div class="kpi-card">
+            <div class="kpi-value" id="total">0</div>
+            <div class="kpi-title">Total</div>
+        </div>
+
+        <div class="kpi-card">
+            <div class="kpi-value" id="pending">0</div>
+            <div class="kpi-title">Pending</div>
+        </div>
+
+        <div class="kpi-card">
+            <div class="kpi-value" id="progress">0</div>
+            <div class="kpi-title">In Progress</div>
+        </div>
+
+        <div class="kpi-card">
+            <div class="kpi-value" id="completed">0</div>
+            <div class="kpi-title">Completed</div>
+        </div>
+
+    </div>
+
+    <!-- TABLE -->
+    <div class="card">
+
+        <h3>📊 PMO Workforce</h3>
+
+        <table>
+
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Project</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+
+            <tbody id="tableBody">
+                <tr><td colspan="4">Loading...</td></tr>
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+<!-- FLOAT BUTTON -->
+<div class="fab" onclick="toggleChat()">🤖</div>
+
+<!-- CHAT BOT -->
+<div class="chat-box" id="chatBox">
+
+    <div class="chat-header">
+        PMO AI Assistant
+    </div>
+
+    <div class="chat-body" id="chatBody">
+        <div class="ai-msg">Hi! Ask me anything about onboarding 🚀</div>
+    </div>
+
+    <div class="chat-input">
+
+        <input id="chatInput"
+            placeholder="Ask PMO AI..."
+            onkeydown="if(event.key==='Enter')sendMsg()">
+
+        <button onclick="sendMsg()">Send</button>
+
+    </div>
+
+</div>
+
+<script>
+
+let chatOpen=false;
+
+/* CHAT TOGGLE */
+function toggleChat(){
+
+    chatOpen=!chatOpen;
+
+    document.getElementById("chatBox")
+        .style.display = chatOpen ? "flex" : "none";
+}
+
+/* SIMPLE AI BOT */
+function sendMsg(){
+
+    const input =
+        document.getElementById("chatInput");
+
+    const msg =
+        input.value;
+
+    if(!msg) return;
+
+    const chat =
+        document.getElementById("chatBody");
+
+    chat.innerHTML += `
+        <div class="user-msg">${msg}</div>
+    `;
+
+    let reply = generateAI(msg);
+
+    setTimeout(()=>{
+
+        chat.innerHTML += `
+            <div class="ai-msg">${reply}</div>
+        `;
+
+        chat.scrollTop = chat.scrollHeight;
+
+    },500);
+
+    input.value="";
+}
+
+/* SIMPLE RULE-BASED AI */
+function generateAI(msg){
+
+    msg = msg.toLowerCase();
+
+    if(msg.includes("status"))
+        return "📊 System running smoothly. Onboarding pipeline active.";
+
+    if(msg.includes("pending"))
+        return "⚠️ Pending approvals are being monitored by PMO AI.";
+
+    if(msg.includes("help"))
+        return "Ask me: status, employees, onboarding, risks 🚀";
+
+    return "🤖 PMO AI: I understood your query and will assist you.";
+}
+
+/* DASHBOARD MOCK */
+function loadDashboard(){
+
+    document.getElementById("total").innerText = 120;
+    document.getElementById("pending").innerText = 15;
+    document.getElementById("progress").innerText = 45;
+    document.getElementById("completed").innerText = 60;
+
+    document.getElementById("aiInsights").innerHTML =
+        "🚀 Pipeline healthy<br>⚠️ 15 pending approvals<br>✅ 60 completed onboardings";
+
+}
+
+loadDashboard();
+
+</script>
+
+</body>
+</html>

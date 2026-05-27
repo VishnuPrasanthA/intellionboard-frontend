@@ -1,0 +1,1999 @@
+<!-- =========================================================
+FILE : leadership_dashboard.html
+NEXT GEN LEADERSHIP AI COMMAND CENTER
+========================================================= -->
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+<title>Leadership AI Command Center</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+
+<style>
+
+/* =========================================================
+ROOT
+========================================================= */
+
+:root{
+
+    --primary:#19d3a2;
+    --primary-dark:#0fa77f;
+    --primary-light:#ecfff9;
+
+    --blue:#59b8ff;
+    --purple:#9f74ff;
+    --orange:#ffb84d;
+    --red:#ff6f6f;
+    --green:#34d47f;
+
+    --text:#172b42;
+    --muted:#7d8da5;
+
+    --glass:rgba(255,255,255,0.72);
+
+    --border:rgba(255,255,255,0.4);
+
+    --bg1:#f5fbff;
+    --bg2:#eef5ff;
+
+    --shadow-sm:
+    0 6px 18px rgba(15,23,42,.06);
+
+    --shadow-md:
+    0 16px 38px rgba(15,23,42,.10);
+
+    --shadow-lg:
+    0 30px 70px rgba(15,23,42,.16);
+
+    --radius:24px;
+
+    --transition:
+    all .35s cubic-bezier(.22,1,.36,1);
+}
+
+/* =========================================================
+GLOBAL
+========================================================= */
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+
+    font-family:'Poppins',sans-serif;
+
+    background:
+    radial-gradient(circle at top left,#dbfff4 0%,transparent 30%),
+    radial-gradient(circle at top right,#ddeeff 0%,transparent 26%),
+    radial-gradient(circle at bottom right,#fff4df 0%,transparent 28%),
+    linear-gradient(135deg,var(--bg1),var(--bg2));
+
+    min-height:100vh;
+
+    color:var(--text);
+
+    overflow-x:hidden;
+}
+
+body::before{
+
+    content:"";
+
+    position:fixed;
+
+    inset:0;
+
+    background:
+    radial-gradient(circle at 20% 20%,rgba(25,211,162,.05),transparent 18%),
+    radial-gradient(circle at 80% 25%,rgba(89,184,255,.05),transparent 18%),
+    radial-gradient(circle at 70% 80%,rgba(159,116,255,.05),transparent 18%);
+
+    animation:bgMove 22s linear infinite;
+
+    z-index:-1;
+}
+
+@keyframes bgMove{
+
+    from{
+        transform:translateY(0);
+    }
+
+    to{
+        transform:translateY(-60px);
+    }
+}
+
+.page{
+
+    padding:18px;
+
+    padding-top:110px;
+}
+
+/* =========================================================
+SCROLLBAR
+========================================================= */
+
+::-webkit-scrollbar{
+    width:8px;
+    height:8px;
+}
+
+::-webkit-scrollbar-thumb{
+
+    background:
+    linear-gradient(180deg,var(--primary),#54ffe2);
+
+    border-radius:20px;
+}
+
+/* =========================================================
+GLASS
+========================================================= */
+
+.glass{
+
+    background:var(--glass);
+
+    backdrop-filter:blur(18px);
+
+    -webkit-backdrop-filter:blur(18px);
+
+    border:1px solid var(--border);
+
+    box-shadow:var(--shadow-sm);
+}
+
+/* =========================================================
+HEADER
+========================================================= */
+
+.header{
+
+    position:fixed;
+
+    top:14px;
+    left:14px;
+    right:14px;
+
+    z-index:99999;
+
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+
+    padding:16px 22px;
+
+    border-radius:28px;
+
+    overflow:hidden;
+}
+
+.header::before{
+
+    content:"";
+
+    position:absolute;
+
+    inset:-2px;
+
+    background:
+    linear-gradient(
+    90deg,
+    rgba(25,211,162,.18),
+    rgba(89,184,255,.18),
+    rgba(159,116,255,.18),
+    rgba(25,211,162,.18));
+
+    background-size:300% 300%;
+
+    z-index:-1;
+
+    animation:borderMove 8s linear infinite;
+}
+
+@keyframes borderMove{
+
+    0%{
+        background-position:0% 50%;
+    }
+
+    100%{
+        background-position:100% 50%;
+    }
+}
+
+.header-left{
+
+    display:flex;
+    align-items:center;
+    gap:16px;
+}
+
+.logo{
+
+    width:60px;
+    height:60px;
+
+    border-radius:18px;
+
+    background:
+    linear-gradient(135deg,var(--primary),#58ffd9);
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    color:white;
+
+    font-size:28px;
+
+    font-weight:800;
+
+    box-shadow:
+    0 12px 30px rgba(25,211,162,.28);
+}
+
+.header-title h1{
+
+    font-size:24px;
+
+    font-weight:800;
+}
+
+.header-title p{
+
+    color:var(--muted);
+
+    font-size:12px;
+
+    margin-top:4px;
+}
+
+.header-right{
+
+    display:flex;
+    align-items:center;
+    gap:12px;
+}
+
+.live-chip{
+
+    padding:10px 18px;
+
+    border-radius:40px;
+
+    background:
+    linear-gradient(
+    135deg,
+    rgba(25,211,162,.12),
+    rgba(25,211,162,.03));
+
+    color:var(--primary);
+
+    font-weight:800;
+
+    font-size:11px;
+
+    border:1px solid rgba(25,211,162,.18);
+}
+
+.btn{
+
+    border:none;
+
+    height:46px;
+
+    padding:0 18px;
+
+    border-radius:14px;
+
+    cursor:pointer;
+
+    font-weight:700;
+
+    transition:var(--transition);
+
+    color:white;
+}
+
+.btn:hover{
+
+    transform:translateY(-3px);
+
+    box-shadow:var(--shadow-md);
+}
+
+.btn-refresh{
+
+    background:
+    linear-gradient(135deg,#3ea6ff,#73c7ff);
+}
+
+.btn-logout{
+
+    background:
+    linear-gradient(135deg,#ff6767,#ff9a7a);
+}
+
+/* =========================================================
+KPI GRID
+========================================================= */
+
+.kpi-grid{
+
+    display:grid;
+
+    grid-template-columns:
+    repeat(auto-fit,minmax(220px,1fr));
+
+    gap:16px;
+
+    margin-bottom:20px;
+}
+
+.kpi{
+
+    position:relative;
+
+    overflow:hidden;
+
+    border-radius:26px;
+
+    padding:22px;
+
+    min-height:145px;
+
+    transition:var(--transition);
+}
+
+.kpi:hover{
+
+    transform:
+    translateY(-6px)
+    scale(1.01);
+
+    box-shadow:var(--shadow-lg);
+}
+
+.kpi::before{
+
+    content:"";
+
+    position:absolute;
+
+    top:-30px;
+    right:-30px;
+
+    width:120px;
+    height:120px;
+
+    border-radius:50%;
+
+    opacity:.08;
+}
+
+.kpi:nth-child(1)::before{
+    background:var(--primary);
+}
+
+.kpi:nth-child(2)::before{
+    background:var(--green);
+}
+
+.kpi:nth-child(3)::before{
+    background:var(--blue);
+}
+
+.kpi:nth-child(4)::before{
+    background:var(--red);
+}
+
+.kpi:nth-child(5)::before{
+    background:var(--purple);
+}
+
+.kpi:nth-child(6)::before{
+    background:var(--orange);
+}
+
+.kpi:nth-child(7)::before{
+    background:#0ea5e9;
+}
+
+.kpi:nth-child(8)::before{
+    background:#f43f5e;
+}
+
+.kpi-icon{
+
+    font-size:26px;
+
+    margin-bottom:12px;
+}
+
+.kpi-title{
+
+    font-size:12px;
+
+    color:var(--muted);
+
+    margin-bottom:6px;
+}
+
+.kpi-value{
+
+    font-size:34px;
+
+    font-weight:800;
+}
+
+.kpi-sub{
+
+    margin-top:8px;
+
+    font-size:11px;
+
+    color:#6b7280;
+}
+
+/* =========================================================
+GRID
+========================================================= */
+
+.grid-2{
+
+    display:grid;
+
+    grid-template-columns:2fr 1fr;
+
+    gap:18px;
+
+    margin-bottom:18px;
+}
+
+.grid-3{
+
+    display:grid;
+
+    grid-template-columns:repeat(3,1fr);
+
+    gap:18px;
+
+    margin-bottom:18px;
+}
+
+.card{
+
+    border-radius:28px;
+
+    padding:20px;
+
+    overflow:hidden;
+
+    position:relative;
+}
+
+.card:hover{
+
+    box-shadow:var(--shadow-lg);
+}
+
+.card-title{
+
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+
+    margin-bottom:18px;
+}
+
+.card-title h3{
+
+    font-size:17px;
+
+    font-weight:700;
+}
+
+.card-title span{
+
+    font-size:11px;
+
+    color:var(--muted);
+}
+
+/* =========================================================
+CHART FIX
+========================================================= */
+
+.chart-box{
+
+    position:relative;
+
+    height:340px;
+}
+
+.chart-box canvas{
+
+    width:100% !important;
+    height:100% !important;
+}
+
+/* =========================================================
+TABLE
+========================================================= */
+
+.table-wrapper{
+
+    overflow:auto;
+
+    border-radius:18px;
+}
+
+table{
+
+    width:100%;
+
+    border-collapse:collapse;
+
+    min-width:1200px;
+}
+
+thead{
+
+    background:
+    linear-gradient(
+    180deg,
+    #fbfdff,
+    #f2f7fd);
+
+    position:sticky;
+
+    top:0;
+
+    z-index:2;
+}
+
+th{
+
+    padding:16px;
+
+    font-size:11px;
+
+    text-align:left;
+
+    color:#5f7187;
+
+    font-weight:800;
+
+    border-bottom:1px solid #edf2f7;
+}
+
+td{
+
+    padding:14px 16px;
+
+    font-size:12px;
+
+    border-bottom:1px solid #eef2f7;
+}
+
+tbody tr{
+
+    transition:var(--transition);
+}
+
+tbody tr:hover{
+
+    background:
+    linear-gradient(
+    90deg,
+    rgba(25,211,162,.04),
+    rgba(89,184,255,.03));
+}
+
+/* =========================================================
+BADGES
+========================================================= */
+
+.badge{
+
+    padding:6px 10px;
+
+    border-radius:40px;
+
+    font-size:10px;
+
+    color:white;
+
+    font-weight:800;
+}
+
+.high{
+    background:linear-gradient(135deg,#ff5f5f,#ff9090);
+}
+
+.medium{
+    background:linear-gradient(135deg,#f39c12,#ffc760);
+}
+
+.low{
+    background:linear-gradient(135deg,#16c79a,#57f4cb);
+}
+
+/* =========================================================
+INSIGHTS
+========================================================= */
+
+.insights{
+
+    display:grid;
+
+    grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+
+    gap:16px;
+
+    margin-bottom:18px;
+}
+
+.insight{
+
+    border-radius:24px;
+
+    padding:20px;
+
+    display:flex;
+    align-items:center;
+    gap:16px;
+}
+
+.insight:hover{
+
+    transform:translateY(-5px);
+
+    box-shadow:var(--shadow-lg);
+}
+
+.insight-icon{
+
+    width:58px;
+    height:58px;
+
+    border-radius:18px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    color:white;
+
+    font-size:24px;
+}
+
+.insight.warning .insight-icon{
+    background:linear-gradient(135deg,#f39c12,#ffd369);
+}
+
+.insight.critical .insight-icon{
+    background:linear-gradient(135deg,#ff5f5f,#ff9090);
+}
+
+.insight.info .insight-icon{
+    background:linear-gradient(135deg,#3498db,#7fd0ff);
+}
+
+.insight h2{
+
+    font-size:28px;
+
+    font-weight:800;
+}
+
+.insight p{
+
+    font-size:12px;
+
+    color:var(--muted);
+}
+
+/* =========================================================
+CHATBOT
+========================================================= */
+
+.ai-fab{
+
+    position:fixed;
+
+    right:24px;
+    bottom:24px;
+
+    width:68px;
+    height:68px;
+
+    border-radius:50%;
+
+    background:
+    linear-gradient(
+    135deg,
+    var(--primary),
+    #58ffd9);
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    color:white;
+
+    font-size:30px;
+
+    cursor:pointer;
+
+    box-shadow:
+    0 20px 40px rgba(25,211,162,.35);
+
+    z-index:99999;
+
+    transition:var(--transition);
+}
+
+.ai-fab:hover{
+
+    transform:
+    scale(1.08)
+    rotate(5deg);
+}
+
+.chat-panel{
+
+    position:fixed;
+
+    right:24px;
+    bottom:105px;
+
+    width:390px;
+    height:560px;
+
+    background:white;
+
+    border-radius:30px;
+
+    overflow:hidden;
+
+    display:none;
+    flex-direction:column;
+
+    z-index:99999;
+
+    box-shadow:
+    0 25px 60px rgba(0,0,0,.18);
+}
+
+.chat-header{
+
+    background:
+    linear-gradient(
+    135deg,
+    var(--primary),
+    #49ffd5);
+
+    color:white;
+
+    padding:18px;
+
+    font-weight:800;
+
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+}
+
+.chat-body{
+
+    flex:1;
+
+    overflow-y:auto;
+
+    padding:18px;
+
+    background:#f8fbff;
+}
+
+.chat-message{
+
+    margin-bottom:14px;
+
+    padding:14px;
+
+    border-radius:16px;
+
+    font-size:12px;
+
+    line-height:1.7;
+}
+
+.bot{
+
+    background:white;
+}
+
+.user{
+
+    background:#dcfff4;
+
+    margin-left:40px;
+}
+
+.chat-input{
+
+    display:flex;
+
+    border-top:1px solid #edf2f7;
+}
+
+.chat-input input{
+
+    flex:1;
+
+    border:none;
+    outline:none;
+
+    padding:16px;
+
+    font-size:12px;
+}
+
+.chat-input button{
+
+    border:none;
+
+    background:var(--primary);
+
+    color:white;
+
+    padding:0 24px;
+
+    font-weight:800;
+
+    cursor:pointer;
+}
+
+/* =========================================================
+RESPONSIVE
+========================================================= */
+
+@media(max-width:1200px){
+
+    .grid-2,
+    .grid-3{
+
+        grid-template-columns:1fr;
+    }
+}
+
+@media(max-width:768px){
+
+    .page{
+        padding-top:170px;
+    }
+
+    .header{
+
+        flex-direction:column;
+        align-items:flex-start;
+    }
+
+    .header-right{
+        width:100%;
+        justify-content:space-between;
+    }
+
+    .chat-panel{
+
+        width:95%;
+
+        right:2.5%;
+    }
+}
+
+</style>
+
+</head>
+
+<body>
+
+<!-- =========================================================
+HEADER
+========================================================= -->
+
+<div class="header glass">
+
+    <div class="header-left">
+
+        <div class="logo">
+            🧠
+        </div>
+
+        <div class="header-title">
+
+            <h1>
+                Leadership AI Command Center
+            </h1>
+
+            <p>
+                Enterprise Workforce Intelligence & Realtime Governance
+            </p>
+
+        </div>
+
+    </div>
+
+    <div class="header-right">
+
+        <div class="live-chip">
+            ● LIVE REALTIME ANALYTICS
+        </div>
+
+        <button
+        class="btn btn-refresh"
+        onclick="loadDashboard()">
+            🔄 Refresh
+        </button>
+
+        <button
+        class="btn btn-logout"
+        onclick="logout()">
+            🚪 Logout
+        </button>
+
+    </div>
+
+</div>
+
+<div class="page">
+
+<!-- =========================================================
+KPI GRID
+========================================================= -->
+
+<div class="kpi-grid">
+
+    <div class="kpi glass">
+        <div class="kpi-icon">👨‍💼</div>
+        <div class="kpi-title">Total Workforce</div>
+        <div class="kpi-value" id="totalEmployees">0</div>
+        <div class="kpi-sub">Total enterprise employees</div>
+    </div>
+
+    <div class="kpi glass">
+        <div class="kpi-icon">✅</div>
+        <div class="kpi-title">Completed</div>
+        <div class="kpi-value" id="completed">0</div>
+        <div class="kpi-sub">Completed onboarding</div>
+    </div>
+
+    <div class="kpi glass">
+        <div class="kpi-icon">🚀</div>
+        <div class="kpi-title">In Progress</div>
+        <div class="kpi-value" id="progress">0</div>
+        <div class="kpi-sub">Active onboarding</div>
+    </div>
+
+    <div class="kpi glass">
+        <div class="kpi-icon">⚠️</div>
+        <div class="kpi-title">High Risk</div>
+        <div class="kpi-value" id="escalations">0</div>
+        <div class="kpi-sub">Escalated employees</div>
+    </div>
+
+    <div class="kpi glass">
+        <div class="kpi-icon">🏢</div>
+        <div class="kpi-title">Accounts</div>
+        <div class="kpi-value" id="accounts">0</div>
+        <div class="kpi-sub">Enterprise accounts</div>
+    </div>
+
+    <div class="kpi glass">
+        <div class="kpi-icon">👔</div>
+        <div class="kpi-title">Managers</div>
+        <div class="kpi-value" id="managers">0</div>
+        <div class="kpi-sub">Reporting managers</div>
+    </div>
+
+    <div class="kpi glass">
+        <div class="kpi-icon">💻</div>
+        <div class="kpi-title">Pending Laptop</div>
+        <div class="kpi-value" id="pendingLaptop">0</div>
+        <div class="kpi-sub">Pending provisioning</div>
+    </div>
+
+    <div class="kpi glass">
+        <div class="kpi-icon">🪪</div>
+        <div class="kpi-title">Pending ID</div>
+        <div class="kpi-value" id="pendingId">0</div>
+        <div class="kpi-sub">Pending ID access</div>
+    </div>
+
+</div>
+
+<!-- =========================================================
+AI INSIGHTS
+========================================================= -->
+
+<div class="insights" id="insightContainer"></div>
+
+<!-- =========================================================
+CHARTS
+========================================================= -->
+
+<div class="grid-2">
+
+    <div class="card glass">
+
+        <div class="card-title">
+            <h3>Onboarding Status Analytics</h3>
+            <span>Realtime Distribution</span>
+        </div>
+
+        <div class="chart-box">
+            <canvas id="statusChart"></canvas>
+        </div>
+
+    </div>
+
+    <div class="card glass">
+
+        <div class="card-title">
+            <h3>Risk Distribution</h3>
+            <span>AI Risk Intelligence</span>
+        </div>
+
+        <div class="chart-box">
+            <canvas id="riskChart"></canvas>
+        </div>
+
+    </div>
+
+</div>
+
+<div class="grid-3">
+
+    <div class="card glass">
+
+        <div class="card-title">
+            <h3>Location Analytics</h3>
+            <span>Geographic Distribution</span>
+        </div>
+
+        <div class="chart-box">
+            <canvas id="locationChart"></canvas>
+        </div>
+
+    </div>
+
+    <div class="card glass">
+
+        <div class="card-title">
+            <h3>Account Analytics</h3>
+            <span>Top Accounts</span>
+        </div>
+
+        <div class="chart-box">
+            <canvas id="accountChart"></canvas>
+        </div>
+
+    </div>
+
+    <div class="card glass">
+
+        <div class="card-title">
+            <h3>Training Analytics</h3>
+            <span>Learning Progress</span>
+        </div>
+
+        <div class="chart-box">
+            <canvas id="trainingChart"></canvas>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- =========================================================
+HIGH RISK TABLE
+========================================================= -->
+
+<div class="card glass">
+
+    <div class="card-title">
+
+        <h3>
+            High Risk Employee Intelligence
+        </h3>
+
+        <span>
+            AI Escalation Monitoring
+        </span>
+
+    </div>
+
+    <div class="table-wrapper">
+
+        <table>
+
+            <thead>
+
+                <tr>
+
+                    <th>EMP ID</th>
+                    <th>EMPLOYEE</th>
+                    <th>ACCOUNT</th>
+                    <th>LOCATION</th>
+                    <th>CURRENT STEP</th>
+                    <th>STATUS</th>
+                    <th>RISK</th>
+
+                </tr>
+
+            </thead>
+
+            <tbody id="highRiskTable"></tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+<!-- =========================================================
+LOCATION TABLE
+========================================================= -->
+
+<div class="card glass">
+
+    <div class="card-title">
+
+        <h3>
+            Location Performance Matrix
+        </h3>
+
+        <span>
+            Leadership Intelligence
+        </span>
+
+    </div>
+
+    <div class="table-wrapper">
+
+        <table>
+
+            <thead>
+
+                <tr>
+
+                    <th>LOCATION</th>
+                    <th>TOTAL</th>
+                    <th>PENDING</th>
+                    <th>COMPLETED</th>
+                    <th>MANAGERS</th>
+                    <th>ESCALATIONS</th>
+                    <th>TRAINING</th>
+                    <th>ITSG</th>
+                    <th>ADMIN</th>
+
+                </tr>
+
+            </thead>
+
+            <tbody id="locationTable"></tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+</div>
+
+<!-- =========================================================
+AI CHATBOT
+========================================================= -->
+
+<div
+class="ai-fab"
+onclick="toggleChat()">
+🤖
+</div>
+
+<div
+class="chat-panel"
+id="chatPanel">
+
+    <div class="chat-header">
+
+        <span>
+            Leadership AI Assistant
+        </span>
+
+        <span
+        style="cursor:pointer"
+        onclick="toggleChat()">
+            ✖
+        </span>
+
+    </div>
+
+    <div
+    class="chat-body"
+    id="chatBody">
+
+        <div class="chat-message bot">
+
+            👋 Welcome to Leadership AI Assistant.<br><br>
+
+            You can ask:
+            <br><br>
+
+            • High risk employees<br>
+            • Pending onboarding<br>
+            • Laptop provisioning delays<br>
+            • Ticket escalation trends<br>
+            • Location performance<br>
+            • Training completion analytics
+
+        </div>
+
+    </div>
+
+    <div class="chat-input">
+
+        <input
+        id="chatInput"
+        placeholder="Ask AI leadership insights..." />
+
+        <button
+        onclick="sendMessage()">
+            Send
+        </button>
+
+    </div>
+
+</div>
+
+<script>
+
+/* =========================================================
+GLOBAL
+========================================================= */
+
+const API =
+"http://127.0.0.1:5332/api/leadership/dashboard";
+
+const socket = io(
+"http://127.0.0.1:5332"
+);
+
+let statusChart;
+let riskChart;
+let locationChart;
+let accountChart;
+let trainingChart;
+
+/* =========================================================
+SOCKET
+========================================================= */
+
+socket.on(
+"realtime_update",
+() => {
+    loadDashboard();
+}
+);
+
+/* =========================================================
+LOAD DASHBOARD
+========================================================= */
+
+async function loadDashboard(){
+
+    try{
+
+        const res = await fetch(API,{
+            credentials:"include"
+        });
+
+        const json = await res.json();
+
+        if(!json.success){
+            return;
+        }
+
+        const s = json.summary;
+
+        setValue(
+            "totalEmployees",
+            s.total_employees
+        );
+
+        setValue(
+            "completed",
+            s.completed
+        );
+
+        setValue(
+            "progress",
+            s.in_progress
+        );
+
+        setValue(
+            "escalations",
+            s.escalations
+        );
+
+        setValue(
+            "accounts",
+            s.accounts
+        );
+
+        setValue(
+            "managers",
+            s.managers
+        );
+
+        setValue(
+            "pendingLaptop",
+            s.pending_laptop
+        );
+
+        setValue(
+            "pendingId",
+            s.pending_id
+        );
+
+        renderStatusChart(
+            json.status_data
+        );
+
+        renderRiskChart(
+            json.risk_data
+        );
+
+        renderLocationChart(
+            json.location_data
+        );
+
+        renderAccountChart(
+            json.account_data
+        );
+
+        renderTrainingChart(
+            json.training_data
+        );
+
+        renderLocationTable(
+            json.location_data
+        );
+
+        renderHighRiskTable(
+            json.high_risk_employees
+        );
+
+        renderInsights(
+            json.leadership_insights
+        );
+
+    }catch(err){
+
+        console.error(err);
+    }
+}
+
+/* =========================================================
+UTIL
+========================================================= */
+
+function setValue(id,value){
+
+    document.getElementById(id)
+    .innerText = value || 0;
+}
+
+/* =========================================================
+CHARTS
+========================================================= */
+
+function destroyChart(chart){
+
+    if(chart){
+        chart.destroy();
+    }
+}
+
+function renderStatusChart(data){
+
+    destroyChart(statusChart);
+
+    statusChart = new Chart(
+
+        document.getElementById(
+            "statusChart"
+        ),
+
+        {
+            type:"bar",
+
+            data:{
+
+                labels:data.map(
+                    x=>x.onboarding_status
+                ),
+
+                datasets:[{
+
+                    label:"Employees",
+
+                    data:data.map(
+                        x=>x.total
+                    ),
+
+                    borderRadius:12
+                }]
+            },
+
+            options:{
+
+                responsive:true,
+
+                maintainAspectRatio:false,
+
+                plugins:{
+                    legend:{
+                        display:false
+                    }
+                }
+            }
+        }
+    );
+}
+
+function renderRiskChart(data){
+
+    destroyChart(riskChart);
+
+    riskChart = new Chart(
+
+        document.getElementById(
+            "riskChart"
+        ),
+
+        {
+            type:"doughnut",
+
+            data:{
+
+                labels:data.map(
+                    x=>x.risk_level
+                ),
+
+                datasets:[{
+
+                    data:data.map(
+                        x=>x.total
+                    )
+                }]
+            },
+
+            options:{
+                responsive:true,
+                maintainAspectRatio:false
+            }
+        }
+    );
+}
+
+function renderLocationChart(data){
+
+    destroyChart(locationChart);
+
+    locationChart = new Chart(
+
+        document.getElementById(
+            "locationChart"
+        ),
+
+        {
+            type:"pie",
+
+            data:{
+
+                labels:data.map(
+                    x=>x.location
+                ),
+
+                datasets:[{
+
+                    data:data.map(
+                        x=>x.total
+                    )
+                }]
+            },
+
+            options:{
+                responsive:true,
+                maintainAspectRatio:false
+            }
+        }
+    );
+}
+
+function renderAccountChart(data){
+
+    destroyChart(accountChart);
+
+    accountChart = new Chart(
+
+        document.getElementById(
+            "accountChart"
+        ),
+
+        {
+            type:"polarArea",
+
+            data:{
+
+                labels:data.map(
+                    x=>x.account_name
+                ),
+
+                datasets:[{
+
+                    data:data.map(
+                        x=>x.total
+                    )
+                }]
+            },
+
+            options:{
+                responsive:true,
+                maintainAspectRatio:false
+            }
+        }
+    );
+}
+
+function renderTrainingChart(data){
+
+    destroyChart(trainingChart);
+
+    trainingChart = new Chart(
+
+        document.getElementById(
+            "trainingChart"
+        ),
+
+        {
+            type:"line",
+
+            data:{
+
+                labels:data.map(
+                    x=>x.training_status
+                ),
+
+                datasets:[{
+
+                    label:"Employees",
+
+                    data:data.map(
+                        x=>x.total
+                    ),
+
+                    tension:.4,
+
+                    fill:true
+                }]
+            },
+
+            options:{
+                responsive:true,
+                maintainAspectRatio:false
+            }
+        }
+    );
+}
+
+/* =========================================================
+TABLES
+========================================================= */
+
+function renderLocationTable(data){
+
+    const tbody =
+    document.getElementById(
+        "locationTable"
+    );
+
+    tbody.innerHTML = "";
+
+    data.forEach(row=>{
+
+        tbody.innerHTML += `
+
+        <tr>
+
+            <td>${row.location || "-"}</td>
+
+            <td>${row.total}</td>
+
+            <td>${row.pending}</td>
+
+            <td>${row.completed}</td>
+
+            <td>${row.managers}</td>
+
+            <td>
+                <span class="badge high">
+                    ${row.escalations}
+                </span>
+            </td>
+
+            <td>${row.training}</td>
+
+            <td>${row.itsg_pending}</td>
+
+            <td>${row.admin_pending}</td>
+
+        </tr>
+        `;
+    });
+}
+
+function renderHighRiskTable(data){
+
+    const tbody =
+    document.getElementById(
+        "highRiskTable"
+    );
+
+    tbody.innerHTML = "";
+
+    data.forEach(emp=>{
+
+        tbody.innerHTML += `
+
+        <tr>
+
+            <td>${emp.emp_id}</td>
+
+            <td>${emp.emp_name}</td>
+
+            <td>${emp.account_name || "-"}</td>
+
+            <td>${emp.location || "-"}</td>
+
+            <td>${emp.current_step || "-"}</td>
+
+            <td>${emp.onboarding_status || "-"}</td>
+
+            <td>
+                <span class="badge high">
+                    ${emp.risk_level}
+                </span>
+            </td>
+
+        </tr>
+        `;
+    });
+}
+
+/* =========================================================
+INSIGHTS
+========================================================= */
+
+function renderInsights(data){
+
+    const container =
+    document.getElementById(
+        "insightContainer"
+    );
+
+    container.innerHTML = "";
+
+    data.forEach(ins=>{
+
+        const icon =
+        ins.type === "critical"
+        ? "🚨"
+        : ins.type === "warning"
+        ? "⚠️"
+        : "📊";
+
+        container.innerHTML += `
+
+        <div class="insight glass ${ins.type}">
+
+            <div class="insight-icon">
+                ${icon}
+            </div>
+
+            <div>
+
+                <h2>
+                    ${ins.type.toUpperCase()}
+                </h2>
+
+                <p>
+                    ${ins.message}
+                </p>
+
+            </div>
+
+        </div>
+        `;
+    });
+}
+
+/* =========================================================
+CHATBOT
+========================================================= */
+
+function toggleChat(){
+
+    const panel =
+    document.getElementById(
+        "chatPanel"
+    );
+
+    panel.style.display =
+    panel.style.display === "flex"
+    ? "none"
+    : "flex";
+}
+
+function sendMessage() {
+
+    const input = document.getElementById("chatInput");
+    const text = input.value.trim();
+
+    if (!text) return;
+
+    const body = document.getElementById("chatBody");
+
+    body.innerHTML += `
+        <div class="chat-message user">
+            ${text}
+        </div>
+    `;
+
+    const msg = text.toLowerCase();
+
+    let reply = "📊 Leadership AI processed your request. Analyzing workforce intelligence...";
+
+    /* =========================================================
+       KPI COMMANDS
+    ========================================================= */
+
+    if (msg.includes("pending laptop") || msg.includes("laptop pending")) {
+
+        const count = allEmployees.filter(e =>
+            String(e.current_step || "").toUpperCase().includes("LAPTOP")
+        ).length;
+
+        reply =
+        `💻 LAPTOP ALLOCATION PENDING\n━━━━━━━━━━━━━━━━━━\nTotal Pending Laptop Requests: ${count}\n\nInsight: ITSG workload is ${count > 20 ? "HIGH" : "NORMAL"}`;
+    }
+
+    else if (msg.includes("id pending") || msg.includes("id card")) {
+
+        const count = allEmployees.filter(e =>
+            String(e.current_step || "").toUpperCase().includes("ID_CARD")
+        ).length;
+
+        reply =
+        `🪪 ID CARD ALLOCATION PENDING\n━━━━━━━━━━━━━━━━━━\nTotal Pending ID Cards: ${count}\n\nInsight: Access provisioning delays detected.`;
+    }
+
+    else if (msg.includes("location")) {
+
+        const locationMap = {};
+
+        allEmployees.forEach(e => {
+
+            const loc = e.location || "UNKNOWN";
+
+            locationMap[loc] = (locationMap[loc] || 0) + 1;
+        });
+
+        reply =
+        `📍 LOCATION INSIGHTS\n━━━━━━━━━━━━━━━━━━\n` +
+        Object.entries(locationMap)
+            .map(([k, v]) => `${k}: ${v}`)
+            .join("\n");
+    }
+
+    else if (msg.includes("risk")) {
+
+        const highRisk = allEmployees.filter(e =>
+            (e.risk_level || "").toUpperCase() === "HIGH"
+        ).length;
+
+        reply =
+        `⚠️ RISK ANALYSIS\n━━━━━━━━━━━━━━━━━━\nHigh Risk Employees: ${highRisk}\n\nInsight: Escalation trend requires leadership review.`;
+    }
+
+    else if (msg.includes("escalation")) {
+
+        const escalated = allEmployees.filter(e =>
+            String(e.onboarding_status || "").toUpperCase().includes("ESCALATED")
+        ).length;
+
+        reply =
+        `🚨 ESCALATION SUMMARY\n━━━━━━━━━━━━━━━━━━\nTotal Escalated Cases: ${escalated}\n\nAction: Review SLA breaches immediately.`;
+    }
+
+    else if (msg.includes("training")) {
+
+        const training = allEmployees.filter(e =>
+            String(e.training_status || "").toUpperCase().includes("PENDING")
+        ).length;
+
+        reply =
+        `📚 TRAINING STATUS\n━━━━━━━━━━━━━━━━━━\nPending Training: ${training}\n\nInsight: Compliance risk may increase if delayed.`;
+    }
+
+    else if (msg.includes("summary") || msg.includes("dashboard")) {
+
+        const total = allEmployees.length;
+
+        const pending = allEmployees.filter(e =>
+            String(e.onboarding_status || "").toUpperCase().includes("PENDING")
+        ).length;
+
+        const progress = allEmployees.filter(e =>
+            String(e.onboarding_status || "").toUpperCase().includes("PROGRESS")
+        ).length;
+
+        const completed = allEmployees.filter(e =>
+            String(e.onboarding_status || "").toUpperCase().includes("COMPLETE")
+        ).length;
+
+        reply =
+        `📊 EXECUTIVE DASHBOARD SUMMARY\n━━━━━━━━━━━━━━━━━━\n` +
+        `Total Employees: ${total}\n` +
+        `Pending: ${pending}\n` +
+        `In Progress: ${progress}\n` +
+        `Completed: ${completed}\n\n` +
+        `Insight: Onboarding flow is ${pending > progress ? "backlogged" : "stable"}.`;
+    }
+
+    else if (msg.includes("delay")) {
+
+        const laptopDelay = allEmployees.filter(e =>
+            String(e.current_step || "").includes("LAPTOP")
+        ).length;
+
+        const idDelay = allEmployees.filter(e =>
+            String(e.current_step || "").includes("ID_CARD")
+        ).length;
+
+        reply =
+        `⏱️ DELAY ANALYSIS\n━━━━━━━━━━━━━━━━━━\nLaptop Delays: ${laptopDelay}\nID Card Delays: ${idDelay}\n\nInsight: IT provisioning bottleneck detected.`;
+    }
+
+    else if (msg.includes("account")) {
+
+        const accountMap = {};
+
+        allEmployees.forEach(e => {
+
+            const acc = e.account_name || "UNKNOWN";
+
+            accountMap[acc] = (accountMap[acc] || 0) + 1;
+        });
+
+        reply =
+        `🏢 ACCOUNT DISTRIBUTION\n━━━━━━━━━━━━━━━━━━\n` +
+        Object.entries(accountMap)
+            .map(([k, v]) => `${k}: ${v}`)
+            .join("\n");
+    }
+
+    else {
+
+        /* =========================================================
+           DEFAULT AI INSIGHT MODE
+        ========================================================= */
+
+        const total = allEmployees.length;
+
+        reply =
+        `🧠 AI LEADERSHIP INSIGHT\n━━━━━━━━━━━━━━━━━━\n` +
+        `I analyzed your query: "${text}"\n\n` +
+        `System Status:\n` +
+        `• Total Workforce: ${total}\n\n` +
+        `Try asking:\n` +
+        `• laptop pending\n` +
+        `• id card pending\n` +
+        `• risk analysis\n` +
+        `• location report\n` +
+        `• executive summary`;
+    }
+
+    body.innerHTML += `
+        <div class="chat-message bot">
+            ${reply}
+        </div>
+    `;
+
+    body.scrollTop = body.scrollHeight;
+    input.value = "";
+}
+
+/* =========================================================
+LOGOUT
+========================================================= */
+
+async function logout() {
+
+    try {
+
+        // ==========================================
+        // CALL BACKEND LOGOUT
+        // ==========================================
+
+        await fetch(
+            "http://127.0.0.1:5332/api/auth/logout",
+            {
+                method: "POST",
+                credentials: "include"
+            }
+        );
+
+    } catch (err) {
+
+        console.error("Logout API Error:", err);
+    }
+
+    // ==========================================
+    // CLEAR LOCAL STORAGE
+    // ==========================================
+
+    localStorage.clear();
+
+    sessionStorage.clear();
+
+    // ==========================================
+    // REDIRECT TO LOGIN PAGE
+    // ==========================================
+
+    window.location.href =
+        "http://127.0.0.1:5500/login.html";
+}
+/* =========================================================
+INIT
+========================================================= */
+
+loadDashboard();
+
+setInterval(
+    loadDashboard,
+    30000
+);
+
+</script>
+
+</body>
+</html>

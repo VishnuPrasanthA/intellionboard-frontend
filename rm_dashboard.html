@@ -1,0 +1,2395 @@
+<!-- =========================================================
+RM_DASHBOARD.HTML
+FULL ENTERPRISE REPORTING MANAGER DASHBOARD
+INTELLIONBOARD QA SYSTEM
+========================================================= -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>RM Dashboard | IntelliOnboard QA</title>
+<style>
+/* =========================================================
+   NEXT GEN REPORTING MANAGER DASHBOARD UI
+   ULTRA MODERN • GLASSMORPHISM • AI EFFECTS
+   FULL RM DASHBOARD STYLE UPGRADE
+========================================================= */
+
+/* =========================================================
+   ROOT COLORS
+========================================================= */
+
+:root{
+
+    --primary:#16c79a;
+    --primary-dark:#0fa67f;
+    --primary-light:#e9fff8;
+
+    --secondary:#59b8ff;
+    --purple:#9b6dff;
+    --orange:#ffb84d;
+    --danger:#ff6b6b;
+    --success:#35d07f;
+
+    --text:#172b42;
+    --muted:#7f8ea3;
+
+    --glass:rgba(255,255,255,0.72);
+    --border:rgba(255,255,255,0.45);
+
+    --bg1:#f4fbff;
+    --bg2:#eef6ff;
+
+    --shadow-sm:
+    0 8px 24px rgba(15,23,42,.06);
+
+    --shadow-md:
+    0 18px 40px rgba(15,23,42,.10);
+
+    --shadow-lg:
+    0 30px 70px rgba(15,23,42,.16);
+
+    --radius:24px;
+
+    --transition:
+    all .35s cubic-bezier(.22,1,.36,1);
+}
+
+/* =========================================================
+   GLOBAL
+========================================================= */
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+html{
+    scroll-behavior:smooth;
+}
+
+body{
+
+    font-family:
+    "Segoe UI",
+    Inter,
+    sans-serif;
+
+    color:var(--text);
+
+    background:
+    radial-gradient(circle at top left,#dffdf3 0%,transparent 30%),
+    radial-gradient(circle at top right,#dcecff 0%,transparent 25%),
+    radial-gradient(circle at bottom right,#fff2dc 0%,transparent 30%),
+    linear-gradient(135deg,var(--bg1),var(--bg2));
+
+    min-height:100vh;
+
+    overflow-x:hidden;
+
+    position:relative;
+}
+
+/* animated background */
+
+body::before{
+
+    content:"";
+
+    position:fixed;
+
+    inset:0;
+
+    background:
+    radial-gradient(circle at 20% 20%,rgba(22,199,154,.05),transparent 18%),
+    radial-gradient(circle at 80% 25%,rgba(89,184,255,.05),transparent 18%),
+    radial-gradient(circle at 70% 80%,rgba(155,109,255,.05),transparent 18%);
+
+    z-index:-1;
+
+    animation:bgMove 20s linear infinite;
+}
+
+@keyframes bgMove{
+
+    0%{
+        transform:translateY(0px);
+    }
+
+    100%{
+        transform:translateY(-60px);
+    }
+}
+
+/* =========================================================
+   SCROLLBAR
+========================================================= */
+
+::-webkit-scrollbar{
+    width:10px;
+    height:10px;
+}
+
+::-webkit-scrollbar-thumb{
+
+    background:
+    linear-gradient(
+    180deg,
+    var(--primary),
+    #58ffd8);
+
+    border-radius:30px;
+}
+
+::-webkit-scrollbar-track{
+    background:#edf5fb;
+}
+
+/* =========================================================
+   CONTAINER
+========================================================= */
+
+.container{
+
+    padding:18px;
+
+    padding-top:110px;
+}
+
+/* =========================================================
+   GLASS EFFECT
+========================================================= */
+
+.glass,
+.card,
+.section,
+.ai-panel,
+.header{
+
+    background:var(--glass);
+
+    backdrop-filter:blur(18px);
+
+    -webkit-backdrop-filter:blur(18px);
+
+    border:1px solid var(--border);
+
+    box-shadow:var(--shadow-sm);
+
+    transition:var(--transition);
+}
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.header{
+
+    position:fixed;
+
+    top:14px;
+    left:14px;
+    right:14px;
+
+    z-index:99999;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:space-between;
+
+    padding:16px 22px;
+
+    border-radius:28px;
+
+    overflow:hidden;
+}
+
+/* animated border */
+
+.header::before{
+
+    content:"";
+
+    position:absolute;
+
+    inset:-2px;
+
+    background:
+    linear-gradient(
+    90deg,
+    rgba(22,199,154,.18),
+    rgba(89,184,255,.18),
+    rgba(155,109,255,.18),
+    rgba(22,199,154,.18));
+
+    background-size:300% 300%;
+
+    z-index:-1;
+
+    animation:borderMove 8s linear infinite;
+}
+
+@keyframes borderMove{
+
+    0%{
+        background-position:0% 50%;
+    }
+
+    100%{
+        background-position:100% 50%;
+    }
+}
+
+.header:hover{
+
+    transform:translateY(-2px);
+
+    box-shadow:var(--shadow-lg);
+}
+
+/* =========================================================
+   HEADER LEFT
+========================================================= */
+
+.header-left{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:14px;
+}
+
+.header-logo{
+
+    width:58px;
+    height:58px;
+
+    border-radius:20px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    font-size:28px;
+
+    color:white;
+
+    background:
+    linear-gradient(
+    135deg,
+    var(--primary),
+    #58ffd8);
+
+    box-shadow:
+    0 14px 30px rgba(22,199,154,.25);
+
+    position:relative;
+
+    transition:var(--transition);
+}
+
+.header-logo::after{
+
+    content:"";
+
+    position:absolute;
+
+    inset:-7px;
+
+    border-radius:24px;
+
+    border:2px solid rgba(22,199,154,.15);
+
+    animation:pulseRing 2.8s infinite;
+}
+
+@keyframes pulseRing{
+
+    0%{
+        transform:scale(.9);
+        opacity:1;
+    }
+
+    100%{
+        transform:scale(1.3);
+        opacity:0;
+    }
+}
+
+.header-logo:hover{
+
+    transform:
+    rotate(8deg)
+    scale(1.08);
+}
+
+.header-left h2{
+
+    font-size:22px;
+
+    font-weight:900;
+
+    color:#13253a;
+
+    margin-bottom:4px;
+}
+
+.header-left small{
+
+    color:var(--muted);
+
+    font-size:12px;
+}
+
+/* =========================================================
+   HEADER RIGHT
+========================================================= */
+
+.header-right{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:12px;
+}
+
+/* =========================================================
+   SEARCH BOX
+========================================================= */
+
+.search-box{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:10px;
+
+    background:rgba(255,255,255,.92);
+
+    border:1px solid rgba(22,199,154,.10);
+
+    border-radius:16px;
+
+    padding:0 14px;
+
+    height:50px;
+
+    transition:var(--transition);
+}
+
+.search-box:hover{
+
+    transform:translateY(-2px);
+
+    box-shadow:
+    0 12px 24px rgba(0,0,0,.06);
+}
+
+.search-box input,
+.search-box select{
+
+    border:none;
+    outline:none;
+
+    background:transparent;
+
+    font-size:13px;
+
+    color:#162a3c;
+}
+
+/* =========================================================
+   BUTTONS
+========================================================= */
+
+.btn,
+button,
+.logout-btn{
+
+    border:none;
+
+    cursor:pointer;
+
+    border-radius:16px;
+
+    font-weight:700;
+
+    transition:var(--transition);
+
+    position:relative;
+
+    overflow:hidden;
+}
+
+/* shine effect */
+
+.btn::before,
+.logout-btn::before{
+
+    content:"";
+
+    position:absolute;
+
+    top:0;
+    left:-120%;
+
+    width:100%;
+    height:100%;
+
+    background:
+    linear-gradient(
+    120deg,
+    transparent,
+    rgba(255,255,255,.35),
+    transparent);
+
+    transition:.8s;
+}
+
+.btn:hover::before,
+.logout-btn:hover::before{
+    left:120%;
+}
+
+.btn:hover,
+.logout-btn:hover{
+
+    transform:
+    translateY(-3px)
+    scale(1.02);
+
+    box-shadow:var(--shadow-md);
+}
+
+.logout-btn{
+
+    background:
+    linear-gradient(
+    135deg,
+    #ff6a6a,
+    #ff9a80);
+
+    color:white;
+
+    padding:12px 18px;
+}
+
+.btn-mail{
+
+    background:
+    linear-gradient(
+    135deg,
+    #5aaeff,
+    #7bc7ff);
+
+    color:white;
+}
+
+.btn-escalate{
+
+    background:
+    linear-gradient(
+    135deg,
+    #ffb347,
+    #ffd36d);
+
+    color:white;
+}
+
+.btn-complete{
+
+    background:
+    linear-gradient(
+    135deg,
+    #16c79a,
+    #5effcf);
+
+    color:white;
+}
+
+/* =========================================================
+   AI PANEL
+========================================================= */
+
+.ai-panel{
+
+    position:relative;
+
+    overflow:hidden;
+
+    padding:28px;
+
+    border-radius:30px;
+
+    margin-bottom:22px;
+
+    background:
+    linear-gradient(
+    135deg,
+    rgba(22,199,154,.95),
+    rgba(89,184,255,.88));
+
+    color:white;
+}
+
+.ai-panel::after{
+
+    content:"";
+
+    position:absolute;
+
+    top:0;
+    left:-100%;
+
+    width:100%;
+    height:100%;
+
+    background:
+    linear-gradient(
+    90deg,
+    transparent,
+    rgba(255,255,255,.10),
+    transparent);
+
+    animation:shine 5s infinite;
+}
+
+@keyframes shine{
+
+    0%{
+        left:-100%;
+    }
+
+    100%{
+        left:120%;
+    }
+}
+
+.ai-panel h3{
+
+    font-size:24px;
+
+    margin-bottom:10px;
+}
+
+.ai-panel p{
+
+    opacity:.92;
+
+    line-height:1.7;
+}
+
+/* =========================================================
+   KPI CARDS
+========================================================= */
+
+.cards{
+
+    display:grid;
+
+    grid-template-columns:repeat(4,minmax(0,1fr));
+
+    gap:18px;
+
+    margin-bottom:24px;
+}
+
+.card{
+
+    border-radius:28px;
+
+    padding:22px;
+
+    position:relative;
+
+    overflow:hidden;
+}
+
+.card::before{
+
+    content:"";
+
+    position:absolute;
+
+    top:-40px;
+    right:-40px;
+
+    width:120px;
+    height:120px;
+
+    border-radius:50%;
+
+    background:rgba(22,199,154,.08);
+}
+
+.card:hover{
+
+    transform:
+    translateY(-6px)
+    scale(1.01);
+
+    box-shadow:var(--shadow-lg);
+}
+
+.card h2{
+
+    margin-top:10px;
+
+    font-size:30px;
+
+    color:var(--primary);
+
+    font-weight:900;
+}
+
+.card small{
+
+    color:var(--muted);
+
+    font-size:12px;
+}
+
+/* =========================================================
+   SECTION
+========================================================= */
+
+.section{
+
+    border-radius:30px;
+
+    padding:24px;
+
+    margin-bottom:24px;
+}
+
+.section:hover{
+
+    transform:translateY(-3px);
+
+    box-shadow:var(--shadow-lg);
+}
+
+.section-header{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    margin-bottom:20px;
+}
+
+.section-header h3{
+
+    font-size:22px;
+
+    color:var(--primary);
+
+    font-weight:900;
+}
+
+/* =========================================================
+   TABLE
+========================================================= */
+
+#employeeTable{
+
+    width:100%;
+
+    overflow-x:auto;
+
+    border-radius:22px;
+
+    background:white;
+}
+
+table{
+
+    width:100%;
+
+    min-width:1400px;
+
+    border-collapse:collapse;
+
+    background:white;
+}
+
+thead{
+
+    position:sticky;
+
+    top:0;
+
+    z-index:10;
+
+    background:
+    linear-gradient(
+    180deg,
+    #fbfdff,
+    #f2f7fd);
+}
+
+th{
+
+    padding:18px 16px;
+
+    text-align:left;
+
+    font-size:12px;
+
+    font-weight:900;
+
+    color:#5a6a7f;
+
+    white-space:nowrap;
+
+    border-bottom:1px solid #edf2f7;
+}
+
+td{
+
+    padding:16px;
+
+    font-size:12px;
+
+    white-space:nowrap;
+
+    border-bottom:1px solid #eef3f8;
+}
+
+tbody tr{
+
+    transition:var(--transition);
+}
+
+tbody tr:hover{
+
+    background:
+    linear-gradient(
+    90deg,
+    rgba(22,199,154,.04),
+    rgba(89,184,255,.03));
+
+    transform:scale(1.002);
+}
+
+tbody tr:hover td{
+
+    box-shadow:
+    0 10px 24px rgba(22,199,154,.05);
+}
+
+/* =========================================================
+   EMPLOYEE NAME
+========================================================= */
+
+.employee-name{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:4px;
+}
+
+.employee-name b{
+
+    font-size:13px;
+
+    color:#13253a;
+}
+
+.employee-name small{
+
+    color:var(--muted);
+
+    font-size:11px;
+}
+
+/* =========================================================
+   BADGES
+========================================================= */
+
+.badge{
+
+    display:inline-flex;
+
+    align-items:center;
+    justify-content:center;
+
+    padding:7px 12px;
+
+    border-radius:30px;
+
+    font-size:10px;
+
+    font-weight:900;
+
+    color:white;
+}
+
+.completed{
+
+    background:
+    linear-gradient(
+    135deg,
+    #1abc9c,
+    #5effcf);
+}
+
+.pending{
+
+    background:
+    linear-gradient(
+    135deg,
+    #f39c12,
+    #ffd36d);
+}
+
+.delayed{
+
+    background:
+    linear-gradient(
+    135deg,
+    #ff5f5f,
+    #ff9393);
+}
+
+.inprogress{
+
+    background:
+    linear-gradient(
+    135deg,
+    #3498db,
+    #6dc8ff);
+}
+
+/* =========================================================
+   PROGRESS
+========================================================= */
+
+.progress{
+
+    width:120px;
+    height:14px;
+
+    background:#e9eef5;
+
+    border-radius:30px;
+
+    overflow:hidden;
+}
+
+.progress-fill{
+
+    height:100%;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    font-size:9px;
+
+    font-weight:900;
+
+    color:white;
+
+    background:
+    linear-gradient(
+    90deg,
+    var(--primary),
+    #58ffd8);
+}
+
+/* =========================================================
+   CHATBOT CONTAINER (FIXED + MODERN)
+========================================================= */
+
+.chatbot{
+    position:fixed;
+    bottom:90px;
+    right:20px;
+
+    width:380px;
+    max-width:95vw;
+    height:560px;
+
+    background:#ffffff;
+
+    border-radius:24px;
+
+    box-shadow:0 25px 70px rgba(0,0,0,0.25);
+
+    display:none;              /* IMPORTANT: hidden by default */
+    flex-direction:column;
+
+    overflow:hidden;
+
+    z-index:999999;
+
+    animation:fadeUp .25s ease;
+}
+
+/* =========================================================
+   CHAT HEADER (ADD IF NOT EXISTS)
+========================================================= */
+
+.chat-header{
+    background:linear-gradient(135deg,#16c79a,#59b8ff);
+    color:white;
+
+    padding:14px 18px;
+
+    font-weight:800;
+    font-size:14px;
+
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+/* =========================================================
+   CHAT BODY
+========================================================= */
+
+.chat-body{
+    flex:1;
+
+    display:flex;
+    flex-direction:column;
+
+    gap:12px;
+
+    padding:16px;
+
+    overflow-y:auto;
+
+    background:#f8fbff;
+
+    scroll-behavior:smooth;
+}
+
+/* =========================================================
+   USER MESSAGE
+========================================================= */
+
+.chat-user-msg{
+    align-self:flex-end;
+
+    background:linear-gradient(135deg,#16c79a,#5effcf);
+
+    color:white;
+
+    padding:12px 16px;
+
+    border-radius:18px 18px 4px 18px;
+
+    max-width:80%;
+
+    font-size:13px;
+    line-height:1.5;
+
+    box-shadow:0 8px 20px rgba(22,199,154,0.25);
+
+    animation:fadeUp .2s ease;
+}
+
+/* =========================================================
+   AI MESSAGE
+========================================================= */
+
+.chat-ai-msg{
+    align-self:flex-start;
+
+    background:white;
+
+    color:#172b42;
+
+    padding:12px 16px;
+
+    border-radius:18px 18px 18px 4px;
+
+    max-width:85%;
+
+    font-size:13px;
+    line-height:1.6;
+
+    border:1px solid #edf2f7;
+
+    box-shadow:0 6px 18px rgba(0,0,0,0.08);
+
+    animation:fadeUp .2s ease;
+}
+
+/* =========================================================
+   CHAT INPUT
+========================================================= */
+
+.chat-input{
+    display:flex;
+    align-items:center;
+
+    gap:10px;
+
+    padding:12px;
+
+    border-top:1px solid #e9eef5;
+
+    background:white;
+}
+
+.chat-input input{
+    flex:1;
+
+    padding:12px 14px;
+
+    border-radius:14px;
+
+    border:1px solid #e5eaf0;
+
+    outline:none;
+
+    font-size:13px;
+}
+
+.chat-input input:focus{
+    border-color:#16c79a;
+    box-shadow:0 0 0 3px rgba(22,199,154,0.15);
+}
+
+.chat-input button{
+    background:linear-gradient(135deg,#16c79a,#59b8ff);
+
+    color:white;
+
+    border:none;
+
+    padding:12px 16px;
+
+    border-radius:14px;
+
+    cursor:pointer;
+
+    font-weight:700;
+
+    transition:0.2s;
+}
+
+.chat-input button:hover{
+    transform:scale(1.05);
+}
+
+/* =========================================================
+   HELP PANEL
+========================================================= */
+
+.help-title{
+    font-size:15px;
+    font-weight:800;
+    margin-bottom:12px;
+    color:#16c79a;
+}
+
+.help-grid{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+}
+
+.help-item{
+    background:#f8fbff;
+
+    padding:12px;
+
+    border-radius:14px;
+
+    border:1px solid #edf2f7;
+
+    font-size:12px;
+    line-height:1.5;
+}
+
+/* =========================================================
+   TYPING ANIMATION
+========================================================= */
+
+.typing-dot{
+    width:8px;
+    height:8px;
+
+    border-radius:50%;
+
+    background:#16c79a;
+
+    display:inline-block;
+
+    margin-right:4px;
+
+    animation:bounce 1s infinite;
+}
+
+.typing-dot:nth-child(2){ animation-delay:0.2s; }
+.typing-dot:nth-child(3){ animation-delay:0.4s; }
+
+@keyframes bounce{
+    0%,80%,100%{ transform:scale(0); }
+    40%{ transform:scale(1); }
+}
+
+/* =========================================================
+   ANIMATION
+========================================================= */
+
+@keyframes fadeUp{
+    from{
+        opacity:0;
+        transform:translateY(10px);
+    }
+    to{
+        opacity:1;
+        transform:translateY(0);
+    }
+}
+
+/* =========================================================
+   MOBILE RESPONSIVE FIX
+========================================================= */
+
+@media(max-width:768px){
+
+    .chatbot{
+        width:95%;
+        right:2.5%;
+        bottom:80px;
+        height:75vh;
+    }
+}
+/* =========================================================
+   MODAL
+========================================================= */
+
+.modal{
+
+    position:fixed;
+
+    top:0;
+    left:0;
+
+    width:100%;
+    height:100%;
+
+    background:rgba(0,0,0,.45);
+
+    display:none;
+
+    justify-content:center;
+    align-items:center;
+
+    z-index:999999;
+}
+
+.modal-content{
+
+    width:520px;
+
+    background:white;
+
+    border-radius:30px;
+
+    padding:28px;
+
+    box-shadow:var(--shadow-lg);
+}
+
+/* =========================================================
+   RISK COLORS
+========================================================= */
+
+.risk-low{
+    color:#16c79a;
+    font-weight:900;
+}
+
+.risk-medium{
+    color:#f39c12;
+    font-weight:900;
+}
+
+.risk-high{
+    color:#ff5f5f;
+    font-weight:900;
+}
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media(max-width:1200px){
+
+    .cards{
+        grid-template-columns:repeat(2,1fr);
+    }
+
+    .header{
+        flex-wrap:wrap;
+    }
+
+    .header-right{
+        width:100%;
+    }
+}
+
+@media(max-width:768px){
+
+    .container{
+        padding-top:160px;
+    }
+
+    .cards{
+        grid-template-columns:1fr;
+    }
+
+    .header{
+        left:10px;
+        right:10px;
+    }
+
+    .header-right{
+        flex-wrap:wrap;
+    }
+
+    .search-box{
+        width:100%;
+    }
+
+    .chatbot{
+
+        width:95%;
+
+        right:2.5%;
+
+        height:82vh;
+    }
+}</style>
+</head>
+
+<body>
+
+<!-- =========================================================
+HEADER
+========================================================= -->
+
+<div class="header">
+
+<div class="header-left">
+<h2>Reporting Manager Dashboard</h2>
+<small>AI Powered Onboarding Monitoring System</small>
+</div>
+
+<div class="header-right">
+<div>
+<strong id="rmName"></strong>
+</div>
+<div id="liveStatus"
+style="
+background:#dcfce7;
+padding:8px 14px;
+border-radius:20px;
+font-size:12px;
+font-weight:700;
+color:#166534;
+">
+🟢 LIVE
+</div>
+<button class="logout-btn" onclick="logout()">
+Logout
+</button>
+</div>
+
+</div>
+
+<!-- =========================================================
+MAIN
+========================================================= -->
+
+<div class="container">
+
+<!-- AI PANEL -->
+
+<div class="ai-panel" id="aiInsights">
+Loading AI Insights...
+</div>
+
+<!-- STATS -->
+
+<div class="cards">
+
+<div class="card">
+<small>Total Employees</small>
+<h2 id="totalEmployees">0</h2>
+</div>
+
+<div class="card">
+<small>Pending</small>
+<h2 id="pendingEmployees">0</h2>
+</div>
+
+<div class="card">
+<small>Completed</small>
+<h2 id="completedEmployees">0</h2>
+</div>
+
+<div class="card">
+<small>Training Pending</small>
+<h2 id="trainingPending">0</h2>
+</div>
+
+<div class="card">
+<small>SLA Risk</small>
+<h2 id="slaRisk">0</h2>
+</div>
+
+<div class="card">
+<small>Delayed</small>
+<h2 id="delayedEmployees">0</h2>
+</div>
+
+</div>
+
+<!-- TABLE -->
+
+<div class="section">
+
+<div class="section-header">
+
+<h3>Team Onboarding Monitoring</h3>
+
+<div class="search-box">
+
+<input
+type="text"
+placeholder="Search employee..."
+id="searchInput"
+onkeyup="applyFilter()"
+>
+
+<select id="statusFilter" onchange="applyFilter()">
+<option value="all">All</option>
+<option value="pending">Pending</option>
+<option value="completed">Completed</option>
+<option value="delayed">Delayed</option>
+<option value="training">Training Pending</option>
+</select>
+
+</div>
+
+</div>
+
+<div id="employeeTable"></div>
+
+</div>
+
+</div>
+<!-- CHAT TOGGLE BUTTON -->
+
+<div
+id="chatToggle"
+onclick="toggleChatbot()"
+style="
+position:fixed;
+bottom:20px;
+right:20px;
+width:65px;
+height:65px;
+border-radius:50%;
+background:#0F6E56;
+display:flex;
+align-items:center;
+justify-content:center;
+color:white;
+font-size:28px;
+cursor:pointer;
+box-shadow:0 10px 25px rgba(0,0,0,0.25);
+z-index:9999;
+">
+🤖
+</div>
+<!-- =========================================================
+CHATBOT
+========================================================= -->
+
+<div class="chatbot">
+
+<div class="chat-header">
+🤖 RM AI Assistant
+</div>
+
+<div class="chat-body" id="chatBody">
+
+<div>
+Welcome RM.<br><br>
+
+Examples:<br>
+- mail 101010 complete training<br>
+- show delayed employees<br>
+- escalate pending employees
+</div>
+
+</div>
+
+<div class="chat-input">
+
+<input
+id="chatInput"
+placeholder="Type command..."
+>
+
+<button onclick="sendChat()">
+Send
+</button>
+
+</div>
+
+</div>
+
+<!-- =========================================================
+TIMELINE MODAL
+========================================================= -->
+
+<div class="modal" id="timelineModal">
+
+<div class="modal-content">
+
+<h3>Employee Timeline</h3>
+
+<br>
+
+<div id="timelineData"></div>
+
+<br>
+
+<button class="btn" onclick="closeModal()">
+Close
+</button>
+
+</div>
+
+</div>
+
+<!-- =========================================================
+SCRIPT
+========================================================= -->
+
+<script>
+
+const API = "https://intellionboard.onrender.com/api/rm";
+
+let fullData = [];
+
+const rm = localStorage.getItem("user_name") || "RM";
+const rmEmail =
+localStorage.getItem("user_email") || "";
+
+document.getElementById("rmName").innerText = rm;
+
+/* =========================================================
+LOAD DATA
+========================================================= */
+function getStageBadge(stage){
+
+    if(!stage) return "Initiated";
+
+    const map = {
+
+        "ID_CARD_AND_ACCESS":"🪪 ID & Access",
+        "LAPTOP_ALLOCATION":"💻 Laptop",
+        "TRAINING":"📘 Training",
+        "ASSESSMENT":"📝 Assessment",
+        "PROJECT_ALLOCATION":"🚀 Project",
+        "COMPLETED":"✅ Completed"
+
+    };
+
+    return map[stage] || stage;
+}
+
+let chatbotOpen = false;
+
+function toggleChatbot(){
+
+const bot = document.querySelector(".chatbot");
+
+chatbotOpen = !chatbotOpen;
+
+bot.style.display =
+chatbotOpen
+? "flex"
+: "none";
+
+}
+async function loadDashboard(){
+
+try{
+
+const res = await fetch(
+`${API}/rm-dashboard`,
+{
+method:"POST",
+
+headers:{
+"Content-Type":"application/json"
+},
+
+body:JSON.stringify({
+email:rmEmail
+})
+}
+);
+
+const data = await res.json();
+
+console.log(data);
+
+fullData = data.data || [];
+
+renderStats(fullData);
+renderTable(fullData);
+loadAIInsights(fullData);
+
+}catch(err){
+
+console.error("Dashboard Error:",err);
+
+}
+console.log("RM EMAIL =>", rmEmail);
+}
+/* =========================================================
+STATS
+========================================================= */
+
+function renderStats(data){
+
+document.getElementById("totalEmployees").innerText = data.length;
+
+document.getElementById("pendingEmployees").innerText =
+data.filter(x=>x.onboarding_status !== "Completed").length;
+
+document.getElementById("completedEmployees").innerText =
+data.filter(x=>x.onboarding_status === "Completed").length;
+
+document.getElementById("trainingPending").innerText =
+data.filter(x=>x.training_percentage < 100).length;
+
+document.getElementById("slaRisk").innerText =
+data.filter(x=>x.risk_level === "HIGH").length;
+
+document.getElementById("delayedEmployees").innerText =
+data.filter(x=>getDelayDays(x.updated_at) > 2).length;
+
+}
+
+/* =========================================================
+AI INSIGHTS
+========================================================= */
+
+function loadAIInsights(data){
+
+    let delayed =
+        data.filter(x=>getDelayDays(x.updated_at)>2).length;
+
+    let highRisk =
+        data.filter(x=>x.risk_level==="HIGH").length;
+
+    let trainingPending =
+        data.filter(x=>x.training_percentage<100).length;
+
+    let completed =
+        data.filter(x=>x.onboarding_status==="Completed").length;
+
+    document.getElementById("aiInsights").innerHTML = `
+
+    <h3>🤖 AI Workforce Insights</h3>
+
+    <br>
+
+    <p>🚨 ${highRisk} employees are at HIGH onboarding risk</p>
+
+    <p>⚠️ ${delayed} employees delayed beyond SLA</p>
+
+    <p>📘 ${trainingPending} employees pending training completion</p>
+
+    <p>✅ ${completed} employees fully onboarded</p>
+
+    <br>
+
+    <p>
+    AI Recommendation:
+    Focus escalation on delayed employees with pending
+    laptop + training status.
+    </p>
+    `;
+}
+
+/* =========================================================
+TABLE
+========================================================= */
+
+function renderTable(data){
+
+let html = `
+<table>
+
+<thead>
+
+<tr>
+<th>ID</th>
+<th>Name</th>
+<th>Status</th>
+<th>Stage</th>
+<th>Training</th>
+<th>Assessment</th>
+<th>Laptop</th>
+<th>ID Card</th>
+<th>Delay</th>
+<th>Overall Progress</th>
+<th>Risk</th>
+<th>Readiness</th>
+<th>Actions</th>
+</tr>
+
+</thead>
+
+<tbody>
+`;
+
+data.forEach(emp=>{
+
+let delay = getDelayDays(emp.updated_at);
+
+let statusClass =
+emp.onboarding_status === "Completed"
+? "completed"
+: delay > 2
+? "delayed"
+: "pending";
+
+html += `
+<tr>
+
+<td>${emp.emp_id}</td>
+
+<td>
+<div class="employee-name">
+<b>${emp.emp_name}</b>
+<small>${emp.email || ""}</small>
+</div>
+</td>
+
+<td>
+<span class="badge ${statusClass}">
+${emp.onboarding_status}
+</span>
+</td>
+
+<td>
+    <span class="badge inprogress">
+        ${getStageBadge(emp.current_step)}
+    </span>
+</td>
+
+<td>
+
+<div class="progress">
+<div class="progress-fill"
+style="width:${emp.training_percentage || 0}%">
+</div>
+</div>
+
+<small>${emp.training_percentage || 0}%</small>
+
+</td>
+
+<td>
+${emp.assessment_status || "Pending"}
+</td>
+
+<td>
+${emp.laptop_status || "Pending"}
+</td>
+
+<td>
+${emp.id_card_status || "Pending"}
+</td>
+
+<td>
+${delay} days
+</td>
+<td>
+
+<div class="progress">
+<div class="progress-fill"
+style="width:${emp.progress_percentage|| 0}%">
+</div>
+</div>
+
+<small>${emp.progress_percentage || 0}%</small>
+
+</td>
+<td>
+<span class="
+${emp.risk_level === "HIGH"
+? "risk-high"
+: emp.risk_level === "MEDIUM"
+? "risk-medium"
+: "risk-low"}
+">
+${emp.risk_level || "LOW"}
+</span>
+</td>
+
+<td>
+${emp.readiness_score || 0}%
+</td>
+
+<td>
+
+<div class="action-buttons">
+
+<button
+class="btn btn-mail"
+title="Send Reminder"
+onclick="sendReminder('${emp.emp_id}')">
+📧
+</button>
+
+<button
+class="btn btn-escalate"
+title="Escalate"
+onclick="escalate('${emp.emp_id}')">
+⚠️
+</button>
+
+<button
+class="btn btn-complete"
+title="View Analytics"
+onclick="openEmployeeDetails('${emp.emp_id}')">
+📊
+</button>
+
+</div>
+
+</td>
+
+</tr>
+`;
+
+});
+
+html += `
+</tbody>
+</table>
+`;
+
+document.getElementById("employeeTable").innerHTML = html;
+
+}
+
+/* =========================================================
+FILTER
+========================================================= */
+
+function applyFilter(){
+
+let text = document.getElementById("searchInput").value.toLowerCase();
+
+let filter = document.getElementById("statusFilter").value;
+
+let filtered = fullData.filter(emp=>{
+
+let search =
+(emp.emp_name || "").toLowerCase().includes(text);
+
+let status = true;
+
+if(filter==="pending")
+status = emp.onboarding_status !== "Completed";
+
+if(filter==="completed")
+status = emp.onboarding_status === "Completed";
+
+if(filter==="delayed")
+status = getDelayDays(emp.updated_at) > 2;
+
+if(filter==="training")
+status = emp.training_percentage < 100;
+
+return search && status;
+
+});
+
+renderTable(filtered);
+
+}
+
+/* =========================================================
+DELAY
+========================================================= */
+
+function getDelayDays(date){
+
+if(!date) return 0;
+
+let diff =
+(Date.now() - new Date(date)) /
+(1000*60*60*24);
+
+return Math.floor(diff);
+
+}
+
+/* =========================================================
+TIMELINE
+========================================================= */
+
+async function openTimeline(empId){
+
+document.getElementById("timelineModal").style.display = "flex";
+
+const res = await fetch(`${API}/timeline/${empId}`);
+const data = await res.json();
+
+let html = "";
+
+(data.data || []).forEach(t=>{
+
+html += `
+<div style="margin-bottom:15px;">
+
+<b>${t.stage}</b><br>
+
+<small>${t.status}</small><br>
+
+<small>${t.time}</small>
+
+<hr>
+
+</div>
+`;
+
+});
+
+document.getElementById("timelineData").innerHTML = html;
+
+}
+
+function closeModal(){
+document.getElementById("timelineModal").style.display = "none";
+}
+
+/* =========================================================
+ESCALATE
+========================================================= */
+
+async function escalate(empId){
+
+await fetch(`${API}/escalate/${empId}`,{
+method:"POST"
+});
+
+alert("Escalation Triggered");
+
+loadDashboard();
+
+}
+
+/* =========================================================
+SEND REMINDER
+========================================================= */
+
+async function sendReminder(empId){
+
+await fetch(`${API}/send-reminder`,{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify({
+emp_id:empId
+})
+});
+
+alert("Reminder Sent");
+
+}
+
+/* =========================================================
+CHATBOT
+========================================================= */
+/* =========================================================
+   RM AI ASSISTANT — NEXT GEN VERSION
+========================================================= */
+
+const chatBody = document.getElementById("chatBody");
+const chatInput = document.getElementById("chatInput");
+
+/* =========================================================
+   ENTER KEY SUPPORT
+========================================================= */
+
+chatInput.addEventListener("keydown", function(e){
+
+    if(e.key === "Enter"){
+        e.preventDefault();
+        sendChat();
+    }
+
+});
+
+/* =========================================================
+   ADD CHAT MESSAGE
+========================================================= */
+
+function addMessage(type, message){
+
+    const div = document.createElement("div");
+
+    div.className = type === "user"
+        ? "chat-user-msg"
+        : "chat-ai-msg";
+
+    div.innerHTML = message;
+
+    chatBody.appendChild(div);
+
+    chatBody.scrollTop = chatBody.scrollHeight;
+}
+
+/* =========================================================
+   TYPING EFFECT
+========================================================= */
+
+function showTyping(){
+
+    const typing = document.createElement("div");
+
+    typing.id = "typing";
+
+    typing.className = "chat-ai-msg";
+
+    typing.innerHTML = `
+        <span class="typing-dot"></span>
+        <span class="typing-dot"></span>
+        <span class="typing-dot"></span>
+    `;
+
+    chatBody.appendChild(typing);
+
+    chatBody.scrollTop = chatBody.scrollHeight;
+}
+
+function removeTyping(){
+
+    const typing = document.getElementById("typing");
+
+    if(typing){
+        typing.remove();
+    }
+}
+
+/* =========================================================
+   FUZZY AI DETECTION
+========================================================= */
+
+function detectIntent(msg){
+
+    msg = msg.toLowerCase();
+
+    /* Pending onboarding */
+
+    if(
+        msg.includes("pending onboarding") ||
+        msg.includes("show pending") ||
+        msg.includes("pending employees") ||
+        msg.includes("onboarding pending") ||
+        msg.includes("show me pending") ||
+        msg.includes("employees pending")
+    ){
+
+        return {
+            type:"pending_onboarding",
+            reply:"📊 Fetching pending onboarding employees..."
+        };
+    }
+
+    /* Delayed employees */
+
+    if(
+        msg.includes("delayed") ||
+        msg.includes("late onboarding") ||
+        msg.includes("delay employees")
+    ){
+
+        return {
+            type:"delayed",
+            reply:"⏳ Fetching delayed onboarding employees..."
+        };
+    }
+
+    /* High risk */
+
+    if(
+        msg.includes("high risk") ||
+        msg.includes("risk employees") ||
+        msg.includes("critical employees")
+    ){
+
+        return {
+            type:"high_risk",
+            reply:"⚠ Fetching high risk employees..."
+        };
+    }
+
+    /* Escalation mail */
+
+    if(
+        msg.includes("escalation") ||
+        msg.includes("escalate") ||
+        msg.includes("send mail to admin") ||
+        msg.includes("id card issue") ||
+        msg.includes("laptop issue")
+    ){
+
+        return {
+            type:"escalation",
+            reply:"📧 AI preparing escalation workflow..."
+        };
+    }
+
+    /* Help */
+
+    if(
+        msg === "help" ||
+        msg.includes("commands") ||
+        msg.includes("what can you do")
+    ){
+
+        return {
+            type:"help"
+        };
+    }
+
+    /* Summary */
+
+    if(
+        msg.includes("summary") ||
+        msg.includes("dashboard status") ||
+        msg.includes("rm report")
+    ){
+
+        return {
+            type:"summary",
+            reply:"📈 Generating RM onboarding summary..."
+        };
+    }
+
+    return {
+        type:"general",
+        reply:"🤖 AI analyzing your request..."
+    };
+}
+
+/* =========================================================
+   HELP COMMAND
+========================================================= */
+
+function showHelp(){
+
+    addMessage("ai", `
+
+    <div class="help-title">
+    🚀 RM AI COMMAND CENTER
+    </div>
+
+    <div class="help-grid">
+
+        <div class="help-item">
+        📧 <b>Escalation Mail</b><br>
+        send escalation mail for employee id 12193289 id card
+        </div>
+
+        <div class="help-item">
+        💻 <b>Laptop Delay</b><br>
+        escalate laptop issue employee 10023
+        </div>
+
+        <div class="help-item">
+        🪪 <b>ID Card Reminder</b><br>
+        remind employee 10122 for id card submission
+        </div>
+
+        <div class="help-item">
+        📄 <b>Pending Documents</b><br>
+        send pending document mail employee 55441
+        </div>
+
+        <div class="help-item">
+        ⚠ <b>High Risk Employees</b><br>
+        show high risk employees
+        </div>
+
+        <div class="help-item">
+        📊 <b>Pending Onboarding</b><br>
+        show me pending onboarding employees
+        </div>
+
+        <div class="help-item">
+        📅 <b>Delayed Tasks</b><br>
+        show delayed onboarding tasks
+        </div>
+
+        <div class="help-item">
+        📈 <b>RM Summary</b><br>
+        give onboarding summary
+        </div>
+
+        <div class="help-item">
+        📨 <b>Bulk Reminder</b><br>
+        send reminder to all pending employees
+        </div>
+
+    </div>
+
+    `);
+}
+
+/* =========================================================
+   MAIN SEND CHAT
+========================================================= */
+
+async function sendChat() {
+
+    let msg = chatInput.value.trim();
+
+    if (!msg) return;
+
+    // 1. show user message
+    addMessage("user", `👨 ${msg}`);
+    chatInput.value = "";
+
+    // 2. detect intent locally
+    const intent = detectIntent(msg);
+
+    // 3. handle help locally
+    if (intent.type === "help") {
+        showHelp();
+        return;
+    }
+
+    // 4. show typing animation
+    showTyping();
+
+    try {
+
+        const res = await fetch(`${API}/chat`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                message: msg,
+                intent: intent.type,
+                rm: rm,
+                email: rmEmail
+            })
+        });
+
+        const data = await res.json();
+
+        // remove typing before showing response
+        removeTyping();
+
+        // 5. backend success
+        if (res.ok && data.success) {
+
+            addMessage("ai", `🤖 ${data.reply}`);
+
+        } else {
+
+            addMessage("ai", `
+                ⚠ ${data.reply || "Request failed"}
+                <br><br>
+                🤖 Local AI detected: <b>${intent.type.replaceAll("_", " ")}</b>
+            `);
+        }
+
+    } catch (err) {
+
+        removeTyping();
+
+        // 6. network failure fallback
+        addMessage("ai", `
+            ⚠ Unable to connect to AI server.<br><br>
+            🤖 Local AI detected: <b>${intent.type.replaceAll("_", " ")}</b>
+        `);
+
+        console.error("Chat Error:", err);
+    }
+}
+/* =========================================================
+LOGOUT
+========================================================= */
+async function logout() {
+
+    try {
+
+        // ==========================================
+        // CALL BACKEND LOGOUT
+        // ==========================================
+
+        await fetch(
+            "https://intellionboard.onrender.com/api/auth/logout",
+            {
+                method: "POST",
+                credentials: "include"
+            }
+        );
+
+    } catch (err) {
+
+        console.error("Logout API Error:", err);
+    }
+
+    // ==========================================
+    // CLEAR LOCAL STORAGE
+    // ==========================================
+
+    localStorage.clear();
+
+    sessionStorage.clear();
+
+    // ==========================================
+    // REDIRECT TO LOGIN PAGE
+    // ==========================================
+
+    window.location.href =
+        "http://127.0.0.1:5500/login.html";
+}
+
+/* =========================================================
+AUTO REFRESH
+========================================================= */
+
+setInterval(loadDashboard,10000);
+
+loadDashboard();
+async function openEmployeeDetails(empId){
+
+    document.getElementById("employeeModal")
+        .style.display = "flex";
+
+    const res = await fetch(
+        `${API}/employee/${empId}`
+    );
+
+    const data = await res.json();
+
+    const emp = data.data || {};
+
+    document.getElementById("empModalTitle")
+        .innerText =
+        `${emp.emp_name} (${emp.emp_id})`;
+
+    document.getElementById("employeeFullDetails")
+        .innerHTML = `
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+
+        <div>
+
+            <h3>Employee Info</h3>
+
+            <br>
+
+            <p><b>Email:</b> ${emp.email || "-"}</p>
+            <p><b>Designation:</b> ${emp.designation || "-"}</p>
+            <p><b>Project:</b> ${emp.project_name || "-"}</p>
+            <p><b>COE:</b> ${emp.selected_coe || "-"}</p>
+            <p><b>Status:</b> ${emp.onboarding_status || "-"}</p>
+
+        </div>
+
+        <div>
+
+            <h3>Onboarding Tracking</h3>
+
+            <br>
+
+            <p><b>ID Card:</b> ${emp.id_card_status || "-"}</p>
+            <p><b>Laptop:</b> ${emp.laptop_status || "-"}</p>
+            <p><b>Training:</b> ${emp.training_status || "-"}</p>
+            <p><b>Assessment:</b> ${emp.assessment_status || "-"}</p>
+            <p><b>Progress:</b> ${emp.progress_percentage || 0}%</p>
+
+        </div>
+
+    </div>
+
+    <br>
+
+    <h3>Risk Analysis</h3>
+
+    <br>
+
+    <p>
+    Risk Level:
+    <b>${emp.risk_level || "LOW"}</b>
+    </p>
+
+    <br>
+
+    <div class="progress">
+        <div class="progress-fill"
+        style="width:${emp.progress_percentage || 0}%">
+        </div>
+    </div>
+
+    `;
+}
+function closeEmployeeModal(){
+
+    document.getElementById("employeeModal")
+        .style.display = "none";
+}
+</script>
+<div class="modal" id="employeeModal">
+
+<div class="modal-content" style="width:800px;max-height:90vh;overflow:auto;">
+
+<h2 id="empModalTitle">Employee Details</h2>
+
+<br>
+
+<div id="employeeFullDetails"></div>
+
+<br>
+
+<button class="btn" onclick="closeEmployeeModal()">
+Close
+</button>
+
+</div>
+
+</div>
+</body>
+</html>

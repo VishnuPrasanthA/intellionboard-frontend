@@ -1,0 +1,2325 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <title>Admin Control Center</title>
+    
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+
+    <link rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+          rel="stylesheet">
+
+    <!-- FONT AWESOME -->
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+
+    <style>
+
+/* =========================================================
+MODERN ROOT THEME
+========================================================= */
+
+:root{
+
+    --primary:#19d3a2;
+    --primary-dark:#0fa77f;
+    --primary-light:#eafff8;
+
+    --blue:#59b8ff;
+    --purple:#9f74ff;
+    --orange:#ffb84d;
+    --red:#ff6f6f;
+    --green:#34d47f;
+
+    --text:#172b42;
+    --muted:#7d8da5;
+
+    --glass:rgba(255,255,255,0.72);
+
+    --border:rgba(255,255,255,0.42);
+
+    --bg1:#f6fbff;
+    --bg2:#eef5ff;
+
+    --shadow-sm:
+    0 8px 24px rgba(15,23,42,.06);
+
+    --shadow-md:
+    0 18px 40px rgba(15,23,42,.10);
+
+    --shadow-lg:
+    0 35px 80px rgba(15,23,42,.16);
+
+    --radius:24px;
+
+    --transition:
+    all .35s cubic-bezier(.22,1,.36,1);
+}
+
+/* =========================================================
+GLOBAL
+========================================================= */
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+
+    font-family:'Poppins',sans-serif;
+
+    background:
+    radial-gradient(circle at top left,#dbfff4 0%,transparent 28%),
+    radial-gradient(circle at top right,#ddeeff 0%,transparent 26%),
+    radial-gradient(circle at bottom right,#fff4df 0%,transparent 28%),
+    linear-gradient(135deg,var(--bg1),var(--bg2));
+
+    min-height:100vh;
+
+    color:var(--text);
+
+    overflow-x:hidden;
+}
+
+/* =========================================================
+ANIMATED BG
+========================================================= */
+
+body::before{
+
+    content:"";
+
+    position:fixed;
+
+    inset:0;
+
+    background:
+    radial-gradient(circle at 20% 20%,rgba(25,211,162,.05),transparent 18%),
+    radial-gradient(circle at 80% 25%,rgba(89,184,255,.05),transparent 18%),
+    radial-gradient(circle at 70% 80%,rgba(159,116,255,.05),transparent 18%);
+
+    animation:bgMove 20s linear infinite;
+
+    z-index:-1;
+}
+
+@keyframes bgMove{
+
+    from{
+        transform:translateY(0px);
+    }
+
+    to{
+        transform:translateY(-60px);
+    }
+}
+
+/* =========================================================
+SCROLLBAR
+========================================================= */
+
+::-webkit-scrollbar{
+    width:8px;
+    height:8px;
+}
+
+::-webkit-scrollbar-thumb{
+
+    background:
+    linear-gradient(
+    180deg,
+    var(--primary),
+    #5effde);
+
+    border-radius:30px;
+}
+
+/* =========================================================
+PAGE
+========================================================= */
+
+.page{
+
+    padding:22px;
+
+    padding-top:110px;
+}
+
+/* =========================================================
+GLASS EFFECT
+========================================================= */
+
+.glass{
+
+    background:var(--glass);
+
+    backdrop-filter:blur(18px);
+
+    -webkit-backdrop-filter:blur(18px);
+
+    border:1px solid var(--border);
+
+    box-shadow:var(--shadow-sm);
+}
+
+/* =========================================================
+HEADER
+========================================================= */
+
+.header{
+
+    position:fixed;
+
+    top:14px;
+    left:14px;
+    right:14px;
+
+    z-index:9999;
+
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+
+    padding:18px 22px;
+
+    border-radius:28px;
+
+    overflow:hidden;
+
+    background:rgba(255,255,255,0.70);
+
+    backdrop-filter:blur(18px);
+
+    border:1px solid rgba(255,255,255,0.5);
+
+    box-shadow:var(--shadow-md);
+}
+
+.header::before{
+
+    content:"";
+
+    position:absolute;
+
+    inset:-2px;
+
+    background:
+    linear-gradient(
+    90deg,
+    rgba(25,211,162,.16),
+    rgba(89,184,255,.16),
+    rgba(159,116,255,.16),
+    rgba(25,211,162,.16));
+
+    background-size:300% 300%;
+
+    z-index:-1;
+
+    animation:borderMove 8s linear infinite;
+}
+
+@keyframes borderMove{
+
+    0%{
+        background-position:0% 50%;
+    }
+
+    100%{
+        background-position:100% 50%;
+    }
+}
+
+.title-section{
+
+    display:flex;
+    align-items:center;
+    gap:16px;
+}
+
+.title-icon{
+
+    width:62px;
+    height:62px;
+
+    border-radius:18px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    font-size:28px;
+    font-weight:800;
+
+    color:white;
+
+    background:
+    linear-gradient(
+    135deg,
+    var(--primary),
+    #58ffd9);
+
+    box-shadow:
+    0 15px 35px rgba(25,211,162,.28);
+}
+
+.header h2{
+
+    font-size:28px;
+
+    font-weight:800;
+
+    letter-spacing:.3px;
+}
+
+.header p{
+
+    margin-top:4px;
+
+    font-size:12px;
+
+    color:var(--muted);
+}
+
+.header-right{
+
+    display:flex;
+    align-items:center;
+    gap:12px;
+}
+
+/* =========================================================
+SEARCH
+========================================================= */
+
+.search-box{
+
+    width:280px;
+
+    padding:14px 16px;
+
+    border-radius:16px;
+
+    border:1px solid rgba(255,255,255,0.6);
+
+    background:rgba(255,255,255,0.75);
+
+    outline:none;
+
+    font-size:13px;
+
+    transition:var(--transition);
+
+    box-shadow:
+    inset 0 1px 3px rgba(0,0,0,.04);
+}
+
+.search-box:focus{
+
+    border-color:rgba(25,211,162,.45);
+
+    box-shadow:
+    0 0 0 5px rgba(25,211,162,.12);
+}
+
+/* =========================================================
+BUTTONS
+========================================================= */
+
+button{
+
+    border:none;
+
+    height:48px;
+
+    padding:0 18px;
+
+    border-radius:16px;
+
+    cursor:pointer;
+
+    font-weight:700;
+
+    transition:var(--transition);
+
+    color:white;
+
+    font-size:13px;
+}
+
+button:hover{
+
+    transform:translateY(-3px);
+
+    box-shadow:var(--shadow-md);
+}
+
+.btn-refresh{
+
+    background:
+    linear-gradient(
+    135deg,
+    #3ea6ff,
+    #73c7ff);
+}
+
+.btn-logout{
+
+    background:
+    linear-gradient(
+    135deg,
+    #ff6767,
+    #ff9a7a);
+}
+
+.btn-close{
+
+    background:
+    linear-gradient(
+    135deg,
+    #ff5b5b,
+    #ff9191);
+}
+
+.btn-escalate{
+
+    background:
+    linear-gradient(
+    135deg,
+    #8b5cf6,
+    #b28cff);
+}
+
+/* =========================================================
+KPI SECTION
+========================================================= */
+
+.kpi-row{
+
+    display:grid;
+
+    grid-template-columns:
+    repeat(auto-fit,minmax(220px,1fr));
+
+    gap:18px;
+
+    margin-bottom:24px;
+}
+
+.kpi-card{
+
+    position:relative;
+
+    overflow:hidden;
+
+    border-radius:28px;
+
+    padding:24px;
+
+    min-height:150px;
+
+    background:rgba(255,255,255,0.78);
+
+    backdrop-filter:blur(14px);
+
+    border:1px solid rgba(255,255,255,0.6);
+
+    box-shadow:var(--shadow-sm);
+
+    transition:var(--transition);
+}
+
+.kpi-card:hover{
+
+    transform:
+    translateY(-6px)
+    scale(1.01);
+
+    box-shadow:var(--shadow-lg);
+}
+
+.kpi-card::before{
+
+    content:"";
+
+    position:absolute;
+
+    top:-30px;
+    right:-30px;
+
+    width:120px;
+    height:120px;
+
+    border-radius:50%;
+
+    opacity:.08;
+}
+
+.kpi-card:nth-child(1)::before{
+    background:var(--primary);
+}
+
+.kpi-card:nth-child(2)::before{
+    background:var(--blue);
+}
+
+.kpi-card:nth-child(3)::before{
+    background:var(--purple);
+}
+
+.kpi-card:nth-child(4)::before{
+    background:var(--orange);
+}
+
+.kpi-card:nth-child(5)::before{
+    background:var(--red);
+}
+
+.kpi-title{
+
+    font-size:13px;
+
+    color:var(--muted);
+
+    margin-bottom:10px;
+
+    font-weight:600;
+}
+
+.kpi-value{
+
+    font-size:42px;
+
+    font-weight:800;
+
+    color:var(--primary-dark);
+
+    line-height:1;
+}
+
+.kpi-sub{
+
+    margin-top:10px;
+
+    font-size:11px;
+
+    color:#6b7280;
+}
+
+/* =========================================================
+CHART GRID
+========================================================= */
+
+.chart-grid{
+
+    display:grid;
+
+    grid-template-columns:1fr 1fr;
+
+    gap:20px;
+
+    margin-bottom:24px;
+}
+
+.chart-card{
+
+    position:relative;
+
+    border-radius:28px;
+
+    padding:22px;
+
+    background:rgba(255,255,255,0.76);
+
+    backdrop-filter:blur(18px);
+
+    border:1px solid rgba(255,255,255,0.55);
+
+    box-shadow:var(--shadow-sm);
+
+    transition:var(--transition);
+
+    overflow:hidden;
+
+    min-height:380px;
+}
+
+.chart-card:hover{
+
+    transform:translateY(-5px);
+
+    box-shadow:var(--shadow-lg);
+}
+
+.chart-card::before{
+
+    content:"";
+
+    position:absolute;
+
+    top:-80px;
+    right:-60px;
+
+    width:180px;
+    height:180px;
+
+    border-radius:50%;
+
+    background:
+    radial-gradient(
+    circle,
+    rgba(25,211,162,.12),
+    transparent 70%);
+}
+
+.chart-title{
+
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+
+    margin-bottom:18px;
+
+    font-size:18px;
+
+    font-weight:700;
+}
+
+.chart-title span{
+
+    font-size:11px;
+
+    color:var(--muted);
+}
+
+.chart-wrapper{
+
+    position:relative;
+
+    width:100%;
+    height:300px;
+}
+
+canvas{
+
+    width:100% !important;
+    height:100% !important;
+}
+
+/* =========================================================
+TABLE SECTION
+========================================================= */
+
+.table-card{
+
+    border-radius:30px;
+
+    padding:22px;
+
+    background:rgba(255,255,255,0.78);
+
+    backdrop-filter:blur(18px);
+
+    border:1px solid rgba(255,255,255,0.6);
+
+    box-shadow:var(--shadow-sm);
+
+    overflow:hidden;
+}
+
+.table-title{
+
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+
+    margin-bottom:18px;
+}
+
+.table-title h3{
+
+    font-size:20px;
+
+    font-weight:700;
+}
+
+.table-title span{
+
+    font-size:12px;
+
+    color:var(--muted);
+}
+
+.table-wrapper{
+
+    overflow:auto;
+
+    border-radius:18px;
+}
+
+table{
+
+    width:100%;
+
+    border-collapse:collapse;
+
+    min-width:1100px;
+}
+
+thead{
+
+    background:
+    linear-gradient(
+    180deg,
+    #fbfdff,
+    #f2f7fd);
+
+    position:sticky;
+
+    top:0;
+
+    z-index:2;
+}
+
+th{
+
+    padding:16px;
+
+    text-align:left;
+
+    font-size:11px;
+
+    font-weight:800;
+
+    color:#5f7187;
+
+    border-bottom:1px solid #edf2f7;
+}
+
+td{
+
+    padding:15px 16px;
+
+    border-bottom:1px solid #eef2f7;
+
+    font-size:13px;
+}
+
+tbody tr{
+
+    transition:var(--transition);
+}
+
+tbody tr:hover{
+
+    background:
+    linear-gradient(
+    90deg,
+    rgba(25,211,162,.04),
+    rgba(89,184,255,.03));
+
+    transform:scale(1.002);
+}
+
+/* =========================================================
+BADGES
+========================================================= */
+
+.badge{
+
+    display:inline-flex;
+
+    align-items:center;
+    justify-content:center;
+
+    padding:7px 12px;
+
+    border-radius:40px;
+
+    font-size:10px;
+
+    font-weight:800;
+
+    color:white;
+
+    letter-spacing:.4px;
+}
+
+.badge-open{
+
+    background:
+    linear-gradient(
+    135deg,
+    #ff5f5f,
+    #ff9b9b);
+}
+
+.badge-closed{
+
+    background:
+    linear-gradient(
+    135deg,
+    #16c79a,
+    #57f4cb);
+}
+
+.step-pill{
+
+    display:inline-flex;
+
+    align-items:center;
+    justify-content:center;
+
+    padding:7px 14px;
+
+    border-radius:30px;
+
+    font-size:11px;
+
+    font-weight:700;
+
+    color:#2563eb;
+
+    background:
+    linear-gradient(
+    135deg,
+    #eef4ff,
+    #f6f9ff);
+}
+
+/* =========================================================
+MODAL
+========================================================= */
+
+.modal{
+
+    position:fixed;
+
+    inset:0;
+
+    background:rgba(10,15,25,.55);
+
+    backdrop-filter:blur(8px);
+
+    display:none;
+
+    justify-content:center;
+    align-items:center;
+
+    z-index:99999;
+
+    padding:20px;
+}
+
+.modal-box{
+
+    width:100%;
+    max-width:460px;
+
+    border-radius:30px;
+
+    padding:26px;
+
+    background:white;
+
+    box-shadow:
+    0 30px 80px rgba(0,0,0,.25);
+
+    animation:modalFade .35s ease;
+}
+
+@keyframes modalFade{
+
+    from{
+        opacity:0;
+        transform:translateY(20px) scale(.96);
+    }
+
+    to{
+        opacity:1;
+        transform:translateY(0px) scale(1);
+    }
+}
+
+.modal-box h3{
+
+    font-size:22px;
+
+    margin-bottom:10px;
+}
+
+.ticket-info{
+
+    margin-top:12px;
+
+    line-height:1.9;
+
+    font-size:13px;
+
+    color:#4b5563;
+}
+
+.modal textarea{
+
+    width:100%;
+
+    height:130px;
+
+    margin-top:16px;
+
+    border-radius:16px;
+
+    border:1px solid #e4e9f2;
+
+    padding:14px;
+
+    resize:none;
+
+    outline:none;
+
+    font-size:13px;
+
+    transition:var(--transition);
+
+    background:#fbfdff;
+}
+
+.modal textarea:focus{
+
+    border-color:rgba(25,211,162,.45);
+
+    box-shadow:
+    0 0 0 5px rgba(25,211,162,.12);
+}
+
+.modal-actions{
+
+    display:flex;
+
+    justify-content:flex-end;
+
+    gap:12px;
+
+    margin-top:20px;
+}
+
+/* =========================================================
+RESPONSIVE
+========================================================= */
+
+@media(max-width:1200px){
+
+    .chart-grid{
+        grid-template-columns:1fr;
+    }
+}
+
+@media(max-width:992px){
+
+    .kpi-row{
+        grid-template-columns:repeat(2,1fr);
+    }
+}
+
+@media(max-width:768px){
+
+    .page{
+        padding-top:180px;
+    }
+
+    .header{
+
+        flex-direction:column;
+
+        align-items:flex-start;
+
+        gap:16px;
+    }
+
+    .header-right{
+
+        width:100%;
+
+        flex-wrap:wrap;
+    }
+
+    .search-box{
+        width:100%;
+    }
+
+    .kpi-row{
+        grid-template-columns:1fr;
+    }
+
+    .chart-card{
+        min-height:340px;
+    }
+
+    table{
+        min-width:900px;
+    }
+}
+
+@media(max-width:520px){
+
+    .header h2{
+        font-size:22px;
+    }
+
+    .title-icon{
+
+        width:52px;
+        height:52px;
+
+        font-size:24px;
+    }
+
+    .chart-wrapper{
+        height:250px;
+    }
+
+    .modal-box{
+        padding:22px;
+    }
+}
+#botToggle{
+    position:fixed;
+    bottom:25px;
+    right:25px;
+    width:60px;
+    height:60px;
+    border-radius:50%;
+    background:linear-gradient(135deg,#19d3a2,#59b8ff);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:26px;
+    cursor:pointer;
+    box-shadow:0 10px 30px rgba(0,0,0,.2);
+    z-index:99999;
+}
+
+#botPanel{
+    position:fixed;
+    bottom:100px;
+    right:25px;
+    width:320px;
+    height:420px;
+    background:white;
+    border-radius:20px;
+    box-shadow:0 20px 60px rgba(0,0,0,.25);
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+    z-index:99999;
+}
+
+.botHeader{
+    padding:12px;
+    background:linear-gradient(135deg,#19d3a2,#59b8ff);
+    color:white;
+    display:flex;
+    justify-content:space-between;
+}
+
+.botMessages{
+    flex:1;
+    padding:10px;
+    overflow:auto;
+    font-size:12px;
+}
+
+.botInputArea{
+    display:flex;
+    border-top:1px solid #eee;
+}
+
+.botInputArea input{
+    flex:1;
+    border:none;
+    padding:10px;
+    outline:none;
+}
+
+.botInputArea button{
+    border:none;
+    background:#19d3a2;
+    color:white;
+    padding:10px 14px;
+    cursor:pointer;
+}
+</style>
+</head>
+
+<body>
+
+<div class="page">
+
+    <!-- ====================================================
+         HEADER
+    ==================================================== -->
+
+    <div class="header">
+
+        <div class="title-section">
+
+            <div class="title-icon">
+                🛡️
+            </div>
+
+            <h2>Admin Control Center</h2>
+
+        </div>
+
+        <div class="header-right">
+
+            <input
+                type="text"
+                class="search-box"
+                placeholder="Search Employee / Ticket..."
+                onkeyup="searchTable(this.value)"
+            >
+
+            <button
+                class="btn-refresh"
+                onclick="loadDashboard()">
+
+                🔄 Refresh
+
+            </button>
+
+            <button
+                class="btn-logout"
+                onclick="logout()">
+
+                🚪 Logout
+
+            </button>
+
+        </div>
+
+    </div>
+
+    <!-- ====================================================
+         KPI
+    ==================================================== -->
+
+    <div class="kpi-row">
+
+        <div class="kpi-card">
+
+            <div class="kpi-title">
+                Total Employees
+            </div>
+
+            <div class="kpi-value" id="total">
+                0
+            </div>
+
+        </div>
+
+        <div class="kpi-card">
+
+            <div class="kpi-title">
+                Open Tickets
+            </div>
+
+            <div class="kpi-value" id="tickets">
+                0
+            </div>
+
+        </div>
+
+        <div class="kpi-card">
+
+            <div class="kpi-title">
+                In Progress
+            </div>
+
+            <div class="kpi-value" id="progress">
+                0
+            </div>
+
+        </div>
+
+        <div class="kpi-card">
+
+            <div class="kpi-title">
+                Completed
+            </div>
+
+            <div class="kpi-value" id="completed">
+                0
+            </div>
+
+        </div>
+
+        <div class="kpi-card">
+
+            <div class="kpi-title">
+                Escalations
+            </div>
+
+            <div class="kpi-value" id="escalations">
+                0
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ====================================================
+         CHARTS
+    ==================================================== -->
+
+    <div class="chart-grid">
+
+        <div class="chart-card">
+
+            <div class="chart-title">
+                📊 Employee Status Overview
+            </div>
+
+            <div class="chart-wrapper">
+
+                <canvas id="statusChart"></canvas>
+
+            </div>
+
+        </div>
+
+        <div class="chart-card">
+
+            <div class="chart-title">
+                🎫 Ticket Status Overview
+            </div>
+
+            <div class="chart-wrapper">
+
+                <canvas id="ticketChart"></canvas>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ====================================================
+         TABLE
+    ==================================================== -->
+
+    <div class="table-card">
+
+        <div class="table-title">
+
+            👥 ID Card & ODC Access Employees
+
+        </div>
+
+        <table>
+
+            <thead>
+
+                <tr>
+
+                    <th>Employee ID</th>
+                    <th>Name</th>
+                    <th>Status</th>
+                    <th>Current Step</th>
+                    <th>Department</th>
+                    <th>Ticket ID</th>
+                    <th>Ticket Status</th>
+                    <th>Actions</th>
+
+                </tr>
+
+            </thead>
+
+            <tbody id="tableBody"></tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+<!-- ====================================================
+     MODAL
+==================================================== -->
+
+<div class="modal" id="commentModal">
+
+    <div class="modal-box">
+
+        <h3>📝 Close Ticket</h3>
+
+        <div class="ticket-info" id="ticketInfo"></div>
+
+        <textarea
+            id="adminComment"
+            placeholder="Enter closure remarks..."
+        ></textarea>
+
+        <div class="modal-actions">
+
+            <button onclick="closeModal()">
+                Cancel
+            </button>
+
+            <button
+                class="btn-close"
+                onclick="submitClosure()">
+
+                Close Ticket
+
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+<!-- ================= BOT UI ================= -->
+<div id="aiBotContainer">
+
+    <div id="botToggle" onclick="toggleBot()">
+        🤖
+    </div>
+
+    <div id="botPanel" style="display:none;">
+
+        <div class="botHeader">
+            <b>Admin AI Bot</b>
+            <span onclick="toggleBot()" style="cursor:pointer;">✖</span>
+        </div>
+
+        <div id="botMessages" class="botMessages"></div>
+
+        <div class="botInputArea">
+            <input id="botInput"
+                   placeholder="Try: employee 101 / bulk close / stats"
+                   onkeydown="if(event.key==='Enter') runBotCommand()"/>
+            <button onclick="runBotCommand()">Send</button>
+        </div>
+
+    </div>
+</div>
+
+
+<script>
+
+const API = "http://127.0.0.1:5332/api/admin";
+
+/* =========================
+   GLOBAL STATE
+========================= */
+
+let allEmployees = [];
+let allTickets = [];
+
+let currentTicketId = null;
+
+let statusChart = null;
+let ticketChart = null;
+
+let socket = null;
+let reloadTimeout = null;
+
+/* =========================
+   SAFE STRING HELPERS
+========================= */
+
+function safeText(val) {
+    return String(val || "").trim().toUpperCase();
+}
+
+/* =========================
+   WORKFLOW ENGINE (FIXED)
+========================= */
+
+function computeWorkflow(emp, tickets = []) {
+
+    const currentStep = safeText(emp?.current_step);
+
+    if (!Array.isArray(tickets)) tickets = [];
+
+    const idTicket = tickets.find(t =>
+        safeText(t?.ticket_type).includes("ID_CARD")
+    );
+
+    const laptopTicket = tickets.find(t =>
+        safeText(t?.ticket_type).includes("LAPTOP")
+    );
+
+    const coeTicket = tickets.find(t =>
+        safeText(t?.ticket_type).includes("COE")
+    );
+
+    const idClosed = safeText(idTicket?.ticket_status) === "CLOSED";
+    const laptopClosed = safeText(laptopTicket?.ticket_status) === "CLOSED";
+    const coeClosed = safeText(coeTicket?.ticket_status) === "CLOSED";
+
+    if (!idTicket && !laptopTicket && !coeTicket) {
+        return "ID_CARD_AND_ACCESS";
+    }
+
+    if (!idClosed) return "ID_CARD_AND_ACCESS";
+
+    if (idClosed && !laptopTicket) {
+        return "LAPTOP_ALLOCATION_PENDING";
+    }
+
+    if (idClosed && !laptopClosed) {
+        return "LAPTOP_ALLOCATION_PENDING";
+    }
+
+    if (idClosed && laptopClosed && !coeTicket) {
+        return "COE_PENDING";
+    }
+
+    if (idClosed && laptopClosed && !coeClosed) {
+        return "COE_PENDING";
+    }
+
+    if (idClosed && laptopClosed && coeClosed) {
+        return "ONBOARDING_COMPLETED";
+    }
+
+    return currentStep || "ID_CARD_AND_ACCESS";
+}
+function toggleBot(){
+    const panel = document.getElementById("botPanel");
+    panel.style.display = panel.style.display === "none" ? "flex" : "none";
+}
+
+function addBotMsg(msg, from="bot"){
+    const div = document.createElement("div");
+    div.innerHTML = `<b>${from}:</b> ${msg}`;
+    document.getElementById("botMessages").appendChild(div);
+}
+
+/* ================= BOT CORE ================= */
+
+function norm(v){
+    return String(v ?? "")
+        .trim()
+        .toLowerCase()
+        .replace(/[\s-_]/g, "");
+}
+
+function send(msg, from="bot"){
+    addBotMsg(msg, from);
+}
+
+function runBotCommand(){
+
+    const input = document.getElementById("botInput");
+    const cmd = input.value.trim();
+    input.value = "";
+
+    if(!cmd) return;
+
+    send(cmd, "you");
+
+    const raw = cmd;
+    const lower = cmd.toLowerCase();
+
+    let lastTicket = window._lastTicket || null;
+
+    /* ================= NORMALIZER ================= */
+    const norm = (v) =>
+        String(v || "")
+        .toLowerCase()
+        .trim()
+        .replace(/[\s-_]/g, "");
+
+    /* ================= LEVENSHTEIN ================= */
+    function levenshtein(a, b){
+        const dp = Array.from({length: b.length+1}, ()=>[]);
+        for(let i=0;i<=b.length;i++) dp[i][0]=i;
+        for(let j=0;j<=a.length;j++) dp[0][j]=j;
+
+        for(let i=1;i<=b.length;i++){
+            for(let j=1;j<=a.length;j++){
+                dp[i][j]=Math.min(
+                    dp[i-1][j]+1,
+                    dp[i][j-1]+1,
+                    dp[i-1][j-1]+(b[i-1]===a[j-1]?0:1)
+                );
+            }
+        }
+        return dp[b.length][a.length];
+    }
+
+    /* ================= FUZZY EMPLOYEE ================= */
+    function findEmployeeFuzzy(input){
+
+        const val = norm(input);
+        let best = null;
+        let score = Infinity;
+
+        allEmployees.forEach(e=>{
+
+            const id = norm(e.emp_id);
+            const name = norm(e.emp_name);
+
+            const s = Math.min(
+                levenshtein(val, id),
+                levenshtein(val, name)
+            );
+
+            if(s < score){
+                score = s;
+                best = e;
+            }
+        });
+
+        return score <= 3 ? best : null;
+    }
+
+    /* ================= AUTOCOMPLETE ================= */
+    function suggest(input){
+
+        const v = norm(input);
+
+        return allEmployees
+            .filter(e =>
+                norm(e.emp_name).includes(v) ||
+                norm(e.emp_id).includes(v)
+            )
+            .slice(0,5);
+    }
+
+    /* ================= NLP ENGINE (FIXED) ================= */
+    function parseNLP(text){
+
+        const t = text.toLowerCase();
+
+        // show status
+        const statusMatch = t.match(/show (.+) status/);
+        if(statusMatch){
+
+            const emp = findEmployeeFuzzy(statusMatch[1]);
+            if(emp){
+                return { type:"status", emp };
+            }
+        }
+
+        // close ticket NLP
+        const closeMatch = t.match(/close (.+) ticket/);
+        if(closeMatch){
+
+            const emp = findEmployeeFuzzy(closeMatch[1]);
+            if(emp){
+                return { type:"close", emp };
+            }
+        }
+
+        // direct employee mention
+        const emp = findEmployeeFuzzy(text);
+        if(emp){
+            return { type:"employee", emp };
+        }
+
+        return null;
+    }
+
+    /* ================= HELP ================= */
+    if(lower === "help"){
+        return send(`
+            📌 AI BOT COMMAND CENTER<br><br>
+
+            👤 Employee<br>
+            • employee name/id<br><br>
+
+            🤖 NLP<br>
+            • show vishnu status<br>
+            • close raj ticket<br><br>
+
+            📊 Stats<br>
+            • stats
+        `);
+    }
+
+    /* ================= NLP FIRST ================= */
+    const nlp = parseNLP(raw);
+
+    if(nlp){
+
+        if(nlp.type === "status"){
+            return send(`
+                👤 <b>${nlp.emp.emp_name}</b><br>
+                ID: ${nlp.emp.emp_id}<br>
+                Status: ${nlp.emp.ticket_status}<br>
+                Step: ${nlp.emp.current_step}<br>
+                Ticket: ${nlp.emp.ticket_id}
+            `);
+        }
+
+        if(nlp.type === "close"){
+            window._lastTicket = nlp.emp;
+
+            return send(`
+                🎫 Ticket Found (NLP)<br>
+                ${nlp.emp.emp_name}<br>
+                Ticket: ${nlp.emp.ticket_id}<br><br>
+                Type: confirm close
+            `);
+        }
+
+        if(nlp.type === "employee"){
+            return send(`
+                👤 <b>${nlp.emp.emp_name}</b><br>
+                ID: ${nlp.emp.emp_id}<br>
+                Dept: ${nlp.emp.department}<br>
+                Ticket: ${nlp.emp.ticket_id}
+            `);
+        }
+    }
+
+    /* ================= EMPLOYEE SEARCH ================= */
+    if(lower.startsWith("employee") || /^\d+$/.test(lower)){
+
+        const query = lower.startsWith("employee")
+            ? raw.split(" ").slice(1).join(" ")
+            : raw;
+
+        let emp = findEmployeeFuzzy(query);
+
+        if(!emp){
+
+            const sug = suggest(query);
+
+            return send(`
+                ❌ Not Found<br><br>
+                💡 Suggestions:<br>
+                ${sug.map(s=>`• ${s.emp_name} (${s.emp_id})`).join("<br>")}
+            `);
+        }
+
+        return send(`
+            👤 <b>${emp.emp_name}</b><br>
+            ID: ${emp.emp_id}<br>
+            Dept: ${emp.department}<br>
+            Status: ${emp.ticket_status}
+        `);
+    }
+
+    /* ================= STATS ================= */
+    if(lower === "stats"){
+
+        const open = allEmployees.filter(e=>e.ticket_status==="OPEN").length;
+        const closed = allEmployees.filter(e=>e.ticket_status==="CLOSED").length;
+
+        return send(`
+            📊 Stats<br>
+            Open: ${open}<br>
+            Closed: ${closed}
+        `);
+    }
+
+    /* ================= FALLBACK ================= */
+    const fallback = findEmployeeFuzzy(raw);
+
+    if(fallback){
+        return send(`
+            👤 Did you mean?<br>
+            ${fallback.emp_name}<br>
+            ID: ${fallback.emp_id}<br>
+            Ticket: ${fallback.ticket_id}
+        `);
+    }
+
+    return send(`
+        ❓ Unknown command<br><br>
+        Try:<br>
+        • employee vishnu<br>
+        • show raj status<br>
+        • close raj ticket<br>
+        • stats
+    `);
+}
+/* =========================
+   LOAD DASHBOARD (FIXED)
+========================= */
+async function loadDashboard() {
+
+    try {
+
+        console.clear();
+
+        console.log("================================================");
+        console.log("🚀 ADMIN DASHBOARD LOADING...");
+        console.log("================================================");
+
+        /* =====================================================
+           ONLY TICKET API NEEDED
+        ===================================================== */
+
+        const ticketUrl = `http://127.0.0.1:5332/api/admin/tickets`;
+
+        console.log("TICKET API:", ticketUrl);
+
+        /* =====================================================
+           FETCH ADMIN LOCATION TICKETS
+        ===================================================== */
+
+        const ticketRes = await fetch(ticketUrl, {
+
+            method: "GET",
+
+            credentials: "include",
+
+            headers: {
+                "Content-Type": "application/json"
+            }
+        });
+
+        console.log("TICKET STATUS:", ticketRes.status);
+
+        if (!ticketRes.ok) {
+
+            throw new Error(
+                `TICKET API FAILED -> ${ticketRes.status}`
+            );
+        }
+
+        /* =====================================================
+           JSON
+        ===================================================== */
+
+        const ticketJson = await ticketRes.json();
+
+        console.log("RAW API RESPONSE:", ticketJson);
+
+        /* =====================================================
+           DATA VALIDATION
+        ===================================================== */
+
+        if (!ticketJson.success) {
+
+            throw new Error(
+                ticketJson.message || "API FAILED"
+            );
+        }
+
+        let employees =
+            Array.isArray(ticketJson.data)
+                ? ticketJson.data
+                : [];
+
+        console.log("EMPLOYEE COUNT:", employees.length);
+
+        /* =====================================================
+           NORMALIZE EMPLOYEE DATA
+        ===================================================== */
+
+        allEmployees = employees.map(emp => {
+
+            return {
+
+                /* =============================================
+                   EMPLOYEE
+                ============================================= */
+
+                emp_id:
+                    String(emp.emp_id || "-"),
+
+                emp_name:
+                    emp.emp_name || "-",
+
+                email:
+                    emp.email || "-",
+
+                designation:
+                    emp.designation || "-",
+
+                department:
+                    emp.department || "-",
+
+                account_name:
+                    emp.account_name || "-",
+
+                project_name:
+                    emp.project_name || "-",
+
+                location:
+                    emp.location || "-",
+
+                /* =============================================
+                   ONBOARDING
+                ============================================= */
+
+                onboarding_status:
+                    emp.onboarding_status ||
+                    "Onboarding In Progress",
+
+                current_step:
+                    emp.current_step ||
+                    "ID_CARD_AND_ACCESS",
+
+                progress:
+                    emp.progress || 0,
+
+                /* =============================================
+                   TICKET
+                ============================================= */
+
+                ticket_id:
+                    emp.ticket_id || "-",
+
+                ticket_type:
+                    String(
+                        emp.ticket_type ||
+                        "ID_CARD_AND_ACCESS"
+                    ).toUpperCase(),
+
+                ticket_status:
+                    String(
+                        emp.ticket_status ||
+                        emp.id_card_status ||
+                        "OPEN"
+                    ).toUpperCase(),
+
+                /* =============================================
+                   FLAGS
+                ============================================= */
+
+                escalated:
+                    Boolean(emp.escalated),
+
+                is_open:
+                    Boolean(emp.is_open),
+
+                /* =============================================
+                   DATES
+                ============================================= */
+
+                created_at:
+                    emp.created_at || null,
+
+                updated_at:
+                    emp.updated_at || null
+            };
+        });
+
+        /* =====================================================
+           REMOVE DUPLICATES
+        ===================================================== */
+
+        const uniqueMap = {};
+
+        allEmployees.forEach(emp => {
+
+            const key = `${emp.emp_id}_${emp.ticket_id || Math.random()}`;
+
+            uniqueMap[key] = emp;
+        });
+
+        allEmployees =
+            Object.values(uniqueMap);
+
+        /* =====================================================
+           SORT LATEST FIRST
+        ===================================================== */
+
+       allEmployees.sort((a, b) => {
+    return new Date(b.updated_at || "2000-01-01") -
+           new Date(a.updated_at || "2000-01-01");
+});
+
+        console.log("================================================");
+        console.log("FINAL EMPLOYEE DATA");
+        console.table(allEmployees);
+        console.log("================================================");
+
+        /* =====================================================
+           RENDER UI
+        ===================================================== */
+
+        renderTable(allEmployees);
+
+        const stats = {
+    total_employees: allEmployees.length,
+    id_card_open: allEmployees.filter(e => e.ticket_status === "OPEN").length,
+    id_card_closed: allEmployees.filter(e => e.ticket_status === "CLOSED").length,
+    in_progress_onboarding: allEmployees.filter(e => e.onboarding_status !== "COMPLETED").length,
+    completed_onboarding: allEmployees.filter(e => e.onboarding_status === "COMPLETED").length
+};
+
+updateKPIsFromSocket(stats);
+
+        if (typeof loadCharts === "function") {
+    loadCharts(allEmployees);
+}
+
+        console.log("✅ DASHBOARD LOADED SUCCESSFULLY");
+
+    } catch (err) {
+
+        console.error("================================================");
+        console.error("❌ DASHBOARD LOAD FAILED");
+        console.error(err);
+        console.error("================================================");
+
+        allEmployees = [];
+
+        renderTable([]);
+
+        updateKPIsFromSocket({
+    total_employees: 0,
+    id_card_open: 0,
+    id_card_closed: 0,
+    in_progress_onboarding: 0,
+    completed_onboarding: 0
+});
+
+        if (typeof loadCharts === "function") {
+    loadCharts([]);
+}
+
+        alert(
+            "Dashboard loading failed.\nCheck browser console."
+        );
+    }
+}
+function loadCharts(data = []) {
+
+    console.log("📊 Loading Charts with:", data);
+
+    const open = data.filter(e => e.ticket_status === "OPEN").length;
+    const closed = data.filter(e => e.ticket_status === "CLOSED").length;
+
+    const inProgress = data.filter(e => e.onboarding_status !== "COMPLETED").length;
+    const completed = data.filter(e => e.onboarding_status === "COMPLETED").length;
+
+    // ✅ DESTROY OLD CHARTS (VERY IMPORTANT)
+    if (statusChart) {
+        statusChart.destroy();
+    }
+
+    if (ticketChart) {
+        ticketChart.destroy();
+    }
+
+    /* =========================
+       EMPLOYEE STATUS CHART
+    ========================= */
+
+    const ctx1 = document.getElementById("statusChart");
+
+    statusChart = new Chart(ctx1, {
+        type: "doughnut",
+        data: {
+            labels: ["In Progress", "Completed"],
+            datasets: [{
+                data: [inProgress, completed],
+                backgroundColor: ["#59b8ff", "#34d47f"]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+
+    /* =========================
+       TICKET STATUS CHART
+    ========================= */
+
+    const ctx2 = document.getElementById("ticketChart");
+
+    ticketChart = new Chart(ctx2, {
+        type: "pie",
+        data: {
+            labels: ["Open", "Closed"],
+            datasets: [{
+                data: [open, closed],
+                backgroundColor: ["#ff6f6f", "#19d3a2"]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+}
+
+/* =========================
+   CREATE TICKET (SAFE)
+========================= */
+
+async function createTicket(empId, type = "ID_CARD_AND_ACCESS") {
+
+    try {
+
+        const res = await fetch(`${API}/tickets/create`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ emp_id: empId, ticket_type: type })
+        });
+
+        if (!res.ok) throw new Error("Create Failed");
+
+        await res.json();
+
+        await loadDashboard();
+        emitTicketUpdate();
+
+    } catch (e) {
+        console.error(e);
+        alert("Ticket creation failed");
+    }
+}
+
+/* =========================
+   CLOSE TICKET (FIXED)
+========================= */
+
+async function submitClosure() {
+
+    const comment = document.getElementById("adminComment")?.value?.trim();
+
+    if (!currentTicketId) return alert("No ticket selected");
+    if (!comment) return alert("Enter comments");
+
+    try {
+
+        const res = await fetch(`${API}/tickets/close`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                ticket_id: currentTicketId,
+                remarks: comment
+            })
+        });
+
+        if (!res.ok) throw new Error("Close failed");
+
+        closeModal();
+
+        await loadDashboard();
+        emitTicketUpdate();
+
+        alert("Ticket Closed ✔");
+
+    } catch (e) {
+        console.error(e);
+        alert("Close failed");
+    }
+}
+
+/* =========================
+   SOCKET (STABLE)
+========================= */
+
+function emitTicketUpdate() {
+
+    if (socket?.connected) {
+        socket.emit("global_ticket_update", { updated: true });
+    }
+}
+
+function initSocket() {
+
+    try {
+
+        if (typeof io === "undefined") {
+            console.warn("Socket.io not loaded");
+            return;
+        }
+
+        socket = io("http://127.0.0.1:5332", {
+
+            transports: ["polling"],
+
+            reconnection: true,
+
+            reconnectionAttempts: 5
+        });
+
+        socket.on("connect", () => {
+            console.log("✅ Socket Connected");
+        });
+
+        socket.on("connect_error", err => {
+            console.error("❌ Socket Error:", err);
+        });
+
+        socket.on("global_ticket_update", (data) => {
+
+    console.log("📡 SOCKET UPDATE RECEIVED:", data);
+
+    clearTimeout(reloadTimeout);
+
+    reloadTimeout = setTimeout(() => {
+
+        // update KPIs directly from socket (NO FULL RELOAD NEEDED)
+        if (data?.stats) {
+            updateKPIsFromSocket(data.stats);
+        }
+
+        // optionally refresh table if needed
+        loadDashboard();
+
+    }, 400);
+});
+
+    } catch (err) {
+
+        console.error("Socket Init Failed:", err);
+    }
+}
+/* =========================
+   ROLE VIEW (SAFE)
+========================= */
+
+function getDashboardView(role, employees = []) {
+
+    role = safeText(role);
+
+    if (role === "HEALTHCARE_PMO") {
+        return employees.filter(e =>
+            safeText(e.current_step).includes("COE") ||
+            safeText(e.current_step).includes("LAPTOP")
+        );
+    }
+
+    if (role === "RM") {
+        return employees.filter(e =>
+            safeText(e.current_step).includes("ID_CARD")
+        );
+    }
+
+    if (role === "ACCOUNT_PMO") {
+        return employees.filter(e =>
+            safeText(e.ticket_status) === "OPEN"
+        );
+    }
+
+    return employees;
+}
+
+/* =========================
+   MODAL
+========================= */
+
+function openCloseModal(empId, ticketId) {
+
+    currentTicketId = ticketId;
+
+    document.getElementById("ticketInfo").innerHTML =
+        `<b>Employee:</b> ${empId}<br><b>Ticket:</b> ${ticketId}`;
+
+    document.getElementById("commentModal").style.display = "flex";
+}
+
+function closeModal() {
+
+    currentTicketId = null;
+    document.getElementById("commentModal").style.display = "none";
+}
+
+/* =========================
+   SEARCH (SAFE)
+========================= */
+
+function searchTable(val) {
+
+    val = safeText(val).toLowerCase();
+
+    const filtered = allEmployees.filter(e =>
+        JSON.stringify(e).toLowerCase().includes(val)
+    );
+
+    renderTable(filtered);
+}
+function renderTable(data = []) {
+
+    const tbody =
+        document.getElementById("tableBody");
+
+    if (!tbody) return;
+
+    if (data.length === 0) {
+
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="8"
+                    style="text-align:center;padding:30px;">
+                    No Data Found
+                </td>
+            </tr>
+        `;
+
+        return;
+    }
+
+    tbody.innerHTML =
+        data.map(emp => {
+
+            return `
+                <tr>
+
+                    <td>${emp.emp_id || "-"}</td>
+
+                    <td>${emp.emp_name || "-"}</td>
+
+                    <td>
+                        <span class="badge ${
+                        emp.ticket_status === "CLOSED"
+                        ? "badge-closed"
+                        : "badge-open"
+                        }">
+                            ${emp.onboarding_status || "-"}
+                        </span>
+                    </td>
+
+                    <td>
+                        <span class="step-pill">
+                            ${emp.current_step || "-"}
+                        </span>
+                    </td>
+
+                    <td>
+                        ${emp.department || "-"}
+                    </td>
+
+                    <td>
+                        ${emp.ticket_id || "-"}
+                    </td>
+
+                    <td>
+                        ${emp.ticket_status || "-"}
+                    </td>
+
+                    <td>
+
+                        ${
+                            emp.ticket_status === "OPEN"
+
+                            ?
+
+                            `<button
+                                class="btn-close"
+                                onclick="openCloseModal(
+                                    '${emp.emp_id}',
+                                    '${emp.ticket_id}'
+                                )">
+                                Close
+                            </button>`
+
+                            :
+
+                            `<span style="color:green;">
+                                Completed
+                            </span>`
+                        }
+
+                    </td>
+
+                </tr>
+            `;
+        }).join("");
+}
+
+function updateKPIsFromSocket(stats = {}) {
+
+    const idOpen = stats.id_card_open || 0;
+    const idClosed = stats.id_card_closed || 0;
+
+    const laptopOpen = stats.laptop_open || 0;
+    const laptopClosed = stats.laptop_closed || 0;
+
+    const completed = stats.completed_onboarding || 0;
+    const inProgress = stats.in_progress_onboarding || 0;
+
+    const total = stats.total_employees || 0;
+
+    // KPI UI updates
+    document.getElementById("total").innerText = total;
+
+    document.getElementById("tickets").innerText = idOpen; // OPEN tickets view
+
+    document.getElementById("progress").innerText = inProgress;
+
+    document.getElementById("completed").innerText = completed;
+
+    document.getElementById("escalations").innerText = 0; // not in backend yet
+
+    console.log(`
+================ SOCKET KPI =================
+ID CARD OPEN   : ${idOpen}
+ID CARD CLOSED : ${idClosed}
+LAPTOP OPEN    : ${laptopOpen}
+LAPTOP CLOSED  : ${laptopClosed}
+COMPLETED      : ${completed}
+IN PROGRESS    : ${inProgress}
+TOTAL          : ${total}
+============================================
+`);
+}
+/* =========================
+   LOGOUT
+========================= */
+
+async function logout() {
+
+    try {
+
+        // ==========================================
+        // CALL BACKEND LOGOUT
+        // ==========================================
+
+        await fetch(
+            "http://127.0.0.1:5332/api/auth/logout",
+            {
+                method: "POST",
+                credentials: "include"
+            }
+        );
+
+    } catch (err) {
+
+        console.error("Logout API Error:", err);
+    }
+
+    // ==========================================
+    // CLEAR LOCAL STORAGE
+    // ==========================================
+
+    localStorage.clear();
+
+    sessionStorage.clear();
+
+    // ==========================================
+    // REDIRECT TO LOGIN PAGE
+    // ==========================================
+
+    window.location.href =
+        "http://127.0.0.1:5500/login.html";
+}
+
+/* =========================
+   INIT
+========================= */
+window.onload = () => {
+    initSocket();
+    loadDashboard();
+};
+
+</script>
+</body>
+</html>

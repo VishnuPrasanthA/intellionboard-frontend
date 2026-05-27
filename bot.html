@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+<title>AI Employee Onboarding Assistant</title>
+
+<style>
+
+:root{
+    --primary:#0F6E56;
+    --primary2:#1D9E75;
+    --bg:#eef3f8;
+    --card:#ffffff;
+    --text:#1e293b;
+    --muted:#64748b;
+    --bot:#f1f5f9;
+    --user:#2563eb;
+    --danger:#ef4444;
+    --success:#10b981;
+}
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    font-family:"Segoe UI",sans-serif;
+    background:linear-gradient(135deg,#eef3f8,#f8fbff);
+    min-height:100vh;
+    padding:30px;
+    color:var(--text);
+}
+
+.container{
+    max-width:900px;
+    margin:auto;
+}
+
+.top-banner{
+    background:linear-gradient(135deg,var(--primary),var(--primary2));
+    color:white;
+    padding:24px;
+    border-radius:20px;
+    margin-bottom:20px;
+    box-shadow:0 10px 25px rgba(0,0,0,0.12);
+}
+
+.top-banner h1{
+    font-size:32px;
+    margin-bottom:8px;
+}
+
+.top-banner p{
+    opacity:0.92;
+    line-height:1.6;
+}
+
+.main-grid{
+    display:grid;
+    grid-template-columns: 320px 1fr;
+    gap:20px;
+}
+
+.side-panel{
+    background:var(--card);
+    border-radius:20px;
+    padding:20px;
+    box-shadow:0 8px 20px rgba(0,0,0,0.06);
+    height:fit-content;
+}
+
+.side-panel h3{
+    margin-bottom:18px;
+    color:var(--primary);
+}
+
+.info-card{
+    background:#f8fafc;
+    border:1px solid #e2e8f0;
+    padding:14px;
+    border-radius:14px;
+    margin-bottom:14px;
+}
+
+.info-card label{
+    display:block;
+    font-size:12px;
+    color:var(--muted);
+    margin-bottom:5px;
+    text-transform:uppercase;
+    letter-spacing:0.5px;
+}
+
+.info-card div{
+    font-weight:600;
+}
+
+.progress-section{
+    margin-top:25px;
+}
+
+.progress-bar{
+    height:12px;
+    background:#e2e8f0;
+    border-radius:20px;
+    overflow:hidden;
+    margin-top:10px;
+}
+
+.progress-fill{
+    height:100%;
+    width:0%;
+    background:linear-gradient(90deg,var(--primary),var(--primary2));
+    transition:0.4s;
+}
+
+.chat-card{
+    background:var(--card);
+    border-radius:20px;
+    box-shadow:0 8px 20px rgba(0,0,0,0.06);
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+    height:720px;
+}
+
+.chat-header{
+    padding:18px 22px;
+    border-bottom:1px solid #edf2f7;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+}
+
+.bot-info{
+    display:flex;
+    align-items:center;
+    gap:12px;
+}
+
+.bot-avatar{
+    width:48px;
+    height:48px;
+    border-radius:50%;
+    background:linear-gradient(135deg,var(--primary),var(--primary2));
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:white;
+    font-size:22px;
+}
+
+.status{
+    color:var(--success);
+    font-size:13px;
+    margin-top:3px;
+}
+
+.chat-box{
+    flex:1;
+    overflow-y:auto;
+    padding:20px;
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+    background:#f8fbff;
+}
+
+.message-wrapper{
+    display:flex;
+    flex-direction:column;
+    max-width:75%;
+}
+
+.message-wrapper.user{
+    align-self:flex-end;
+}
+
+.msg{
+    padding:14px 16px;
+    border-radius:18px;
+    line-height:1.6;
+    font-size:14px;
+    animation:fadeIn 0.3s ease;
+}
+
+.bot-msg{
+    background:var(--bot);
+    color:#111827;
+    border-bottom-left-radius:6px;
+}
+
+.user-msg{
+    background:linear-gradient(135deg,#2563eb,#1d4ed8);
+    color:white;
+    border-bottom-right-radius:6px;
+}
+
+.reply-container{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-top:10px;
+}
+
+.reply-chip{
+    padding:8px 16px;
+    border-radius:20px;
+    border:1px solid #dbe3ec;
+    background:white;
+    cursor:pointer;
+    transition:0.2s;
+    font-size:13px;
+    font-weight:600;
+}
+
+.reply-chip:hover{
+    background:var(--primary);
+    color:white;
+    border-color:var(--primary);
+}
+
+.reply-chip.disabled{
+    opacity:0.5;
+    pointer-events:none;
+}
+
+.controls{
+    padding:18px;
+    border-top:1px solid #edf2f7;
+    display:flex;
+    gap:12px;
+    background:white;
+}
+
+.controls input{
+    flex:1;
+    border:1px solid #dbe3ec;
+    border-radius:14px;
+    padding:14px;
+    font-size:14px;
+    outline:none;
+}
+
+.controls input:focus{
+    border-color:var(--primary);
+    box-shadow:0 0 0 4px rgba(15,110,86,0.1);
+}
+
+.controls button{
+    border:none;
+    background:linear-gradient(135deg,var(--primary),var(--primary2));
+    color:white;
+    padding:0 24px;
+    border-radius:14px;
+    cursor:pointer;
+    font-weight:600;
+    transition:0.2s;
+}
+
+.controls button:hover{
+    transform:translateY(-2px);
+}
+
+.summary-card{
+    margin-top:18px;
+    background:#ecfdf5;
+    border:1px solid #bbf7d0;
+    padding:16px;
+    border-radius:14px;
+    display:none;
+}
+
+.summary-card h4{
+    color:#065f46;
+    margin-bottom:12px;
+}
+
+.summary-item{
+    margin-bottom:8px;
+}
+
+.typing{
+    display:flex;
+    align-items:center;
+    gap:4px;
+    padding:12px 16px;
+    width:fit-content;
+    background:var(--bot);
+    border-radius:16px;
+}
+
+.typing span{
+    width:8px;
+    height:8px;
+    background:#94a3b8;
+    border-radius:50%;
+    animation:blink 1.2s infinite;
+}
+
+.typing span:nth-child(2){
+    animation-delay:0.2s;
+}
+
+.typing span:nth-child(3){
+    animation-delay:0.4s;
+}
+
+@keyframes blink{
+    0%,100%{opacity:0.2;}
+    50%{opacity:1;}
+}
+
+@keyframes fadeIn{
+    from{
+        opacity:0;
+        transform:translateY(8px);
+    }
+    to{
+        opacity:1;
+        transform:translateY(0);
+    }
+}
+
+@media(max-width:900px){
+
+    .main-grid{
+        grid-template-columns:1fr;
+    }
+
+    .chat-card{
+        height:650px;
+    }
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="top-banner">
+        <h1>🚀 AI Employee Onboarding Assistant</h1>
+        <p>
+            Automated onboarding experience for new employees.
+            This assistant helps PMO teams collect confirmations,
+            onboarding readiness, asset validation, access status,
+            and employee acknowledgements automatically.
+        </p>
+    </div>
+
+    <div class="main-grid">
+
+        <!-- LEFT PANEL -->
+        <div class="side-panel">
+
+            <h3>📋 Employee Summary</h3>
+
+            <div class="info-card">
+                <label>Employee ID</label>
+                <div id="side_emp_id">-</div>
+            </div>
+
+            <div class="info-card">
+                <label>Employee Name</label>
+                <div id="side_emp_name">-</div>
+            </div>
+
+            <div class="info-card">
+                <label>Email</label>
+                <div id="side_email">-</div>
+            </div>
+
+            <div class="info-card">
+                <label>Account</label>
+                <div id="side_account">-</div>
+            </div>
+
+            <div class="info-card">
+                <label>Location</label>
+                <div id="side_location">-</div>
+            </div>
+
+            <div class="progress-section">
+
+                <h3>📈 Onboarding Progress</h3>
+
+                <div class="progress-bar">
+                    <div id="progressFill" class="progress-fill"></div>
+                </div>
+
+                <div style="margin-top:10px;color:#64748b;">
+                    <span id="progressText">0%</span> Completed
+                </div>
+
+            </div>
+
+            <div id="summaryCard" class="summary-card">
+
+                <h4>✅ Final Summary</h4>
+
+                <div id="summaryContent"></div>
+
+            </div>
+
+        </div>
+
+        <!-- CHAT -->
+        <div class="chat-card">
+
+            <div class="chat-header">
+
+                <div class="bot-info">
+
+                    <div class="bot-avatar">
+                        🤖
+                    </div>
+
+                    <div>
+                        <div style="font-weight:700;">
+                            QA Onboarding AI
+                        </div>
+
+                        <div class="status">
+                            ● Online
+                        </div>
+                    </div>
+
+                </div>
+
+                <div style="font-size:13px;color:#64748b;">
+                    Employee Verification Bot
+                </div>
+
+            </div>
+
+            <div id="chat" class="chat-box"></div>
+
+            <div class="controls">
+
+                <input
+                    id="user_input"
+                    placeholder="Type your response..."
+                    onkeypress="if(event.key==='Enter') handleInput()"
+                >
+
+                <button onclick="handleInput()">
+                    Send
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+const BASE_URL = "http://127.0.0.1:5332";
+
+let emp_id = "";
+let phase = "ask_emp";
+let step = 0;
+
+let employeeData = {};
+let answers = {};
+
+const questions = [
+    "Laptop","Headphones","Charger","Bag",
+    "ODC Access","ID Card","SharePoint Access",
+    "VPN Access","Teams Access","Outlook Access"
+];
+
+// ================= ✅ TEXT CLEAN (FRONTEND FUZZY HELP) =================
+function cleanText(t){
+    return t.toLowerCase().replace(/[^a-z ]/g,'');
+}
+
+// ================= UI =================
+function addTyping(){
+    const chat=document.getElementById("chat");
+    const typing=document.createElement("div");
+    typing.id="typing";
+    typing.className="typing";
+    typing.innerHTML=`<span></span><span></span><span></span>`;
+    chat.appendChild(typing);
+    chat.scrollTop=chat.scrollHeight;
+}
+
+function removeTyping(){
+    document.getElementById("typing")?.remove();
+}
+
+function botReply(text,replies=[]){
+    addTyping();
+    setTimeout(()=>{
+        removeTyping();
+        addMessage(text,"bot",replies);
+    },500);
+}
+
+function addMessage(text,type="bot",replies=[]){
+
+    const chat=document.getElementById("chat");
+
+    const wrap=document.createElement("div");
+    wrap.className="message-wrapper "+(type==="user"?"user":"");
+
+    const msg=document.createElement("div");
+    msg.className="msg "+(type==="user"?"user-msg":"bot-msg");
+    msg.innerHTML=text;
+
+    wrap.appendChild(msg);
+
+    if(replies.length){
+        const box=document.createElement("div");
+        box.className="reply-container";
+
+        replies.forEach(r=>{
+            const chip=document.createElement("div");
+            chip.className="reply-chip";
+            chip.innerText=r;
+
+            chip.onclick=()=>{
+                box.querySelectorAll(".reply-chip")
+                   .forEach(c=>c.classList.add("disabled"));
+
+                addMessage(r,"user");
+                handleResponse(r);
+            };
+
+            box.appendChild(chip);
+        });
+
+        wrap.appendChild(box);
+    }
+
+    chat.appendChild(wrap);
+    chat.scrollTop = chat.scrollHeight;
+}
+
+// ================= LOAD =================
+window.onload=()=>{
+    botReply("👋 Welcome to Smart AI-like Onboarding Assistant");
+    setTimeout(()=>{
+        botReply("Enter your <b>Employee ID</b> to begin");
+    },800);
+};
+
+// ================= INPUT =================
+function handleInput(){
+
+    const input=document.getElementById("user_input");
+    const val=input.value.trim();
+
+    if(!val) return;
+
+    addMessage(val,"user");
+    input.value="";
+
+    if(phase==="ask_emp"){
+        emp_id=val;
+        fetchEmployee();
+        return;
+    }
+
+    handleResponse(val);
+}
+
+// ================= LOG =================
+function logChat(q,a){
+    fetch(BASE_URL+"/chat-log",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({emp_id,question:q,answer:a})
+    });
+}
+
+// ================= FETCH EMP =================
+function fetchEmployee(){
+
+    botReply("🔍 Fetching employee...");
+
+    fetch(BASE_URL+"/employee/"+emp_id)
+    .then(res=>{
+        if(!res.ok) throw Error();
+        return res.json();
+    })
+    .then(response=>{
+
+        const emp=response.data;
+
+        employeeData=emp;
+
+        updateSidePanel();
+
+        botReply(`Hello <b>${emp.emp_name}</b> 👋`);
+
+        setTimeout(()=>{
+            botReply(`
+                <b>ID:</b> ${emp.emp_id}<br>
+                <b>Email:</b> ${emp.email}<br>
+                <b>Account:</b> ${emp.account_name}<br>
+                <b>Location:</b> ${emp.location}
+            `);
+        },600);
+
+        setTimeout(()=>{
+            botReply("Is this correct?",["Yes","No"]);
+        },1200);
+
+        phase="verify";
+    })
+    .catch(()=>{
+        botReply("❌ Employee not found");
+    });
+}
+
+// ================= SIDE =================
+function updateSidePanel(){
+    document.getElementById("side_emp_id").innerText=employeeData.emp_id||"-";
+    document.getElementById("side_emp_name").innerText=employeeData.emp_name||"-";
+    document.getElementById("side_email").innerText=employeeData.email||"-";
+    document.getElementById("side_account").innerText=employeeData.account_name||"-";
+    document.getElementById("side_location").innerText=employeeData.location||"-";
+}
+
+// ================= ASSIGN COE =================
+function assignCoe(name){
+
+    botReply("Assigning CoE and trainings... ⏳");
+
+    fetch(BASE_URL + "/assign-coe", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            emp_id: emp_id,
+            coe_name: name
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+
+        // ================================
+        // ✅ ERROR HANDLING
+        // ================================
+        if(!data.success){
+            botReply("❌ Failed to assign CoE. Try again.");
+            return;
+        }
+
+        // ================================
+        // ✅ STORE SESSION DATA (IMPORTANT)
+        // ================================
+        localStorage.setItem("emp_id", emp_id);
+        localStorage.setItem("coe", data.coe);
+
+        // ✅ store assigned trainings (very useful)
+        localStorage.setItem("trainings", JSON.stringify(data.trainings));
+
+        // ================================
+        // ✅ UI MESSAGE
+        // ================================
+        botReply(`
+✅ <b>${data.coe}</b> assigned successfully 🎯<br>
+📘 Trainings assigned:<br>
+${data.trainings.map(t => "• " + t).join("<br>")}
+        `);
+
+        // ================================
+        // ✅ REDIRECT TO LMS
+        // ================================
+        setTimeout(() => {
+            window.location.href = "employee_dashboard.html";
+        }, 1800);
+
+    })
+    .catch(err => {
+
+        console.error(err);
+
+        botReply("❌ Network error while assigning CoE.");
+
+    });
+}
+// ================= RESPONSE =================
+function handleResponse(val){
+
+    // ✅ KEEP ORIGINAL
+    let rawVal = val;
+
+    // ✅ CLEAN + NORMALIZE
+    let cleanVal = cleanText(val);
+
+    // ✅ 🔥 SMART YES/NO DETECTION
+    const yesWords = ["yes","y","yeah","yep","sure","ok","okay","correct"];
+    const noWords  = ["no","n","nope","wrong","change"];
+
+    const isYes = yesWords.some(w => cleanVal.includes(w));
+    const isNo  = noWords.some(w => cleanVal.includes(w));
+
+    // =========================================================
+    // VERIFY
+    // =========================================================
+    if(phase === "verify"){
+
+        if(isNo){
+            botReply("❌ Please contact PMO team.");
+            return;
+        }
+
+        if(isYes){
+            botReply("Enter your Primary Skill:");
+            phase = "skill1";
+            return;
+        }
+
+        botReply("Please choose Yes or No");
+        return;
+    }
+
+    // =========================================================
+    // PRIMARY SKILL
+    // =========================================================
+    if(phase === "skill1"){
+
+        answers.primary = rawVal;
+        logChat("Primary Skill", rawVal);
+
+        botReply("Enter your Secondary Skill:");
+        phase = "skill2";
+        return;
+    }
+
+    // =========================================================
+    // SECONDARY SKILL
+    // =========================================================
+    if(phase === "skill2"){
+
+        answers.secondary = rawVal;
+        logChat("Secondary Skill", rawVal);
+
+        botReply("Enter your Experience (0,1,2...)");
+        phase = "exp";
+        return;
+    }
+
+    // =========================================================
+    // EXPERIENCE (✅ FIXED FULLY)
+    // =========================================================
+    if(phase === "exp"){
+
+        // ✅ Extract number EVEN if "2 years", "0 yrs"
+        let match = rawVal.match(/\d+/);
+
+        let exp = match ? parseInt(match[0]) : NaN;
+
+        if(isNaN(exp)){
+            botReply("⚠️ Enter valid experience like 0, 1, 2");
+            return;
+        }
+
+        answers.exp = exp;
+        logChat("Experience", rawVal);
+
+        // ✅ Save to DB
+        fetch(BASE_URL + "/save-skills",{
+            method:"POST",
+            headers:{"Content-Type":"application/json"},
+            body:JSON.stringify({
+                emp_id,
+                primary_skill:answers.primary,
+                secondary_skill:answers.secondary,
+                experience_years:exp
+            })
+        });
+
+        // ✅ SHOW MESSAGE (UX IMPROVEMENT)
+        if(exp <= 1){
+            botReply("🧑‍🎓 Fresher detected → assigning beginner training");
+        } else {
+            botReply("✅ Experience recognized → assigning advanced training");
+        }
+
+        // ✅ SMART COE CALL
+        fetch(BASE_URL + "/get-coe-options/" + emp_id)
+        .then(r=>r.json())
+        .then(data=>{
+
+            if(!data.success){
+                botReply("❌ Could not fetch CoE.");
+                return;
+            }
+
+            // ✅ RECOMMEND
+            if(data.confidence >= 1){
+
+                answers.recommended_coe = data.recommended;
+
+                botReply(`
+✅ Based on your skills,
+we recommend <b>${data.recommended}</b> ⭐
+
+Do you want to proceed?
+                `, ["Yes","Change"]);
+
+                phase = "confirm_coe";
+
+            } else {
+
+                botReply("Select CoE:", data.options);
+                phase = "coe";
+            }
+        });
+
+        return;
+    }
+
+    // =========================================================
+    // CONFIRM COE
+    // =========================================================
+    if(phase === "confirm_coe"){
+
+        if(isYes){
+
+            logChat("Accepted Recommended COE", answers.recommended_coe);
+
+            assignCoe(answers.recommended_coe);
+
+        } else {
+
+            fetch(BASE_URL + "/get-all-coe")
+            .then(r=>r.json())
+            .then(d=>{
+                botReply("Select your CoE:", d.coes);
+                phase = "coe";
+            });
+        }
+
+        return;
+    }
+
+    // =========================================================
+    // MANUAL COE
+    // =========================================================
+    if(phase === "coe"){
+
+        logChat("Selected COE", rawVal);
+
+        assignCoe(rawVal);
+        return;
+    }
+
+    // =========================================================
+    // QUESTIONS
+    // =========================================================
+    if(phase === "questions"){
+
+        let answerBool = isYes;
+
+        answers[questions[step]] = answerBool;
+
+        logChat(questions[step], rawVal);
+
+        step++;
+        updateProgress();
+
+        ask();
+        return;
+    }
+}
+// ================= ASK =================
+function ask(){
+
+    if(step < questions.length){
+        botReply(
+            `Do you have <b>${questions[step]}</b>?`,
+            ["Yes","No"]
+        );
+        return;
+    }
+
+    submit();
+}
+
+// ================= PROGRESS =================
+function updateProgress(){
+    let p=Math.floor((step/questions.length)*100);
+    document.getElementById("progressFill").style.width=p+"%";
+    document.getElementById("progressText").innerText=p+"%";
+}
+
+// ================= SUBMIT =================
+function submit(){
+
+    botReply("📤 Submitting...");
+
+    setTimeout(()=>{
+
+        let missing=[];
+
+        questions.forEach(q=>{
+            if(!answers[q]) missing.push(q);
+        });
+
+        botReply("✅ Completed 🎉");
+
+        setTimeout(()=>{
+            botReply(
+                missing.length
+                ? "<b>Missing:</b><br>"+missing.join("<br>")
+                : "✅ All Done!"
+            );
+        },500);
+
+        showSummary(missing);
+
+    },1000);
+}
+
+// ================= SUMMARY =================
+function showSummary(m){
+
+    document.getElementById("summaryCard").style.display="block";
+
+    document.getElementById("summaryContent").innerHTML=`
+        <b>Employee:</b> ${employeeData.emp_name}<br>
+        <b>Status:</b> ${m.length?"Pending":"Ready"}<br>
+        <b>Missing:</b> ${m.length?m.join(", "):"None"}
+    `;
+}
+
+</script>
+
+</body>
+</html>

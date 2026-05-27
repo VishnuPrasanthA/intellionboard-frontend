@@ -1,0 +1,1237 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>ITSG Laptop Allocation Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <meta charset="UTF-8">
+
+    <link rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+          rel="stylesheet">
+
+    <!-- FONT AWESOME -->
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+
+
+<style>
+
+/* =========================================================
+ROOT (MODERN GLASS THEME)
+========================================================= */
+
+:root{
+
+    --primary:#19d3a2;
+    --primary-dark:#0fa77f;
+    --primary-light:#e8fff7;
+
+    --blue:#4dabf7;
+    --purple:#b197fc;
+    --orange:#ffa94d;
+    --red:#ff6b6b;
+    --green:#51cf66;
+
+    --text:#1b2b3a;
+    --muted:#6b7b8c;
+
+    --glass:rgba(255,255,255,0.65);
+    --border:rgba(255,255,255,0.4);
+
+    --bg1:#f6fbff;
+    --bg2:#eef6ff;
+
+    --shadow-sm:0 6px 18px rgba(0,0,0,.06);
+    --shadow-md:0 16px 38px rgba(0,0,0,.10);
+    --shadow-lg:0 30px 70px rgba(0,0,0,.14);
+
+    --radius:22px;
+
+    --transition:all .3s ease;
+}
+
+/* =========================================================
+GLOBAL
+========================================================= */
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    font-family:'Poppins',sans-serif;
+    background:
+        radial-gradient(circle at top left,#dff7ff 0%,transparent 35%),
+        radial-gradient(circle at top right,#e8fff4 0%,transparent 35%),
+        linear-gradient(135deg,var(--bg1),var(--bg2));
+    min-height:100vh;
+    color:var(--text);
+}
+
+/* =========================================================
+GLASS CARD BASE
+========================================================= */
+
+.card,
+.card-box,
+.header,
+.tabs,
+.table-container{
+    background:var(--glass);
+    backdrop-filter:blur(16px);
+    -webkit-backdrop-filter:blur(16px);
+    border:1px solid var(--border);
+    box-shadow:var(--shadow-sm);
+    border-radius:var(--radius);
+}
+
+/* =========================================================
+HEADER (MODERN FLOATING)
+========================================================= */
+
+.header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:18px 22px;
+    margin-bottom:20px;
+}
+
+.header h2{
+    font-size:22px;
+    font-weight:800;
+    color:var(--primary-dark);
+}
+
+/* =========================================================
+BUTTONS (MODERN GRADIENT)
+========================================================= */
+
+.btn{
+    border:none;
+    padding:9px 14px;
+    border-radius:12px;
+    cursor:pointer;
+    font-weight:700;
+    transition:var(--transition);
+    color:white;
+}
+
+.btn:hover{
+    transform:translateY(-3px);
+    box-shadow:var(--shadow-md);
+}
+
+.refresh-btn{
+    background:linear-gradient(135deg,#4dabf7,#74c0fc);
+}
+
+.logout-btn{
+    background:linear-gradient(135deg,#ff6b6b,#ffa8a8);
+}
+
+/* =========================================================
+KPI / STATS GRID (IMPORTANT UPGRADE)
+========================================================= */
+
+.stats{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+    gap:16px;
+    margin-bottom:18px;
+}
+
+.card-box{
+    padding:20px;
+    text-align:center;
+    transition:var(--transition);
+    position:relative;
+    overflow:hidden;
+}
+
+.card-box:hover{
+    transform:translateY(-6px);
+    box-shadow:var(--shadow-lg);
+}
+
+.card-box h3{
+    font-size:32px;
+    font-weight:800;
+    color:var(--primary-dark);
+}
+
+.card-box p{
+    margin-top:8px;
+    font-size:12px;
+    color:var(--muted);
+    font-weight:600;
+}
+
+/* soft glow effect */
+.card-box::before{
+    content:"";
+    position:absolute;
+    top:-30px;
+    right:-30px;
+    width:100px;
+    height:100px;
+    border-radius:50%;
+    opacity:.08;
+    background:var(--primary);
+}
+
+/* =========================================================
+CHART
+========================================================= */
+
+.chart-wrapper{
+    width:260px;
+    margin:auto;
+}
+
+/* =========================================================
+SEARCH
+========================================================= */
+
+.search-box{
+    width:100%;
+    padding:12px 14px;
+    border-radius:12px;
+    border:1px solid #dfe7ef;
+    outline:none;
+    font-size:14px;
+    background:white;
+}
+
+/* =========================================================
+TABS
+========================================================= */
+
+.tabs{
+    display:flex;
+    gap:10px;
+    padding:10px;
+    margin-bottom:18px;
+}
+
+.tab-btn{
+    border:none;
+    padding:10px 16px;
+    border-radius:12px;
+    cursor:pointer;
+    font-weight:700;
+    background:#e9eef5;
+    transition:var(--transition);
+}
+
+.tab-btn.active{
+    background:var(--primary);
+    color:white;
+}
+
+/* =========================================================
+TABLE (MODERN CLEAN LOOK)
+========================================================= */
+
+.table-container{
+    padding:10px;
+    overflow-x:auto;
+}
+
+table{
+    width:100%;
+    border-collapse:separate;
+    border-spacing:0 10px;
+}
+
+thead th{
+    text-align:left;
+    padding:14px;
+    font-size:11px;
+    color:var(--muted);
+    text-transform:uppercase;
+}
+
+tbody tr{
+    background:white;
+    border-radius:12px;
+    box-shadow:var(--shadow-sm);
+    transition:var(--transition);
+}
+
+tbody tr:hover{
+    transform:translateY(-2px);
+    box-shadow:var(--shadow-md);
+}
+
+tbody td{
+    padding:14px;
+    font-size:13px;
+}
+
+/* =========================================================
+ROW STATUS COLORS
+========================================================= */
+
+.pending-row td:first-child{
+    border-left:5px solid var(--orange);
+}
+
+.completed-row td:first-child{
+    border-left:5px solid var(--primary);
+}
+
+.progress-row td:first-child{
+    border-left:5px solid var(--blue);
+}
+
+/* =========================================================
+BADGES (MODERN PILL STYLE)
+========================================================= */
+
+.badge{
+    padding:6px 12px;
+    border-radius:40px;
+    font-size:11px;
+    font-weight:700;
+    display:inline-block;
+}
+
+.badge.pending{
+    background:#fff4e5;
+    color:#d97706;
+}
+
+.badge.completed{
+    background:#e6fcf5;
+    color:var(--primary-dark);
+}
+
+.badge.progress{
+    background:#e7f5ff;
+    color:#1c7ed6;
+}
+
+.badge.ticket-open{
+    background:#ffe3e3;
+    color:#e03131;
+}
+
+.badge.ticket-closed{
+    background:#e6fcf5;
+    color:#2b8a3e;
+}
+
+.badge.ticket-progress{
+    background:#e7f5ff;
+    color:#1971c2;
+}
+
+/* =========================================================
+ACTIONS
+========================================================= */
+
+.action-group{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+}
+
+.allocate-btn{
+    background:linear-gradient(135deg,var(--primary),#63e6be);
+    color:white;
+}
+
+.ticket-btn{
+    background:linear-gradient(135deg,#845ef7,#b197fc);
+    color:white;
+}
+
+.disabled-btn{
+    background:#e9ecef;
+    color:#868e96;
+    cursor:not-allowed;
+}
+
+/* =========================================================
+PROGRESS BAR
+========================================================= */
+
+.progress-bar{
+    width:100%;
+    height:10px;
+    background:#edf2f7;
+    border-radius:20px;
+    overflow:hidden;
+}
+
+.progress-fill{
+    height:100%;
+    background:linear-gradient(90deg,var(--primary),#63e6be);
+}
+
+/* =========================================================
+EMPTY STATE
+========================================================= */
+
+.no-data{
+    text-align:center;
+    padding:40px;
+    color:var(--muted);
+    font-weight:600;
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- =========================================================
+     HEADER
+========================================================= -->
+
+<div class="card header">
+
+    <h2>💻 ITSG Laptop Allocation Dashboard</h2>
+
+    <div style="display:flex;gap:10px;">
+
+        <button
+            class="btn refresh-btn"
+            onclick="loadData()"
+        >
+            🔄 Refresh
+        </button>
+
+        <button
+            class="logout-btn"
+            onclick="logout()"
+        >
+            Logout
+        </button>
+
+    </div>
+
+</div>
+
+<!-- =========================================================
+     STATS
+========================================================= -->
+
+<div class="stats">
+
+    <div class="card-box">
+        <h3 id="total">0</h3>
+        <p>Total Employees</p>
+    </div>
+
+    <div class="card-box">
+        <h3 id="pending">0</h3>
+        <p>Pending Allocation</p>
+    </div>
+
+    <div class="card-box">
+        <h3 id="completed">0</h3>
+        <p>Completed Allocation</p>
+    </div>
+
+    <div class="card-box">
+        <h3 id="openTickets">0</h3>
+        <p>Open Tickets</p>
+    </div>
+
+</div>
+
+<!-- =========================================================
+     CHART
+========================================================= -->
+
+<div class="card">
+
+    <div class="chart-wrapper">
+        <canvas id="assetChart"></canvas>
+    </div>
+
+</div>
+
+<!-- =========================================================
+     SEARCH
+========================================================= -->
+
+<div class="card">
+
+    <input
+        type="text"
+        id="searchInput"
+        class="search-box"
+        placeholder="Search employee by ID / Name / Ticket"
+        onkeyup="searchEmployees()"
+    >
+
+</div>
+
+<!-- =========================================================
+     TABS
+========================================================= -->
+
+<div class="tabs">
+
+    <button
+        class="tab-btn active"
+        onclick="showTab(event,'current')"
+    >
+        Current
+    </button>
+
+    <button
+        class="tab-btn"
+        onclick="showTab(event,'completed')"
+    >
+        Completed
+    </button>
+
+</div>
+
+<!-- =========================================================
+     TABLE
+========================================================= -->
+
+<div class="card table-container">
+
+    <div id="table">
+        Loading dashboard...
+    </div>
+
+</div>
+
+<script>
+
+/* =========================================================
+   GLOBALS
+========================================================= */
+
+let chart;
+let allEmployees = [];
+let allTickets = [];
+let currentTab = "current";
+
+/* =========================================================
+   SAFE VALUE
+========================================================= */
+
+function safe(v){
+
+    if(
+        v === undefined ||
+        v === null ||
+        v === ""
+    ){
+        return "N/A";
+    }
+
+    return String(v);
+}
+
+/* =========================================================
+   FORMAT TEXT
+========================================================= */
+
+function formatText(txt){
+
+    return safe(txt)
+        .replace(/_/g," ")
+        .replace(/\b\w/g,c=>c.toUpperCase());
+}
+
+/* =========================================================
+   GET STATUS CLASS
+========================================================= */
+
+function getStatusClass(status){
+
+    status = String(status || "").toUpperCase();
+
+    if(status.includes("COMPLETE")){
+        return "completed";
+    }
+
+    if(status.includes("PROGRESS")){
+        return "progress";
+    }
+
+    return "pending";
+}
+
+/* =========================================================
+   LOAD DATA
+========================================================= */
+
+async function loadData(){
+
+    try{
+
+        document.getElementById("table").innerHTML =
+            `<div class="no-data">Loading dashboard...</div>`;
+
+        /* =====================================================
+           EMPLOYEE API
+        ===================================================== */
+
+        const empRes =
+            await fetch(
+    "http://127.0.0.1:5332/itsg/laptop-tickets",
+    {
+        method:"GET",
+
+        credentials:"include",
+
+        headers:{
+            "Content-Type":"application/json"
+        }
+    }
+);
+
+        const empJson =
+            await empRes.json();
+
+        let employees =
+            empJson.data || [];
+
+        /* =====================================================
+           TICKET API
+        ===================================================== */
+
+        const ticketRes =
+           await fetch(
+    "http://127.0.0.1:5332/itsg/laptop-tickets",
+    {
+        method:"GET",
+
+        credentials:"include",
+
+        headers:{
+            "Content-Type":"application/json"
+        }
+    }
+);
+        const ticketJson =
+            await ticketRes.json();
+
+        allTickets =
+            ticketJson.data || [];
+
+        /* =====================================================
+           MERGE TICKET DATA
+        ===================================================== */
+
+        employees.forEach(emp => {
+
+            const empId =
+                String(emp.emp_id);
+
+            const empTickets =
+                allTickets.filter(t => {
+
+                    const ticketEmpId =
+                        String(t.emp_id);
+
+                    const ticketType =
+                        String(t.type || "")
+                            .toUpperCase();
+
+                    return (
+                        ticketEmpId === empId &&
+                        (
+                            ticketType.includes("LAPTOP") ||
+                            ticketType.includes("ASSET") ||
+                            ticketType.includes("ACCESS")
+                        )
+                    );
+                });
+
+            if(empTickets.length){
+
+                const latestTicket =
+                    empTickets.sort((a,b)=>
+                        new Date(b.updated_at || b.created_at) -
+                        new Date(a.updated_at || a.created_at)
+                    )[0];
+
+                emp.ticket_id =
+                    latestTicket.ticket_id;
+
+                emp.ticket_status =
+                    latestTicket.ticket_status ||
+                    latestTicket.status;
+
+                emp.ticket_type =
+                    latestTicket.type;
+
+                emp.ticket_department =
+                    latestTicket.department;
+            }
+        });
+
+        allEmployees = employees;
+
+        renderDashboard();
+
+    }catch(err){
+
+        console.error("LOAD ERROR:",err);
+
+        document.getElementById("table").innerHTML =
+            `
+            <div class="no-data">
+                Failed to load dashboard
+            </div>
+            `;
+    }
+}
+
+/* =========================================================
+   RENDER DASHBOARD
+========================================================= */
+
+function renderDashboard(){
+
+    const current =
+        allEmployees.filter(e =>
+            !String(e.onboarding_status || "")
+                .toUpperCase()
+                .includes("COMPLETE")
+        );
+
+    const completed =
+        allEmployees.filter(e =>
+            String(e.onboarding_status || "")
+                .toUpperCase()
+                .includes("COMPLETE")
+        );
+
+    const openTickets =
+        allEmployees.filter(e => {
+
+            const status =
+                String(e.ticket_status || "")
+                    .toUpperCase();
+
+            return (
+                status === "OPEN" ||
+                status === "IN_PROGRESS"
+            );
+        });
+
+    document.getElementById("total").innerText =
+        allEmployees.length;
+
+    document.getElementById("pending").innerText =
+        current.length;
+
+    document.getElementById("completed").innerText =
+        completed.length;
+
+    document.getElementById("openTickets").innerText =
+        openTickets.length;
+
+    renderChart(
+        current.length,
+        completed.length
+    );
+
+    renderTable(
+        currentTab === "current"
+            ? current
+            : completed
+    );
+}
+
+/* =========================================================
+   SEARCH
+========================================================= */
+
+function searchEmployees(){
+
+    const keyword =
+        document.getElementById("searchInput")
+            .value
+            .toLowerCase();
+
+    let source =
+        currentTab === "current"
+        ? allEmployees.filter(e =>
+            !String(e.onboarding_status || "")
+                .toUpperCase()
+                .includes("COMPLETE")
+        )
+        : allEmployees.filter(e =>
+            String(e.onboarding_status || "")
+                .toUpperCase()
+                .includes("COMPLETE")
+        );
+
+    source =
+        source.filter(emp => {
+
+            return (
+                String(emp.emp_id || "")
+                    .toLowerCase()
+                    .includes(keyword)
+
+                ||
+
+                String(emp.emp_name || "")
+                    .toLowerCase()
+                    .includes(keyword)
+
+                ||
+
+                String(emp.ticket_id || "")
+                    .toLowerCase()
+                    .includes(keyword)
+            );
+        });
+
+    renderTable(source);
+}
+
+/* =========================================================
+   RENDER TABLE
+========================================================= */
+
+function renderTable(data){
+
+    if(!data.length){
+
+        document.getElementById("table").innerHTML =
+            `
+            <div class="no-data">
+                No employee records found
+            </div>
+            `;
+
+        return;
+    }
+
+    let html = `
+
+    <table>
+
+        <thead>
+
+            <tr>
+
+                <th>Employee</th>
+                <th>Status</th>
+                <th>Current Step</th>
+                <th>Ticket Details</th>
+                <th>Progress</th>
+                <th>Action</th>
+
+            </tr>
+
+        </thead>
+
+        <tbody>
+    `;
+
+    data.forEach(emp => {
+
+        const onboardingStatus =
+            String(emp.onboarding_status || "")
+                .toUpperCase();
+
+        const ticketStatus =
+            String(emp.ticket_status || "")
+                .toUpperCase();
+
+        const progress =
+    Number(emp.progress || 0);
+
+        let rowClass = "pending-row";
+
+        if(onboardingStatus.includes("COMPLETE")){
+            rowClass = "completed-row";
+        }
+        else if(onboardingStatus.includes("PROGRESS")){
+            rowClass = "progress-row";
+        }
+
+        html += `
+
+        <tr class="${rowClass}">
+
+            <td>
+
+                <div class="employee-name">
+                    ${safe(emp.emp_name)}
+                </div>
+
+                <div class="muted">
+                    EMP ID : ${safe(emp.emp_id)}
+                </div>
+
+                <div class="muted">
+                    RM : ${safe(emp.reporting_manager_name)}
+                </div>
+
+            </td>
+
+            <td>
+
+                <span class="badge ${getStatusClass(onboardingStatus)}">
+                    ${formatText(emp.onboarding_status)}
+                </span>
+
+            </td>
+
+            <td>
+
+                <div>
+                    ${formatText(emp.current_step)}
+                </div>
+
+                <div class="muted">
+                    ${safe(emp.location)}
+                </div>
+
+            </td>
+
+            <td>
+
+                ${
+                    emp.ticket_id
+
+                    ? `
+
+                        <div>
+                            <b>${safe(emp.ticket_id)}</b>
+                        </div>
+
+                        <div class="muted" style="margin-top:5px;">
+                            ${formatText(emp.ticket_type)}
+                        </div>
+
+                        <div style="margin-top:8px;">
+
+                            <span class="badge ${
+                                ticketStatus === "CLOSED"
+                                ? "ticket-closed"
+
+                                : ticketStatus === "IN_PROGRESS"
+                                ? "ticket-progress"
+
+                                : "ticket-open"
+                            }">
+
+                                ${formatText(ticketStatus)}
+
+                            </span>
+
+                        </div>
+
+                    `
+
+                    : `
+
+                        <span class="muted">
+                            No Ticket
+                        </span>
+
+                    `
+                }
+
+            </td>
+
+            <td>
+
+                <div style="margin-bottom:8px;">
+                    ${progress}%
+                </div>
+
+                <div class="progress-bar">
+
+                    <div
+                        class="progress-fill"
+                        style="width:${progress}%"
+                    ></div>
+
+                </div>
+
+            </td>
+
+            <td>
+
+                <div class="action-group">
+
+                    ${
+                        ticketStatus === "OPEN" ||
+                        ticketStatus === "IN_PROGRESS"
+
+                        ? `
+
+                            <button
+                                class="btn disabled-btn"
+                                disabled
+                            >
+                                ⏳ Ticket Open
+                            </button>
+
+                        `
+
+                        : onboardingStatus.includes("COMPLETE")
+
+                        ? `
+
+                            <button
+                                class="btn disabled-btn"
+                                disabled
+                            >
+                                ✔ Completed
+                            </button>
+
+                        `
+
+                        : `
+
+                            <button
+                                class="btn allocate-btn"
+                                onclick="allocate('${emp.emp_id}')"
+                            >
+                                💻 Allocate Laptop
+                            </button>
+
+                        `
+                    }
+
+                    ${
+                        emp.ticket_id
+
+                        ? `
+
+                            <button
+                                class="btn ticket-btn"
+                                onclick="viewTicket('${emp.ticket_id}')"
+                            >
+                                🎫 View Ticket
+                            </button>
+
+                        `
+
+                        : ""
+                    }
+
+                </div>
+
+            </td>
+
+        </tr>
+        `;
+    });
+
+    html += `
+        </tbody>
+    </table>
+    `;
+
+    document.getElementById("table").innerHTML =
+        html;
+}
+
+/* =========================================================
+   CHART
+========================================================= */
+
+function renderChart(pending,completed){
+
+    if(chart){
+        chart.destroy();
+    }
+
+    chart = new Chart(
+        document.getElementById("assetChart"),
+        {
+            type:"doughnut",
+
+            data:{
+                labels:[
+                    "Pending",
+                    "Completed"
+                ],
+
+                datasets:[{
+
+                    data:[
+                        pending,
+                        completed
+                    ],
+
+                    backgroundColor:[
+                        "#f39c12",
+                        "#0F6E56"
+                    ]
+                }]
+            },
+
+            options:{
+                responsive:true
+            }
+        }
+    );
+}
+
+/* =========================================================
+   TAB
+========================================================= */
+
+function showTab(event,tab){
+
+    currentTab = tab;
+
+    document
+        .querySelectorAll(".tab-btn")
+        .forEach(btn =>
+            btn.classList.remove("active")
+        );
+
+    event.target.classList.add("active");
+
+    renderDashboard();
+}
+
+/* =========================================================
+   ALLOCATE LAPTOP
+========================================================= */
+
+async function allocate(empId){
+
+    try{
+
+        const res =
+            await fetch(
+    `http://127.0.0.1:5332/itsg/allocate/${empId}`,
+    {
+        method:"PUT",
+
+        credentials:"include",
+
+        headers:{
+            "Content-Type":"application/json"
+        }
+    }
+);
+        const json =
+            await res.json();
+
+        alert(
+            json.message ||
+            "Laptop allocation completed"
+        );
+
+        loadData();
+
+    }catch(err){
+
+        console.error(err);
+
+        alert("Laptop allocation failed");
+    }
+}
+
+/* =========================================================
+   VIEW TICKET
+========================================================= */
+
+function viewTicket(ticketId){
+
+    const ticket =
+        allTickets.find(t =>
+            String(t.ticket_id) === String(ticketId)
+        );
+
+    if(!ticket){
+
+        alert("Ticket not found");
+        return;
+    }
+
+    alert(
+`
+TICKET ID : ${safe(ticket.ticket_id)}
+
+EMPLOYEE ID : ${safe(ticket.emp_id)}
+
+TYPE : ${safe(ticket.type)}
+
+STATUS : ${safe(ticket.ticket_status || ticket.status)}
+
+COMMENTS :
+${safe(ticket.admin_comments)}
+`
+    );
+}
+
+/* =========================================================
+   LOGOUT
+========================================================= */
+
+async function logout() {
+
+    try {
+
+        // ==========================================
+        // CALL BACKEND LOGOUT
+        // ==========================================
+
+        await fetch(
+            "http://127.0.0.1:5332/api/auth/logout",
+            {
+                method: "POST",
+                credentials: "include"
+            }
+        );
+
+    } catch (err) {
+
+        console.error("Logout API Error:", err);
+    }
+
+    // ==========================================
+    // CLEAR LOCAL STORAGE
+    // ==========================================
+
+    localStorage.clear();
+
+    sessionStorage.clear();
+
+    // ==========================================
+    // REDIRECT TO LOGIN PAGE
+    // ==========================================
+
+    window.location.href =
+        "http://127.0.0.1:5500/login.html";
+}
+/* =========================================================
+   AUTO REFRESH
+========================================================= */
+
+setInterval(loadData,10000);
+
+/* =========================================================
+   INIT
+========================================================= */
+
+loadData();
+
+</script>
+
+</body>
+</html>

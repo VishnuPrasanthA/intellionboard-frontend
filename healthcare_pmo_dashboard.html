@@ -1,0 +1,4834 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet/dist/leaflet.css"
+/>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+    <title>Healthcare PMO Dashboard</title>
+
+    <!-- GOOGLE FONT -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+
+    <link rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+          rel="stylesheet">
+
+    <!-- FONT AWESOME -->
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+
+    <!-- DASHBOARD CSS -->
+    <link rel="stylesheet"
+          href="assets/css/dashboard.css">
+
+<style>
+
+/* =========================================================
+   NEXT-GEN PMO AI DASHBOARD UI
+   FULLY FIXED • SINGLE ROW KPI • FIXED GLASS HEADER
+========================================================= */
+
+/* =========================================================
+   ROOT
+========================================================= */
+
+:root{
+
+    --primary:#19d3a2;
+    --primary-dark:#10b88b;
+    --primary-light:#ecfff9;
+
+    --blue:#59b8ff;
+    --purple:#9f74ff;
+    --orange:#ffb84d;
+    --red:#ff6f6f;
+    --green:#34d47f;
+
+    --text:#172b42;
+    --muted:#7d8da5;
+
+    --glass:rgba(255,255,255,0.68);
+
+    --border:rgba(255,255,255,0.42);
+
+    --bg1:#f5fbff;
+    --bg2:#eef5ff;
+
+    --shadow-sm:
+    0 6px 18px rgba(15,23,42,.06);
+
+    --shadow-md:
+    0 16px 38px rgba(15,23,42,.10);
+
+    --shadow-lg:
+    0 30px 70px rgba(15,23,42,.16);
+
+    --radius:22px;
+
+    --transition:
+    all .35s cubic-bezier(.22,1,.36,1);
+}
+
+/* =========================================================
+   GLOBAL
+========================================================= */
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+html{
+    scroll-behavior:smooth;
+}
+
+body{
+
+    font-family:
+    "Segoe UI",
+    Inter,
+    Arial,
+    sans-serif;
+
+    color:var(--text);
+
+    background:
+    radial-gradient(circle at top left,#dbfff4 0%,transparent 30%),
+    radial-gradient(circle at top right,#ddeeff 0%,transparent 26%),
+    radial-gradient(circle at bottom right,#fff4df 0%,transparent 28%),
+    linear-gradient(135deg,var(--bg1),var(--bg2));
+
+    min-height:100vh;
+
+    overflow-x:hidden;
+
+    position:relative;
+}
+
+/* animated background */
+
+body::before{
+
+    content:"";
+
+    position:fixed;
+
+    inset:0;
+
+    background:
+    radial-gradient(circle at 20% 20%,rgba(25,211,162,.05),transparent 18%),
+    radial-gradient(circle at 80% 25%,rgba(89,184,255,.05),transparent 18%),
+    radial-gradient(circle at 70% 80%,rgba(159,116,255,.05),transparent 18%);
+
+    z-index:-1;
+
+    animation:bgMove 20s linear infinite;
+}
+
+@keyframes bgMove{
+
+    0%{
+        transform:translateY(0px);
+    }
+
+    100%{
+        transform:translateY(-60px);
+    }
+}
+
+.page{
+
+    padding:16px;
+
+    padding-top:110px;
+}
+
+/* =========================================================
+   SCROLLBAR
+========================================================= */
+
+::-webkit-scrollbar{
+    width:10px;
+    height:10px;
+}
+
+::-webkit-scrollbar-thumb{
+
+    background:
+    linear-gradient(180deg,var(--primary),#5effd9);
+
+    border-radius:30px;
+}
+
+::-webkit-scrollbar-track{
+    background:#edf5fb;
+}
+
+/* =========================================================
+   GLASS
+========================================================= */
+
+.glass-card,
+.glass-header{
+
+    background:var(--glass);
+
+    backdrop-filter:blur(18px);
+
+    -webkit-backdrop-filter:blur(18px);
+
+    border:1px solid var(--border);
+
+    box-shadow:var(--shadow-sm);
+
+    transition:var(--transition);
+}
+
+/* =========================================================
+   HEADER FIXED
+========================================================= */
+
+.header{
+
+    position:fixed;
+
+    top:14px;
+    left:14px;
+    right:14px;
+
+    z-index:999999;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:space-between;
+
+    flex-wrap:nowrap;
+
+    gap:14px;
+
+    padding:14px 18px;
+
+    border-radius:26px;
+
+    overflow:hidden;
+}
+
+/* glowing animated border */
+
+.header::before{
+
+    content:"";
+
+    position:absolute;
+
+    inset:-2px;
+
+    background:
+    linear-gradient(
+    90deg,
+    rgba(25,211,162,.18),
+    rgba(89,184,255,.18),
+    rgba(159,116,255,.18),
+    rgba(25,211,162,.18));
+
+    background-size:300% 300%;
+
+    z-index:-1;
+
+    animation:borderMove 8s linear infinite;
+}
+
+@keyframes borderMove{
+
+    0%{
+        background-position:0% 50%;
+    }
+
+    100%{
+        background-position:100% 50%;
+    }
+}
+
+.header:hover{
+
+    transform:translateY(-2px);
+
+    box-shadow:var(--shadow-lg);
+}
+
+/* =========================================================
+   HEADER LEFT
+========================================================= */
+
+.header-left{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:12px;
+
+    min-width:max-content;
+}
+
+.header-logo{
+
+    width:56px;
+    height:56px;
+
+    border-radius:18px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    background:
+    linear-gradient(135deg,var(--primary),#53ffd7);
+
+    color:white;
+
+    font-size:26px;
+
+    position:relative;
+
+    box-shadow:
+    0 12px 30px rgba(25,211,162,.28);
+
+    transition:var(--transition);
+}
+
+.header-logo::after{
+
+    content:"";
+
+    position:absolute;
+
+    inset:-7px;
+
+    border-radius:24px;
+
+    border:2px solid rgba(25,211,162,.15);
+
+    animation:pulseRing 2.8s infinite;
+}
+
+@keyframes pulseRing{
+
+    0%{
+        transform:scale(.9);
+        opacity:1;
+    }
+
+    100%{
+        transform:scale(1.3);
+        opacity:0;
+    }
+}
+
+.header-logo:hover{
+
+    transform:
+    rotate(8deg)
+    scale(1.08);
+}
+
+.header-left h1{
+
+    font-size:18px;
+
+    font-weight:800;
+
+    color:#13253a;
+
+    letter-spacing:.2px;
+
+    line-height:1.1;
+
+    white-space:nowrap;
+}
+
+.header-subtitle{
+
+    margin-top:3px;
+
+    font-size:11px;
+
+    color:var(--muted);
+
+    white-space:nowrap;
+}
+
+/* =========================================================
+   HEADER RIGHT
+========================================================= */
+
+.header-right{
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:flex-end;
+
+    gap:10px;
+
+    flex:1;
+
+    min-width:0;
+}
+
+/* =========================================================
+   SEARCH
+========================================================= */
+
+.search-wrapper{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:8px;
+
+    background:rgba(255,255,255,.92);
+
+    border:1px solid rgba(25,211,162,.08);
+
+    border-radius:14px;
+
+    padding:0 12px;
+
+    height:48px;
+
+    min-width:220px;
+
+    max-width:320px;
+
+    flex:1;
+
+    transition:var(--transition);
+}
+
+.search-wrapper:hover{
+
+    transform:translateY(-2px);
+
+    box-shadow:
+    0 10px 24px rgba(0,0,0,.06);
+}
+
+.search-wrapper:focus-within{
+
+    border-color:rgba(25,211,162,.35);
+
+    box-shadow:
+    0 0 0 4px rgba(25,211,162,.10);
+}
+
+.search-icon{
+
+    font-size:13px;
+
+    color:var(--muted);
+}
+
+.search-box{
+
+    width:100%;
+
+    border:none;
+    outline:none;
+
+    background:transparent;
+
+    font-size:12px;
+
+    color:#162a3c;
+}
+
+.search-box::placeholder{
+    color:#99a8b8;
+}
+
+/* =========================================================
+   BUTTONS
+========================================================= */
+
+.btn,
+button{
+
+    border:none;
+
+    cursor:pointer;
+
+    border-radius:14px;
+
+    font-weight:700;
+
+    transition:var(--transition);
+
+    position:relative;
+
+    overflow:hidden;
+
+    white-space:nowrap;
+}
+
+.btn{
+
+    height:48px;
+
+    padding:0 18px;
+
+    font-size:12px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    gap:6px;
+}
+
+/* shine */
+
+.btn::before{
+
+    content:"";
+
+    position:absolute;
+
+    top:0;
+    left:-120%;
+
+    width:100%;
+    height:100%;
+
+    background:
+    linear-gradient(
+    120deg,
+    transparent,
+    rgba(255,255,255,.35),
+    transparent);
+
+    transition:.8s;
+}
+
+.btn:hover::before{
+    left:120%;
+}
+
+.btn:hover{
+
+    transform:
+    translateY(-3px)
+    scale(1.02);
+
+    box-shadow:var(--shadow-md);
+}
+
+.btn-refresh{
+
+    background:
+    linear-gradient(135deg,#3ea6ff,#73c7ff);
+
+    color:white;
+}
+
+.btn-bulk{
+
+    background:
+    linear-gradient(135deg,#9257ff,#c48cff);
+
+    color:white;
+}
+
+.btn-logout{
+
+    background:
+    linear-gradient(135deg,#ff6767,#ff8f7d);
+
+    color:white;
+}
+
+/* =========================================================
+   CARDS
+========================================================= */
+
+.glass-card{
+
+    border-radius:28px;
+
+    padding:18px;
+
+    margin-bottom:16px;
+
+    overflow:hidden;
+
+    position:relative;
+}
+
+.glass-card::before{
+
+    content:"";
+
+    position:absolute;
+
+    inset:0;
+
+    background:
+    linear-gradient(
+    180deg,
+    rgba(255,255,255,.14),
+    transparent);
+
+    pointer-events:none;
+}
+
+.glass-card:hover{
+
+    transform:translateY(-4px);
+
+    box-shadow:var(--shadow-lg);
+}
+
+/* =========================================================
+   SECTION
+========================================================= */
+
+.section-top{
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:space-between;
+
+    gap:14px;
+
+    margin-bottom:14px;
+}
+
+.section-title{
+
+    font-size:16px;
+
+    font-weight:800;
+
+    color:var(--primary);
+}
+
+.section-sub{
+
+    margin-top:3px;
+
+    color:var(--muted);
+
+    font-size:11px;
+}
+
+.live-chip{
+
+    padding:9px 14px;
+
+    border-radius:40px;
+
+    font-size:11px;
+
+    font-weight:800;
+
+    color:var(--primary);
+
+    background:
+    linear-gradient(
+    135deg,
+    rgba(25,211,162,.10),
+    rgba(25,211,162,.03));
+
+    border:1px solid rgba(25,211,162,.15);
+}
+
+/* =========================================================
+   UPLOAD ZONE SMALLER
+========================================================= */
+
+.modern-upload{
+
+    border:2px dashed rgba(25,211,162,.24);
+
+    border-radius:24px;
+
+    background:
+    linear-gradient(
+    180deg,
+    rgba(255,255,255,.92),
+    rgba(245,255,251,.92));
+
+    padding:28px 18px;
+
+    text-align:center;
+
+    position:relative;
+
+    overflow:hidden;
+
+    transition:var(--transition);
+}
+
+.modern-upload:hover{
+
+    transform:translateY(-4px);
+
+    border-color:var(--primary);
+
+    box-shadow:
+    0 20px 40px rgba(25,211,162,.10);
+}
+
+.upload-animation{
+
+    font-size:40px;
+
+    margin-bottom:10px;
+
+    animation:floaty 3s ease-in-out infinite;
+}
+
+@keyframes floaty{
+
+    0%{
+        transform:translateY(0px);
+    }
+
+    50%{
+        transform:translateY(-8px);
+    }
+
+    100%{
+        transform:translateY(0px);
+    }
+}
+
+.modern-upload h2{
+
+    font-size:18px;
+
+    margin-bottom:6px;
+}
+
+.modern-upload p{
+
+    font-size:11px;
+
+    color:var(--muted);
+
+    margin-bottom:14px;
+}
+
+/* =========================================================
+   KPI ROW FIXED SINGLE ROW
+========================================================= */
+
+.kpi-row{
+
+    display:grid;
+
+    grid-template-columns:repeat(4,minmax(0,1fr));
+
+    gap:14px;
+
+    margin-bottom:16px;
+}
+
+.kpi-card{
+
+    background:rgba(255,255,255,.96);
+
+    border-radius:24px;
+
+    padding:18px;
+
+    position:relative;
+
+    overflow:hidden;
+
+    transition:var(--transition);
+
+    min-width:0;
+}
+
+.kpi-card::before{
+
+    content:"";
+
+    position:absolute;
+
+    top:-40px;
+    right:-40px;
+
+    width:120px;
+    height:120px;
+
+    border-radius:50%;
+
+    opacity:.08;
+}
+
+.total-card::before{
+    background:var(--primary);
+}
+
+.pending-card::before{
+    background:var(--orange);
+}
+
+.progress-card::before{
+    background:var(--blue);
+}
+
+.completed-card::before{
+    background:var(--green);
+}
+
+.kpi-card:hover{
+
+    transform:
+    translateY(-5px)
+    scale(1.01);
+
+    box-shadow:var(--shadow-lg);
+}
+
+.kpi-icon{
+
+    font-size:22px;
+
+    margin-bottom:10px;
+
+    transition:var(--transition);
+}
+
+.kpi-card:hover .kpi-icon{
+
+    transform:
+    scale(1.12)
+    rotate(6deg);
+}
+
+.kpi-title{
+
+    font-size:11px;
+
+    color:var(--muted);
+
+    margin-bottom:6px;
+}
+
+.kpi-value{
+
+    font-size:28px;
+
+    font-weight:900;
+}
+
+.total-card .kpi-value{
+    color:var(--primary);
+}
+
+.pending-card .kpi-value{
+    color:var(--orange);
+}
+
+.progress-card .kpi-value{
+    color:var(--blue);
+}
+
+.completed-card .kpi-value{
+    color:var(--green);
+}
+
+/* =========================================================
+   ANALYTICS SAME ROW
+========================================================= */
+
+.chart-grid{
+
+    display:grid;
+
+    grid-template-columns:repeat(3,minmax(0,1fr));
+
+    gap:14px;
+
+    margin-bottom:16px;
+}
+
+.analytics-card{
+
+    min-height:240px;
+
+    border-radius:24px;
+
+    padding:16px;
+
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+
+    overflow:hidden;
+}
+
+.analytics-card:hover{
+
+    transform:translateY(-5px);
+
+    box-shadow:var(--shadow-lg);
+}
+
+.card-title{
+
+    font-size:14px;
+
+    font-weight:800;
+
+    margin-bottom:10px;
+}
+
+.chart-wrapper{
+
+    flex:1;
+
+    width:100%;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+
+canvas{
+
+    width:160px !important;
+    height:160px !important;
+
+    transition:var(--transition);
+}
+
+.analytics-card:hover canvas{
+    transform:scale(1.04);
+}
+
+#worldMap{
+
+    width:100%;
+    height:165px;
+
+    border-radius:16px;
+
+    overflow:hidden;
+}
+
+/* =========================================================
+   EMPLOYEE TABLE
+========================================================= */
+
+.employee-card{
+
+    border-radius:28px;
+}
+
+.employee-header{
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:space-between;
+
+    margin-bottom:16px;
+}
+
+.employee-header h2{
+
+    font-size:20px;
+
+    margin-bottom:3px;
+}
+
+.employee-subtitle{
+
+    color:var(--muted);
+
+    font-size:11px;
+}
+
+.live-badge{
+
+    padding:10px 14px;
+
+    border-radius:40px;
+
+    font-size:11px;
+
+    font-weight:900;
+
+    color:var(--primary);
+
+    background:
+    linear-gradient(
+    135deg,
+    rgba(25,211,162,.10),
+    rgba(25,211,162,.03));
+
+    border:1px solid rgba(25,211,162,.15);
+}
+
+/* =========================================================
+   TABLE FIX
+========================================================= */
+
+.modern-table{
+
+    width:100%;
+
+    overflow-x:auto;
+
+    overflow-y:hidden;
+
+    border-radius:20px;
+
+    border:1px solid rgba(230,237,245,.7);
+
+    background:white;
+}
+
+/* FIXED TABLE HEIGHT */
+
+.modern-table::-webkit-scrollbar{
+    height:8px;
+}
+
+.modern-table::-webkit-scrollbar-thumb{
+    background:linear-gradient(90deg,var(--primary),#58ffd9);
+    border-radius:30px;
+}
+
+table{
+
+    width:100%;
+
+    min-width:1200px;
+
+    border-collapse:collapse;
+
+    table-layout:auto;
+
+    background:white;
+}
+
+/* FIX HEADER OVERLAY ISSUE */
+
+thead{
+
+    position:sticky;
+
+    top:0;
+
+    z-index:100;
+
+    background:
+    linear-gradient(
+    180deg,
+    #fbfdff,
+    #f2f7fd);
+}
+
+thead tr{
+
+    background:
+    linear-gradient(
+    180deg,
+    #fbfdff,
+    #f2f7fd);
+}
+
+th{
+
+    padding:16px 18px;
+
+    text-align:left;
+
+    font-size:11px;
+
+    font-weight:900;
+
+    color:#55657b;
+
+    white-space:nowrap;
+
+    border-bottom:1px solid #edf2f7;
+}
+
+td{
+
+    padding:15px 18px;
+
+    border-bottom:1px solid #eef3f8;
+
+    font-size:11px;
+
+    white-space:nowrap;
+}
+
+tbody tr{
+
+    transition:var(--transition);
+}
+
+tbody tr:hover{
+
+    background:
+    linear-gradient(
+    90deg,
+    rgba(25,211,162,.04),
+    rgba(89,184,255,.03));
+
+    transform:scale(1.001);
+}
+
+/* =========================================================
+   BADGES
+========================================================= */
+
+.status-badge,
+.risk-badge{
+
+    padding:6px 11px;
+
+    border-radius:30px;
+
+    font-size:10px;
+
+    font-weight:900;
+
+    color:white;
+
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+}
+
+.pending-badge{
+    background:linear-gradient(135deg,#f39c12,#ffc760);
+}
+
+.progress-badge{
+    background:linear-gradient(135deg,#3498db,#6dc8ff);
+}
+
+.completed-badge{
+    background:linear-gradient(135deg,#27ae60,#5ee49b);
+}
+
+.high-risk{
+    background:linear-gradient(135deg,#ff5f5f,#ff9090);
+}
+
+.medium-risk{
+    background:linear-gradient(135deg,#f39c12,#ffc760);
+}
+
+.low-risk{
+    background:linear-gradient(135deg,#16c79a,#57f4cb);
+}
+
+/* =========================================================
+   PROGRESS
+========================================================= */
+
+.progress-container{
+
+    width:120px;
+
+    background:#e8edf2;
+
+    border-radius:30px;
+
+    overflow:hidden;
+
+    height:14px;
+}
+
+.progress-fill{
+
+    height:100%;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    font-size:9px;
+
+    font-weight:900;
+
+    color:white;
+
+    background:
+    linear-gradient(
+    90deg,
+    var(--primary),
+    #55ffd5);
+}
+
+/* =========================================================
+   INSIGHTS
+========================================================= */
+
+.insight-grid{
+
+    display:grid;
+
+    grid-template-columns:repeat(3,minmax(0,1fr));
+
+    gap:14px;
+}
+
+.insight-box{
+
+    background:white;
+
+    border-radius:22px;
+
+    padding:18px;
+
+    display:flex;
+    align-items:center;
+
+    gap:12px;
+
+    transition:var(--transition);
+}
+
+.insight-box:hover{
+
+    transform:
+    translateY(-5px)
+    scale(1.01);
+
+    box-shadow:var(--shadow-lg);
+}
+
+.insight-icon{
+
+    width:54px;
+    height:54px;
+
+    border-radius:18px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    font-size:24px;
+
+    color:white;
+}
+
+.high-risk-box .insight-icon{
+    background:linear-gradient(135deg,#ff6060,#ff9999);
+}
+
+.escalation-box .insight-icon{
+    background:linear-gradient(135deg,#f39c12,#ffd369);
+}
+
+.delayed-box .insight-icon{
+    background:linear-gradient(135deg,#3498db,#7fd0ff);
+}
+
+.insight-label{
+
+    font-size:11px;
+
+    color:var(--muted);
+
+    margin-bottom:4px;
+}
+
+.insight-value{
+
+    font-size:28px;
+
+    font-weight:900;
+}
+
+/* =========================================================
+   FLOATING AI
+========================================================= */
+
+.modern-fab{
+
+    position:fixed;
+
+    right:22px;
+    bottom:22px;
+
+    width:64px;
+    height:64px;
+
+    border-radius:50%;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    font-size:28px;
+
+    color:white;
+
+    background:
+    linear-gradient(
+    135deg,
+    var(--primary),
+    #58ffd9);
+
+    box-shadow:
+    0 18px 40px rgba(25,211,162,.28);
+
+    cursor:pointer;
+
+    z-index:99999;
+
+    transition:var(--transition);
+}
+
+.modern-fab:hover{
+
+    transform:
+    scale(1.08)
+    rotate(5deg);
+}
+
+/* =========================================================
+   CHAT PANEL
+========================================================= */
+
+.modern-chat{
+
+    position:fixed;
+
+    right:22px;
+    bottom:96px;
+
+    width:380px;
+    height:540px;
+
+    background:white;
+
+    border-radius:28px;
+
+    overflow:hidden;
+
+    display:none;
+    flex-direction:column;
+
+    z-index:99999;
+
+    box-shadow:
+    0 24px 60px rgba(0,0,0,.18);
+}
+
+.chat-header{
+
+    background:
+    linear-gradient(
+    135deg,
+    var(--primary),
+    #49ffd5);
+
+    color:white;
+
+    padding:18px;
+
+    font-weight:900;
+
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+}
+
+.chat-body{
+
+    flex:1;
+
+    overflow-y:auto;
+
+    padding:18px;
+
+    background:#f8fbff;
+}
+
+.chat-welcome{
+
+    background:white;
+
+    border-radius:20px;
+
+    padding:18px;
+
+    line-height:1.8;
+
+    font-size:12px;
+
+    box-shadow:var(--shadow-sm);
+}
+
+.chat-input{
+
+    display:flex;
+
+    border-top:1px solid #edf2f7;
+
+    background:white;
+}
+
+.chat-input input{
+
+    flex:1;
+
+    border:none;
+    outline:none;
+
+    padding:16px;
+
+    font-size:12px;
+}
+
+.chat-input button{
+
+    border:none;
+
+    background:var(--primary);
+
+    color:white;
+
+    padding:0 22px;
+
+    font-weight:900;
+}
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media(max-width:1200px){
+
+    .chart-grid{
+        grid-template-columns:1fr;
+    }
+
+    .insight-grid{
+        grid-template-columns:1fr;
+    }
+
+    .header{
+        flex-wrap:wrap;
+    }
+
+    .header-right{
+        width:100%;
+    }
+}
+
+@media(max-width:768px){
+
+    .page{
+        padding-top:160px;
+    }
+
+    .header{
+        left:10px;
+        right:10px;
+    }
+
+    .header-right{
+        flex-wrap:wrap;
+    }
+
+    .search-wrapper{
+        width:100%;
+        max-width:none;
+    }
+
+    .kpi-row{
+        grid-template-columns:repeat(2,1fr);
+    }
+
+    .modern-chat{
+
+        width:95%;
+
+        right:2.5%;
+
+        height:82vh;
+    }
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="page">
+
+    <!-- =====================================================
+         HEADER
+    ====================================================== -->
+
+    <div class="header glass-header">
+
+        <div class="header-left">
+
+            <div class="header-logo pulse-glow">
+                🚀
+            </div>
+
+            <div>
+
+                <h1>Healthcare PMO AI Control Center</h1>
+
+                <div class="header-subtitle">
+                    Real-Time Healthcare QA Onboarding Visibility Dashboard
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="header-right">
+
+            <div class="search-wrapper">
+
+                <span class="search-icon">🔍</span>
+
+                <input
+                    class="search-box"
+                    placeholder="Search Employee / Account / RM / PMO"
+                    onkeyup="searchTable(this.value)"
+                >
+
+            </div>
+
+            <button class="btn btn-refresh" onclick="loadDashboard()">
+                🔄 Refresh
+            </button>
+
+            <button class="btn btn-bulk" onclick="bulkInitiate()">
+                🚀 Bulk Onboard
+            </button>
+
+            <button class="btn btn-logout" onclick="logout()">
+                🚪 Logout
+            </button>
+
+        </div>
+
+    </div>
+
+    <!-- =====================================================
+         UPLOAD ENGINE
+    ====================================================== -->
+
+    <div class="upload-card glass-card section-spacing">
+
+        <div class="section-top">
+
+            <div>
+
+                <div class="section-title">
+                    📁 Allocation Report Intake Engine
+                </div>
+
+                <div class="section-sub">
+                    Upload allocation sheet to trigger onboarding workflow
+                </div>
+
+            </div>
+
+            <div class="live-chip">
+                ⚡ AI Workflow Active
+            </div>
+
+        </div>
+
+        <input
+            type="file"
+            id="allocationFile"
+            accept=".xlsx,.xls"
+            style="display:none"
+            onchange="uploadAllocationReport()"
+        >
+
+        <div
+            class="upload-zone modern-upload"
+            onclick="document.getElementById('allocationFile').click()"
+            ondrop="handleDrop(event)"
+            ondragover="allowDrop(event)"
+        >
+
+            <div class="upload-animation">
+                ⬆
+            </div>
+
+            <h2>Drop Allocation Report</h2>
+
+            <p>
+                Upload allocation Excel file for automated onboarding orchestration
+            </p>
+
+            <button class="btn btn-bulk upload-btn">
+                Select Allocation File
+            </button>
+
+        </div>
+
+        <div class="processing-loader" id="processingLoader">
+            🤖 AI Engine Processing Allocation Workflow...
+        </div>
+
+        <div class="upload-result" id="uploadResult"></div>
+
+    </div>
+
+    <!-- =====================================================
+         KPI CARDS
+    ====================================================== -->
+
+    <div class="kpi-row section-spacing">
+
+        <div class="kpi-card total-card hover-card">
+
+            <div class="kpi-top">
+                <div class="kpi-icon">👥</div>
+            </div>
+
+            <div class="kpi-title">
+                Total Employees
+            </div>
+
+            <div id="total" class="kpi-value">
+                0
+            </div>
+
+        </div>
+
+        <div class="kpi-card pending-card hover-card">
+
+            <div class="kpi-top">
+                <div class="kpi-icon">⏳</div>
+            </div>
+
+            <div class="kpi-title">
+                Pending
+            </div>
+
+            <div id="pending" class="kpi-value">
+                0
+            </div>
+
+        </div>
+
+        <div class="kpi-card progress-card hover-card">
+
+            <div class="kpi-top">
+                <div class="kpi-icon">🔄</div>
+            </div>
+
+            <div class="kpi-title">
+                In Progress
+            </div>
+
+            <div id="progress" class="kpi-value">
+                0
+            </div>
+
+        </div>
+
+        <div class="kpi-card completed-card hover-card">
+
+            <div class="kpi-top">
+                <div class="kpi-icon">✅</div>
+            </div>
+
+            <div class="kpi-title">
+                Completed
+            </div>
+
+            <div id="completed" class="kpi-value">
+                0
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- =====================================================
+         ANALYTICS
+    ====================================================== -->
+
+    <div class="chart-grid section-spacing">
+
+        <div class="analytics-card glass-card hover-card">
+
+            <div class="card-title">
+                📊 Status Distribution
+            </div>
+
+            <div class="chart-wrapper">
+                <canvas id="pieChart"></canvas>
+            </div>
+
+        </div>
+
+        <div class="analytics-card glass-card hover-card">
+
+            <div class="card-title">
+                📈 Progress Analytics
+            </div>
+
+            <div class="chart-wrapper">
+                <canvas id="donutChart"></canvas>
+            </div>
+
+        </div>
+
+        <div class="analytics-card glass-card hover-card">
+
+            <div class="card-title">
+                🌍 Employee Distribution
+            </div>
+
+            <div id="worldMap"></div>
+
+        </div>
+
+    </div>
+
+    <!-- =====================================================
+         EMPLOYEE TABLE
+    ====================================================== -->
+
+    <div class="employee-card glass-card section-spacing">
+
+        <div class="employee-header">
+
+            <div>
+
+                <h2>👥 Employee Onboarding Tracker</h2>
+
+                <div class="employee-subtitle">
+                    Live PMO onboarding lifecycle monitoring engine
+                </div>
+
+            </div>
+
+            <div class="live-badge pulse-live">
+                ⚡ LIVE SYNC ACTIVE
+            </div>
+
+        </div>
+
+        <div class="table-wrapper modern-table">
+
+            <table>
+
+                <thead>
+
+                    <tr>
+
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Account</th>
+                        <th>RM</th>
+                        <th>PMO</th>
+                        <th>Status</th>
+                        <th>Current Step</th>
+                        <th>Progress</th>
+                        <th>Risk</th>
+                        <th>Location</th>
+                        <th>Actions</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody id="tableBody">
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+    <!-- =====================================================
+         AI INSIGHTS SECTION
+    ====================================================== -->
+
+    <div class="glass-card insights-section section-spacing">
+
+        <div class="insight-header">
+
+            <div class="insight-title">
+                🤖 AI Insights Engine
+            </div>
+
+            <div class="insight-sub">
+                Real-Time Risk + SLA + Delay Monitoring
+            </div>
+
+        </div>
+
+        <div class="insight-grid">
+
+            <div class="insight-box high-risk-box hover-card">
+
+                <div class="insight-icon">
+                    ⚠
+                </div>
+
+                <div>
+
+                    <div class="insight-label">
+                        High Risk Employees
+                    </div>
+
+                    <div class="insight-value" id="highRiskCount">
+                        0
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="insight-box escalation-box hover-card">
+
+                <div class="insight-icon">
+                    🚨
+                </div>
+
+                <div>
+
+                    <div class="insight-label">
+                        Escalation Cases
+                    </div>
+
+                    <div class="insight-value" id="escalationCount">
+                        0
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="insight-box delayed-box hover-card">
+
+                <div class="insight-icon">
+                    ⏳
+                </div>
+
+                <div>
+
+                    <div class="insight-label">
+                        Delayed Cases
+                    </div>
+
+                    <div class="insight-value" id="delayedCount">
+                        0
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- =====================================================
+     FLOATING AI CHAT
+====================================================== -->
+
+<div class="chat-fab modern-fab" onclick="toggleChat()">
+    🤖
+</div>
+
+<div class="chat-panel modern-chat" id="chatPanel">
+
+    <div class="chat-header">
+
+        <div>
+            🤖 PMO AI Assistant
+        </div>
+
+        <span onclick="toggleChat()">✖</span>
+
+    </div>
+
+    <div class="chat-body" id="chatBody">
+
+        <div class="chat-welcome">
+
+            👋 Welcome to PMO AI Assistant
+
+            <br><br>
+
+            Ask about:
+            <br>
+            • Employee onboarding
+            <br>
+            • SLA escalation
+            <br>
+            • Allocation tracking
+            <br>
+            • Risk monitoring
+            <br>
+            • Delayed workflows
+
+        </div>
+
+    </div>
+
+    <div class="chat-input">
+
+        <input
+            id="chatInput"
+            placeholder="Ask AI Assistant..."
+        />
+
+        <button onclick="askAgent()">
+            Send
+        </button>
+
+    </div>
+
+</div>
+<script>
+
+/* =========================================================
+   HEALTHCARE PMO AI CONTROL CENTER
+   ENTERPRISE VERSION
+========================================================= */
+
+/* =========================================================
+   CONFIG
+========================================================= */
+
+const API_BASE = "http://localhost:5332";
+
+const REFRESH_INTERVAL = 30000;
+
+let allEmployees = [];
+
+let filteredEmployees = [];
+
+const EMPLOYEE_STATE = {}; 
+
+let DASHBOARD_INITIALIZED = false;
+
+let dashboardInterval = null;
+
+let pieChart = null;
+
+let donutChart = null;
+
+let trendChart = null;
+
+let map = null;
+
+let markers = [];
+
+let socket = null;
+
+let SOCKET_CONNECTED = false;
+
+let SOCKET_INITIALIZED = false;
+
+let chatOpen = false;
+
+let selectedEmployee = null;
+
+/* =========================================================
+   INIT
+========================================================= */
+
+window.onload = async function () {
+
+    console.log("🚀 PMO AI Dashboard Initializing...");
+
+    initializeDashboard();
+};
+async function initializeDashboard() {
+
+    try {
+
+        /* =========================================================
+           PREVENT DOUBLE INITIALIZATION (CRITICAL FIX)
+        ========================================================= */
+
+        if (DASHBOARD_INITIALIZED) {
+            console.warn("⚠ Dashboard already initialized. Skipping re-init.");
+            return;
+        }
+
+        DASHBOARD_INITIALIZED = true;
+
+        console.log("🚀 Initializing PMO Dashboard...");
+
+        /* =========================================================
+           SAFE INIT ORDER (DEPENDENCY SAFE)
+        ========================================================= */
+
+        // UI/Map first (non-blocking)
+        initMap();
+
+        // Realtime layer
+        initSocket();
+
+        // Keyboard events
+        bindKeyboardEvents();
+
+        /* =========================================================
+           FIRST DATA LOAD (BLOCKING - MUST COMPLETE FIRST)
+        ========================================================= */
+
+        await loadDashboard();
+
+        /* =========================================================
+           CLEAR OLD INTERVAL IF EXISTS (IMPORTANT FIX)
+        ========================================================= */
+
+        if (dashboardInterval) {
+            clearInterval(dashboardInterval);
+        }
+
+        /* =========================================================
+           AUTO REFRESH LOOP (CONTROLLED)
+        ========================================================= */
+
+        dashboardInterval = setInterval(async () => {
+
+            try {
+                await loadDashboard();
+            } catch (err) {
+                console.error("REFRESH ERROR:", err);
+            }
+
+        }, REFRESH_INTERVAL);
+
+        console.log("✅ Dashboard Fully Initialized");
+
+    } catch (err) {
+
+        console.error("❌ INIT ERROR:", err);
+
+        DASHBOARD_INITIALIZED = false; // allow retry if failed
+    }
+}
+
+/* =========================================================
+   SOCKET.IO
+========================================================= */
+
+function initSocket() {
+
+    try {
+
+        /* =========================================================
+           GUARD: PREVENT MULTIPLE SOCKET INIT (CRITICAL FIX)
+        ========================================================= */
+
+        if (SOCKET_INITIALIZED) {
+            console.warn("⚠ Socket already initialized. Skipping re-init.");
+            return;
+        }
+
+        SOCKET_INITIALIZED = true;
+
+        /* =========================================================
+           CHECK SOCKET.IO AVAILABILITY
+        ========================================================= */
+
+        if (typeof io === "undefined") {
+
+            console.warn("❌ Socket.IO Not Loaded - Switching to Polling Mode Only");
+
+            showToast("Realtime disabled (Socket.IO missing)", "warning");
+
+            return;
+        }
+
+        /* =========================================================
+           CLEAN OLD SOCKET IF EXISTS (VERY IMPORTANT FIX)
+        ========================================================= */
+
+        if (socket) {
+
+            console.log("♻ Cleaning previous socket connection...");
+
+            socket.removeAllListeners();
+
+            socket.disconnect();
+        }
+
+        /* =========================================================
+           CREATE SOCKET CONNECTION
+        ========================================================= */
+
+        socket = io(API_BASE, {
+
+            transports: ["websocket", "polling"],
+
+            reconnection: true,
+
+            reconnectionAttempts: 10,
+
+            reconnectionDelay: 2000,
+
+            timeout: 10000
+        });
+
+        /* =========================================================
+           CONNECTION EVENTS
+        ========================================================= */
+
+        socket.on("connect", () => {
+
+            SOCKET_CONNECTED = true;
+
+            console.log("✅ Socket Connected:", socket.id);
+
+            showToast("Realtime sync connected", "success");
+        });
+
+        socket.on("disconnect", (reason) => {
+
+            SOCKET_CONNECTED = false;
+
+            console.warn("❌ Socket Disconnected:", reason);
+
+            showToast("Realtime sync disconnected", "warning");
+        });
+
+        socket.on("connect_error", (err) => {
+
+            SOCKET_CONNECTED = false;
+
+            console.error("⚠ Socket Connection Error:", err.message);
+
+            showToast("Realtime connection error", "error");
+        });
+
+        socket.on("reconnect_attempt", (attempt) => {
+
+            console.log(`🔄 Reconnect Attempt: ${attempt}`);
+        });
+
+        socket.on("reconnect", () => {
+
+            console.log("🔁 Socket Reconnected");
+
+            showToast("Realtime sync restored", "success");
+        });
+
+        /* =========================================================
+           BUSINESS EVENTS (OPTIMIZED - NO SPAM RELOADS)
+        ========================================================= */
+
+        socket.on("employee_update", async () => {
+
+            console.log("🔄 Employee Update Received");
+
+            // Avoid unnecessary full reload spam in future (can be optimized further)
+            await loadDashboard();
+        });
+
+        socket.on("ticket_created", async (data) => {
+
+            console.log("🎫 Ticket Event:", data);
+
+            showToast(
+                `Ticket Created: ${data.ticket_id || "Unknown"}`,
+                "success"
+            );
+
+            await loadDashboard();
+        });
+
+        socket.on("bulk_update", async () => {
+
+            console.log("🚀 Bulk Update Received");
+
+            showToast("Bulk update completed", "info");
+
+            await loadDashboard();
+        });
+
+        /* =========================================================
+           HEARTBEAT DEBUG (OPTIONAL ENTERPRISE MONITORING)
+        ========================================================= */
+
+        socket.on("ping", () => {
+
+            console.log("💓 Socket heartbeat received");
+        });
+
+        console.log("🚀 Socket Initialization Complete");
+
+    } catch (err) {
+
+        SOCKET_CONNECTED = false;
+
+        console.error("❌ SOCKET ERROR:", err);
+
+        showToast("Socket initialization failed", "error");
+    }
+}
+
+/* =========================================================
+   API LAYER
+========================================================= */
+
+async function callAPI(
+    endpoint,
+    method = "GET",
+    payload = null,
+    options = {}
+) {
+
+    const {
+        timeout = 15000,
+        retry = 0
+    } = options;
+
+    let controller = new AbortController();
+    let timer = null;
+
+    try {
+
+        /* =========================================================
+           TIMEOUT HANDLING (CRITICAL FIX)
+        ========================================================= */
+
+        timer = setTimeout(() => {
+            controller.abort();
+        }, timeout);
+
+        /* =========================================================
+           BUILD REQUEST OPTIONS
+        ========================================================= */
+
+        const fetchOptions = {
+            method,
+            signal: controller.signal,
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        if (payload) {
+            fetchOptions.body = JSON.stringify(payload);
+        }
+
+        /* =========================================================
+           API CALL
+        ========================================================= */
+
+        const response = await fetch(
+            `${API_BASE}${endpoint}`,
+            fetchOptions
+        );
+
+        clearTimeout(timer);
+
+        /* =========================================================
+           HANDLE HTTP ERRORS
+        ========================================================= */
+
+        if (!response.ok) {
+
+            const errorText = await response.text().catch(() => "");
+
+            console.error("HTTP ERROR RESPONSE:", errorText);
+
+            throw new Error(
+                `HTTP ERROR ${response.status}`
+            );
+        }
+
+        /* =========================================================
+           SAFE JSON PARSE (FIX FOR BACKEND NON-JSON)
+        ========================================================= */
+
+        let data;
+
+        try {
+            data = await response.json();
+        } catch (err) {
+
+            console.error("INVALID JSON FROM SERVER");
+
+            throw new Error("Invalid JSON response from server");
+        }
+
+        /* =========================================================
+           NORMALIZE RESPONSE STRUCTURE (CRITICAL FIX)
+        ========================================================= */
+
+        if (!data) {
+            return {
+                success: false,
+                data: []
+            };
+        }
+
+        /* If backend returns raw array */
+        if (Array.isArray(data)) {
+            return {
+                success: true,
+                data: data
+            };
+        }
+
+        /* =========================================================
+           SUCCESS RETURN
+        ========================================================= */
+
+        return data;
+
+    } catch (err) {
+
+        clearTimeout(timer);
+
+        console.error("API ERROR:", err.message);
+
+        /* =========================================================
+           NETWORK / ABORT HANDLING
+        ========================================================= */
+
+        let message = "API Connection Failed";
+
+        if (err.name === "AbortError") {
+            message = "Request Timeout - Server too slow";
+        }
+
+        /* =========================================================
+           TOAST NOTIFICATION
+        ========================================================= */
+
+        showToast(message, "error");
+
+        /* =========================================================
+           SAFE FALLBACK RESPONSE
+        ========================================================= */
+
+        return {
+            success: false,
+            data: [],
+            error: err.message
+        };
+    }
+}
+/* =========================================================
+   DASHBOARD LOAD
+========================================================= */
+
+async function loadDashboard() {
+
+    let loaderShown = false;
+
+    try {
+
+        /* =========================================================
+           SHOW LOADER SAFELY
+        ========================================================= */
+
+        showLoader(true);
+        loaderShown = true;
+
+        /* =========================================================
+           FETCH DATA
+        ========================================================= */
+
+        const response = await callAPI("/employees");
+
+        /* =========================================================
+           NORMALIZE DATA (ROBUST FIX)
+        ========================================================= */
+
+        let employees = [];
+
+        if (Array.isArray(response)) {
+            employees = response;
+
+        } else if (Array.isArray(response?.data)) {
+            employees = response.data;
+
+        } else if (Array.isArray(response?.employees)) {
+            employees = response.employees;
+
+        } else {
+            employees = [];
+        }
+
+        /* =========================================================
+           GLOBAL STATE UPDATE
+        ========================================================= */
+
+        allEmployees = employees;
+        filteredEmployees = [...employees];
+
+        /* =========================================================
+           FAST PARALLEL UI RENDER (PERFORMANCE BOOST)
+        ========================================================= */
+
+        renderEmployees(filteredEmployees);
+        updateKPIs(filteredEmployees);
+
+        /* Run heavy UI tasks in parallel */
+        const uiTasks = [];
+
+        uiTasks.push(
+            Promise.resolve(loadCharts(filteredEmployees))
+        );
+
+        uiTasks.push(
+            Promise.resolve(renderInsights(filteredEmployees))
+        );
+
+        uiTasks.push(
+            plotAllLocations(filteredEmployees)
+        );
+
+        await Promise.allSettled(uiTasks);
+
+        /* =========================================================
+           FINAL UI UPDATES
+        ========================================================= */
+
+        updateDashboardTimestamp();
+
+    } catch (err) {
+
+        console.error("LOAD DASHBOARD FAILED:", err);
+
+        showToast("Dashboard Load Failed", "error");
+
+    } finally {
+
+        /* =========================================================
+           ALWAYS HIDE LOADER (CRITICAL FIX)
+        ========================================================= */
+
+        if (loaderShown) {
+            showLoader(false);
+        }
+    }
+}
+
+/* =========================================================
+   EMPLOYEE TABLE
+========================================================= */
+
+function renderEmployees(data) {
+
+    const tbody =
+        document.getElementById("tableBody");
+
+    if (!tbody) return;
+
+    tbody.innerHTML = "";
+
+    /* =========================================================
+       SAFE HELPERS
+    ========================================================= */
+
+    const safe = (val) => {
+
+        if (
+            val === undefined ||
+            val === null ||
+            val === "" ||
+            String(val).toLowerCase() === "undefined"
+        ) {
+            return "N/A";
+        }
+
+        return String(val);
+    };
+
+    const formatText = (txt) => {
+
+        return safe(txt)
+            .replace(/_/g, " ")
+            .replace(/\b\w/g, c => c.toUpperCase());
+    };
+
+    /* =========================================================
+       EMPTY STATE
+    ========================================================= */
+
+    if (!data || !data.length) {
+
+        tbody.innerHTML = `
+
+            <tr>
+                <td colspan="11"
+                    style="
+                        text-align:center;
+                        padding:30px;
+                        color:#888;
+                        font-size:14px;
+                    ">
+                    No Employee Data Available
+                </td>
+            </tr>
+
+        `;
+
+        return;
+    }
+
+    /* =========================================================
+       RENDER EMPLOYEES
+    ========================================================= */
+
+    data.forEach(emp => {
+
+        const empId =
+            safe(emp.emp_id);
+
+        /* =====================================================
+           STATUS + PROGRESS
+        ===================================================== */
+
+        const status =
+            String(emp.onboarding_status || "")
+                .toUpperCase();
+
+        let progress =
+            Number(emp.progress_percentage || 0);
+
+        const step =
+            String(emp.current_step || "")
+                .toUpperCase();
+
+        if (!progress || progress === 0) {
+
+            if (step.includes("COE")) {
+                progress = 100;
+            }
+            else if (
+                step.includes("LAPTOP")
+            ) {
+                progress = 75;
+            }
+            else if (
+                step.includes("ID_CARD") ||
+                step.includes("ACCESS")
+            ) {
+                progress = 50;
+            }
+            else {
+                progress = 25;
+            }
+        }
+
+        /* =====================================================
+           RISK ENGINE
+        ===================================================== */
+
+        let risk =
+            String(emp.risk_level || "")
+                .toUpperCase();
+
+        if (!risk || risk === "N/A") {
+
+            if (
+                status.includes("ESCALATED") ||
+                status.includes("DELAY")
+            ) {
+                risk = "HIGH";
+            }
+            else if (
+                step.includes("ID_CARD") ||
+                step.includes("ACCESS") ||
+                step.includes("LAPTOP")
+            ) {
+                risk = "MEDIUM";
+            }
+            else {
+                risk = "LOW";
+            }
+        }
+
+        /* =====================================================
+           BUTTON STATE
+        ===================================================== */
+
+        const isStarted =
+            status.includes("PROGRESS");
+
+        const isCompleted =
+            status.includes("COMPLETE");
+
+        /* =====================================================
+           TICKET STATE FIX
+        ===================================================== */
+
+        const hasIdTicket =
+            emp.id_ticket_status &&
+            String(emp.id_ticket_status)
+                .toUpperCase() !== "CLOSED";
+
+        const hasLaptopTicket =
+            emp.laptop_ticket_status &&
+            String(emp.laptop_ticket_status)
+                .toUpperCase() !== "CLOSED";
+
+        const hasTicket =
+            hasIdTicket || hasLaptopTicket;
+
+        /* =====================================================
+           ACCOUNT / RM / PMO FIX
+        ===================================================== */
+
+        const accountName =
+            safe(
+                emp.account_name ||
+                emp.account ||
+                emp.project_name
+            );
+
+        const rmName =
+            safe(
+                emp.reporting_manager_name ||
+                emp.rm_name ||
+                emp.reporting_manager
+            );
+
+        const pmoName =
+            safe(
+                emp.account_pmo_name ||
+                emp.pmo_name ||
+                emp.account_pmo
+            );
+
+        /* =====================================================
+           STATUS CLASS FIX
+        ===================================================== */
+
+        let statusClass =
+            getStatusClass(
+                emp.onboarding_status
+            );
+
+        if (!statusClass) {
+
+            if (status.includes("COMPLETE")) {
+                statusClass = "status-complete";
+            }
+            else if (
+                status.includes("PROGRESS")
+            ) {
+                statusClass = "status-progress";
+            }
+            else {
+                statusClass = "status-pending";
+            }
+        }
+
+        /* =====================================================
+           CREATE ROW
+        ===================================================== */
+
+        const tr =
+            document.createElement("tr");
+
+        tr.innerHTML = `
+
+            <!-- EMPLOYEE ID -->
+
+            <td>
+                ${empId}
+            </td>
+
+            <!-- EMPLOYEE NAME -->
+
+            <td>
+
+                <div class="employee-name">
+                    ${safe(emp.emp_name)}
+                </div>
+
+            </td>
+
+            <!-- ACCOUNT -->
+
+            <td>
+                ${accountName}
+            </td>
+
+            <!-- RM -->
+
+            <td>
+                ${rmName}
+            </td>
+
+            <!-- PMO -->
+
+            <td>
+                ${pmoName}
+            </td>
+
+            <!-- STATUS -->
+
+            <td>
+
+                <span class="status-badge ${statusClass}">
+
+                    ${formatText(emp.onboarding_status)}
+
+                </span>
+
+            </td>
+
+            <!-- CURRENT STEP -->
+
+            <td>
+
+                ${formatText(emp.current_step)}
+
+            </td>
+
+            <!-- PROGRESS -->
+
+            <td>
+
+                <div class="progress-container">
+
+                    <div
+                        class="progress-fill"
+                        style="width:${progress}%"
+                    >
+                        ${progress}%
+                    </div>
+
+                </div>
+
+            </td>
+
+            <!-- RISK -->
+
+            <td>
+
+                <span class="risk-badge ${getRiskClass(risk)}">
+
+                    ${risk}
+
+                </span>
+
+            </td>
+
+            <!-- LOCATION -->
+
+            <td>
+
+                ${safe(emp.location)}
+
+            </td>
+
+            <!-- ACTIONS -->
+
+            <td>
+
+                <div class="action-buttons">
+
+                    <!-- =========================================
+                         ONBOARD BUTTON
+                    ========================================== -->
+
+                    <button
+
+                        id="onboard-${empId}"
+
+                        class="onboard-btn"
+
+                        onclick="startOnboarding('${empId}')"
+
+                        title="Start onboarding"
+
+                        ${isStarted || isCompleted ? "disabled" : ""}
+
+                        style="
+                            ${isStarted || isCompleted
+                                ? `
+                                    opacity:0.6;
+                                    cursor:not-allowed;
+                                `
+                                : ""
+                            }
+                        "
+                    >
+
+                        ${isCompleted
+                            ? "✅ Completed"
+                            : isStarted
+                                ? "⏳ In Progress"
+                                : "🚀 Onboard"
+                        }
+
+                    </button>
+
+                    <!-- =========================================
+                         VIEW BUTTON
+                    ========================================== -->
+
+                    <button
+
+                        class="view-btn"
+
+                        onclick="viewEmployee('${empId}')"
+
+                        title="View employee lifecycle"
+                    >
+
+                        👁 View
+
+                    </button>
+
+                    <!-- =========================================
+                         TICKET BUTTON
+                    ========================================== -->
+
+                    <button
+
+                        id="ticket-${empId}"
+
+                        class="ticket-btn"
+
+                        onclick="
+                            ${hasTicket
+                                ? `viewTicketStatus('${empId}')`
+                                : `createTicket('${empId}')`
+                            }
+                        "
+
+                        title="
+                            ${hasTicket
+                                ? 'View Ticket Status'
+                                : 'Create Ticket'
+                            }
+                        "
+                    >
+
+                        🎫
+                        ${hasTicket
+                            ? "View Ticket"
+                            : "Create Ticket"
+                        }
+
+                    </button>
+
+                </div>
+
+            </td>
+
+        `;
+
+        tbody.appendChild(tr);
+    });
+
+    /* =========================================================
+       TABLE RENDER COMPLETE
+    ========================================================= */
+
+    console.log(
+        "✅ Employee table rendered successfully"
+    );
+}
+function viewTicketStatus(empId) {
+
+    const emp = allEmployees.find(
+        e => String(e.emp_id) === String(empId)
+    );
+
+    if (!emp) return;
+
+    showToast("Opening Ticket Status...", "info");
+
+    addChat(
+        "AI",
+        `
+        🎫 Ticket Status<br>
+        👤 Employee: ${emp.emp_name}<br>
+        🆔 Ticket ID: ${emp.ticket_id}<br>
+        📊 Status: ${emp.ticket_status}<br>
+        ⚙ Current Step: ${emp.current_step || "N/A"}
+        `
+    );
+
+    if (!chatOpen) toggleChat();
+}
+/* =========================================================
+   SAFE VALUE
+========================================================= */
+
+function safe(value) {
+
+    if (
+        value === undefined ||
+        value === null ||
+        value === ""
+    ) {
+
+        return "-";
+    }
+
+    return String(value);
+}
+
+/* =========================================================
+   STATUS CLASS
+========================================================= */
+
+function getStatusClass(status) {
+
+    status =
+        String(status || "")
+        .toUpperCase();
+
+    if (
+        status.includes("COMPLETE")
+    ) {
+
+        return "completed-badge";
+    }
+
+    if (
+        status.includes("PROGRESS")
+    ) {
+
+        return "progress-badge";
+    }
+
+    if (
+        status.includes("PENDING")
+    ) {
+
+        return "pending-badge";
+    }
+
+    if (
+        status.includes("DELAY")
+    ) {
+
+        return "delay-badge";
+    }
+
+    return "pending-badge";
+}
+
+/* =========================================================
+   RISK CLASS
+========================================================= */
+
+function getRiskClass(risk) {
+
+    risk =
+        String(risk || "")
+        .toUpperCase();
+
+    if (risk === "HIGH") {
+
+        return "high-risk";
+    }
+
+    if (risk === "MEDIUM") {
+
+        return "medium-risk";
+    }
+
+    return "low-risk";
+}
+
+/* =========================================================
+   KPI
+========================================================= */
+
+function updateKPIs(data) {
+
+    if (!Array.isArray(data)) {
+        data = [];
+    }
+
+    /* =========================================================
+       SINGLE PASS KPI COMPUTATION (PERFORMANCE FIX)
+    ========================================================= */
+
+    let total = 0;
+    let pending = 0;
+    let progress = 0;
+    let completed = 0;
+
+    for (let i = 0; i < data.length; i++) {
+
+        const status = String(
+            data[i]?.onboarding_status || ""
+        ).toUpperCase();
+
+        total++;
+
+        if (status.includes("PENDING")) {
+            pending++;
+        }
+
+        else if (status.includes("PROGRESS")) {
+            progress++;
+        }
+
+        else if (status.includes("COMPLETE")) {
+            completed++;
+        }
+    }
+
+    /* =========================================================
+       UPDATE UI
+    ========================================================= */
+
+    setKPIValue("total", total);
+    setKPIValue("pending", pending);
+    setKPIValue("progress", progress);
+    setKPIValue("completed", completed);
+}
+
+function setKPIValue(id, value) {
+
+    const el = document.getElementById(id);
+
+    if (!el) return;
+
+    /* =========================================================
+       SAFE UPDATE
+    ========================================================= */
+
+    const current = parseInt(el.innerText || "0", 10);
+
+    /* =========================================================
+       OPTIONAL ANIMATION HOOK (SAFE)
+    ========================================================= */
+
+    if (!isNaN(current) && current !== value) {
+
+        el.innerText = value;
+
+        el.classList.add("kpi-update");
+
+        setTimeout(() => {
+            el.classList.remove("kpi-update");
+        }, 300);
+
+    } else {
+
+        el.innerText = value;
+    }
+}
+/* =========================================================
+   CHARTS
+========================================================= */
+
+function loadCharts(data) {
+
+    try {
+
+        /* =========================================================
+           SAFETY CHECK
+        ========================================================= */
+
+        if (!Array.isArray(data)) {
+            console.warn("Invalid chart data");
+            return;
+        }
+
+        /* =========================================================
+           NORMALIZED COUNTS (SAFE PARSING)
+        ========================================================= */
+
+        const stats = data.reduce(
+            (acc, e) => {
+
+                const status =
+                    String(e.onboarding_status || "")
+                        .toUpperCase();
+
+                if (status.includes("PENDING")) {
+                    acc.pending++;
+                }
+
+                if (status.includes("PROGRESS")) {
+                    acc.progress++;
+                }
+
+                if (status.includes("COMPLETE")) {
+                    acc.completed++;
+                }
+
+                return acc;
+
+            },
+            { pending: 0, progress: 0, completed: 0 }
+        );
+
+        const { pending, progress, completed } = stats;
+
+        /* =========================================================
+           DESTROY OLD CHARTS (MEMORY SAFE)
+        ========================================================= */
+
+        if (pieChart) {
+            pieChart.destroy();
+            pieChart = null;
+        }
+
+        if (donutChart) {
+            donutChart.destroy();
+            donutChart = null;
+        }
+
+        /* =========================================================
+           GET CANVAS CONTEXTS
+        ========================================================= */
+
+        const pieCtx = document.getElementById("pieChart");
+        const donutCtx = document.getElementById("donutChart");
+
+        if (!pieCtx || !donutCtx) {
+            console.warn("Chart canvas not found");
+            return;
+        }
+
+        /* =========================================================
+           EMPTY DATA HANDLING (UI SAFE)
+        ========================================================= */
+
+        const chartData = [pending, progress, completed];
+
+        const hasData = chartData.some(v => v > 0);
+
+        if (!hasData) {
+            console.warn("No chart data available");
+
+            // Optional: show empty state chart
+            pieChart = new Chart(pieCtx, {
+                type: "pie",
+                data: {
+                    labels: ["No Data"],
+                    datasets: [{
+                        data: [1],
+                        backgroundColor: ["#e0e0e0"]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+
+            donutChart = new Chart(donutCtx, {
+                type: "doughnut",
+                data: {
+                    labels: ["No Data"],
+                    datasets: [{
+                        data: [1],
+                        backgroundColor: ["#e0e0e0"]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: "65%"
+                }
+            });
+
+            return;
+        }
+
+        /* =========================================================
+           PIE CHART
+        ========================================================= */
+
+        pieChart = new Chart(pieCtx, {
+            type: "pie",
+            data: {
+                labels: ["Pending", "In Progress", "Completed"],
+                datasets: [{
+                    data: chartData,
+                    backgroundColor: [
+                        "#f39c12",
+                        "#3498db",
+                        "#1D9E75"
+                    ],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: {
+                    duration: 600
+                }
+            }
+        });
+
+        /* =========================================================
+           DONUT CHART
+        ========================================================= */
+
+        donutChart = new Chart(donutCtx, {
+            type: "doughnut",
+            data: {
+                labels: ["Pending", "In Progress", "Completed"],
+                datasets: [{
+                    data: chartData,
+                    backgroundColor: [
+                        "#ff7675",
+                        "#74b9ff",
+                        "#55efc4"
+                    ],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: "65%",
+                animation: {
+                    duration: 600
+                },
+                plugins: {
+                    legend: {
+                        position: "bottom"
+                    }
+                }
+            }
+        });
+
+    } catch (err) {
+
+        console.error("CHART ERROR", err);
+    }
+}
+/* =========================================================
+   INSIGHTS
+========================================================= */
+
+function renderInsights(data) {
+
+    const highRisk =
+        data.filter(e =>
+            String(
+                e.risk_level
+            ).toUpperCase() === "HIGH"
+        ).length;
+
+    const pending =
+        data.filter(e =>
+            String(
+                e.onboarding_status
+            ).includes("PENDING")
+        ).length;
+
+    const delayed =
+        data.filter(e =>
+            String(
+                e.onboarding_status
+            ).includes("DELAY")
+        ).length;
+
+    const insights =
+        document.getElementById(
+            "aiInsights"
+        );
+
+    if (!insights) return;
+
+    insights.innerHTML = `
+
+        <div class="insight-card">
+            ⚠ ${highRisk} High Risk Employees
+        </div>
+
+        <div class="insight-card">
+            📌 ${pending} Pending Onboarding
+        </div>
+
+        <div class="insight-card">
+            🚨 ${delayed} Delayed Cases
+        </div>
+
+        <div class="insight-card">
+            🤖 AI Agents Monitoring Workflow
+        </div>
+    `;
+}
+
+/* =========================================================
+   SEARCH
+========================================================= */
+
+function searchTable(value) {
+
+    value =
+        String(value || "")
+        .toLowerCase();
+
+    filteredEmployees =
+        allEmployees.filter(emp => {
+
+            return (
+
+                String(
+                    emp.emp_name || ""
+                )
+                .toLowerCase()
+                .includes(value)
+
+                ||
+
+                String(
+                    emp.emp_id || ""
+                )
+                .toLowerCase()
+                .includes(value)
+
+                ||
+
+                String(
+                    emp.account_name || ""
+                )
+                .toLowerCase()
+                .includes(value)
+
+                ||
+
+                String(
+                    emp.reporting_manager_name || ""
+                )
+                .toLowerCase()
+                .includes(value)
+
+                ||
+
+                String(
+                    emp.account_pmo_name || ""
+                )
+                .toLowerCase()
+                .includes(value)
+
+                ||
+
+                String(
+                    emp.location || ""
+                )
+                .toLowerCase()
+                .includes(value)
+            );
+        });
+
+    renderEmployees(filteredEmployees);
+}
+
+/* =========================================================
+   MAP
+========================================================= */
+
+function initMap() {
+
+    try {
+
+        if (
+            typeof L === "undefined"
+        ) {
+
+            console.warn(
+                "Leaflet Not Loaded"
+            );
+
+            return;
+        }
+
+        map = L.map("worldMap")
+            .setView([20, 78], 4);
+
+        L.tileLayer(
+            "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+            {
+
+                attribution:
+                    "© OpenStreetMap"
+            }
+
+        ).addTo(map);
+
+    } catch (err) {
+
+        console.error(
+            "MAP ERROR",
+            err
+        );
+    }
+}
+
+async function plotAllLocations(data) {
+
+    try {
+
+        if (!map) return;
+
+        markers.forEach(marker => {
+
+            map.removeLayer(marker);
+        });
+
+        markers = [];
+
+        const grouped = {};
+
+        data.forEach(emp => {
+
+            const location =
+                emp.location;
+
+            if (!location) return;
+
+            if (!grouped[location]) {
+
+                grouped[location] = [];
+            }
+
+            grouped[location].push(emp);
+        });
+
+        for (const location in grouped) {
+
+            try {
+
+                const response =
+                    await fetch(
+
+                        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location)}`
+                    );
+
+                const geo =
+                    await response.json();
+
+                if (geo.length) {
+
+                    const marker =
+                        L.marker([
+                            parseFloat(
+                                geo[0].lat
+                            ),
+                            parseFloat(
+                                geo[0].lon
+                            )
+                        ])
+
+                        .addTo(map)
+
+                        .bindPopup(`
+
+                            <b>${location}</b>
+
+                            <br>
+
+                            Employees:
+                            ${grouped[location].length}
+
+                            <br>
+
+                            AI Monitoring Active
+                        `);
+
+                    markers.push(marker);
+                }
+
+            } catch (err) {
+
+                console.error(
+                    "LOCATION ERROR",
+                    err
+                );
+            }
+        }
+
+    } catch (err) {
+
+        console.error(
+            "MAP PLOT ERROR",
+            err
+        );
+    }
+}
+
+/* =========================================================
+   FILE UPLOAD
+========================================================= */
+
+async function uploadAllocationReport() {
+    try {
+        const input = document.getElementById("allocationFile");
+
+        if (!input.files.length) return;
+
+        showLoader(true);
+
+        const formData = new FormData();
+
+        // ⚠️ confirm backend expects "file"
+        formData.append("file", input.files[0]);
+
+        const response = await fetch(`${API_BASE}/upload-allocation`, {
+            method: "POST",
+            body: formData
+        });
+
+        const text = await response.text(); // IMPORTANT DEBUG STEP
+
+        console.log("RAW RESPONSE:", text);
+
+        let result;
+        try {
+            result = JSON.parse(text);
+        } catch (e) {
+            throw new Error("Backend did not return JSON");
+        }
+
+        if (!response.ok || result.success === false) {
+            throw new Error(result.message || "Upload failed in backend");
+        }
+
+        updateUploadResult(result);
+
+        showToast("Allocation Uploaded Successfully", "success");
+
+        await loadDashboard();
+
+    } catch (err) {
+        console.error("UPLOAD ERROR:", err);
+        showToast(err.message || "Upload Failed", "error");
+    } finally {
+        showLoader(false);
+    }
+}
+
+function updateUploadResult(result) {
+
+    document.getElementById(
+        "uploadResult"
+    ).style.display = "block";
+
+    setValue(
+        "totalFound",
+        result.total_found || 0
+    );
+
+    setValue(
+        "newEmployees",
+        result.new_employees || 0
+    );
+
+    setValue(
+        "qaProfiles",
+        result.qa_profiles || 0
+    );
+
+    setValue(
+        "dbInserted",
+        result.db_inserted || 0
+    );
+
+    setValue(
+        "duplicatesFound",
+        result.duplicates || 0
+    );
+}
+
+function setValue(id, value) {
+
+    const el =
+        document.getElementById(id);
+
+    if (el) {
+
+        el.innerText = value;
+    }
+}
+
+/* =========================================================
+   TICKET CREATION
+========================================================= */
+
+async function createTicket(empId) {
+
+    const btn = document.getElementById(`ticket-${empId}`);
+
+    try {
+
+        /* =========================================================
+           VALIDATION
+        ========================================================= */
+
+        if (!empId) {
+            showToast("Invalid Employee ID", "error");
+            return { success: false };
+        }
+
+        const employee = allEmployees.find(
+            e => String(e.emp_id) === String(empId)
+        );
+
+        if (!employee) {
+            showToast("Employee Not Found", "error");
+            return { success: false };
+        }
+
+        /* =========================================================
+           UI LOCK (PREVENT DOUBLE CLICK)
+        ========================================================= */
+
+        if (btn) {
+            btn.disabled = true;
+            btn.innerText = "⏳ Creating...";
+        }
+
+        showToast("Creating Ticket...", "info");
+
+        /* =========================================================
+           PAYLOAD BUILD
+        ========================================================= */
+
+        const payload = {
+            emp_id: employee.emp_id,
+            emp_name: employee.emp_name,
+            onboarding_status: employee.onboarding_status,
+            current_step: employee.current_step,
+            risk_level: employee.risk_level,
+            account_name: employee.account_name,
+            reporting_manager: employee.reporting_manager_name,
+            pmo: employee.account_pmo_name
+        };
+
+        /* =========================================================
+           API CALL
+        ========================================================= */
+
+        const response = await callAPI(
+            "/create-ticket",
+            "POST",
+            payload
+        );
+
+        /* =========================================================
+           SUCCESS FLOW
+        ========================================================= */
+
+        if (response && response.success) {
+
+            showToast(
+                `Ticket Created: ${response.ticket_id}`,
+                "success"
+            );
+
+            /* =========================================================
+               CHAT UPDATE (REALTIME AI FEEDBACK)
+            ========================================================= */
+
+            addChat(
+                "AI",
+                `🎫 Ticket ${response.ticket_id} created for ${employee.emp_name}`
+            );
+
+            /* =========================================================
+               LOCAL STATE UPDATE (OPTIONAL ENRICHMENT)
+            ========================================================= */
+
+            const empIndex = allEmployees.findIndex(
+                e => String(e.emp_id) === String(empId)
+            );
+
+            if (empIndex !== -1) {
+
+                allEmployees[empIndex].ticket_id = response.ticket_id;
+                allEmployees[empIndex].ticket_status = "OPEN";
+            }
+
+            filteredEmployees = [...allEmployees];
+
+            renderEmployees(filteredEmployees);
+
+            /* =========================================================
+               SOCKET SYNC (REALTIME PIPELINE READY)
+            ========================================================= */
+
+            if (socket) {
+                socket.emit("ticket_created", {
+                    ticket_id: response.ticket_id,
+                    emp_id: empId
+                });
+            }
+
+            return {
+                success: true,
+                ticket_id: response.ticket_id,
+                emp_id: empId
+            };
+        }
+
+        /* =========================================================
+           FAILURE FLOW
+        ========================================================= */
+
+        else {
+
+            showToast("Ticket Creation Failed", "error");
+
+            if (btn) {
+                btn.disabled = false;
+                btn.innerText = "🎫 Ticket";
+            }
+
+            return { success: false };
+        }
+
+    } catch (err) {
+
+        console.error("TICKET ERROR", err);
+
+        showToast("Ticket Error", "error");
+
+        if (btn) {
+            btn.disabled = false;
+            btn.innerText = "🎫 Ticket";
+        }
+
+        return {
+            success: false,
+            error: err.message
+        };
+    }
+}
+
+/* =========================================================
+   ONBOARDING
+========================================================= */
+
+async function startOnboarding(empId) {
+
+    const btn = document.getElementById(`onboard-${empId}`);
+
+    try {
+
+        /* =========================================================
+           VALIDATION
+        ========================================================= */
+
+        if (!empId) {
+            showToast("Invalid Employee ID", "error");
+            return { success: false };
+        }
+
+        /* =========================================================
+           UI LOCK (MATCHES RENDER TABLE BUTTON)
+        ========================================================= */
+
+        if (btn) {
+            btn.disabled = true;
+            btn.innerText = "⏳ Starting...";
+        }
+
+        showToast("Starting Onboarding...", "info");
+
+        /* =========================================================
+           API CALL
+        ========================================================= */
+
+        const response = await callAPI(
+            "/start-onboarding",
+            "POST",
+            { emp_id: empId }
+        );
+
+        /* =========================================================
+           SUCCESS FLOW (NO FULL RELOAD - OPTIMIZED)
+        ========================================================= */
+
+        if (response && response.success) {
+
+            showToast("Onboarding Started", "success");
+
+            /* =========================================================
+               LOCAL STATE UPDATE (INSTANT UI REFRESH)
+            ========================================================= */
+
+            const empIndex = allEmployees.findIndex(
+                e => String(e.emp_id) === String(empId)
+            );
+
+            if (empIndex !== -1) {
+
+                allEmployees[empIndex].onboarding_status = "IN PROGRESS";
+                allEmployees[empIndex].current_step = "Initiated";
+                allEmployees[empIndex].progress_percentage = 5;
+            }
+
+            filteredEmployees = [...allEmployees];
+
+            renderEmployees(filteredEmployees);
+            updateKPIs(filteredEmployees);
+
+            /* =========================================================
+               SOCKET SYNC (REALTIME SYSTEM READY)
+            ========================================================= */
+
+            if (socket) {
+                socket.emit("onboarding_started", {
+                    emp_id: empId,
+                    status: "IN PROGRESS"
+                });
+            }
+
+            return {
+                success: true,
+                emp_id: empId,
+                data: response
+            };
+        }
+
+        /* =========================================================
+           FAILURE FLOW (RESET UI)
+        ========================================================= */
+
+        else {
+
+            showToast("Failed To Start", "error");
+
+            if (btn) {
+                btn.disabled = false;
+                btn.innerText = "🚀 Onboard";
+            }
+
+            return { success: false };
+        }
+
+    } catch (err) {
+
+        console.error("START ERROR", err);
+
+        showToast("Onboarding Error", "error");
+
+        /* =========================================================
+           RESET BUTTON ON ERROR
+        ========================================================= */
+
+        if (btn) {
+            btn.disabled = false;
+            btn.innerText = "🚀 Onboard";
+        }
+
+        return {
+            success: false,
+            error: err.message
+        };
+    }
+}
+/* =========================================================
+   VIEW EMPLOYEE
+========================================================= */
+
+function viewEmployee(empId) {
+
+    const emp =
+        allEmployees.find(
+            e =>
+                String(e.emp_id)
+                === String(empId)
+        );
+
+    if (!emp) return;
+
+    selectedEmployee = emp;
+
+    addChat(
+        "AI",
+        `
+        👤 ${emp.emp_name}
+        <br>
+        📌 Status: ${emp.onboarding_status}
+        <br>
+        📍 Step: ${emp.current_step}
+        <br>
+        ⚠ Risk: ${emp.risk_level}
+        `
+    );
+
+    if (!chatOpen) {
+
+        toggleChat();
+    }
+}
+
+/* =========================================================
+   CHAT
+========================================================= */
+
+function toggleChat() {
+
+    chatOpen = !chatOpen;
+
+    const panel =
+        document.getElementById("chatPanel");
+
+    if (!panel) return;
+
+    panel.style.display =
+        chatOpen ? "flex" : "none";
+
+    if (chatOpen) {
+
+        addChat(
+            "SYSTEM",
+            "🤖 PMO AI Assistant Ready. Type 'help' for commands."
+        );
+    }
+}
+
+/* =========================================================
+   SAFE CHAT RENDER
+========================================================= */
+
+function addChat(role, message) {
+
+    const body =
+        document.getElementById("chatBody");
+
+    if (!body) return;
+
+    const safeMessage =
+        String(message || "")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;");
+
+    body.innerHTML += `
+
+        <div class="chat-message ${role.toLowerCase()}">
+
+            <b>${role}:</b>
+
+            <div>${safeMessage}</div>
+
+        </div>
+    `;
+
+    body.scrollTop = body.scrollHeight;
+}
+
+/* =========================================================
+   CHAT COMMAND ENGINE
+========================================================= */
+async function askAgent() {
+
+    const input =
+        document.getElementById("chatInput");
+
+    if (!input) return;
+
+    const question =
+        String(input.value || "").trim();
+
+    if (!question) return;
+
+    addChat("YOU", question);
+
+    input.value = "";
+
+    const lower =
+        question.toLowerCase().trim();
+
+    /* ====================================================
+       HELPERS
+    ==================================================== */
+
+    const clean = (val) => {
+
+        if (
+            val === undefined ||
+            val === null ||
+            val === "" ||
+            String(val).toLowerCase() === "undefined"
+        ) {
+            return "N/A";
+        }
+
+        return String(val).trim();
+    };
+
+    const formatText = (txt) => {
+
+        return clean(txt)
+            .replace(/_/g, " ")
+            .replace(/\s+/g, " ")
+            .replace(/\b\w/g, c => c.toUpperCase());
+    };
+
+    const calculateRisk = (emp) => {
+
+        const step =
+            String(emp?.current_step || "")
+                .toUpperCase();
+
+        const status =
+            String(emp?.onboarding_status || "")
+                .toUpperCase();
+
+        if (
+            status.includes("ESCALATED") ||
+            status.includes("DELAY")
+        ) {
+            return "HIGH";
+        }
+
+        if (
+            step.includes("ID_CARD") ||
+            step.includes("ACCESS") ||
+            step.includes("LAPTOP")
+        ) {
+            return "MEDIUM";
+        }
+
+        return "LOW";
+    };
+
+    const calculateProgress = (emp) => {
+
+        if (
+            emp?.progress_percentage !== undefined &&
+            emp?.progress_percentage !== null &&
+            emp?.progress_percentage !== ""
+        ) {
+            return Number(emp.progress_percentage);
+        }
+
+        const step =
+            String(emp?.current_step || "")
+                .toUpperCase();
+
+        if (step.includes("COE")) return 100;
+        if (step.includes("LAPTOP")) return 75;
+
+        if (
+            step.includes("ID_CARD") ||
+            step.includes("ACCESS")
+        ) {
+            return 50;
+        }
+
+        return 25;
+    };
+
+    const addCleanResponse = (title, lines = []) => {
+
+        const message = `
+${title}
+
+${lines.join("\n")}
+        `.trim();
+
+        addChat("AI", message);
+    };
+
+    const removeThinkingMessage = () => {
+
+        const chatBody =
+            document.getElementById("chatBody");
+
+        if (!chatBody) return;
+
+        chatBody.querySelectorAll("*").forEach(msg => {
+
+            const text = msg.innerText || "";
+
+            if (
+                text.includes("Analyzing onboarding data") ||
+                text.includes("Thinking")
+            ) {
+                msg.remove();
+            }
+        });
+    };
+
+    /* ====================================================
+       HELP
+    ==================================================== */
+
+    if (lower === "help") {
+
+        addCleanResponse(
+            "🤖 PMO AI COMMAND CENTER",
+            [
+                "━━━━━━━━━━━━━━━━━━",
+                "📌 AVAILABLE COMMANDS",
+                "",
+                "• help",
+                "• pending",
+                "• inprogress",
+                "• completed",
+                "• status report",
+                "• high risk",
+                "• bulkOnboard",
+                "• onboard <emp_id>",
+                "",
+                "📌 EXAMPLES",
+                "",
+                "• onboard 10101029",
+                "• bulkonboard",
+                "• status report"
+            ]
+        );
+
+        return;
+    }
+
+    /* ====================================================
+       🔥 NEW: SINGLE ONBOARD COMMAND
+    ==================================================== */
+
+    if (lower.startsWith("onboard")) {
+
+        const empMatch =
+            question.match(/\b\d{4,10}\b/);
+
+        if (!empMatch) {
+
+            addChat(
+                "AI",
+                "⚠ Please provide Employee ID (example: onboard 10101029)"
+            );
+
+            return;
+        }
+
+        const empId = empMatch[0];
+
+        addChat("AI", `🚀 Starting onboarding for Employee ${empId}...`);
+
+        try {
+
+            const res = await callAPI(
+                "/start-onboarding",
+                "POST",
+                { emp_id: empId }
+            );
+
+            addChat(
+                "AI",
+                `✅ Onboarding started for ${res?.employee?.emp_name || empId}`
+            );
+
+        } catch (err) {
+
+            console.error(err);
+            addChat("AI", "❌ Failed to start onboarding");
+        }
+
+        return;
+    }
+
+    /* ====================================================
+       🔥 UPDATED: BULK ONBOARD COMMAND
+    ==================================================== */
+
+    if (
+        lower === "bulkonboard" ||
+        lower.includes("bulk onboard")
+    ) {
+
+        addChat("AI", "🚀 Starting bulk onboarding...");
+
+        try {
+
+            const res = await callAPI(
+                "/bulk-onboard",
+                "POST",
+                {}
+            );
+
+            addCleanResponse(
+                "📦 BULK ONBOARD RESULT",
+                [
+                    "━━━━━━━━━━━━━━━━━━",
+                    `✅ Success : ${res.success_count}`,
+                    `❌ Failed  : ${res.failed_count}`,
+                    `📊 Total   : ${res.results.length}`
+                ]
+            );
+
+        } catch (err) {
+
+            console.error(err);
+            addChat("AI", "❌ Bulk onboarding failed");
+        }
+
+        return;
+    }
+
+    /* ====================================================
+       EXISTING LOGIC (UNCHANGED)
+    ==================================================== */
+
+    if (lower === "pending") {
+
+        const pendingCount =
+            allEmployees.filter(e =>
+                String(e.onboarding_status || "")
+                    .toUpperCase()
+                    .includes("PENDING")
+            ).length;
+
+        addCleanResponse("🟡 PENDING EMPLOYEES", [
+            "━━━━━━━━━━━━━━━━━━",
+            `Total Pending Employees : ${pendingCount}`
+        ]);
+
+        return;
+    }
+
+    if (lower === "inprogress" || lower === "in progress") {
+
+        const progressCount =
+            allEmployees.filter(e =>
+                String(e.onboarding_status || "")
+                    .toUpperCase()
+                    .includes("PROGRESS")
+            ).length;
+
+        addCleanResponse("🔵 IN PROGRESS EMPLOYEES", [
+            "━━━━━━━━━━━━━━━━━━",
+            `Total In Progress Employees : ${progressCount}`
+        ]);
+
+        return;
+    }
+
+    if (lower === "completed") {
+
+        const completedCount =
+            allEmployees.filter(e =>
+                String(e.onboarding_status || "")
+                    .toUpperCase()
+                    .includes("COMPLETE")
+            ).length;
+
+        addCleanResponse("🟢 COMPLETED EMPLOYEES", [
+            "━━━━━━━━━━━━━━━━━━",
+            `Total Completed Employees : ${completedCount}`
+        ]);
+
+        return;
+    }
+
+    if (lower.includes("high risk")) {
+
+        const risky =
+            allEmployees.filter(e =>
+                calculateRisk(e) === "HIGH"
+            );
+
+        addCleanResponse("⚠ HIGH RISK EMPLOYEES", [
+            "━━━━━━━━━━━━━━━━━━",
+            `Total High Risk Employees : ${risky.length}`
+        ]);
+
+        return;
+    }
+
+    if (lower.includes("status report")) {
+
+        const total = allEmployees.length;
+
+        const pending = allEmployees.filter(e =>
+            String(e.onboarding_status || "")
+                .toUpperCase()
+                .includes("PENDING")
+        ).length;
+
+        const progress = allEmployees.filter(e =>
+            String(e.onboarding_status || "")
+                .toUpperCase()
+                .includes("PROGRESS")
+        ).length;
+
+        const completed = allEmployees.filter(e =>
+            String(e.onboarding_status || "")
+                .toUpperCase()
+                .includes("COMPLETE")
+        ).length;
+
+        addCleanResponse("📊 PMO DASHBOARD SUMMARY", [
+            "━━━━━━━━━━━━━━━━━━",
+            `👥 Total : ${total}`,
+            `🟡 Pending : ${pending}`,
+            `🔵 In Progress : ${progress}`,
+            `🟢 Completed : ${completed}`
+        ]);
+
+        return;
+    }
+
+    /* ====================================================
+       EMPLOYEE SEARCH
+    ==================================================== */
+
+    const empMatch = question.match(/\b\d{4,10}\b/);
+
+    if (empMatch) {
+
+        const empId = empMatch[0];
+
+        const emp = allEmployees.find(e =>
+            String(e.emp_id) === empId
+        );
+
+        if (!emp) {
+            addChat("AI", `⚠ Employee ${empId} not found`);
+            return;
+        }
+
+        addCleanResponse("👤 EMPLOYEE DETAILS", [
+            "━━━━━━━━━━━━━━━━━━",
+            `Name : ${clean(emp.emp_name)}`,
+            `ID   : ${clean(emp.emp_id)}`,
+            `Status : ${formatText(emp.onboarding_status)}`
+        ]);
+
+        return;
+    }
+
+    /* ====================================================
+       AI FALLBACK
+    ==================================================== */
+
+    try {
+
+        addChat("AI", "🧠 Analyzing onboarding data...");
+
+        const response = await callAPI("/ai-agent", "POST", {
+            question,
+            context: { employees: allEmployees }
+        });
+
+        let aiReply =
+            response?.answer ||
+            response?.message ||
+            "";
+
+        addChat("AI", aiReply || "⚠ No response");
+
+    } catch (err) {
+
+        console.error(err);
+        addChat("AI", "❌ AI service error");
+    }
+}
+/* =========================================================
+   BULK ONBOARD
+========================================================= */
+
+let BULK_RUNNING = false;
+
+async function bulkInitiate() {
+
+    try {
+
+        /* =========================================================
+           PREVENT DOUBLE EXECUTION (ENTERPRISE SAFETY)
+        ========================================================= */
+
+        if (BULK_RUNNING) {
+
+            showToast(
+                "Bulk onboarding already running...",
+                "warning"
+            );
+
+            addChat(
+                "AI",
+                "⚠ Bulk onboarding is already in progress. Please wait."
+            );
+
+            return;
+        }
+
+        BULK_RUNNING = true;
+
+        /* =========================================================
+           FILTER PENDING EMPLOYEES ONLY
+        ========================================================= */
+
+        const pendingEmployees =
+            allEmployees.filter(emp =>
+                String(emp.onboarding_status || "")
+                    .toUpperCase()
+                    .includes("PENDING")
+            );
+
+        if (!pendingEmployees.length) {
+
+            showToast(
+                "No Pending Employees Found",
+                "warning"
+            );
+
+            addChat(
+                "AI",
+                "⚠ No pending employees available for onboarding."
+            );
+
+            BULK_RUNNING = false;
+            return;
+        }
+
+        /* =========================================================
+           START NOTIFICATION
+        ========================================================= */
+
+        showToast(
+            `Bulk Onboarding Started (${pendingEmployees.length})`,
+            "info"
+        );
+
+        addChat(
+            "AI",
+            `🚀 Bulk onboarding initiated for ${pendingEmployees.length} employees...`
+        );
+
+        addChat(
+            "AI",
+            "🧠 Validating employee onboarding pipeline..."
+        );
+
+        /* =========================================================
+           PAYLOAD BUILD (BACKEND READY)
+        ========================================================= */
+
+        const payload = {
+            employee_ids: pendingEmployees.map(e => e.emp_id),
+            total_count: pendingEmployees.length,
+            initiated_at: new Date().toISOString()
+        };
+
+        /* =========================================================
+           API CALL
+        ========================================================= */
+
+        const response =
+            await callAPI(
+                "/bulk-onboard",
+                "POST",
+                payload
+            );
+
+        /* =========================================================
+           SUCCESS HANDLING
+        ========================================================= */
+
+        if (response && response.success) {
+
+            showToast(
+                "Bulk Onboarding Completed",
+                "success"
+            );
+
+            addChat(
+                "AI",
+                `
+                ✅ Bulk Onboarding Completed Successfully<br>
+                👥 Processed: ${pendingEmployees.length}<br>
+                📊 Status: All onboarding workflows triggered<br>
+                🤖 AI Agents: Activated for monitoring<br>
+                `
+            );
+
+            /* LIVE DASHBOARD REFRESH */
+            await loadDashboard();
+
+        }
+
+        /* =========================================================
+           FAILURE HANDLING
+        ========================================================= */
+
+        else {
+
+            showToast(
+                "Bulk Operation Failed",
+                "error"
+            );
+
+            addChat(
+                "AI",
+                `
+                ❌ Bulk onboarding failed<br>
+                🔍 Reason: Backend rejected request or validation error<br>
+                📡 Check server logs for details
+                `
+            );
+        }
+
+    }
+
+    /* =========================================================
+       ERROR HANDLING
+    ========================================================= */
+
+    catch (err) {
+
+        console.error("BULK ERROR", err);
+
+        showToast(
+            "Bulk Onboarding Error",
+            "error"
+        );
+
+        addChat(
+            "AI",
+            `
+            ❌ Unexpected System Error<br>
+            ⚠ ${err.message || "Unknown error"}<br>
+            🛠 Please retry or check backend service
+            `
+        );
+    }
+
+    /* =========================================================
+       CLEANUP LOCK
+    ========================================================= */
+
+    finally {
+
+        BULK_RUNNING = false;
+    }
+}
+
+/* =========================================================
+   KEYBOARD EVENTS
+========================================================= */
+
+let KEYBOARD_EVENTS_BOUND = false;
+
+function bindKeyboardEvents() {
+
+    /* =========================================================
+       PREVENT DUPLICATE BINDING (CRITICAL FIX)
+    ========================================================= */
+
+    if (KEYBOARD_EVENTS_BOUND) {
+        return;
+    }
+
+    KEYBOARD_EVENTS_BOUND = true;
+
+    document.addEventListener("keydown", function (event) {
+
+        const isChatFocused =
+            document.activeElement &&
+            document.activeElement.id === "chatInput";
+
+        /* =========================================================
+           ENTER → SEND MESSAGE
+        ========================================================= */
+
+        if (event.key === "Enter" && isChatFocused) {
+
+            // Allow Ctrl+Enter for multi-action future support
+            if (event.ctrlKey) return;
+
+            event.preventDefault();
+
+            askAgent();
+        }
+
+        /* =========================================================
+           CTRL + ENTER → FORCE SUBMIT (FUTURE AI EXTENSION HOOK)
+        ========================================================= */
+
+        if (event.key === "Enter" && event.ctrlKey && isChatFocused) {
+
+            event.preventDefault();
+
+            askAgent();
+        }
+
+        /* =========================================================
+           ESCAPE → CLEAR INPUT (UX ENHANCEMENT)
+        ========================================================= */
+
+        if (event.key === "Escape" && isChatFocused) {
+
+            const input = document.getElementById("chatInput");
+
+            if (input) {
+                input.value = "";
+            }
+        }
+    });
+}
+/* =========================================================
+   HELPERS
+========================================================= */
+
+function showLoader(show) {
+
+    const loader =
+        document.getElementById(
+            "processingLoader"
+        );
+
+    if (!loader) return;
+
+    loader.style.display =
+        show
+        ? "block"
+        : "none";
+}
+
+let toastContainerCreated = false;
+
+function createToastContainer() {
+
+    if (toastContainerCreated) return;
+
+    const container = document.createElement("div");
+
+    container.id = "toastContainer";
+
+    container.style.position = "fixed";
+    container.style.top = "20px";
+    container.style.right = "20px";
+    container.style.zIndex = "9999";
+    container.style.display = "flex";
+    container.style.flexDirection = "column";
+    container.style.gap = "10px";
+
+    document.body.appendChild(container);
+
+    toastContainerCreated = true;
+}
+
+function showToast(msg, type = "info", duration = 3000) {
+
+    createToastContainer();
+
+    const container = document.getElementById("toastContainer");
+
+    if (!container) return;
+
+    const toast = document.createElement("div");
+
+    /* =========================================================
+       STYLE CONFIG
+    ========================================================= */
+
+    const colors = {
+        success: "#1D9E75",
+        error: "#e74c3c",
+        warning: "#f39c12",
+        info: "#3498db"
+    };
+
+    toast.innerText = msg;
+
+    toast.style.padding = "12px 16px";
+    toast.style.borderRadius = "8px";
+    toast.style.color = "#fff";
+    toast.style.fontSize = "14px";
+    toast.style.fontWeight = "500";
+    toast.style.boxShadow = "0 4px 12px rgba(0,0,0,0.15)";
+    toast.style.background = colors[type] || colors.info;
+    toast.style.opacity = "0";
+    toast.style.transform = "translateX(100%)";
+    toast.style.transition = "all 0.3s ease";
+
+    container.appendChild(toast);
+
+    /* =========================================================
+       ANIMATE IN
+    ========================================================= */
+
+    setTimeout(() => {
+        toast.style.opacity = "1";
+        toast.style.transform = "translateX(0)";
+    }, 50);
+
+    /* =========================================================
+       AUTO REMOVE
+    ========================================================= */
+
+    setTimeout(() => {
+
+        toast.style.opacity = "0";
+        toast.style.transform = "translateX(100%)";
+
+        setTimeout(() => {
+            toast.remove();
+        }, 300);
+
+    }, duration);
+}
+
+function updateDashboardTimestamp() {
+
+    const el = document.getElementById("lastUpdated");
+
+    if (!el) return;
+
+    const now = new Date();
+
+    /* =========================================================
+       FORMATTED TIME + DATE (ENTERPRISE UI FORMAT)
+    ========================================================= */
+
+    const formattedTime = now.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: true
+    });
+
+    const formattedDate = now.toLocaleDateString();
+
+    const finalText = `${formattedDate} • ${formattedTime}`;
+
+    /* =========================================================
+       AVOID UNNECESSARY DOM UPDATES (PERFORMANCE FIX)
+    ========================================================= */
+
+    if (el.innerText === finalText) {
+        return;
+    }
+
+    /* =========================================================
+       UPDATE UI
+    ========================================================= */
+
+    el.innerText = finalText;
+
+    /* =========================================================
+       OPTIONAL LIVE INDICATOR (UI ENHANCEMENT)
+    ========================================================= */
+
+    el.style.color = "#1D9E75";
+
+    el.style.fontWeight = "600";
+}
+/* =========================================================
+   DRAG DROP
+========================================================= */
+
+function allowDrop(event) {
+
+    event.preventDefault();
+}
+
+function handleDrop(event) {
+
+    event.preventDefault();
+
+    const files =
+        event.dataTransfer.files;
+
+    if (!files.length) return;
+
+    const input =
+        document.getElementById(
+            "allocationFile"
+        );
+
+    input.files = files;
+
+    uploadAllocationReport();
+}
+
+/* =========================================================
+   LOGOUT
+========================================================= */
+
+async function logout() {
+
+    try {
+
+        // ==========================================
+        // CALL BACKEND LOGOUT
+        // ==========================================
+
+        await fetch(
+            "http://127.0.0.1:5332/api/auth/logout",
+            {
+                method: "POST",
+                credentials: "include"
+            }
+        );
+
+    } catch (err) {
+
+        console.error("Logout API Error:", err);
+    }
+
+    // ==========================================
+    // CLEAR LOCAL STORAGE
+    // ==========================================
+
+    localStorage.clear();
+
+    sessionStorage.clear();
+
+    // ==========================================
+    // REDIRECT TO LOGIN PAGE
+    // ==========================================
+
+    window.location.href =
+        "http://127.0.0.1:5500/login.html";
+}
+</script>
+</body>
+
+</html>

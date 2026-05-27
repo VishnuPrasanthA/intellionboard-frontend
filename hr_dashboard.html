@@ -1,0 +1,1199 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<title>HR Intake Dashboard</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+
+/* ================= ROOT THEME ================= */
+:root{
+    --primary:#0F6E56;
+    --primary-light:#E1F5EE;
+    --accent:#1D9E75;
+
+    --danger:#e74c3c;
+    --warning:#f39c12;
+    --info:#185FA5;
+
+    --bg:#f4f7fb;
+    --card:#ffffff;
+    --text:#2c3e50;
+
+    --shadow-sm: 0 4px 10px rgba(0,0,0,0.05);
+    --shadow-md: 0 8px 18px rgba(0,0,0,0.08);
+}
+
+/* ================= BODY ================= */
+body {
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(135deg,#eef5f3,#f7fafc);
+    margin: 0;
+    color: var(--text);
+}
+
+/* ================= HEADER ================= */
+.header {
+    background: linear-gradient(90deg,var(--primary),var(--accent));
+    color: #fff;
+    padding: 16px 22px;
+    font-size: 18px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    box-shadow: var(--shadow-sm);
+}
+
+/* ================= LAYOUT ================= */
+.container { padding: 16px; }
+
+/* ================= CARD ================= */
+.card {
+    background: var(--card);
+    padding: 16px;
+    margin-bottom: 14px;
+    border-radius: 14px;
+    box-shadow: var(--shadow-sm);
+    transition: 0.2s ease;
+}
+
+.card:hover{
+    box-shadow: var(--shadow-md);
+}
+
+/* ================= SECTION TITLE ================= */
+.card h3 {
+    font-size: 16px;
+    margin-bottom: 14px;
+    color: var(--primary);
+    font-weight: 600;
+}
+
+/* ================= FORM GRID (CLEAN ENTERPRISE UI) ================= */
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+}
+
+/* FIELD CARD */
+.field {
+    background: #f9fbfc;
+    padding: 10px;
+    border-radius: 10px;
+    border: 1px solid #eef2f7;
+    transition: 0.2s ease;
+}
+
+.field:hover {
+    border-color: rgba(15,110,86,0.25);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+}
+
+/* LABEL */
+.field label {
+    font-size: 12px;
+    margin-bottom: 5px;
+    color: #4b5563;
+}
+
+/* INPUTS (FIXED DUPLICATE ISSUE) */
+input, select {
+    width: 100%;
+    padding: 9px;
+    font-size: 13px;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    background: #fff;
+    box-sizing: border-box;
+    transition: 0.2s;
+}
+
+input:focus, select:focus{
+    border-color: var(--primary);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(15,110,86,0.12);
+}
+
+/* ERROR */
+.error-text {
+    font-size: 11px;
+    margin-top: 3px;
+    color: var(--danger);
+}
+
+/* ================= BUTTONS ================= */
+button {
+    padding: 8px 12px;
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: 0.2s;
+}
+
+button:hover{
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+/* BUTTON ROW */
+.button-row {
+    display: flex;
+    align-items: center;
+    margin-top: 16px;
+    gap: 10px;
+}
+
+/* ================= TABLE ================= */
+.table-wrapper {
+    overflow: auto;
+    max-height: 320px;
+    border-radius: 12px;
+}
+
+/* TABLE */
+.table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 8px;
+}
+
+/* HEADER */
+.table th {
+    font-size: 11px;
+    text-transform: uppercase;
+    color: #6b7280;
+    padding: 10px;
+    text-align: left;
+}
+
+/* ROW */
+.table tr {
+    background: #fff;
+    box-shadow: var(--shadow-sm);
+    transition: 0.2s;
+}
+
+.table tr:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+/* CELL */
+.table td {
+    padding: 10px;
+    font-size: 13px;
+}
+
+/* ROUND ROW */
+.table tr td:first-child {
+    border-top-left-radius: 10px;
+    border-bottom-left-radius: 10px;
+}
+.table tr td:last-child {
+    border-top-right-radius: 10px;
+    border-bottom-right-radius: 10px;
+}
+
+/* ================= VISUAL GRID ================= */
+.visual-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-top: 10px;
+}
+
+/* ================= VIZ CARD ================= */
+.viz-card {
+    background: #fff;
+    padding: 12px;
+    border-radius: 12px;
+    box-shadow: var(--shadow-sm);
+    min-height: 160px;
+    overflow: hidden;
+    transition: 0.2s;
+}
+
+.viz-card:hover{
+    box-shadow: var(--shadow-md);
+}
+
+/* TITLE */
+.viz-card h4 {
+    margin-bottom: 8px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+/* CHART */
+.viz-card canvas {
+    max-height: 120px !important;
+}
+
+/* ================= MINI BARS ================= */
+.mini-bar {
+    margin-bottom: 8px;
+}
+
+.mini-bar-label {
+    font-size: 12px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.mini-bar-track {
+    background: #e5e7eb;
+    height: 6px;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.mini-bar-fill {
+    height: 6px;
+    background: linear-gradient(90deg,var(--primary),var(--accent));
+}
+
+/* ================= AI CARD ================= */
+.ai-card {
+    grid-column: span 1 !important;
+    min-height: 160px;
+    background: linear-gradient(135deg,#f8fafc,#eef5f3);
+}
+
+/* AI TEXT */
+#aiInsights {
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+/* ================= BADGES ================= */
+.badge-good {
+    background:#e6f7ee;
+    color:var(--primary);
+    padding:3px 8px;
+    border-radius:12px;
+    font-size:11px;
+}
+
+.badge-risk {
+    background:#fdecea;
+    color:var(--danger);
+    padding:3px 8px;
+    border-radius:12px;
+    font-size:11px;
+}
+
+.badge-info {
+    background:#e8f1fb;
+    color:var(--info);
+    padding:3px 8px;
+    border-radius:12px;
+    font-size:11px;
+}
+
+/* ================= RESPONSIVE ================= */
+@media (max-width: 1000px) {
+    .visual-row {
+        grid-template-columns: 1fr;
+    }
+
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+</style>
+<div class="header">
+    HR Intake Dashboard
+
+    <div style="float:right; display:flex; gap:10px; align-items:center;">
+
+        <input id="search_emp_id" placeholder="Enter Emp ID"
+            style="padding:8px; border-radius:6px; border:none;">
+
+        <button onclick="searchEmployee()">Search</button>
+
+        <!-- 🔥 NEW LOGOUT BUTTON -->
+        <button class="logout-btn" onclick="logout()">Logout</button>
+
+    </div>
+</div>
+</head>
+
+<body>
+<div class="container">
+
+<div class="card">
+<h3>Manual Entry</h3>
+
+<div class="form-grid">
+
+<!-- Emp ID -->
+<div class="field">
+    <label>Emp ID</label>
+    <input id="emp_id" placeholder="Enter Emp ID">
+    <div class="error-text" id="emp_id_error"></div>
+</div>
+
+<!-- Name -->
+<div class="field">
+    <label>Name</label>
+    <input id="name" placeholder="Enter Name">
+    <div class="error-text" id="name_error"></div>
+</div>
+
+<!-- Email -->
+<div class="field">
+    <label>Email</label>
+    <input id="email" placeholder="Enter Email">
+    <div class="error-text" id="email_error"></div>
+</div>
+
+<!-- Role -->
+<div class="field">
+    <label>Role / Department</label>
+    <select id="role">
+        <option value="">Select Role</option>
+        <option>QA Testing</option>
+        <option>Developer</option>
+        <option>DevOps</option>
+        <option>Business Analyst</option>
+        <option>UI/UX</option>
+        <option>PMO</option>
+        <option>Support</option>
+        <option>Data Engineer</option>
+        <option>Other</option>
+    </select>
+    <div class="error-text" id="role_error"></div>
+</div>
+
+<!-- Account -->
+<div class="field">
+    <label>Account</label>
+    <select id="account" onchange="loadHiringManagers()">
+        <option value="">Select Account</option>
+        <option>HMSA</option>
+        <option>Molina</option>
+        <option>CS</option>
+        <option>Elevance</option>
+        <option>Gainwell</option>
+    </select>
+    <div class="error-text" id="account_error"></div>
+</div>
+
+<!-- Location -->
+<div class="field">
+    <label>Location</label>
+    <select id="location" onchange="loadHiringManagers()">
+        <option value="">Select Location</option>
+        <option>Hyderabad</option>
+        <option>Visakhapatnam</option>
+        <option>Chennai</option>
+        <option>Bangalore</option>
+        <option>Pune</option>
+        <option>Noida</option>
+    </select>
+    <div class="error-text" id="location_error"></div>
+</div>
+
+<!-- Hiring Manager -->
+<div class="field">
+    <label>Hiring Manager</label>
+    <select id="hiring_manager" disabled>
+        <option value="">Select Hiring Manager</option>
+    </select>
+    <div class="error-text" id="hiring_manager_error"></div>
+</div>
+
+<!-- DOJ -->
+<div class="field">
+    <label>Date of Joining</label>
+    <input id="doj" type="date">
+    <div class="error-text" id="doj_error"></div>
+</div>
+
+</div>
+
+<div class="button-row">
+    <button id="addBtn" onclick="addEmployee()">Add Employee</button>
+</div>
+
+</div>
+<!-- REST UI SAME -->
+<div class="card">
+<h3>Upload Excel</h3>
+<input type="file" id="fileInput">
+<button onclick="uploadFile()">Process</button>
+</div>
+
+<div class="card">
+<h3>Preview Data</h3>
+<div class="table-wrapper">
+<table class="table" id="preview"></table>
+</div>
+<!-- 🔥 FILTERS INSIDE PREVIEW -->
+<div style="margin-top:15px; display:flex; gap:10px; flex-wrap:wrap;">
+
+<select id="filter_account" onchange="applyFilters()">
+<option value="">All Accounts</option>
+<option>HMSA</option>
+<option>Molina</option>
+<option>CS</option>
+<option>Elevance</option>
+<option>Gainwell</option>
+</select>
+
+<select id="filter_role" onchange="applyFilters()">
+<option value="">All Roles</option>
+<option>QA Testing</option>
+<option>Developer</option>
+<option>DevOps</option>
+</select>
+
+<select id="filter_location" onchange="applyFilters()">
+<option value="">All Locations</option>
+<option>Hyderabad</option>
+<option>Chennai</option>
+<option>Visakhapatnam</option>
+<option>Bangalore</option>
+<option>Pune</option>
+<option>Noida</option>
+</select>
+
+<select id="filter_status" onchange="applyFilters()">
+<option value="">All Status</option>
+<option>Initiated</option>
+<option>Pending Hiring Manager Assignment</option>
+<option>Pending PMO Approval</option>
+<option>Completed</option>
+</select>
+
+</div>
+
+<!-- 🔥 CHART -->
+<div class="visual-row">
+
+    <!-- 🟢 DONUT CHART -->
+    <div class="viz-card">
+        <h4>Onboarding Status</h4>
+        <canvas id="statusChart"></canvas>
+    </div>
+
+    <!-- 🔵 LOCATION MINI BARS -->
+    <div class="viz-card">
+        <h4>Location</h4>
+        <div id="locationBars"></div>
+    </div>
+
+    <!-- 🟣 RM MINI BARS -->
+    <div class="viz-card">
+        <h4>RM Distribution</h4>
+        <div id="rmBars"></div>
+    </div>
+
+    <div class="viz-card ai-card">
+    <h4>🤖 AI Insights</h4>
+    <div id="aiInsights">
+        <div class="ai-loading">Analyzing data...</div>
+    </div>
+</div>
+
+</div>
+
+<!-- 🔥 MAP -->
+<div id="map" style="height:300px; margin-top:20px;"></div>
+<div class="button-row">
+    
+    <!-- LEFT SIDE -->
+    <button onclick="sendToDB()">Push to DB</button>
+
+    <!-- RIGHT SIDE GROUP -->
+    <div style="margin-left:auto; display:flex; gap:10px;">
+        <button onclick="viewDB()">🔐 View DB Data</button>
+        <button onclick="resetFilters()">Reset Filters</button>
+    </div>
+
+</div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script>
+let parsedData = [];
+let validData = [];
+let fullDBData = [];
+let filteredData = [];
+let activeFilters = {
+    location: null,
+    status: null
+};
+
+function logout(){
+
+    // 🔥 clear session/local storage
+    localStorage.clear();
+    sessionStorage.clear();
+
+    // 🔥 optional: call backend logout API
+    // fetch("http://localhost:5000/logout", { method: "POST" });
+
+    // 🔥 redirect to login page
+    window.location.href = "login.html";
+}
+
+/* ================= EMAIL ================= */
+function isValidEmail(email){
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+/* ================= NORMALIZE ================= */
+function normalize(text){
+    return text.toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+function addEmployee(){
+
+    let payload = {
+        emp_id: document.getElementById("emp_id").value.trim(),
+        emp_name: document.getElementById("name").value.trim(),
+        email: document.getElementById("email").value.trim(),
+        role: document.getElementById("role").value,
+        account: document.getElementById("account").value,
+        location: document.getElementById("location").value,
+        hiring_manager: document.getElementById("hiring_manager").value,
+        doj: document.getElementById("doj").value
+    };
+
+    // 🔥 CLEAR ERRORS
+    document.querySelectorAll(".error-text").forEach(e => e.innerText = "");
+
+    let hasError = false;
+
+    function setError(id, msg){
+        document.getElementById(id + "_error").innerText = msg;
+        hasError = true;
+    }
+
+    // 🔥 VALIDATION RULES
+    if(!payload.emp_id) setError("emp_id", "Emp ID required");
+    if(!payload.emp_name) setError("name", "Name required");
+    if(!payload.email || !isValidEmail(payload.email)) setError("email", "Valid email required");
+    if(!payload.role) setError("role", "Role required");
+    if(!payload.account) setError("account", "Account required");
+    if(!payload.location) setError("location", "Location required");
+    if(!payload.hiring_manager) setError("hiring_manager", "Select hiring manager");
+    if(!payload.doj) setError("doj", "DOJ required");
+
+    // 🚫 STOP API CALL
+    if(hasError){
+        alert("❌ Please fix validation errors");
+        return;
+    }
+
+    // ✅ CALL API ONLY IF VALID
+    fetch("http://localhost:5000/add-employee", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+    })
+    .then(res => res.json())
+    .then(data => {
+        if(data.success){
+            alert("✅ Employee Added Successfully");
+        } else {
+            alert("❌ " + data.message);
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        alert("API Error");
+    });
+}
+
+function resetFilters(){
+    activeFilters = { location:null, status:null };
+    applyGlobalFilters();
+}
+/* ================= AUTO MAP ================= */
+function autoMapColumns(columns){
+    let mapping = {};
+
+    columns.forEach(col=>{
+        let norm = normalize(col);
+
+        if(norm.includes("empid")) mapping[col] = "emp_id";
+        else if(norm.includes("empname")) mapping[col] = "emp_name";
+        else if(norm.includes("email")) mapping[col] = "email";
+        else if(norm.includes("manager")) mapping[col] = "reporting_manager";
+        else if(norm === "location") mapping[col] = "location";
+        else if(norm.includes("doj") || norm.includes("joining")) mapping[col] = "doj";
+        else if(norm.includes("account")) mapping[col] = "account";
+    });
+
+    return mapping;
+}
+
+/* ================= DATE FIX ================= */
+function formatDate(value){
+    if(typeof value === "number"){
+        let d = XLSX.SSF.parse_date_code(value);
+        return `${d.y}-${String(d.m).padStart(2,'0')}-${String(d.d).padStart(2,'0')}`;
+    }
+    return value || "";
+}
+
+/* ================= VALIDATE ================= */
+function validateRow(row){
+    if(!row.emp_id) return "Emp ID required";
+    if(!row.emp_name) return "Name required";
+    if(!row.email || !isValidEmail(row.email)) return "Invalid email";
+    if(!row.account) return "Account required";
+    if(!row.location) return "Location required";
+    if(!row.doj) return "DOJ required";
+    return null;
+}
+
+/* ================= TRANSFORM ================= */
+function transformData(data, mapping){
+    return data.map(row=>{
+        let obj = {};
+
+        Object.keys(mapping).forEach(col=>{
+            let target = mapping[col];
+            let val = row[col];
+
+            if(target === "doj"){
+                val = formatDate(val);
+            }
+
+            if(target === "location"){
+                val = (typeof val === "number") ? "" : String(val).trim();
+            }
+
+            obj[target] = val;
+        });
+
+        return obj;
+    });
+}
+
+/* ================= UPLOAD ================= */
+function uploadFile(){
+
+    const file = fileInput.files[0];
+    if(!file) return alert("Select file");
+
+    const reader = new FileReader();
+
+    reader.onload = function(e){
+
+        const wb = XLSX.read(e.target.result, {type:'binary'});
+        const sheet = wb.Sheets[wb.SheetNames[0]];
+        const json = XLSX.utils.sheet_to_json(sheet, { raw:true, defval:"" });
+
+        if(json.length === 0){
+            alert("Empty file");
+            return;
+        }
+
+        let mapping = autoMapColumns(Object.keys(json[0]));
+        parsedData = transformData(json, mapping);
+
+        validData = [];
+
+        let table = "<tr><th>emp_id</th><th>emp_name</th><th>email</th><th>location</th><th>doj</th><th>account</th><th>Status</th></tr>";
+
+        parsedData.forEach(row=>{
+            if(row.location){
+                row.location = row.location.split("-")[0].trim();
+            }
+
+            let err = validateRow(row);
+
+            table += `<tr>
+                <td>${row.emp_id||""}</td>
+                <td>${row.emp_name||""}</td>
+                <td>${row.email||""}</td>
+                <td>${row.location||""}</td>
+                <td>${row.doj||""}</td>
+                <td>${row.account||""}</td>
+                <td style="color:${err?'red':'green'}">${err ? "❌ "+err : "✅ Valid"}</td>
+            </tr>`;
+
+            if(!err) validData.push(row);
+        });
+
+        preview.innerHTML = table;
+    };
+
+    reader.readAsBinaryString(file);
+}
+
+/* ================= SEND ================= */
+function sendToDB(){
+    if(validData.length === 0){
+        alert("❌ No valid data");
+        return;
+    }
+
+    fetch("http://localhost:5000/upload-excel", {
+        method:"POST",
+        headers:{ "Content-Type":"application/json" },
+        body: JSON.stringify(validData)
+    })
+    .then(res=>res.json())
+    .then(data=> alert("✅ Uploaded"))
+    .catch(err=> alert("❌ "+err.message));
+}
+/* ================= HIRING MANAGER FIX ================= */
+
+const HM_MAP = {
+    "HMSA": {
+        "hyderabad": ["Sakthivel Kannan", "HM_HYD_2"],
+        "visakhapatnam": ["HM_VIZ_1"],
+        "chennai": ["HM_CH_1"]
+    },
+    "MOLINA": {
+        "pune": ["HM_PUNE_1"],
+        "noida": ["HM_NOIDA_1","HM_NOIDA_2"]
+    },
+    "CS": {
+        "bangalore": ["HM_BLR_1"]
+    }
+};
+
+function loadHiringManagers(){
+
+    let acc = document.getElementById("account").value.trim().toLowerCase();
+    let loc = document.getElementById("location").value.trim().toLowerCase();
+
+    let dropdown = document.getElementById("hiring_manager");
+
+    dropdown.innerHTML = '<option value="">Loading...</option>';
+    dropdown.disabled = true;
+
+    if(!acc || !loc){
+        dropdown.innerHTML = '<option value="">Select Hiring Manager</option>';
+        dropdown.disabled = true;
+        return;
+    }
+
+    console.log("Calling API with:", acc, loc); // 🔥 DEBUG
+
+    fetch(`http://localhost:5000/hiring-managers?account=${encodeURIComponent(acc)}&location=${encodeURIComponent(loc)}`)
+    .then(res => res.json())
+    .then(data => {
+
+        console.log("API Response:", data); // 🔥 DEBUG
+
+        dropdown.innerHTML = '<option value="">Select Hiring Manager</option>';
+
+        if(!data.data || data.data.length === 0){
+            dropdown.innerHTML = '<option value="">No Manager Found</option>';
+            dropdown.disabled = false;
+            return;
+        }
+
+        data.data.forEach(hm => {
+            dropdown.innerHTML += `<option value="${hm.name}">${hm.name}</option>`;
+        });
+
+        dropdown.disabled = false;
+    })
+    .catch(err => {
+        console.error("HM Load Error:", err);
+
+        dropdown.innerHTML = '<option value="">Error loading managers</option>';
+        dropdown.disabled = false;
+    });
+}
+/* ================= VIEW DB ================= */
+function viewDB(){
+
+    let password = prompt("Enter DB Password");
+    if(!password) return;
+
+    fetch("http://localhost:5000/employees", {
+        headers:{ "Authorization": password }
+    })
+    .then(res => {
+
+        // 🔥 HANDLE ERROR FIRST
+        if(!res.ok){
+            throw new Error("Unauthorized or Server Error");
+        }
+
+        return res.json();
+    })
+    .then(data => {
+
+        if(!data.success){
+            alert(data.message || "Failed to load DB");
+            return;
+        }
+
+        fullDBData = data.data || [];
+        filteredData = fullDBData;
+
+        renderTable(fullDBData);
+        updateCharts(fullDBData);
+        updateMap(fullDBData);
+
+        renderDonut(fullDBData);
+        renderLocationBars(fullDBData);
+        renderRMBars(fullDBData);
+
+        generateAIInsights(fullDBData);
+    })
+    .catch(err => {
+        console.error("DB ERROR:", err);
+        alert("❌ Failed to fetch DB. Check password / API.");
+    });
+}
+
+/* ================= TABLE ================= */
+function renderTable(data){
+
+    if(!data || data.length === 0){
+        preview.innerHTML = "<tr><td>No Data</td></tr>";
+        return;
+    }
+
+    let table = "<tr>";
+
+    Object.keys(data[0]).forEach(col=>{
+        table += `<th>${col}</th>`;
+    });
+
+    table += "</tr>";
+
+    data.forEach(row=>{
+        table += "<tr>";
+        Object.values(row).forEach(val=>{
+            table += `<td>${val || ""}</td>`;
+        });
+        table += "</tr>";
+    });
+
+    preview.innerHTML = table;
+}
+
+
+/* ================= Visualizations ================= */
+let donutChart;
+
+function renderDonut(data){
+
+    let pending = data.filter(r => r.status === "Pending Hiring Manager Assignment").length;
+    let pmo = data.filter(r => r.status === "Pending PMO Approval").length;
+    let completed = data.filter(r => r.status === "Completed").length;
+
+    if(donutChart){
+        donutChart.destroy();
+    }
+
+    donutChart = new Chart(document.getElementById('statusChart'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Pending HM', 'Pending PMO', 'Completed'],
+            datasets: [{
+                data: [pending, pmo, completed],
+                backgroundColor: ['orange', '#007bff', 'green'],
+                borderWidth: 0   // 🔥 cleaner look
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,   // 🔥 allows bigger donut
+            layout: {
+                padding: 10
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'right',   // 🔥 move to right
+                    align: 'start',
+                    labels: {
+                        boxWidth: 12,    // 🔥 smaller legend box
+                        boxHeight: 12,
+                        padding: 10,
+                        font: {
+                            size: 11     // 🔥 smaller text
+                        }
+                    }
+                },
+                title: {
+                    display: false,
+                    text: 'Onboarding Status',   // 🔥 updated title
+                    font: {
+                        size: 14,
+                        weight: '600'
+                    },
+                    padding: {
+                        bottom: 10
+                    }
+                }
+            },
+            cutout: '60%',  // 🔥 slightly thicker donut (bigger feel)
+            onClick: (evt, elements) => handlePieClick(elements)
+        }
+    });
+}
+function handlePieClick(elements){
+
+    if(!elements.length) return;
+
+    const statusMap = [
+        "Pending Hiring Manager Assignment",
+        "Pending PMO Approval",
+        "Completed"
+    ];
+
+    let index = elements[0].index;
+
+    activeFilters.status = statusMap[index];
+    applyGlobalFilters();
+}
+function renderLocationBars(data){
+
+    let map = {};
+
+    data.forEach(r => {
+        let loc = r.location?.trim().toLowerCase();
+        if(loc){
+            loc = loc.charAt(0).toUpperCase() + loc.slice(1);
+            map[loc] = (map[loc] || 0) + 1;
+        }
+    });
+
+    let html = "";
+
+    Object.entries(map).forEach(([loc, count]) => {
+        html += `
+        <div class="mini-bar" 
+             style="cursor:pointer"
+             onclick="filterByLocation('${loc}')">
+
+            <div class="mini-bar-label">${loc} (${count})</div>
+
+            <div class="mini-bar-track">
+                <div class="mini-bar-fill" style="width:${count * 15}px"></div>
+            </div>
+        </div>`;
+    });
+
+    document.getElementById("locationBars").innerHTML = html;
+}
+function filterByLocation(loc){
+    activeFilters.location = loc.toLowerCase();
+    applyGlobalFilters();
+}
+
+function renderRMBars(data){
+
+    let map = {};
+
+    data.forEach(r => {
+        if(r.rm){
+            map[r.rm] = (map[r.rm] || 0) + 1;
+        }
+    });
+
+    let html = "";
+
+    Object.entries(map).forEach(([rm, count]) => {
+        html += `
+        <div class="mini-bar">
+            <div class="mini-bar-label">${rm} (${count})</div>
+            <div class="mini-bar-track">
+                <div class="mini-bar-fill" style="width:${count * 15}px"></div>
+            </div>
+        </div>`;
+    });
+
+    document.getElementById("rmBars").innerHTML = html;
+}
+
+function generateAIInsights(data){
+
+    if(!data || data.length === 0){
+        aiInsights.innerHTML = "No data available";
+        return;
+    }
+
+    let pendingPMO = data.filter(r => r.status === "Pending PMO Approval").length;
+
+    let html = "";
+
+    if(pendingPMO > 0){
+        html += `
+        <p style="cursor:pointer;color:red"
+           onclick="filterByStatus('Pending PMO Approval')">
+           ⚠️ ${pendingPMO} employees pending PMO approval
+        </p>`;
+    }
+
+    aiInsights.innerHTML = html;
+}
+
+function filterByStatus(status){
+    activeFilters.status = status;
+    applyGlobalFilters();
+}
+/* ================= CHART FIX ================= */
+let chartInstance;
+
+function updateCharts(data){
+
+    // ✅ FIX: prevent crash
+    if(typeof Chart === "undefined"){
+        console.warn("Chart.js not loaded");
+        return;
+    }
+
+    let counts = {};
+
+    data.forEach(r=>{
+        counts[r.location] = (counts[r.location] || 0) + 1;
+    });
+
+    if(chartInstance){
+        chartInstance.destroy();
+    }
+
+    chartInstance = new Chart(document.getElementById("chart"), {
+        type: "bar",
+        data: {
+            labels: Object.keys(counts),
+            datasets: [{
+                label: "Employees per Location",
+                data: Object.values(counts)
+            }]
+        }
+    });
+}
+
+/* ================= MAP ================= */
+let map;
+let markers = [];
+
+function initMap(){
+    if(map) return;
+
+    map = L.map('map').setView([20.5937, 78.9629], 5);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; OpenStreetMap',
+    crossOrigin: true
+}).addTo(map);
+}
+
+function updateMap(data){
+
+    if(typeof L === "undefined"){
+        console.warn("Leaflet not loaded");
+        return;
+    }
+
+    initMap();
+
+    markers.forEach(m => map.removeLayer(m));
+    markers = [];
+
+    let counts = {};
+
+    data.forEach(r=>{
+        let loc = r.location?.toLowerCase().trim().split("-")[0];
+        counts[loc] = (counts[loc] || 0) + 1;
+    });
+
+    const LOCATION_COORDS = {
+        hyderabad: [17.3850, 78.4867],
+        visakhapatnam: [17.6868, 83.2185],
+        chennai: [13.0827, 80.2707],
+        bangalore: [12.9716, 77.5946],
+        pune: [18.5204, 73.8567],
+        noida: [28.5355, 77.3910]
+    };
+
+    Object.keys(counts).forEach(loc => {
+
+        let cleanLoc = loc.toLowerCase().trim();
+        let coords = LOCATION_COORDS[cleanLoc] || [20.5937, 78.9629];
+
+        let marker = L.circleMarker(coords, {
+            radius: 5 + counts[loc],
+            fillOpacity: 0.7
+        }).addTo(map)
+        .bindPopup(`${cleanLoc}: ${counts[loc]} employees`);
+
+        // 🔥 CLICK FILTER
+        marker.on('click', () => {
+            activeFilters.location = cleanLoc;
+            applyGlobalFilters();
+        });
+
+        markers.push(marker);
+    });
+}
+
+function applyGlobalFilters(){
+
+    let data = fullDBData;
+
+    if(activeFilters.location){
+        data = data.filter(r =>
+            r.location?.toLowerCase().includes(activeFilters.location)
+        );
+    }
+
+    if(activeFilters.status){
+        data = data.filter(r =>
+            r.status === activeFilters.status
+        );
+    }
+
+    renderTable(data);
+    renderDonut(data);
+    renderLocationBars(data);
+    renderRMBars(data);
+    updateMap(data);
+    generateAIInsights(data);
+}
+/* ================= FILTER ================= */
+function applyFilters(){
+
+    let acc = filter_account.value;
+    let role = filter_role.value;
+    let loc = filter_location.value;
+    let status = filter_status.value;
+
+    filteredData = fullDBData.filter(row =>
+        (!acc || row.account === acc) &&
+        (!role || row.role === role) &&
+        (!loc || row.location === loc) &&
+        (!status || row.status === status)
+    );
+
+    renderTable(filteredData);       // ✅ FIXED
+    updateCharts(filteredData);
+    updateMap(filteredData);
+
+    renderDonut(filteredData);
+    renderLocationBars(filteredData);
+    renderRMBars(filteredData);
+
+    generateAIInsights(filteredData); // ✅ update AI dynamically
+}
+
+</script>
+</body>
+</html>

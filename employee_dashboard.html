@@ -1,0 +1,1172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+<title>IntelliOnboard LMS V2</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    font-family:'Poppins',sans-serif;
+    background:#eef5ff;
+    overflow-x:hidden;
+}
+
+/* =====================================================
+   MAIN LAYOUT
+===================================================== */
+
+.main-layout{
+    display:flex;
+    min-height:100vh;
+}
+
+/* =====================================================
+   SIDEBAR
+===================================================== */
+
+.sidebar{
+    width:280px;
+    background:linear-gradient(180deg,#0F172A,#111827);
+    color:white;
+    padding:30px 20px;
+    position:fixed;
+    left:0;
+    top:0;
+    bottom:0;
+    overflow-y:auto;
+}
+
+.logo{
+    font-size:26px;
+    font-weight:800;
+    margin-bottom:40px;
+}
+
+.logo span{
+    color:#19d3a2;
+}
+
+.profile-card{
+    background:rgba(255,255,255,0.06);
+    padding:20px;
+    border-radius:20px;
+    margin-bottom:30px;
+}
+
+.profile-name{
+    font-size:18px;
+    font-weight:700;
+}
+
+.profile-role{
+    font-size:13px;
+    opacity:.8;
+    margin-top:5px;
+}
+
+.menu{
+    margin-top:20px;
+}
+
+.menu-item{
+    padding:14px 16px;
+    border-radius:14px;
+    margin-bottom:10px;
+    cursor:pointer;
+    transition:.3s;
+    font-weight:500;
+}
+
+.menu-item:hover{
+    background:#19d3a2;
+}
+
+.logout-btn{
+    margin-top:40px;
+    width:100%;
+    padding:14px;
+    border:none;
+    border-radius:14px;
+    background:#ff4d4d;
+    color:white;
+    font-weight:700;
+    cursor:pointer;
+}
+
+/* =====================================================
+   CONTENT
+===================================================== */
+
+.content{
+    margin-left:280px;
+    width:calc(100% - 280px);
+    padding:30px;
+}
+
+/* =====================================================
+   TOP BAR
+===================================================== */
+
+.topbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:30px;
+}
+
+.topbar-left h1{
+    font-size:34px;
+    color:#0F172A;
+}
+
+.topbar-left p{
+    color:#64748b;
+    margin-top:6px;
+}
+
+.coe-badge{
+    padding:10px 18px;
+    border-radius:30px;
+    background:#19d3a2;
+    color:white;
+    font-weight:700;
+}
+
+/* =====================================================
+   STATS
+===================================================== */
+
+.stats-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+    gap:20px;
+    margin-bottom:35px;
+}
+
+.stat-card{
+    background:white;
+    border-radius:24px;
+    padding:25px;
+    box-shadow:0 10px 30px rgba(0,0,0,0.08);
+    transition:.3s;
+}
+
+.stat-card:hover{
+    transform:translateY(-5px);
+}
+
+.stat-title{
+    color:#64748b;
+    font-size:14px;
+}
+
+.stat-value{
+    font-size:34px;
+    font-weight:800;
+    margin-top:10px;
+    color:#0F172A;
+}
+
+/* =====================================================
+   SECTIONS
+===================================================== */
+
+.section{
+    margin-bottom:40px;
+}
+
+.section-title{
+    font-size:24px;
+    font-weight:800;
+    margin-bottom:20px;
+    color:#0F172A;
+}
+
+/* =====================================================
+   TRAINING CARDS
+===================================================== */
+
+.training-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
+    gap:25px;
+}
+
+.training-card{
+    background:white;
+    border-radius:28px;
+    padding:24px;
+    box-shadow:0 10px 30px rgba(0,0,0,0.08);
+    position:relative;
+    overflow:hidden;
+    transition:.3s;
+    cursor:pointer;
+}
+
+.training-card:hover{
+    transform:translateY(-6px);
+}
+
+.training-card::before{
+    content:'';
+    position:absolute;
+    top:0;
+    left:0;
+    width:100%;
+    height:6px;
+    background:linear-gradient(90deg,#19d3a2,#0ea5e9);
+}
+
+.training-title{
+    font-size:20px;
+    font-weight:700;
+    color:#0F172A;
+}
+
+.training-desc{
+    margin-top:12px;
+    color:#64748b;
+    font-size:14px;
+    line-height:1.6;
+}
+
+.progress-wrapper{
+    margin-top:20px;
+}
+
+.progress-bar{
+    width:100%;
+    height:10px;
+    background:#edf2f7;
+    border-radius:20px;
+    overflow:hidden;
+}
+
+.progress-fill{
+    height:100%;
+    background:linear-gradient(90deg,#19d3a2,#0ea5e9);
+    border-radius:20px;
+}
+
+.training-footer{
+    margin-top:18px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.status-pill{
+    padding:8px 14px;
+    border-radius:20px;
+    font-size:12px;
+    font-weight:700;
+}
+
+.completed{
+    background:#d1fae5;
+    color:#065f46;
+}
+
+.pending{
+    background:#fee2e2;
+    color:#991b1b;
+}
+
+.locked{
+    background:#e2e8f0;
+    color:#334155;
+}
+
+/* =====================================================
+   MODAL
+===================================================== */
+
+.modal{
+    position:fixed;
+    inset:0;
+    background:rgba(15,23,42,0.8);
+    display:none;
+    justify-content:center;
+    align-items:center;
+    z-index:9999;
+}
+
+.modal-box{
+    width:92%;
+    max-width:1400px;
+    height:88vh;
+    background:white;
+    border-radius:28px;
+    overflow:hidden;
+    display:flex;
+}
+
+/* =====================================================
+   LEFT TOPICS
+===================================================== */
+
+.left-panel{
+    width:32%;
+    background:#f8fafc;
+    padding:24px;
+    overflow-y:auto;
+}
+
+.topic-item{
+    background:white;
+    border-radius:18px;
+    padding:18px;
+    margin-bottom:16px;
+    cursor:pointer;
+    border:2px solid transparent;
+    transition:.3s;
+}
+
+.topic-item:hover{
+    border-color:#19d3a2;
+}
+
+.topic-active{
+    border-color:#19d3a2;
+    background:#ecfdf5;
+}
+
+.topic-locked{
+    opacity:.5;
+    cursor:not-allowed;
+}
+
+.topic-title{
+    font-weight:700;
+    color:#0F172A;
+}
+
+.topic-meta{
+    margin-top:8px;
+    font-size:13px;
+    color:#64748b;
+}
+
+/* =====================================================
+   VIDEO AREA
+===================================================== */
+
+.right-panel{
+    flex:1;
+    padding:25px;
+}
+
+.video-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:20px;
+}
+
+.video-title{
+    font-size:24px;
+    font-weight:800;
+}
+
+.learning-time{
+    background:#ecfeff;
+    padding:10px 18px;
+    border-radius:20px;
+    color:#0f766e;
+    font-weight:700;
+}
+
+iframe{
+    width:100%;
+    height:70vh;
+    border:none;
+    border-radius:20px;
+}
+
+/* =====================================================
+   COMPLETION BANNER
+===================================================== */
+
+.complete-banner{
+    margin-top:20px;
+    background:linear-gradient(90deg,#19d3a2,#0ea5e9);
+    color:white;
+    padding:18px;
+    border-radius:20px;
+    display:none;
+    text-align:center;
+    font-weight:700;
+    font-size:18px;
+}
+
+/* =====================================================
+   RESPONSIVE
+===================================================== */
+
+@media(max-width:1000px){
+
+    .sidebar{
+        display:none;
+    }
+
+    .content{
+        margin-left:0;
+        width:100%;
+    }
+
+    .modal-box{
+        flex-direction:column;
+        height:auto;
+    }
+
+    .left-panel{
+        width:100%;
+        height:300px;
+    }
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="main-layout">
+
+    <!-- =====================================================
+         SIDEBAR
+    ====================================================== -->
+
+    <div class="sidebar">
+
+        <div class="logo">
+            Intelli<span>Onboard</span>
+        </div>
+
+        <div class="profile-card">
+            <div class="profile-name" id="employeeName">
+                Employee
+            </div>
+
+            <div class="profile-role">
+                Healthcare Learning Portal
+            </div>
+        </div>
+
+        <div class="menu">
+            <div class="menu-item">🏠 Dashboard</div>
+            <div class="menu-item">📘 Foundation Trainings</div>
+            <div class="menu-item">🏥 Account Trainings</div>
+            <div class="menu-item">🧠 COE Trainings</div>
+            <div class="menu-item">📝 Assessments</div>
+            <div class="menu-item">🏆 Certifications</div>
+            <div class="menu-item">📈 Learning Analytics</div>
+        </div>
+
+        <button class="logout-btn" onclick="logout()">
+            Logout
+        </button>
+
+    </div>
+
+    <!-- =====================================================
+         CONTENT
+    ====================================================== -->
+
+    <div class="content">
+
+        <!-- TOPBAR -->
+
+        <div class="topbar">
+
+            <div class="topbar-left">
+                <h1>Welcome Back 👋</h1>
+                <p>
+                    Continue your healthcare onboarding journey
+                </p>
+            </div>
+
+            <div style="display:flex;align-items:center;gap:15px;">
+
+    <div style="
+        background:white;
+        padding:10px 18px;
+        border-radius:16px;
+        box-shadow:0 4px 12px rgba(0,0,0,0.08);
+        font-weight:600;
+        color:#0F172A;
+    ">
+        👤 <span id="topEmployeeName"></span>
+    </div>
+
+    <div class="coe-badge" id="coeBadge">
+        AI COE
+    </div>
+
+</div>
+
+        </div>
+
+        <!-- =====================================================
+             STATS
+        ====================================================== -->
+
+        <div class="stats-grid">
+
+            <div class="stat-card">
+                <div class="stat-title">Learning Hours</div>
+                <div class="stat-value" id="hoursSpent">
+                    0h
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-title">Completed Trainings</div>
+                <div class="stat-value" id="completedTrainings">
+                    0
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-title">Pending Trainings</div>
+                <div class="stat-value" id="pendingTrainings">
+                    0
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-title">Assessment Score</div>
+                <div class="stat-value">
+                    92%
+                </div>
+            </div>
+
+        </div>
+
+        <!-- =====================================================
+             FOUNDATION TRAINING
+        ====================================================== -->
+
+        <div class="section">
+
+            <div class="section-title">
+                Foundation Trainings
+            </div>
+
+            <div class="training-grid" id="foundationGrid"></div>
+
+        </div>
+
+        <!-- =====================================================
+             ACCOUNT TRAINING
+        ====================================================== -->
+
+        <div class="section">
+
+            <div class="section-title">
+                Account Mandatory Trainings
+            </div>
+
+            <div class="training-grid" id="accountGrid"></div>
+
+        </div>
+
+        <!-- =====================================================
+             COE TRAINING
+        ====================================================== -->
+
+        <div class="section">
+
+            <div class="section-title">
+                Assigned COE Learning Path
+            </div>
+
+            <div class="training-grid" id="coeGrid"></div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- =====================================================
+     MODAL
+===================================================== -->
+
+<div class="modal" id="trainingModal">
+
+    <div class="modal-box">
+
+        <!-- LEFT -->
+
+        <div class="left-panel" id="topicList"></div>
+
+        <!-- RIGHT -->
+
+        <div class="right-panel">
+
+            <div class="video-header">
+
+                <div class="video-title" id="videoTitle">
+                    Training Module
+                </div>
+
+                <div class="learning-time" id="watchTimer">
+                    00:00
+                </div>
+
+            </div>
+
+            <iframe id="videoPlayer"></iframe>
+
+            <div class="complete-banner" id="completeBanner">
+                🎉 Training Completed Successfully!
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+const BASE_URL = "http://127.0.0.1:5332";
+
+const emp_id = localStorage.getItem("emp_id");
+
+if(!emp_id){
+    window.location.href =
+        "http://127.0.0.1:5500/login.html";
+}
+
+async function loadEmployeeProfile() {
+
+    try {
+
+        let employeeName =
+            localStorage.getItem("emp_name");
+
+        let coe =
+            localStorage.getItem("coe");
+
+        // =====================================================
+        // FALLBACK API FETCH
+        // =====================================================
+
+        if (!employeeName || employeeName === "undefined") {
+
+            const res = await fetch(
+                `${BASE_URL}/api/auth/employee/${emp_id}`,
+                {
+                    credentials: "include"
+                }
+            );
+
+            const data = await res.json();
+
+            if (data.success) {
+
+                employeeName =
+                    data.employee?.emp_name ||
+                    data.employee?.name ||
+                    "Employee";
+
+                coe =
+                    data.selected_coe || "";
+
+                localStorage.setItem(
+                    "emp_name",
+                    employeeName
+                );
+
+                localStorage.setItem(
+                    "coe",
+                    coe
+                );
+            }
+        }
+
+        // =====================================================
+        // UI UPDATE
+        // =====================================================
+
+        document.getElementById("employeeName")
+            .innerText = employeeName || "Employee";
+
+        document.getElementById("topEmployeeName")
+            .innerText = employeeName || "Employee";
+
+        document.getElementById("coeBadge")
+            .innerText = coe || "COE";
+
+    }
+
+    catch (err) {
+
+        console.log("PROFILE LOAD ERROR =>", err);
+    }
+}
+
+/* =========================================================
+   GLOBALS
+========================================================= */
+
+let currentTraining = "";
+let currentTopics = [];
+let currentTopicIndex = 0;
+
+let timerInterval;
+let seconds = 0;
+
+/* =========================================================
+   INIT
+========================================================= */
+loadEmployeeProfile();
+loadDashboard();
+loadTrainings();
+
+/* =========================================================
+   DASHBOARD
+========================================================= */
+
+async function loadDashboard(){
+
+    try{
+
+        const res = await fetch(
+            `${BASE_URL}/dashboard-summary/${emp_id}`
+        );
+
+        const data = await res.json();
+
+        document.getElementById("hoursSpent")
+            .innerText = `${data.hours}h`;
+
+        document.getElementById("completedTrainings")
+            .innerText = data.completed;
+
+        document.getElementById("pendingTrainings")
+            .innerText = data.pending;
+
+    }catch(err){
+        console.log(err);
+    }
+}
+
+/* =========================================================
+   LOAD TRAININGS
+========================================================= */
+
+async function loadTrainings(){
+
+    try{
+
+        const res = await fetch(
+            `${BASE_URL}/employee-trainings/${emp_id}`
+        );
+
+        const trainings = await res.json();
+
+        const foundation = [];
+        const account = [];
+        const coe = [];
+
+        trainings.forEach(t=>{
+
+            const obj = {
+                name:t.name,
+                progress:t.progress,
+                status:t.status,
+                desc:t.description || "Learning Module"
+            };
+
+            const lower = t.name.toLowerCase();
+
+            if(
+                lower.includes("healthcare") ||
+                lower.includes("testing") ||
+                lower.includes("automation")
+            ){
+                foundation.push(obj);
+            }
+            else if(
+                lower.includes("hipaa") ||
+                lower.includes("security")
+            ){
+                account.push(obj);
+            }
+            else{
+                coe.push(obj);
+            }
+
+        });
+
+        renderCards(foundation,"foundationGrid");
+        renderCards(account,"accountGrid");
+        renderCards(coe,"coeGrid");
+
+    }catch(err){
+        console.log(err);
+    }
+}
+
+/* =========================================================
+   RENDER CARDS
+========================================================= */
+
+function renderCards(data, containerId){
+
+    const container =
+        document.getElementById(containerId);
+
+    container.innerHTML = "";
+
+    data.forEach((t)=>{
+
+        let statusClass = "pending";
+
+        if(t.status === "COMPLETED"){
+            statusClass = "completed";
+        }
+
+        if(t.status === "LOCKED"){
+            statusClass = "locked";
+        }
+
+        const card = document.createElement("div");
+
+        card.className = "training-card";
+
+        card.innerHTML = `
+
+            <div class="training-title">
+                ${t.name}
+            </div>
+
+            <div class="training-desc">
+                ${t.desc}
+            </div>
+
+            <div class="progress-wrapper">
+
+                <div class="progress-bar">
+
+                    <div class="progress-fill"
+                        style="width:${t.progress}%">
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="training-footer">
+
+                <div class="status-pill ${statusClass}">
+                    ${t.status}
+                </div>
+
+                <div>
+                    ${t.progress || 0}%
+                </div>
+
+            </div>
+        `;
+
+        if(t.status !== "LOCKED"){
+
+            card.onclick = ()=>{
+
+                openTraining(t.name);
+
+            };
+        }
+
+        container.appendChild(card);
+
+    });
+}
+
+/* =========================================================
+   OPEN TRAINING
+========================================================= */
+
+async function openTraining(trainingName){
+
+    currentTraining = trainingName;
+
+    document.getElementById("trainingModal")
+        .style.display = "flex";
+
+    document.getElementById("videoTitle")
+        .innerText = trainingName;
+
+    try{
+
+        await fetch(`${BASE_URL}/start-training`,{
+            method:"POST",
+            headers:{
+                "Content-Type":"application/json"
+            },
+            body:JSON.stringify({
+                emp_id:emp_id,
+                training_name:trainingName
+            })
+        });
+
+        const res = await fetch(
+            `${BASE_URL}/training-details/${emp_id}/${encodeURIComponent(trainingName)}`
+        );
+
+        currentTopics = await res.json();
+
+        currentTopicIndex = 0;
+
+        renderTopics();
+
+        if(currentTopics.length > 0){
+            playTopic(0);
+        }
+
+    }catch(err){
+        console.log(err);
+    }
+}
+
+/* =========================================================
+   RENDER TOPICS
+========================================================= */
+
+function renderTopics(){
+
+    const list =
+        document.getElementById("topicList");
+
+    list.innerHTML = "";
+
+    currentTopics.forEach((t,index)=>{
+
+        const div =
+            document.createElement("div");
+
+        div.className = "topic-item";
+
+        if(index === currentTopicIndex){
+            div.classList.add("topic-active");
+        }
+
+        if(index > currentTopicIndex + 1){
+            div.classList.add("topic-locked");
+        }
+
+        div.innerHTML = `
+
+            <div class="topic-title">
+                ${index+1}. ${t.topic_name}
+            </div>
+
+            <div class="topic-meta">
+                ${t.minutes || 10} mins
+            </div>
+        `;
+
+        if(index <= currentTopicIndex + 1){
+
+            div.onclick = ()=>{
+
+                playTopic(index);
+
+            };
+        }
+
+        list.appendChild(div);
+
+    });
+}
+
+/* =========================================================
+   PLAY TOPIC
+========================================================= */
+
+function playTopic(index){
+
+    currentTopicIndex = index;
+
+    renderTopics();
+
+    const topic = currentTopics[index];
+
+    document.getElementById("videoPlayer").src =
+        topic.video_url;
+
+    seconds = 0;
+
+    clearInterval(timerInterval);
+
+    timerInterval = setInterval(()=>{
+
+        seconds++;
+
+        const mins =
+            String(Math.floor(seconds/60))
+            .padStart(2,'0');
+
+        const secs =
+            String(seconds%60)
+            .padStart(2,'0');
+
+        document.getElementById("watchTimer")
+            .innerText = `${mins}:${secs}`;
+
+    },1000);
+
+}
+
+/* =========================================================
+   COMPLETE TOPIC
+========================================================= */
+
+async function completeTopic(){
+
+    clearInterval(timerInterval);
+
+    const topic =
+        currentTopics[currentTopicIndex];
+
+    try{
+
+        await fetch(
+            `${BASE_URL}/track-topic-progress`,
+            {
+                method:"POST",
+                headers:{
+                    "Content-Type":"application/json"
+                },
+                body:JSON.stringify({
+
+                    emp_id:emp_id,
+                    training_name:currentTraining,
+                    sequence:topic.sequence,
+                    topic_name:topic.topic_name,
+                    watch_seconds:seconds,
+                    completed:true
+
+                })
+            }
+        );
+
+        const res = await fetch(
+            `${BASE_URL}/recalculate-progress/${emp_id}/${encodeURIComponent(currentTraining)}`
+        );
+
+        const data = await res.json();
+
+        if(currentTopicIndex < currentTopics.length-1){
+
+            currentTopicIndex++;
+
+            renderTopics();
+
+        }else{
+
+            document.getElementById(
+                "completeBanner"
+            ).style.display = "block";
+
+            confetti({
+                particleCount:250,
+                spread:120
+            });
+
+            if(data.status === "COMPLETED"){
+
+                await fetch(
+                    `${BASE_URL}/generate-certificate`,
+                    {
+                        method:"POST",
+                        headers:{
+                            "Content-Type":"application/json"
+                        },
+                        body:JSON.stringify({
+                            emp_id:emp_id,
+                            training_name:currentTraining
+                        })
+                    }
+                );
+            }
+
+            loadDashboard();
+            loadTrainings();
+        }
+
+    }catch(err){
+        console.log(err);
+    }
+}
+
+/* =========================================================
+   CLOSE MODAL
+========================================================= */
+
+window.onclick = function(e){
+
+    if(
+        e.target ===
+        document.getElementById("trainingModal")
+    ){
+
+        document.getElementById(
+            "trainingModal"
+        ).style.display = "none";
+
+        clearInterval(timerInterval);
+    }
+}
+
+/* =========================================================
+   LOGOUT
+========================================================= */
+
+async function logout(){
+
+    try{
+
+        await fetch(
+            BASE_URL + "/api/auth/logout",
+            {
+                method:"POST",
+                credentials:"include"
+            }
+        );
+
+    }catch(err){
+        console.log(err);
+    }
+
+    localStorage.clear();
+
+    sessionStorage.clear();
+
+    window.location.replace(
+        "http://127.0.0.1:5500/login.html"
+    );
+}
+
+</script>
+
+</body>
+</html>
