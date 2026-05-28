@@ -632,6 +632,19 @@ iframe{
             </div>
 
             <iframe id="videoPlayer"></iframe>
+            <button onclick="completeTopic()" style="
+    margin-top:15px;
+    padding:12px 18px;
+    background:#19d3a2;
+    border:none;
+    border-radius:12px;
+    color:white;
+    font-weight:700;
+    cursor:pointer;
+">
+    ✅ Mark Topic Complete
+</button>
+``
 
             <div class="complete-banner" id="completeBanner">
                 🎉 Training Completed Successfully!
@@ -645,13 +658,13 @@ iframe{
 
 <script>
 
-const BASE_URL = "http://127.0.0.1:5332";
+const BASE_URL = "https://intellionboard.onrender.com";
 
 const emp_id = localStorage.getItem("emp_id");
 
 if(!emp_id){
     window.location.href =
-        "http://127.0.0.1:5500/login.html";
+        "/";
 }
 
 async function loadEmployeeProfile() {
@@ -1162,7 +1175,7 @@ async function logout(){
     sessionStorage.clear();
 
     window.location.replace(
-        "http://127.0.0.1:5500/login.html"
+        "https://intellionboard.onrender.com/"
     );
 }
 
