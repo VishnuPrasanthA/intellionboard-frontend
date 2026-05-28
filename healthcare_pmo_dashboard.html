@@ -1960,7 +1960,7 @@ const EMPLOYEE_STATE = {};
 let DASHBOARD_INITIALIZED = false;
 
 let dashboardInterval = null;
-
+let DASHBOARD_LOADING = false;
 let pieChart = null;
 
 let donutChart = null;
@@ -1993,25 +1993,46 @@ window.onload = async function () {
     initializeDashboard();
 };
 
-fetch(API_BASE + "/api/auth/validate-session", {
-    credentials: "include"
-})
-.then(res => res.json())
-.then(data => {
-    if (!data.success) {
-        window.location.href = "/index.html?manual=true";
-    }
-})
-.catch(() => {
-    window.location.href = "/index.html?manual=true";
-});
 
 async function initializeDashboard() {
 
     try {
 
         /* =========================================================
-           PREVENT DOUBLE INITIALIZATION (CRITICAL FIX)
+           ✅ SESSION VALIDATION (FIRST - CRITICAL)
+        ========================================================= */
+
+        try {
+
+            const res = await fetch(
+                API_BASE + "/api/auth/validate-session",
+                {
+                    credentials: "include"
+                }
+            );
+
+            if (!res.ok) {
+                throw new Error("Auth API failed");
+            }
+
+            const data = await res.json();
+
+            if (!data.success) {
+                console.warn("❌ Invalid session → redirecting");
+                window.location.href = "/index.html?manual=true";
+                return;
+            }
+
+        } catch (err) {
+
+            console.error("❌ SESSION VALIDATION FAILED:", err);
+
+            window.location.href = "/index.html?manual=true";
+            return;
+        }
+
+        /* =========================================================
+           ✅ PREVENT DOUBLE INITIALIZATION
         ========================================================= */
 
         if (DASHBOARD_INITIALIZED) {
@@ -2024,26 +2045,22 @@ async function initializeDashboard() {
         console.log("🚀 Initializing PMO Dashboard...");
 
         /* =========================================================
-           SAFE INIT ORDER (DEPENDENCY SAFE)
+           ✅ SAFE INIT ORDER
         ========================================================= */
 
-        // UI/Map first (non-blocking)
         initMap();
-
-        // Realtime layer
-        initSocket();
-
-        // Keyboard events
         bindKeyboardEvents();
+        await loadDashboard();   // 🔥 first load fast
+        initSocket();           // ✅ after UI visible
 
         /* =========================================================
-           FIRST DATA LOAD (BLOCKING - MUST COMPLETE FIRST)
+           ✅ FIRST DATA LOAD (CRITICAL)
         ========================================================= */
 
         await loadDashboard();
 
         /* =========================================================
-           CLEAR OLD INTERVAL IF EXISTS (IMPORTANT FIX)
+           ✅ CLEAR OLD INTERVAL
         ========================================================= */
 
         if (dashboardInterval) {
@@ -2051,14 +2068,18 @@ async function initializeDashboard() {
         }
 
         /* =========================================================
-           AUTO REFRESH LOOP (CONTROLLED)
+           ✅ AUTO REFRESH LOOP (STABLE)
         ========================================================= */
 
         dashboardInterval = setInterval(async () => {
 
             try {
+
+                // Optional: prevent overlapping calls
                 await loadDashboard();
+
             } catch (err) {
+
                 console.error("REFRESH ERROR:", err);
             }
 
@@ -2070,7 +2091,7 @@ async function initializeDashboard() {
 
         console.error("❌ INIT ERROR:", err);
 
-        DASHBOARD_INITIALIZED = false; // allow retry if failed
+        DASHBOARD_INITIALIZED = false; // allow retry
     }
 }
 
@@ -2196,6 +2217,14 @@ function initSocket() {
 
             throttleUpdate(); // NOT immediate reload
         });
+
+        socket.on("realtime_update", (data) => {
+    console.log("🔥 Realtime update received:", data);
+
+    showToast("Live update received", "info");
+
+    loadDashboard();
+});
 
         /* =========================================
            HEARTBEAT (IGNORE)
@@ -2365,30 +2394,40 @@ async function callAPI(
 /* =========================================================
    DASHBOARD LOAD
 ========================================================= */
+let DASHBOARD_LOADING = false;
 
 async function loadDashboard() {
+
+    /* =========================================================
+       ✅ PREVENT PARALLEL / DUPLICATE CALLS (CRITICAL FIX)
+    ========================================================= */
+    if (DASHBOARD_LOADING) {
+        console.warn("⚠ Dashboard load skipped (already running)");
+        return;
+    }
+
+    DASHBOARD_LOADING = true;
 
     let loaderShown = false;
 
     try {
 
         /* =========================================================
-           SHOW LOADER SAFELY
+           ✅ SHOW LOADER
         ========================================================= */
-
         showLoader(true);
         loaderShown = true;
 
         /* =========================================================
-           FETCH DATA
+           ✅ FETCH DATA
         ========================================================= */
-
         const response = await callAPI("/api/employees");
 
-        /* =========================================================
-           NORMALIZE DATA (ROBUST FIX)
-        ========================================================= */
+        console.log("📡 API RESPONSE:", response);
 
+        /* =========================================================
+           ✅ NORMALIZE DATA (ROBUST + SAFE)
+        ========================================================= */
         let employees = [];
 
         if (Array.isArray(response)) {
@@ -2399,71 +2438,68 @@ async function loadDashboard() {
 
         } else if (Array.isArray(response?.employees)) {
             employees = response.employees;
+        }
 
-        } else {
+        if (!employees || !Array.isArray(employees)) {
             employees = [];
         }
 
-        /* =========================================================
-           GLOBAL STATE UPDATE
-        ========================================================= */
+        console.log("✅ Employees Loaded:", employees.length);
 
-        if (employees.length > 0) {
-    allEmployees = employees;
-    filteredEmployees = [...employees];
-} else {
-    console.warn("⚠ Empty API response skipped (prevent reset)");
-}
+        if (employees.length === 0) {
+            console.warn("⚠ Empty employee dataset received");
+        }
 
         /* =========================================================
-           FAST PARALLEL UI RENDER (PERFORMANCE BOOST)
+           ✅ GLOBAL STATE UPDATE
         ========================================================= */
+        allEmployees = employees;
+        filteredEmployees = [...allEmployees];
 
+        /* =========================================================
+           ✅ FAST UI RENDER (IMMEDIATE)
+        ========================================================= */
         renderEmployees(filteredEmployees);
         updateKPIs(filteredEmployees);
 
-        /* Run heavy UI tasks in parallel */
-        const uiTasks = [];
-
-        uiTasks.push(
-            Promise.resolve(loadCharts(filteredEmployees))
-        );
-
-        uiTasks.push(
+        /* =========================================================
+           ✅ PARALLEL NON-BLOCKING TASKS
+        ========================================================= */
+        const uiTasks = [
+            Promise.resolve(loadCharts(filteredEmployees)),
             Promise.resolve(renderInsights(filteredEmployees))
-        );
+        ];
 
-        // Run map later (non-blocking)
-setTimeout(() => {
-    plotAllLocations(filteredEmployees);
-}, 1000);
+        /* ✅ Map deferred (heavy task) */
+        setTimeout(() => {
+            plotAllLocations(filteredEmployees);
+        }, 800);
 
         await Promise.allSettled(uiTasks);
 
         /* =========================================================
-           FINAL UI UPDATES
+           ✅ FINAL UI UPDATE
         ========================================================= */
-
         updateDashboardTimestamp();
 
     } catch (err) {
 
-        console.error("LOAD DASHBOARD FAILED:", err);
+        console.error("❌ LOAD DASHBOARD FAILED:", err);
 
         showToast("Dashboard Load Failed", "error");
 
     } finally {
 
         /* =========================================================
-           ALWAYS HIDE LOADER (CRITICAL FIX)
+           ✅ UNLOCK + HIDE LOADER
         ========================================================= */
+        DASHBOARD_LOADING = false;
 
         if (loaderShown) {
             showLoader(false);
         }
     }
 }
-
 /* =========================================================
    EMPLOYEE TABLE
 ========================================================= */
