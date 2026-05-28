@@ -4547,36 +4547,40 @@ function handleDrop(event) {
 /* =========================================================
    LOGOUT
 ========================================================= */
-
 async function logout() {
 
     try {
-
-        await fetch(
-            API_BASE + "/auth/logout",
-            {
-                method: "POST",
-                credentials: "include"
-            }
-        );
-
+        await fetch(API_BASE + "/auth/logout", {
+            method: "POST",
+            credentials: "include"
+        });
     } catch (err) {
         console.error(err);
     }
 
-    /* clear storage */
+    // Clear interval
+    if (dashboardInterval) {
+        clearInterval(dashboardInterval);
+    }
+
+    // Disconnect socket
+    if (socket) {
+        socket.disconnect();
+    }
+
+    // Clear storage
     localStorage.clear();
     sessionStorage.clear();
 
-    /* remove cookies */
-    document.cookie.split(";").forEach(function(c) {
+    // Clear cookies
+    document.cookie.split(";").forEach(function (c) {
         document.cookie = c
             .replace(/^ +/, "")
             .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
     });
 
-    /* HARD redirect */
-    window.location.replace("/index.html");
+    // Redirect
+    window.location.href = "/";
 }
 </script>
 </body>
