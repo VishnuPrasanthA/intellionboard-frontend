@@ -1279,12 +1279,11 @@ id="chatPanel">
 GLOBAL
 ========================================================= */
 
-const API =
-"http://127.0.0.1:5332/api/leadership/dashboard";
+const API = "https://intellionboard.onrender.com/api/leadership/dashboard";
 
-const socket = io(
-"http://127.0.0.1:5332"
-);
+const socket = io("https://intellionboard.onrender.com", {
+    withCredentials: true
+});
 
 let statusChart;
 let riskChart;
@@ -1950,12 +1949,8 @@ async function logout() {
 
     try {
 
-        // ==========================================
-        // CALL BACKEND LOGOUT
-        // ==========================================
-
         await fetch(
-            "http://127.0.0.1:5332/api/auth/logout",
+            "https://intellionboard.onrender.com/api/auth/logout",
             {
                 method: "POST",
                 credentials: "include"
@@ -1963,10 +1958,17 @@ async function logout() {
         );
 
     } catch (err) {
+        console.error("Logout Error:", err);
+    } finally {
 
-        console.error("Logout API Error:", err);
+        localStorage.clear();
+        sessionStorage.clear();
+
+        window.location.replace(
+            "https://intellionboard-frontend.vercel.app/login.html"
+        );
     }
-
+}
     // ==========================================
     // CLEAR LOCAL STORAGE
     // ==========================================
