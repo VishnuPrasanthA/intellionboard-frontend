@@ -2142,17 +2142,31 @@ function initSocket() {
         /* =========================================
            🔥 SMART UPDATE CONTROL
         ========================================== */
-        let updateTimer = null;
+        let refreshScheduled = false;
+let lastRefreshTime = 0;
 
-        function throttleUpdate() {
-            if (updateTimer) return;
+function throttleUpdate() {
 
-            updateTimer = setTimeout(async () => {
-                await loadDashboard();
-                updateTimer = null;
-            }, 3000); // max refresh once per 3s
-        }
+    const now = Date.now();
 
+    // Skip frequent triggers
+    if (now - lastRefreshTime < 8000) {
+        return;
+    }
+
+    // Prevent multiple schedules
+    if (refreshScheduled) {
+        return;
+    }
+
+    refreshScheduled = true;
+
+    setTimeout(async () => {
+        await loadDashboard();
+        lastRefreshTime = Date.now();
+        refreshScheduled = false;
+    }, 2000);
+}
         /* =========================================
            ✅ EMPLOYEE UPDATE (THROTTLED)
         ========================================== */
