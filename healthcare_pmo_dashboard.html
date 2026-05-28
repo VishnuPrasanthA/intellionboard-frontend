@@ -1946,7 +1946,7 @@ tbody tr:hover{
 
 const API_BASE = "https://intellionboard.onrender.com";
 
-const REFRESH_INTERVAL = 30000;
+const REFRESH_INTERVAL = 60000;
 
 let allEmployees = [];
 
@@ -1977,6 +1977,11 @@ let SOCKET_INITIALIZED = false;
 let chatOpen = false;
 
 let selectedEmployee = null;
+    
+let CURRENT_PAGE = 1;
+
+const ROWS_PER_PAGE = 50;
+
 
 /* =========================================================
    INIT
@@ -2064,154 +2069,137 @@ function initSocket() {
 
     try {
 
-        /* =========================================================
-           GUARD: PREVENT MULTIPLE SOCKET INIT (CRITICAL FIX)
-        ========================================================= */
-
+        /* =========================================
+           PREVENT MULTIPLE INIT
+        ========================================== */
         if (SOCKET_INITIALIZED) {
-            console.warn("⚠ Socket already initialized. Skipping re-init.");
+            console.warn("⚠ Socket already initialized");
             return;
         }
 
         SOCKET_INITIALIZED = true;
 
-        /* =========================================================
-           CHECK SOCKET.IO AVAILABILITY
-        ========================================================= */
-
+        /* =========================================
+           CHECK SOCKET.IO
+        ========================================== */
         if (typeof io === "undefined") {
-
-            console.warn("❌ Socket.IO Not Loaded - Switching to Polling Mode Only");
-
-            showToast("Realtime disabled (Socket.IO missing)", "warning");
-
+            console.warn("❌ Socket.IO missing");
+            showToast("Realtime disabled", "warning");
             return;
         }
 
-        /* =========================================================
-           CLEAN OLD SOCKET IF EXISTS (VERY IMPORTANT FIX)
-        ========================================================= */
-
+        /* =========================================
+           CLEAN OLD SOCKET
+        ========================================== */
         if (socket) {
-
-            console.log("♻ Cleaning previous socket connection...");
-
             socket.removeAllListeners();
-
             socket.disconnect();
         }
 
-        /* =========================================================
-           CREATE SOCKET CONNECTION
-        ========================================================= */
-
+        /* =========================================
+           CREATE CONNECTION
+        ========================================== */
         socket = io(API_BASE, {
-
             transports: ["websocket", "polling"],
-
             reconnection: true,
-
-            reconnectionAttempts: 10,
-
+            reconnectionAttempts: 5,
             reconnectionDelay: 2000,
-
             timeout: 10000
         });
 
-        /* =========================================================
+        /* =========================================
            CONNECTION EVENTS
-        ========================================================= */
-
+        ========================================== */
         socket.on("connect", () => {
-
             SOCKET_CONNECTED = true;
-
             console.log("✅ Socket Connected:", socket.id);
-
-            showToast("Realtime sync connected", "success");
         });
 
-        socket.on("disconnect", (reason) => {
-
+        socket.on("disconnect", () => {
             SOCKET_CONNECTED = false;
-
-            console.warn("❌ Socket Disconnected:", reason);
-
-            showToast("Realtime sync disconnected", "warning");
+            console.warn("❌ Socket Disconnected");
         });
 
         socket.on("connect_error", (err) => {
-
             SOCKET_CONNECTED = false;
-
-            console.error("⚠ Socket Connection Error:", err.message);
-
-            showToast("Realtime connection error", "error");
-        });
-
-        socket.on("reconnect_attempt", (attempt) => {
-
-            console.log(`🔄 Reconnect Attempt: ${attempt}`);
+            console.error("⚠ Socket Error:", err.message);
         });
 
         socket.on("reconnect", () => {
-
-            console.log("🔁 Socket Reconnected");
-
-            showToast("Realtime sync restored", "success");
+            console.log("🔁 Reconnected");
         });
 
-        /* =========================================================
-           BUSINESS EVENTS (OPTIMIZED - NO SPAM RELOADS)
-        ========================================================= */
+        /* =========================================
+           🔥 SMART UPDATE CONTROL
+        ========================================== */
+        let updateTimer = null;
 
-        socket.on("employee_update", async () => {
+        function throttleUpdate() {
+            if (updateTimer) return;
 
-            console.log("🔄 Employee Update Received");
+            updateTimer = setTimeout(async () => {
+                await loadDashboard();
+                updateTimer = null;
+            }, 3000); // max refresh once per 3s
+        }
 
-            // Avoid unnecessary full reload spam in future (can be optimized further)
-            await loadDashboard();
+        /* =========================================
+           ✅ EMPLOYEE UPDATE (THROTTLED)
+        ========================================== */
+        socket.on("employee_update", () => {
+            console.log("🔄 Employee updated");
+            throttleUpdate();
         });
 
-        socket.on("ticket_created", async (data) => {
+        /* =========================================
+           ✅ TICKET CREATED (NO FULL RELOAD)
+        ========================================== */
+        socket.on("ticket_created", (data) => {
 
-            console.log("🎫 Ticket Event:", data);
+            console.log("🎫 Ticket:", data);
 
-            showToast(
-                `Ticket Created: ${data.ticket_id || "Unknown"}`,
-                "success"
+            showToast(`Ticket Created: ${data.ticket_id}`, "success");
+
+            const emp = allEmployees.find(
+                e => String(e.emp_id) === String(data.emp_id)
             );
 
-            await loadDashboard();
+            if (emp) {
+                emp.ticket_id = data.ticket_id;
+                emp.ticket_status = "OPEN";
+
+                renderEmployees(filteredEmployees);
+            }
         });
 
-        socket.on("bulk_update", async () => {
+        /* =========================================
+           ✅ BULK UPDATE (ONE REFRESH ONLY)
+        ========================================== */
+        socket.on("bulk_update", () => {
 
-            console.log("🚀 Bulk Update Received");
+            console.log("🚀 Bulk update");
 
-            showToast("Bulk update completed", "info");
+            showToast("Bulk operation completed", "info");
 
-            await loadDashboard();
+            throttleUpdate(); // NOT immediate reload
         });
 
-        /* =========================================================
-           HEARTBEAT DEBUG (OPTIONAL ENTERPRISE MONITORING)
-        ========================================================= */
-
+        /* =========================================
+           HEARTBEAT (IGNORE)
+        ========================================== */
         socket.on("ping", () => {
-
-            console.log("💓 Socket heartbeat received");
+            // silent (no log spam)
         });
 
-        console.log("🚀 Socket Initialization Complete");
+        console.log("🚀 Socket Ready");
 
     } catch (err) {
 
         SOCKET_CONNECTED = false;
 
-        console.error("❌ SOCKET ERROR:", err);
+        console.error("❌ SOCKET INIT FAILED", err);
 
-        showToast("Socket initialization failed", "error");
+        showToast("Socket failed", "error");
     }
 }
 
@@ -2407,8 +2395,12 @@ async function loadDashboard() {
            GLOBAL STATE UPDATE
         ========================================================= */
 
-        allEmployees = employees;
-        filteredEmployees = [...employees];
+        if (employees.length > 0) {
+    allEmployees = employees;
+    filteredEmployees = [...employees];
+} else {
+    console.warn("⚠ Empty API response skipped (prevent reset)");
+}
 
         /* =========================================================
            FAST PARALLEL UI RENDER (PERFORMANCE BOOST)
@@ -2428,9 +2420,10 @@ async function loadDashboard() {
             Promise.resolve(renderInsights(filteredEmployees))
         );
 
-        uiTasks.push(
-            plotAllLocations(filteredEmployees)
-        );
+        // Run map later (non-blocking)
+setTimeout(() => {
+    plotAllLocations(filteredEmployees);
+}, 1000);
 
         await Promise.allSettled(uiTasks);
 
@@ -2462,423 +2455,183 @@ async function loadDashboard() {
    EMPLOYEE TABLE
 ========================================================= */
 
+let CURRENT_PAGE = 1;
+const ROWS_PER_PAGE = 50;
+
 function renderEmployees(data) {
 
-    const tbody =
-        document.getElementById("tableBody");
-
+    const tbody = document.getElementById("tableBody");
     if (!tbody) return;
 
     tbody.innerHTML = "";
 
-    /* =========================================================
+    /* =========================================
        SAFE HELPERS
-    ========================================================= */
-
+    ========================================== */
     const safe = (val) => {
-
-        if (
-            val === undefined ||
-            val === null ||
-            val === "" ||
-            String(val).toLowerCase() === "undefined"
-        ) {
+        if (val === undefined || val === null || val === "" || String(val).toLowerCase() === "undefined") {
             return "N/A";
         }
-
         return String(val);
     };
 
     const formatText = (txt) => {
-
         return safe(txt)
             .replace(/_/g, " ")
             .replace(/\b\w/g, c => c.toUpperCase());
     };
 
-    /* =========================================================
+    /* =========================================
        EMPTY STATE
-    ========================================================= */
-
+    ========================================== */
     if (!data || !data.length) {
 
         tbody.innerHTML = `
-
             <tr>
-                <td colspan="11"
-                    style="
-                        text-align:center;
-                        padding:30px;
-                        color:#888;
-                        font-size:14px;
-                    ">
+                <td colspan="11" style="text-align:center;padding:30px;color:#888;">
                     No Employee Data Available
                 </td>
             </tr>
-
         `;
-
         return;
     }
 
-    /* =========================================================
-       RENDER EMPLOYEES
-    ========================================================= */
+    /* =========================================
+       ✅ PAGINATION (BIG PERFORMANCE FIX)
+    ========================================== */
+    const start = (CURRENT_PAGE - 1) * ROWS_PER_PAGE;
+    const pageData = data.slice(start, start + ROWS_PER_PAGE);
 
-    data.forEach(emp => {
+    /* =========================================
+       ✅ USE DOCUMENT FRAGMENT (FAST DOM)
+    ========================================== */
+    const fragment = document.createDocumentFragment();
 
-        const empId =
-            safe(emp.emp_id);
+    pageData.forEach(emp => {
 
-        /* =====================================================
-           STATUS + PROGRESS
-        ===================================================== */
+        const empId = safe(emp.emp_id);
 
-        const status =
-            String(emp.onboarding_status || "")
-                .toUpperCase();
+        const status = String(emp.onboarding_status || "").toUpperCase();
+        const step = String(emp.current_step || "").toUpperCase();
 
-        let progress =
-            Number(emp.progress_percentage || 0);
+        /* =====================================
+           PROGRESS FAST CALC
+        ===================================== */
+        let progress = Number(emp.progress_percentage || 0);
 
-        const step =
-            String(emp.current_step || "")
-                .toUpperCase();
-
-        if (!progress || progress === 0) {
-
-            if (step.includes("COE")) {
-                progress = 100;
-            }
-            else if (
-                step.includes("LAPTOP")
-            ) {
-                progress = 75;
-            }
-            else if (
-                step.includes("ID_CARD") ||
-                step.includes("ACCESS")
-            ) {
-                progress = 50;
-            }
-            else {
-                progress = 25;
-            }
+        if (!progress) {
+            if (step.includes("COE")) progress = 100;
+            else if (step.includes("LAPTOP")) progress = 75;
+            else if (step.includes("ID_CARD") || step.includes("ACCESS")) progress = 50;
+            else progress = 25;
         }
 
-        /* =====================================================
-           RISK ENGINE
-        ===================================================== */
-
-        let risk =
-            String(emp.risk_level || "")
-                .toUpperCase();
+        /* =====================================
+           RISK FAST CALC
+        ===================================== */
+        let risk = String(emp.risk_level || "").toUpperCase();
 
         if (!risk || risk === "N/A") {
-
-            if (
-                status.includes("ESCALATED") ||
-                status.includes("DELAY")
-            ) {
-                risk = "HIGH";
-            }
-            else if (
-                step.includes("ID_CARD") ||
-                step.includes("ACCESS") ||
-                step.includes("LAPTOP")
-            ) {
-                risk = "MEDIUM";
-            }
-            else {
-                risk = "LOW";
-            }
+            if (status.includes("ESCALATED") || status.includes("DELAY")) risk = "HIGH";
+            else if (step.includes("LAPTOP") || step.includes("ID_CARD") || step.includes("ACCESS")) risk = "MEDIUM";
+            else risk = "LOW";
         }
 
-        /* =====================================================
-           BUTTON STATE
-        ===================================================== */
-
-        const isStarted =
-            status.includes("PROGRESS");
-
-        const isCompleted =
-            status.includes("COMPLETE");
-
-        /* =====================================================
-           TICKET STATE FIX
-        ===================================================== */
-
-        const hasIdTicket =
-            emp.id_ticket_status &&
-            String(emp.id_ticket_status)
-                .toUpperCase() !== "CLOSED";
-
-        const hasLaptopTicket =
-            emp.laptop_ticket_status &&
-            String(emp.laptop_ticket_status)
-                .toUpperCase() !== "CLOSED";
+        const isStarted = status.includes("PROGRESS");
+        const isCompleted = status.includes("COMPLETE");
 
         const hasTicket =
-            hasIdTicket || hasLaptopTicket;
+            (emp.id_ticket_status && emp.id_ticket_status !== "CLOSED") ||
+            (emp.laptop_ticket_status && emp.laptop_ticket_status !== "CLOSED");
 
-        /* =====================================================
-           ACCOUNT / RM / PMO FIX
-        ===================================================== */
+        const accountName = safe(emp.account_name || emp.account || emp.project_name);
+        const rmName = safe(emp.reporting_manager_name || emp.rm_name || emp.reporting_manager);
+        const pmoName = safe(emp.account_pmo_name || emp.pmo_name || emp.account_pmo);
 
-        const accountName =
-            safe(
-                emp.account_name ||
-                emp.account ||
-                emp.project_name
-            );
+        const statusClass = getStatusClass(emp.onboarding_status) || "pending-badge";
 
-        const rmName =
-            safe(
-                emp.reporting_manager_name ||
-                emp.rm_name ||
-                emp.reporting_manager
-            );
-
-        const pmoName =
-            safe(
-                emp.account_pmo_name ||
-                emp.pmo_name ||
-                emp.account_pmo
-            );
-
-        /* =====================================================
-           STATUS CLASS FIX
-        ===================================================== */
-
-        let statusClass =
-            getStatusClass(
-                emp.onboarding_status
-            );
-
-        if (!statusClass) {
-
-            if (status.includes("COMPLETE")) {
-                statusClass = "status-complete";
-            }
-            else if (
-                status.includes("PROGRESS")
-            ) {
-                statusClass = "status-progress";
-            }
-            else {
-                statusClass = "status-pending";
-            }
-        }
-
-        /* =====================================================
+        /* =====================================
            CREATE ROW
-        ===================================================== */
-
-        const tr =
-            document.createElement("tr");
+        ===================================== */
+        const tr = document.createElement("tr");
 
         tr.innerHTML = `
-
-            <!-- EMPLOYEE ID -->
+            <td>${empId}</td>
 
             <td>
-                ${empId}
+                <div class="employee-name">${safe(emp.emp_name)}</div>
             </td>
 
-            <!-- EMPLOYEE NAME -->
+            <td>${accountName}</td>
+            <td>${rmName}</td>
+            <td>${pmoName}</td>
 
             <td>
-
-                <div class="employee-name">
-                    ${safe(emp.emp_name)}
-                </div>
-
-            </td>
-
-            <!-- ACCOUNT -->
-
-            <td>
-                ${accountName}
-            </td>
-
-            <!-- RM -->
-
-            <td>
-                ${rmName}
-            </td>
-
-            <!-- PMO -->
-
-            <td>
-                ${pmoName}
-            </td>
-
-            <!-- STATUS -->
-
-            <td>
-
                 <span class="status-badge ${statusClass}">
-
                     ${formatText(emp.onboarding_status)}
-
                 </span>
-
             </td>
 
-            <!-- CURRENT STEP -->
+            <td>${formatText(emp.current_step)}</td>
 
             <td>
-
-                ${formatText(emp.current_step)}
-
-            </td>
-
-            <!-- PROGRESS -->
-
-            <td>
-
                 <div class="progress-container">
-
-                    <div
-                        class="progress-fill"
-                        style="width:${progress}%"
-                    >
+                    <div class="progress-fill" style="width:${progress}%">
                         ${progress}%
                     </div>
-
                 </div>
-
             </td>
 
-            <!-- RISK -->
-
             <td>
-
-                <span class="risk-badge ${getRiskClass(risk)}">
-
-                    ${risk}
-
-                </span>
-
+                <span class="risk-badge ${getRiskClass(risk)}">${risk}</span>
             </td>
 
-            <!-- LOCATION -->
+            <td>${safe(emp.location)}</td>
 
             <td>
-
-                ${safe(emp.location)}
-
-            </td>
-
-            <!-- ACTIONS -->
-
-            <td>
-
                 <div class="action-buttons">
 
-                    <!-- =========================================
-                         ONBOARD BUTTON
-                    ========================================== -->
-
                     <button
-
                         id="onboard-${empId}"
-
                         class="onboard-btn"
-
                         onclick="startOnboarding('${empId}')"
-
-                        title="Start onboarding"
-
                         ${isStarted || isCompleted ? "disabled" : ""}
-
-                        style="
-                            ${isStarted || isCompleted
-                                ? `
-                                    opacity:0.6;
-                                    cursor:not-allowed;
-                                `
-                                : ""
-                            }
-                        "
                     >
-
-                        ${isCompleted
-                            ? "✅ Completed"
-                            : isStarted
-                                ? "⏳ In Progress"
-                                : "🚀 Onboard"
-                        }
-
+                        ${isCompleted ? "✅ Completed"
+                          : isStarted ? "⏳ In Progress"
+                          : "🚀 Onboard"}
                     </button>
 
-                    <!-- =========================================
-                         VIEW BUTTON
-                    ========================================== -->
-
                     <button
-
                         class="view-btn"
-
                         onclick="viewEmployee('${empId}')"
-
-                        title="View employee lifecycle"
                     >
-
-                        👁 View
-
+                        👁
                     </button>
 
-                    <!-- =========================================
-                         TICKET BUTTON
-                    ========================================== -->
-
                     <button
-
                         id="ticket-${empId}"
-
                         class="ticket-btn"
-
-                        onclick="
-                            ${hasTicket
-                                ? `viewTicketStatus('${empId}')`
-                                : `createTicket('${empId}')`
-                            }
-                        "
-
-                        title="
-                            ${hasTicket
-                                ? 'View Ticket Status'
-                                : 'Create Ticket'
-                            }
-                        "
+                        onclick="${hasTicket
+                            ? `viewTicketStatus('${empId}')`
+                            : `createTicket('${empId}')`
+                        }"
                     >
-
                         🎫
-                        ${hasTicket
-                            ? "View Ticket"
-                            : "Create Ticket"
-                        }
-
                     </button>
 
                 </div>
-
             </td>
-
         `;
 
-        tbody.appendChild(tr);
+        fragment.appendChild(tr);
     });
 
-    /* =========================================================
-       TABLE RENDER COMPLETE
-    ========================================================= */
+    tbody.appendChild(fragment);
 
-    console.log(
-        "✅ Employee table rendered successfully"
-    );
+    console.log(`✅ Rendered page ${CURRENT_PAGE} (${pageData.length} rows)`);
 }
+
 function viewTicketStatus(empId) {
 
     const emp = allEmployees.find(
@@ -4799,14 +4552,8 @@ async function logout() {
 
     try {
 
-        // ==========================================
-        // CALL BACKEND LOGOUT
-        // ==========================================
-
         await fetch(
-            
-    "https://intellionboard.onrender.com/auth/logout",
-
+            API_BASE + "/auth/logout",
             {
                 method: "POST",
                 credentials: "include"
@@ -4814,23 +4561,22 @@ async function logout() {
         );
 
     } catch (err) {
-
-        console.error("Logout API Error:", err);
+        console.error(err);
     }
 
-    // ==========================================
-    // CLEAR LOCAL STORAGE
-    // ==========================================
-
+    /* clear storage */
     localStorage.clear();
-
     sessionStorage.clear();
 
-    // ==========================================
-    // REDIRECT TO LOGIN PAGE
-    // ==========================================
+    /* remove cookies */
+    document.cookie.split(";").forEach(function(c) {
+        document.cookie = c
+            .replace(/^ +/, "")
+            .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+    });
 
-    window.location.href = "/index.html";
+    /* HARD redirect */
+    window.location.replace("/index.html");
 }
 </script>
 </body>
