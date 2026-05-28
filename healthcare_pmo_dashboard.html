@@ -2054,12 +2054,6 @@ async function initializeDashboard() {
         initSocket();           // ✅ after UI visible
 
         /* =========================================================
-           ✅ FIRST DATA LOAD (CRITICAL)
-        ========================================================= */
-
-        await loadDashboard();
-
-        /* =========================================================
            ✅ CLEAR OLD INTERVAL
         ========================================================= */
 
@@ -2218,12 +2212,10 @@ function initSocket() {
             throttleUpdate(); // NOT immediate reload
         });
 
-        socket.on("realtime_update", (data) => {
-    console.log("🔥 Realtime update received:", data);
-
-    showToast("Live update received", "info");
-
-    loadDashboard();
+        socket.on("realtime_update", () => {
+            showToast("Live update received", "info");
+            console.log("🔥 Realtime update received");
+            throttleUpdate();   // ✅ use same controlled refresh
 });
 
         /* =========================================
@@ -2307,15 +2299,13 @@ async function callAPI(
            HANDLE HTTP ERRORS
         ========================================================= */
 
+        if (response.status === 401) {
+            console.warn("🔒 Session expired, redirecting...");
+            window.location.href = "/index.html?manual=true";
+            return { success: false };
+        }
         if (!response.ok) {
-
-            const errorText = await response.text().catch(() => "");
-
-            console.error("HTTP ERROR RESPONSE:", errorText);
-
-            throw new Error(
-                `HTTP ERROR ${response.status}`
-            );
+            throw new Error(`HTTP ERROR ${response.status}`);
         }
 
         /* =========================================================
@@ -3332,7 +3322,8 @@ async function uploadAllocationReport() {
 
         const response = await fetch(`${API_BASE}/api/upload-allocation`, {
             method: "POST",
-            body: formData
+            body: formData,
+            credentials: "include"
         });
 
         const text = await response.text(); // IMPORTANT DEBUG STEP
