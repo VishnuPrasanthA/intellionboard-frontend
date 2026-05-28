@@ -2279,11 +2279,8 @@ async function logout() {
 
     try {
 
-        // ==========================================
-        // CALL BACKEND LOGOUT
-        // ==========================================
-
-        await fetch(
+        // ✅ CALL BACKEND LOGOUT (important for session clear)
+        const res = await fetch(
             "https://intellionboard.onrender.com/api/auth/logout",
             {
                 method: "POST",
@@ -2291,27 +2288,34 @@ async function logout() {
             }
         );
 
+        if (!res.ok) {
+            console.warn("Logout API response not OK");
+        }
+
     } catch (err) {
 
-        console.error("Logout API Error:", err);
+        console.error("❌ Logout API Error:", err);
+
+    } finally {
+
+        // ✅ ALWAYS CLEAR STORAGE (even if API fails)
+        localStorage.clear();
+        sessionStorage.clear();
+
+        // ✅ CLEAR COOKIES (EXTRA SAFETY)
+        document.cookie.split(";").forEach(function(c) {
+            document.cookie = c
+                .replace(/^ +/, "")
+                .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+        });
+
+        // ✅ REDIRECT (USE PRODUCTION LOGIN URL)
+        window.location.replace(
+            "https://intellionboard-frontend.vercel.app/"
+        );
     }
-
-    // ==========================================
-    // CLEAR LOCAL STORAGE
-    // ==========================================
-
-    localStorage.clear();
-
-    sessionStorage.clear();
-
-    // ==========================================
-    // REDIRECT TO LOGIN PAGE
-    // ==========================================
-
-    window.location.href =
-        "http://127.0.0.1:5500/login.html";
 }
-
+``
 /* =========================================================
 AUTO REFRESH
 ========================================================= */
