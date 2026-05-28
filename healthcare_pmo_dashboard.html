@@ -4548,9 +4548,8 @@ function handleDrop(event) {
    LOGOUT
 ========================================================= */
 async function logout() {
-
     try {
-        await fetch(API_BASE + "/auth/logout", {
+        await fetch(API_BASE + "/api/auth/logout", {
             method: "POST",
             credentials: "include"
         });
@@ -4558,29 +4557,18 @@ async function logout() {
         console.error(err);
     }
 
-    // Clear interval
-    if (dashboardInterval) {
-        clearInterval(dashboardInterval);
-    }
+    // Stop refresh loop
+    if (dashboardInterval) clearInterval(dashboardInterval);
 
     // Disconnect socket
-    if (socket) {
-        socket.disconnect();
-    }
+    if (socket) socket.disconnect();
 
     // Clear storage
     localStorage.clear();
     sessionStorage.clear();
 
-    // Clear cookies
-    document.cookie.split(";").forEach(function (c) {
-        document.cookie = c
-            .replace(/^ +/, "")
-            .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
-    });
-
-    // Redirect
-    window.location.href = "/";
+    // ✅ IMPORTANT: Hard redirect (force reload)
+    window.location.href = "/index.html?manual=true";
 }
 </script>
 </body>
