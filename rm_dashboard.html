@@ -1561,7 +1561,12 @@ const data = await res.json();
 
 console.log(data);
 
-fullData = data.data || [];
+if (!data.success) {
+    console.error("API Error:", data);
+    fullData = [];
+} else {
+    fullData = data.data || [];
+}
 
 renderStats(fullData);
 renderTable(fullData);
@@ -1577,27 +1582,48 @@ console.log("RM EMAIL =>", rmEmail);
 /* =========================================================
 STATS
 ========================================================= */
-
 function renderStats(data){
 
-document.getElementById("totalEmployees").innerText = data.length;
+    // ✅ TOTAL
+    document.getElementById("totalEmployees").innerText =
+        data.length || 0;
 
-document.getElementById("pendingEmployees").innerText =
-data.filter(x=>x.onboarding_status !== "Completed").length;
+    // ✅ COMPLETED (case-safe)
+    document.getElementById("completedEmployees").innerText =
+        data.filter(x =>
+            (x.onboarding_status || "")
+                .toLowerCase()
+                .includes("completed")
+        ).length;
 
-document.getElementById("completedEmployees").innerText =
-data.filter(x=>x.onboarding_status === "Completed").length;
+    // ✅ PENDING (everything NOT completed)
+    document.getElementById("pendingEmployees").innerText =
+        data.filter(x =>
+            !(x.onboarding_status || "")
+                .toLowerCase()
+                .includes("completed")
+        ).length;
 
-document.getElementById("trainingPending").innerText =
-data.filter(x=>x.training_percentage < 100).length;
+    // ✅ TRAINING PENDING (safe null handling)
+    document.getElementById("trainingPending").innerText =
+        data.filter(x =>
+            (x.training_percentage || 0) < 100
+        ).length;
 
-document.getElementById("slaRisk").innerText =
-data.filter(x=>x.risk_level === "HIGH").length;
+    // ✅ SLA HIGH RISK (safe)
+    document.getElementById("slaRisk").innerText =
+        data.filter(x =>
+            (x.risk_level || "").toUpperCase() === "HIGH"
+        ).length;
 
-document.getElementById("delayedEmployees").innerText =
-data.filter(x=>getDelayDays(x.updated_at) > 2).length;
+    // ✅ DELAY (FIX: use created_at instead of updated_at)
+    document.getElementById("delayedEmployees").innerText =
+        data.filter(x =>
+            getDelayDays(x.created_at) > 2
+        ).length;
 
 }
+
 
 /* =========================================================
 AI INSIGHTS
