@@ -9,6 +9,7 @@
         name="viewport"
         content="width=device-width, initial-scale=1.0"
     >
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link
   rel="stylesheet"
@@ -1942,7 +1943,8 @@ tbody tr:hover{
    CONFIG
 ========================================================= */
 
-const API_BASE = "http://localhost:5332";
+
+const API_BASE = "https://intellionboard.onrender.com";
 
 const REFRESH_INTERVAL = 30000;
 
@@ -2249,6 +2251,7 @@ async function callAPI(
         const fetchOptions = {
             method,
             signal: controller.signal,
+            credentials: "include",
             headers: {
                 "Content-Type": "application/json",
                 "Accept": "application/json"
@@ -4801,7 +4804,9 @@ async function logout() {
         // ==========================================
 
         await fetch(
-            "http://127.0.0.1:5332/api/auth/logout",
+            
+    "https://intellionboard.onrender.com/auth/logout",
+
             {
                 method: "POST",
                 credentials: "include"
@@ -4825,8 +4830,7 @@ async function logout() {
     // REDIRECT TO LOGIN PAGE
     // ==========================================
 
-    window.location.href =
-        "http://127.0.0.1:5500/login.html";
+    window.location.href = "/login.html";
 }
 </script>
 </body>
