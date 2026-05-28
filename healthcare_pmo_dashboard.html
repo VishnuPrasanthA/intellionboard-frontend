@@ -1756,6 +1756,17 @@ tbody tr:hover{
             </div>
 
         </div>
+        <div style="display:flex;gap:10px;margin-bottom:10px;">
+    
+    <button onclick="filterStatus('ALL')" class="btn">All</button>
+    
+    <button onclick="filterStatus('PENDING')" class="btn">Pending PMO</button>
+    
+    <button onclick="filterStatus('IN PROGRESS')" class="btn">Onboarding</button>
+    
+    <button onclick="filterStatus('COMPLETED')" class="btn">Completed</button>
+
+</div>
 
         <div class="table-wrapper modern-table">
 
@@ -1788,6 +1799,23 @@ tbody tr:hover{
             </table>
 
         </div>
+        <div style="
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:12px;
+    margin-top:15px;
+    padding-top:10px;
+    border-top:1px solid #e5eaf0;
+">
+    <button onclick="prevPage()" class="btn">⬅ Prev</button>
+
+    <span id="pageInfo" style="padding:6px 12px;font-weight:bold;">
+        Page 1
+    </span>
+
+    <button onclick="nextPage()" class="btn">Next ➡</button>
+</div>
 
     </div>
 
@@ -1994,6 +2022,44 @@ window.onload = async function () {
 };
 
 
+function nextPage() {
+
+    const totalPages = Math.ceil(filteredEmployees.length / ROWS_PER_PAGE);
+
+    if (CURRENT_PAGE < totalPages) {
+
+        CURRENT_PAGE++;
+        renderEmployees(filteredEmployees);
+        updatePageInfo();
+    }
+}
+
+function prevPage() {
+
+    if (CURRENT_PAGE > 1) {
+
+        CURRENT_PAGE--;
+        renderEmployees(filteredEmployees);
+        updatePageInfo();
+    }
+}
+
+function updatePageInfo() {
+
+    const totalPages = Math.ceil(filteredEmployees.length / ROWS_PER_PAGE) || 1;
+
+    const el = document.getElementById("pageInfo");
+
+    if (el) {
+        el.innerText = `Page ${CURRENT_PAGE} / ${totalPages}`;
+    }
+
+    const prevBtn = document.querySelector("button[onclick='prevPage()']");
+    const nextBtn = document.querySelector("button[onclick='nextPage()']");
+
+    if (prevBtn) prevBtn.disabled = CURRENT_PAGE === 1;
+    if (nextBtn) nextBtn.disabled = CURRENT_PAGE === totalPages;
+}
 async function initializeDashboard() {
 
     try {
@@ -2479,13 +2545,6 @@ async function loadDashboard() {
         }
     }
 }
-/* =========================================================
-   EMPLOYEE TABLE
-========================================================= */
-
-let CURRENT_PAGE = 1;
-const ROWS_PER_PAGE = 50;
-
 function renderEmployees(data) {
 
     const tbody = document.getElementById("tableBody");
@@ -2494,7 +2553,7 @@ function renderEmployees(data) {
     tbody.innerHTML = "";
 
     /* =========================================
-       SAFE HELPERS
+       ✅ SAFE HELPERS
     ========================================== */
     const safe = (val) => {
         if (val === undefined || val === null || val === "" || String(val).toLowerCase() === "undefined") {
@@ -2510,7 +2569,7 @@ function renderEmployees(data) {
     };
 
     /* =========================================
-       EMPTY STATE
+       ✅ EMPTY STATE
     ========================================== */
     if (!data || !data.length) {
 
@@ -2521,17 +2580,36 @@ function renderEmployees(data) {
                 </td>
             </tr>
         `;
+
+        // Reset pagination display
+        CURRENT_PAGE = 1;
+        updatePageInfo();
+
         return;
     }
 
     /* =========================================
-       ✅ PAGINATION (BIG PERFORMANCE FIX)
+       ✅ TOTAL PAGES + SAFETY FIX
+    ========================================== */
+    const totalPages = Math.ceil(data.length / ROWS_PER_PAGE) || 1;
+
+    // ✅ Prevent invalid page (critical fix)
+    if (CURRENT_PAGE > totalPages) {
+        CURRENT_PAGE = totalPages;
+    }
+
+    if (CURRENT_PAGE < 1) {
+        CURRENT_PAGE = 1;
+    }
+
+    /* =========================================
+       ✅ PAGINATION SLICE
     ========================================== */
     const start = (CURRENT_PAGE - 1) * ROWS_PER_PAGE;
     const pageData = data.slice(start, start + ROWS_PER_PAGE);
 
     /* =========================================
-       ✅ USE DOCUMENT FRAGMENT (FAST DOM)
+       ✅ FAST DOM APPEND (PERFORMANCE)
     ========================================== */
     const fragment = document.createDocumentFragment();
 
@@ -2543,7 +2621,7 @@ function renderEmployees(data) {
         const step = String(emp.current_step || "").toUpperCase();
 
         /* =====================================
-           PROGRESS FAST CALC
+           ✅ PROGRESS CALCULATION
         ===================================== */
         let progress = Number(emp.progress_percentage || 0);
 
@@ -2555,7 +2633,7 @@ function renderEmployees(data) {
         }
 
         /* =====================================
-           RISK FAST CALC
+           ✅ RISK CALCULATION
         ===================================== */
         let risk = String(emp.risk_level || "").toUpperCase();
 
@@ -2579,7 +2657,7 @@ function renderEmployees(data) {
         const statusClass = getStatusClass(emp.onboarding_status) || "pending-badge";
 
         /* =====================================
-           CREATE ROW
+           ✅ CREATE ROW
         ===================================== */
         const tr = document.createElement("tr");
 
@@ -2655,9 +2733,21 @@ function renderEmployees(data) {
         fragment.appendChild(tr);
     });
 
+    /* =========================================
+       ✅ APPEND FINAL DATA
+    ========================================== */
     tbody.appendChild(fragment);
 
-    console.log(`✅ Rendered page ${CURRENT_PAGE} (${pageData.length} rows)`);
+    /* =========================================
+       ✅ UPDATE PAGINATION UI
+    ========================================== */
+    updatePageInfo();
+
+    /* =========================================
+       ✅ DEBUG LOG
+    ========================================== */
+    console.log(`✅ Page ${CURRENT_PAGE}/${totalPages} | Rows: ${pageData.length}`);
+
 }
 
 function viewTicketStatus(empId) {
@@ -3098,6 +3188,8 @@ function renderInsights(data) {
 ========================================================= */
 
 function searchTable(value) {
+    
+    CURRENT_PAGE = 1; // ✅ ADD THIS
 
     value =
         String(value || "")
@@ -3199,7 +3291,51 @@ function initMap() {
         );
     }
 }
+function filterStatus(status) {
 
+    CURRENT_PAGE = 1; // reset pagination
+
+    if (status === "ALL") {
+
+        filteredEmployees = [...allEmployees];
+
+    } else {
+
+        filteredEmployees = allEmployees.filter(emp =>
+            String(emp.onboarding_status || "")
+            .toUpperCase()
+            .includes(status.toUpperCase())
+        );
+    }
+
+    renderEmployees(filteredEmployees);
+}
+function filterStatusAdvanced(stage) {
+
+    CURRENT_PAGE = 1;
+
+    if (stage === "PMO") {
+
+        filteredEmployees = allEmployees.filter(emp =>
+            emp.current_step === "PMO_APPROVAL"
+        );
+
+    } else if (stage === "ONBOARDING") {
+
+        filteredEmployees = allEmployees.filter(emp =>
+            emp.onboarding_status.includes("PROGRESS")
+        );
+
+    } else if (stage === "COMPLETED") {
+
+        filteredEmployees = allEmployees.filter(emp =>
+            emp.onboarding_status.includes("COMPLETED")
+        );
+    }
+
+    renderEmployees(filteredEmployees);
+}
+    
 async function plotAllLocations(data) {
 
     try {
