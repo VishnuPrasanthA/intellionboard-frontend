@@ -901,7 +901,7 @@ async function handleEmployeeRouting() {
         // =====================================================
 
         const res = await fetch(
-            `${API_BASE}/auth/employee/${emp_id}`,
+            `${API_BASE}/api/auth/employee/${emp_id}`,
             {
                 method: "GET",
                 headers: {
@@ -1144,13 +1144,13 @@ async function login(){
             return;
         }
 
-        console.log("LOGIN API =>", `${API_BASE}/auth/login`);
+        console.log("LOGIN API =>", `${API_BASE}/api/auth/login`);
 
         /* =====================================================
            ✅ API CALL
         ===================================================== */
 
-        const response = await fetch(`${API_BASE}/auth/login`, {
+        const response = await fetch(`${API_BASE}/api/auth/login`, {
             method: "POST",
             credentials: "include",
             headers: {
@@ -1389,7 +1389,7 @@ async function signup(){
         ===================================================== */
 
         const response = await fetch(
-            `${API_BASE}/auth/register`,
+            `${API_BASE}/api/auth/register`,
             {
 
                 method: "POST",
@@ -1524,7 +1524,7 @@ async function validateSession() {
         // =====================================================
 
         const response = await fetch(
-            `${API_BASE}/auth/validate-session`,
+            `${API_BASE}/api/auth/validate-session`,
             {
                 method: "POST",
 
