@@ -1669,8 +1669,11 @@ async function validateSession() {
 ========================================================= */
 
 window.onload = () => {
+    const skipAutoLogin = window.location.search.includes("manual");
 
-    validateSession();
+    if (!skipAutoLogin) {
+        validateSession();
+    }
 };
 
 </script>
