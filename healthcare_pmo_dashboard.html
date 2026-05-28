@@ -1261,6 +1261,9 @@ tbody tr:hover{
 .delayed-box .insight-icon{
     background:linear-gradient(135deg,#3498db,#7fd0ff);
 }
+.delay-badge{
+    background:linear-gradient(135deg,#ff7675,#ff9aa2);
+}
 
 .insight-label{
 
@@ -1977,10 +1980,6 @@ let SOCKET_INITIALIZED = false;
 let chatOpen = false;
 
 let selectedEmployee = null;
-    
-let CURRENT_PAGE = 1;
-
-const ROWS_PER_PAGE = 50;
 
 
 /* =========================================================
@@ -1993,6 +1992,20 @@ window.onload = async function () {
 
     initializeDashboard();
 };
+
+fetch(API_BASE + "/api/auth/validate-session", {
+    credentials: "include"
+})
+.then(res => res.json())
+.then(data => {
+    if (!data.success) {
+        window.location.href = "/index.html?manual=true";
+    }
+})
+.catch(() => {
+    window.location.href = "/index.html?manual=true";
+});
+
 async function initializeDashboard() {
 
     try {
@@ -3009,52 +3022,60 @@ function loadCharts(data) {
 
 function renderInsights(data) {
 
-    const highRisk =
-        data.filter(e =>
-            String(
-                e.risk_level
-            ).toUpperCase() === "HIGH"
-        ).length;
+    if (!Array.isArray(data)) data = [];
 
-    const pending =
-        data.filter(e =>
-            String(
-                e.onboarding_status
-            ).includes("PENDING")
-        ).length;
+    /* =========================================
+       ✅ SAFELY NORMALIZED CALCULATIONS
+    ========================================== */
 
-    const delayed =
-        data.filter(e =>
-            String(
-                e.onboarding_status
-            ).includes("DELAY")
-        ).length;
+    let highRisk = 0;
+    let delayed = 0;
+    let escalation = 0;
 
-    const insights =
-        document.getElementById(
-            "aiInsights"
-        );
+    for (let i = 0; i < data.length; i++) {
 
-    if (!insights) return;
+        const emp = data[i];
 
-    insights.innerHTML = `
+        const status = String(emp?.onboarding_status || "").toUpperCase();
+        const risk = String(emp?.risk_level || "").toUpperCase();
 
-        <div class="insight-card">
-            ⚠ ${highRisk} High Risk Employees
-        </div>
+        /* ✅ HIGH RISK */
+        if (risk === "HIGH") {
+            highRisk++;
+        }
 
-        <div class="insight-card">
-            📌 ${pending} Pending Onboarding
-        </div>
+        /* ✅ DELAYED */
+        if (status.includes("DELAY")) {
+            delayed++;
+        }
 
-        <div class="insight-card">
-            🚨 ${delayed} Delayed Cases
-        </div>
+        /* ✅ ESCALATION */
+        if (status.includes("ESCALATION") || status.includes("ESCALATED")) {
+            escalation++;
+        }
+    }
 
-        <div class="insight-card">
-            🤖 AI Agents Monitoring Workflow
-        </div>
-    `;
+    /* =========================================
+       ✅ UPDATE UI (YOUR ACTUAL HTML IDS)
+    ========================================== */
+
+    const highRiskEl = document.getElementById("highRiskCount");
+    const delayedEl = document.getElementById("delayedCount");
+    const escalationEl = document.getElementById("escalationCount");
+
+    if (highRiskEl) highRiskEl.innerText = highRisk;
+    if (delayedEl) delayedEl.innerText = delayed;
+    if (escalationEl) escalationEl.innerText = escalation;
+
+    /* =========================================
+       ✅ LOG FOR DEBUGGING (VERY USEFUL)
+    ========================================== */
+
+    console.log("Insights Updated:", {
+        highRisk,
+        delayed,
+        escalation
+    });
 }
 
 /* =========================================================
@@ -3273,7 +3294,7 @@ async function uploadAllocationReport() {
         // ⚠️ confirm backend expects "file"
         formData.append("file", input.files[0]);
 
-        const response = await fetch(`${API_BASE}/upload-allocation`, {
+        const response = await fetch(`${API_BASE}/api/upload-allocation`, {
             method: "POST",
             body: formData
         });
@@ -3409,7 +3430,7 @@ async function createTicket(empId) {
         ========================================================= */
 
         const response = await callAPI(
-            "/create-ticket",
+            "/api/create-ticket",
             "POST",
             payload
         );
@@ -3539,7 +3560,7 @@ async function startOnboarding(empId) {
         ========================================================= */
 
         const response = await callAPI(
-            "/start-onboarding",
+            "/api/start-onboarding",
             "POST",
             { emp_id: empId }
         );
@@ -3910,7 +3931,7 @@ ${lines.join("\n")}
         try {
 
             const res = await callAPI(
-                "/start-onboarding",
+                "/api/start-onboarding",
                 "POST",
                 { emp_id: empId }
             );
@@ -3943,7 +3964,7 @@ ${lines.join("\n")}
         try {
 
             const res = await callAPI(
-                "/bulk-onboard",
+                "/api/bulk-onboard",
                 "POST",
                 {}
             );
@@ -4107,7 +4128,7 @@ ${lines.join("\n")}
 
         addChat("AI", "🧠 Analyzing onboarding data...");
 
-        const response = await callAPI("/ai-agent", "POST", {
+        const response = await callAPI("/api/ai-agent", "POST", {
             question,
             context: { employees: allEmployees }
         });
@@ -4218,7 +4239,7 @@ async function bulkInitiate() {
 
         const response =
             await callAPI(
-                "/bulk-onboard",
+                "/api/bulk-onboard",
                 "POST",
                 payload
             );
