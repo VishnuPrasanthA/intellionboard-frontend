@@ -2651,9 +2651,28 @@ function renderEmployees(data) {
             (emp.id_ticket_status && emp.id_ticket_status !== "CLOSED") ||
             (emp.laptop_ticket_status && emp.laptop_ticket_status !== "CLOSED");
 
-        const accountName = safe(emp.account_name || emp.account || emp.project_name);
-        const rmName = safe(emp.reporting_manager_name || emp.rm_name || emp.reporting_manager);
-        const pmoName = safe(emp.account_pmo_name || emp.pmo_name || emp.account_pmo);
+       const accountName = safe(
+    emp.account_name ||
+    emp.account ||
+    emp.project_name ||
+    emp.project ||
+    emp.accountName
+);
+
+const rmName = safe(
+    emp.reporting_manager_name ||
+    emp.rm_name ||
+    emp.rm ||
+    emp.reporting_manager ||
+    emp.manager_name
+);
+
+const pmoName = safe(
+    emp.account_pmo_name ||
+    emp.pmo_name ||
+    emp.pmo ||
+    emp.account_pmo
+);
 
         const statusClass = getStatusClass(emp.onboarding_status) || "pending-badge";
 
