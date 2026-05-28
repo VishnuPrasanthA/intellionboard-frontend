@@ -2061,24 +2061,6 @@ async function initializeDashboard() {
             clearInterval(dashboardInterval);
         }
 
-        /* =========================================================
-           ✅ AUTO REFRESH LOOP (STABLE)
-        ========================================================= */
-
-        dashboardInterval = setInterval(async () => {
-
-            try {
-
-                // Optional: prevent overlapping calls
-                await loadDashboard();
-
-            } catch (err) {
-
-                console.error("REFRESH ERROR:", err);
-            }
-
-        }, REFRESH_INTERVAL);
-
         console.log("✅ Dashboard Fully Initialized");
 
     } catch (err) {
@@ -2299,14 +2281,7 @@ async function callAPI(
            HANDLE HTTP ERRORS
         ========================================================= */
 
-        if (response.status === 401) {
-            console.warn("🔒 Session expired, redirecting...");
-            window.location.href = "/index.html?manual=true";
-            return { success: false };
-        }
-        if (!response.ok) {
-            throw new Error(`HTTP ERROR ${response.status}`);
-        }
+       
 
         /* =========================================================
            SAFE JSON PARSE (FIX FOR BACKEND NON-JSON)
