@@ -467,15 +467,37 @@ iframe{
             </div>
         </div>
 
-        <div class="menu">
-            <div class="menu-item">🏠 Dashboard</div>
-            <div class="menu-item">📘 Foundation Trainings</div>
-            <div class="menu-item">🏥 Account Trainings</div>
-            <div class="menu-item">🧠 COE Trainings</div>
-            <div class="menu-item">📝 Assessments</div>
-            <div class="menu-item">🏆 Certifications</div>
-            <div class="menu-item">📈 Learning Analytics</div>
-        </div>
+       <div class="menu">
+
+    <div class="menu-item" onclick="goToSection('topSection')">
+        🏠 Dashboard
+    </div>
+
+    <div class="menu-item" onclick="goToSection('foundationSection')">
+        📘 Foundation Trainings
+    </div>
+
+    <div class="menu-item" onclick="goToSection('accountSection')">
+        🏥 Account Trainings
+    </div>
+
+    <div class="menu-item" onclick="goToSection('coeSection')">
+        🧠 COE Trainings
+    </div>
+
+    <div class="menu-item" onclick="goToSection('assessmentSection')">
+        📝 Assessments
+    </div>
+
+    <div class="menu-item" onclick="goToSection('certificateSection')">
+        🏆 Certifications
+    </div>
+
+    <div class="menu-item" onclick="goToSection('analyticsSection')">
+        📈 Learning Analytics
+    </div>
+
+</div>
 
         <button class="logout-btn" onclick="logout()">
             Logout
@@ -561,7 +583,7 @@ iframe{
              FOUNDATION TRAINING
         ====================================================== -->
 
-        <div class="section">
+<div class="section" id="foundationSection">
 
             <div class="section-title">
                 Foundation Trainings
@@ -575,7 +597,9 @@ iframe{
              ACCOUNT TRAINING
         ====================================================== -->
 
-        <div class="section">
+        
+<div class="section" id="accountSection">
+
 
             <div class="section-title">
                 Account Mandatory Trainings
@@ -589,8 +613,8 @@ iframe{
              COE TRAINING
         ====================================================== -->
 
-        <div class="section">
-
+<div class="section" id="coeSection">
+    
             <div class="section-title">
                 Assigned COE Learning Path
             </div>
@@ -666,6 +690,17 @@ if(!emp_id){
     window.location.href =
         "/";
 }
+function goToSection(id){
+
+    const el = document.getElementById(id);
+
+    if(el){
+        el.scrollIntoView({
+            behavior: "smooth"
+        });
+    }
+}
+
 
 async function loadEmployeeProfile() {
 
@@ -1052,84 +1087,143 @@ function playTopic(index){
 /* =========================================================
    COMPLETE TOPIC
 ========================================================= */
-
 async function completeTopic(){
 
     clearInterval(timerInterval);
 
-    const topic =
-        currentTopics[currentTopicIndex];
+    const topic = currentTopics[currentTopicIndex];
 
     try{
 
-        await fetch(
-            `${BASE_URL}/track-topic-progress`,
-            {
-                method:"POST",
-                headers:{
-                    "Content-Type":"application/json"
-                },
-                body:JSON.stringify({
+        // ✅ 1. Save topic progress
+        await fetch(`${BASE_URL}/track-topic-progress`, {
+            method:"POST",
+            headers:{
+                "Content-Type":"application/json"
+            },
+            body:JSON.stringify({
+                emp_id:emp_id,
+                training_name:currentTraining,
+                sequence:topic.sequence,
+                topic_name:topic.topic_name,
+                watch_seconds:seconds,
+                completed:true
+            })
+        });
 
-                    emp_id:emp_id,
-                    training_name:currentTraining,
-                    sequence:topic.sequence,
-                    topic_name:topic.topic_name,
-                    watch_seconds:seconds,
-                    completed:true
-
-                })
-            }
-        );
-
+        // ✅ 2. Recalculate training progress
         const res = await fetch(
             `${BASE_URL}/recalculate-progress/${emp_id}/${encodeURIComponent(currentTraining)}`
         );
 
         const data = await res.json();
 
-        if(currentTopicIndex < currentTopics.length-1){
+        // ✅ 3. If more topics → go next
+        if(currentTopicIndex < currentTopics.length - 1){
 
             currentTopicIndex++;
-
             renderTopics();
+            playTopic(currentTopicIndex);
 
         }else{
 
-            document.getElementById(
-                "completeBanner"
-            ).style.display = "block";
+            // ✅ 4. Training completed UI
+            const banner = document.getElementById("completeBanner");
 
+            banner.style.display = "block";
+
+            banner.innerHTML = `
+                🎉 Training Completed Successfully!
+            `;
+
+            // ✅ 5. Confetti effect
             confetti({
                 particleCount:250,
                 spread:120
             });
 
+            // ✅ 6. Generate certificate
             if(data.status === "COMPLETED"){
 
-                await fetch(
-                    `${BASE_URL}/generate-certificate`,
-                    {
-                        method:"POST",
-                        headers:{
-                            "Content-Type":"application/json"
-                        },
-                        body:JSON.stringify({
-                            emp_id:emp_id,
-                            training_name:currentTraining
-                        })
-                    }
-                );
+                await fetch(`${BASE_URL}/generate-certificate`, {
+                    method:"POST",
+                    headers:{
+                        "Content-Type":"application/json"
+                    },
+                    body:JSON.stringify({
+                        emp_id:emp_id,
+                        training_name:currentTraining
+                    })
+                });
+
+                // ✅ 7. Show download button
+                banner.innerHTML += `
+                    <br><br>
+                    <button onclick="downloadCertificate('${currentTraining}')"
+                    style="
+                        padding:12px 20px;
+                        border:none;
+                        border-radius:12px;
+                        background:white;
+                        color:#0F172A;
+                        font-weight:800;
+                        cursor:pointer;
+                    ">
+                        🎓 Download Certificate
+                    </button>
+                `;
             }
 
+            // ✅ 8. Refresh dashboard
             loadDashboard();
             loadTrainings();
         }
 
     }catch(err){
-        console.log(err);
+
+        console.error("Completion Error:", err);
+
+        alert("⚠️ Something went wrong while completing topic.");
     }
 }
+function showCertificateButton(trainingName){
+
+    const banner = document.getElementById("completeBanner");
+
+    banner.innerHTML = `
+        🎉 Training Completed Successfully!
+        <br><br>
+        <button onclick="downloadCertificate('${trainingName}')"
+        style="
+            padding:12px 20px;
+            border:none;
+            border-radius:12px;
+            background:white;
+            color:#0F172A;
+            font-weight:800;
+            cursor:pointer;
+        ">
+            🎓 Download Certificate
+        </button>
+    `;
+}
+function downloadCertificate(trainingName){
+
+    window.open(
+        `${BASE_URL}/certificate/${emp_id}/${encodeURIComponent(trainingName)}`,
+        "_blank"
+    );
+}
+new Chart(ctx, {
+    type:"bar",
+    data:{
+        labels:["Mon","Tue","Wed"],
+        datasets:[{
+            label:"Hours",
+            data:[2,3,1]
+        }]
+    }
+});
 
 /* =========================================================
    CLOSE MODAL
