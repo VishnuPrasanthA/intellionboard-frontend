@@ -1053,6 +1053,32 @@ CHARTS
         </div>
 
     </div>
+    <div class="card glass">
+
+    <div class="card-title">
+        <h3>COE Distribution</h3>
+        <span>Skill Grouping</span>
+    </div>
+
+    <div class="chart-box">
+        <canvas id="coeChart"></canvas>
+    </div>
+
+</div>
+
+<div class="card glass">
+
+    <div class="card-title">
+        <h3>Skill Distribution</h3>
+        <span>Technology Mapping</span>
+    </div>
+
+    <div class="chart-box">
+        <canvas id="skillChart"></canvas>
+    </div>
+
+</div>
+
 
     <div class="card glass">
 
@@ -1290,7 +1316,8 @@ let riskChart;
 let locationChart;
 let accountChart;
 let trainingChart;
-
+let coeChart;
+let skillChart;
 /* =========================================================
 SOCKET
 ========================================================= */
@@ -1307,6 +1334,8 @@ LOAD DASHBOARD
 ========================================================= */
 
 async function loadDashboard(){
+
+    window.allEmployees = json.all_employees || [];
 
     try{
 
@@ -1394,6 +1423,9 @@ async function loadDashboard(){
             json.leadership_insights
         );
 
+        renderCOEChart(window.allEmployees);
+        renderSkillChart(window.allEmployees);
+
     }catch(err){
 
         console.error(err);
@@ -1413,6 +1445,40 @@ function setValue(id,value){
 /* =========================================================
 CHARTS
 ========================================================= */
+function renderCOEChart(data){
+
+    if (!data || data.length === 0) return;
+
+    destroyChart(coeChart);
+
+    const map = {};
+
+    data.forEach(emp => {
+        const coe = emp.selected_coe || "UNKNOWN";
+        map[coe] = (map[coe] || 0) + 1;
+    });
+
+    const topCOE = Object.entries(map)
+        .sort((a,b)=>b[1]-a[1])[0];
+
+    coeChart = new Chart(
+        document.getElementById("coeChart"),
+        {
+            type: "doughnut",
+            data: {
+                labels: Object.keys(map),
+                datasets: [{
+                    data: Object.values(map)
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        }
+    );
+}
+
 
 function destroyChart(chart){
 
