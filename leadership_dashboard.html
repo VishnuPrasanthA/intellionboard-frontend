@@ -1026,6 +1026,12 @@ KPI GRID
         <div class="kpi-value" id="pendingId">0</div>
         <div class="kpi-sub">Pending ID access</div>
     </div>
+    <div class="kpi glass">
+    <div class="kpi-icon">🏆</div>
+    <div class="kpi-title">Top COE</div>
+    <div class="kpi-value" id="topCOE">-</div>
+    <div class="kpi-sub">Highest workforce</div>
+    </div>
 
 </div>
 
@@ -1452,6 +1458,10 @@ function renderCOEChart(data){
     destroyChart(coeChart);
 
     const map = {};
+    if (topCOE) {
+    document.getElementById("topCOE").innerText =
+        `${topCOE[0]} (${topCOE[1]})`;
+}
 
     data.forEach(emp => {
         const coe = emp.selected_coe || "UNKNOWN";
