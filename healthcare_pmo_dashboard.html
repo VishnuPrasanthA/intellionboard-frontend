@@ -2788,7 +2788,7 @@ function renderEmployees(data) {
         /* =====================================
            ✅ PROGRESS CALCULATION
         ===================================== */
-        let progress = Number(emp.progress_percentage || 0);
+        let progress = Number(emp.progress_percentage || emp.progress || 0);
 
         if (!progress) {
             if (step.includes("COE")) progress = 100;
@@ -3020,8 +3020,10 @@ function openTicketPopup(empId) {
         else progress = 25;
     }
 
-    const idCardStatus   = safe(emp.id_ticket_status   || emp.id_card_status   || "N/A");
-    const laptopStatus   = safe(emp.laptop_ticket_status|| emp.laptop_status    || "N/A");
+    const idCardStatus   = safe(emp.id_card_status   || emp.id_ticket_status   || "N/A");
+    const laptopStatus   = safe(emp.laptop_status     || emp.laptop_ticket_status || "N/A");
+    const idCardTicketId = safe(emp.id_card_ticket_id || emp.ticket_id || "");
+    const laptopTicketId = safe(emp.laptop_ticket_id  || "");
 
     document.getElementById("ticketPopup_name").textContent   = safe(emp.emp_name);
     document.getElementById("ticketPopup_id").textContent     = safe(emp.emp_id);
@@ -3031,9 +3033,12 @@ function openTicketPopup(empId) {
     document.getElementById("ticketPopup_bar").style.width    = progress + "%";
 
     document.getElementById("ticketPopup_id_card").innerHTML =
-        `<span class="ticket-chip ${chipClass(idCardStatus)}">${idCardStatus}</span>`;
-    document.getElementById("ticketPopup_laptop").innerHTML =
-        `<span class="ticket-chip ${chipClass(laptopStatus)}">${laptopStatus}</span>`;
+    `<span class="ticket-chip ${chipClass(idCardStatus)}">${idCardStatus}</span>
+     ${idCardTicketId !== "N/A" ? `<br><span style="font-size:11px;color:#7d8da5;font-weight:600;">${idCardTicketId}</span>` : ""}`;
+
+document.getElementById("ticketPopup_laptop").innerHTML =
+    `<span class="ticket-chip ${chipClass(laptopStatus)}">${laptopStatus}</span>
+     ${laptopTicketId !== "N/A" ? `<br><span style="font-size:11px;color:#7d8da5;font-weight:600;">${laptopTicketId}</span>` : ""}`;
 
     document.getElementById("ticketPopup").classList.add("open");
 }
