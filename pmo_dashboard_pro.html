@@ -1887,11 +1887,30 @@ function filterRole(role){
 LOGOUT
 ========================================= */
 
-function logout(){
-    localStorage.clear();
-    window.location.href = "login.html";
-}
+async function logout(){
 
+    try{
+
+        await fetch(
+            BASE_URL + "/api/auth/logout",
+            {
+                method:"POST",
+                credentials:"include"
+            }
+        );
+
+    }catch(err){
+        console.log(err);
+    }
+
+    localStorage.clear();
+
+    sessionStorage.clear();
+
+    window.location.replace(
+        "https://intellionboard.vercel.app/"
+    );
+}
 /* =========================================
 AUTO REFRESH
 ========================================= */
