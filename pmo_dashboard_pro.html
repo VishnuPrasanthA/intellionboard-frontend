@@ -1568,6 +1568,21 @@ KPI
 <div id="accountInsights">Loading...</div>
 
 </div>
+<div class="glass-card">
+
+<div class="section-title">⚠ SLA Risk Insights</div>
+
+<div id="slaInsights">Loading...</div>
+
+</div>
+
+   <div class="glass-card">
+
+<div class="section-title">🌍 Workforce Heatmap</div>
+
+<canvas id="heatmapChart"></canvas>
+
+</div>
 
 <!-- =========================================
 TABLE
@@ -1733,6 +1748,8 @@ async function loadDashboard(){
         updateKPIs(filteredEmployees);
         updateRoleStats(filteredEmployees);
         renderAccountInsights(filteredEmployees);
+       await loadSLARisk();
+await loadHeatmap();
 
     }catch(err){
 
@@ -1741,7 +1758,43 @@ async function loadDashboard(){
         showEmptyState();
     }
 }
+let heatmapChart;
 
+async function loadHeatmap(){
+
+    const res = await callAPI(
+        BASE_URL + "/account-heatmap",
+        {
+            method:"POST",
+            body: JSON.stringify({
+                email: rm_email
+            })
+        }
+    );
+
+    const data = res.data || [];
+
+    const labels = data.map(x => x.location);
+    const values = data.map(x => x.count);
+
+    if(heatmapChart){
+        heatmapChart.destroy();
+    }
+
+    heatmapChart = new Chart(
+        document.getElementById("heatmapChart"),
+        {
+            type: "bar",
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: "Employees",
+                    data: values
+                }]
+            }
+        }
+    );
+}
 /* =========================================
 EMPTY STATE
 ========================================= */
@@ -1763,7 +1816,27 @@ function showEmptyState(){
 /* =========================================
 FILTER ACCOUNT
 ========================================= */
+async function loadSLARisk(){
 
+    const res = await callAPI(
+        BASE_URL + "/sla-risk",
+        {
+            method:"POST",
+            body: JSON.stringify({
+                email: rm_email
+            })
+        }
+    );
+
+    const data = res.data || [];
+
+    let delayed = data.filter(e => e.sla_delay).length;
+
+    document.getElementById("slaInsights").innerHTML = `
+        🚨 Delayed Employees: <b>${delayed}</b><br>
+        📊 Total Checked: ${data.length}
+    `;
+}
 function filterAccount(data){
 
     if(!data.length) return [];
@@ -1786,14 +1859,14 @@ function renderEmployees(data){
 
     data.forEach(emp => {
 
-        let progress = emp.progress || 50;
+        let progress = emp.progress_percentage || 10;
 
         const row = document.createElement("tr");
 
         row.innerHTML = `
         <td>${safe(emp.emp_id)}</td>
         <td>${safe(emp.emp_name)}</td>
-        <td>${safe(emp.role)}</td>
+        <td>${safe(emp.designation)}</td>
         <td>${safe(emp.account_name)}</td>
         <td>${safe(emp.onboarding_status)}</td>
         <td>
@@ -1846,7 +1919,7 @@ function updateRoleStats(data){
 
     data.forEach(e=>{
 
-        const role = (e.role || "").toUpperCase();
+        const role = (e.designation || "").toUpperCase();
 
         if(role.includes("QA")) qa++;
         else if(role.includes("DEV")) dev++;
