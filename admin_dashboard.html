@@ -2274,42 +2274,29 @@ TOTAL          : ${total}
 /* =========================
    LOGOUT
 ========================= */
+async function logout(){
 
-async function logout() {
-
-    try {
-
-        // ==========================================
-        // CALL BACKEND LOGOUT
-        // ==========================================
+    try{
 
         await fetch(
-            "http://127.0.0.1:5332/api/auth/logout",
+            BASE_URL + "/api/auth/logout",
             {
-                method: "POST",
-                credentials: "include"
+                method:"POST",
+                credentials:"include"
             }
         );
 
-    } catch (err) {
-
-        console.error("Logout API Error:", err);
+    }catch(err){
+        console.log(err);
     }
-
-    // ==========================================
-    // CLEAR LOCAL STORAGE
-    // ==========================================
 
     localStorage.clear();
 
     sessionStorage.clear();
 
-    // ==========================================
-    // REDIRECT TO LOGIN PAGE
-    // ==========================================
-
-    window.location.href =
-        "http://127.0.0.1:5500/login.html";
+    window.location.replace(
+        "https://intellionboard.vercel.app/"
+    );
 }
 
 /* =========================
