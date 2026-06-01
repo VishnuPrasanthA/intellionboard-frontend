@@ -1631,28 +1631,52 @@ let filteredEmployees = [];
 SAFE API CALL
 ========================================= */
 
-async function callAPI(url){
+async function callAPI(url, options = {}){
 
     try{
 
-        const res = await fetch(url);
+        const res = await fetch(url, {
+
+            method: options.method || "GET",
+
+            headers: {
+                "Content-Type": "application/json",
+                ...(options.headers || {})
+            },
+
+            body: options.body || null
+        });
 
         if(!res.ok){
+
+            const errorText = await res.text();
+
+            console.error("API ERROR:", res.status, errorText);
+
             throw new Error("API Error: " + res.status);
         }
 
         const text = await res.text();
 
+        if(!text){
+            return {};
+        }
+
         try{
             return JSON.parse(text);
-        }catch{
-            console.warn("Invalid JSON, returning empty");
-            return [];
+        }
+        catch(parseError){
+
+            console.warn("⚠ Invalid JSON response:", text);
+
+            return {};
         }
 
     }catch(err){
-        console.error("API FAILED:", err);
-        return [];
+
+        console.error("❌ API FAILED:", err);
+
+        return {};
     }
 }
 
@@ -1665,32 +1689,45 @@ async function loadDashboard(){
     try{
 
         const response = await callAPI(
-            BASE_URL + "/employees-by-rm/" + rm_email
+            BASE_URL + "/account-pmo-dashboard",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    email: rm_email
+                })
+            }
         );
 
         let data = [];
 
-        /* ✅ HANDLE MULTIPLE RESPONSE TYPES */
+        /* ✅ HANDLE RESPONSE FORMAT */
         if(Array.isArray(response)){
             data = response;
         }
-        else if(Array.isArray(response.data)){
+        else if(response && Array.isArray(response.data)){
             data = response.data;
         }
         else{
             data = [];
         }
 
+        /* ✅ EMPTY STATE */
         if(!data.length){
             showEmptyState();
             return;
         }
 
+        /* ✅ FILTER ACCOUNT */
         const accountFiltered = filterAccount(data);
 
+        /* ✅ STORE GLOBAL STATE */
         allEmployees = accountFiltered;
         filteredEmployees = [...accountFiltered];
 
+        /* ✅ RENDER UI */
         renderEmployees(filteredEmployees);
 
         updateKPIs(filteredEmployees);
@@ -1698,7 +1735,9 @@ async function loadDashboard(){
         renderAccountInsights(filteredEmployees);
 
     }catch(err){
+
         console.error("LOAD ERROR:", err);
+
         showEmptyState();
     }
 }
