@@ -129,7 +129,7 @@ body::before{
 
     content:"";
 
-    position:fixed;
+    position: absolute;
 
     inset:0;
 
@@ -208,23 +208,28 @@ body::before{
 
 .header{
     position: fixed;
-    top: 14px;
-    left: 14px;
-    right: 14px;
+    top: 0;              /* ✅ stick to top */
+    left: 0;
+    right: 0;
+
     z-index: 999999;
-    transform: translateZ(0);
-    will-change: transform;
-    -webkit-transform: translateZ(0);
+
+    /* ❌ REMOVED THESE (they cause movement/jitter) */
+    /* transform: translateZ(0); */
+    /* will-change: transform; */
+    /* -webkit-transform: translateZ(0); */
+
     display: flex;
     align-items: center;
     justify-content: space-between;
     flex-wrap: nowrap;
     gap: 14px;
+
     padding: 14px 18px;
-    border-radius: 26px;
+
+    border-radius: 0;    /* ✅ optional (removes visual shifting feel) */
     overflow: hidden;
 }
-
 /* glowing animated border */
 
 .header::before{
@@ -1437,7 +1442,7 @@ tbody tr:hover{
 @media(max-width:768px){
 
     .page{
-        padding-top:140px;
+        padding-top:110px;
     }
 
     .header{
