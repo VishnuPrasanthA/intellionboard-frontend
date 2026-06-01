@@ -1610,10 +1610,15 @@ TABLE
 CONFIG
 ========================================= */
 
-const BASE_URL = "http://127.0.0.1:5332";
+const BASE_URL = "https://intellionboard.onrender.com";
 
-/* ✅ RM LOGIN CONTEXT */
-const rm_email = localStorage.getItem("email");
+/* ✅ RM LOGIN CONTEXT (SAFE) */
+let rm_email = localStorage.getItem("email");
+
+/* fallback for testing */
+if(!rm_email){
+    rm_email = "test@company.com";
+}
 
 /* =========================================
 GLOBAL STATE
@@ -1623,6 +1628,35 @@ let allEmployees = [];
 let filteredEmployees = [];
 
 /* =========================================
+SAFE API CALL
+========================================= */
+
+async function callAPI(url){
+
+    try{
+
+        const res = await fetch(url);
+
+        if(!res.ok){
+            throw new Error("API Error: " + res.status);
+        }
+
+        const text = await res.text();
+
+        try{
+            return JSON.parse(text);
+        }catch{
+            console.warn("Invalid JSON, returning empty");
+            return [];
+        }
+
+    }catch(err){
+        console.error("API FAILED:", err);
+        return [];
+    }
+}
+
+/* =========================================
 LOAD DASHBOARD
 ========================================= */
 
@@ -1630,11 +1664,27 @@ async function loadDashboard(){
 
     try{
 
-        const res = await fetch(
+        const response = await callAPI(
             BASE_URL + "/employees-by-rm/" + rm_email
         );
 
-        const data = await res.json();
+        let data = [];
+
+        /* ✅ HANDLE MULTIPLE RESPONSE TYPES */
+        if(Array.isArray(response)){
+            data = response;
+        }
+        else if(Array.isArray(response.data)){
+            data = response.data;
+        }
+        else{
+            data = [];
+        }
+
+        if(!data.length){
+            showEmptyState();
+            return;
+        }
 
         const accountFiltered = filterAccount(data);
 
@@ -1648,8 +1698,27 @@ async function loadDashboard(){
         renderAccountInsights(filteredEmployees);
 
     }catch(err){
-        console.log(err);
+        console.error("LOAD ERROR:", err);
+        showEmptyState();
     }
+}
+
+/* =========================================
+EMPTY STATE
+========================================= */
+
+function showEmptyState(){
+
+    document.getElementById("tableBody").innerHTML =
+    `<tr><td colspan="6" style="text-align:center;">No Data Found</td></tr>`;
+
+    document.getElementById("total").innerText = 0;
+    document.getElementById("pending").innerText = 0;
+    document.getElementById("progress").innerText = 0;
+    document.getElementById("completed").innerText = 0;
+
+    document.getElementById("accountInsights").innerText =
+        "No account data available";
 }
 
 /* =========================================
@@ -1674,7 +1743,6 @@ RENDER TABLE
 function renderEmployees(data){
 
     const tbody = document.getElementById("tableBody");
-
     tbody.innerHTML = "";
 
     data.forEach(emp => {
@@ -1684,11 +1752,11 @@ function renderEmployees(data){
         const row = document.createElement("tr");
 
         row.innerHTML = `
-        <td>${emp.emp_id}</td>
-        <td>${emp.emp_name}</td>
-        <td>${emp.role || "QA"}</td>
-        <td>${emp.account_name}</td>
-        <td>${emp.onboarding_status}</td>
+        <td>${safe(emp.emp_id)}</td>
+        <td>${safe(emp.emp_name)}</td>
+        <td>${safe(emp.role)}</td>
+        <td>${safe(emp.account_name)}</td>
+        <td>${safe(emp.onboarding_status)}</td>
         <td>
             <div class="progress-container">
                 <div class="progress-fill" style="width:${progress}%">
@@ -1703,6 +1771,14 @@ function renderEmployees(data){
 }
 
 /* =========================================
+SAFE VALUE
+========================================= */
+
+function safe(val){
+    return val ? val : "N/A";
+}
+
+/* =========================================
 KPI
 ========================================= */
 
@@ -1711,13 +1787,13 @@ function updateKPIs(data){
     document.getElementById("total").innerText = data.length;
 
     document.getElementById("pending").innerText =
-        data.filter(e => e.onboarding_status.includes("PENDING")).length;
+        data.filter(e => (e.onboarding_status||"").includes("PENDING")).length;
 
     document.getElementById("progress").innerText =
-        data.filter(e => e.onboarding_status.includes("PROGRESS")).length;
+        data.filter(e => (e.onboarding_status||"").includes("PROGRESS")).length;
 
     document.getElementById("completed").innerText =
-        data.filter(e => e.onboarding_status.includes("COMPLETE")).length;
+        data.filter(e => (e.onboarding_status||"").includes("COMPLETE")).length;
 }
 
 /* =========================================
@@ -1760,10 +1836,11 @@ function renderAccountInsights(data){
     const total = data.length;
 
     const completed = data.filter(e =>
-        e.onboarding_status.includes("COMPLETE")
+        (e.onboarding_status||"").includes("COMPLETE")
     ).length;
 
-    const percentage = Math.floor((completed/total)*100);
+    const percentage =
+        total ? Math.floor((completed/total)*100) : 0;
 
     document.getElementById("accountInsights").innerHTML =
     `
@@ -1811,16 +1888,21 @@ LOGOUT
 ========================================= */
 
 function logout(){
-
     localStorage.clear();
-
     window.location.href = "login.html";
 }
+
+/* =========================================
+AUTO REFRESH
+========================================= */
+
+setInterval(loadDashboard, 60000);
 
 /* INIT */
 loadDashboard();
 
 </script>
+
 
 </body>
 </html>
