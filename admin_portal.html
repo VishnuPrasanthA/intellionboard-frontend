@@ -1,0 +1,1565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IntelliOnboard — Admin Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<style>
+
+/* =========================================================
+   RESET + BASE  (matches login.html aesthetic)
+========================================================= */
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+    font-family: "Segoe UI", Arial, sans-serif;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #021B1A 0%, #063D36 30%, #0F6E56 100%);
+    position: relative;
+    overflow-x: hidden;
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    width: 700px; height: 700px;
+    background: radial-gradient(circle, rgba(38,255,186,0.15), transparent 70%);
+    top: -200px; left: -180px;
+    animation: float1 8s infinite alternate ease-in-out;
+    pointer-events: none;
+    z-index: 0;
+}
+body::after {
+    content: "";
+    position: fixed;
+    width: 550px; height: 550px;
+    background: radial-gradient(circle, rgba(167,139,250,0.10), transparent 70%);
+    bottom: -180px; right: -150px;
+    animation: float2 10s infinite alternate ease-in-out;
+    pointer-events: none;
+    z-index: 0;
+}
+@keyframes float1 { from{transform:translateY(0)} to{transform:translateY(30px)} }
+@keyframes float2 { from{transform:translateX(0)} to{transform:translateX(-30px)} }
+
+/* =========================================================
+   LAYOUT
+========================================================= */
+.wrapper {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    min-height: 100vh;
+}
+
+/* ── SIDEBAR ── */
+.sidebar {
+    width: 260px;
+    flex-shrink: 0;
+    background: rgba(0,0,0,0.35);
+    backdrop-filter: blur(20px);
+    border-right: 1px solid rgba(255,255,255,0.10);
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    z-index: 50;
+}
+
+.sidebar-logo {
+    padding: 28px 24px 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.sidebar-logo-img {
+    width: 46px; height: 46px;
+    background: #fff;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+    margin-bottom: 12px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+}
+.sidebar-logo-img img { width: 70%; height: 70%; object-fit: contain; }
+.sidebar-app-name { font-size: 17px; font-weight: 800; color: #fff; }
+.sidebar-role-badge {
+    margin-top: 5px;
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    background: rgba(167,139,250,0.20);
+    border: 1px solid rgba(167,139,250,0.35);
+    font-size: 11px;
+    font-weight: 700;
+    color: #C4AAFF;
+    letter-spacing: 0.04em;
+}
+
+.sidebar-nav {
+    flex: 1;
+    padding: 16px 12px;
+    overflow-y: auto;
+}
+
+.nav-section-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.10em;
+    color: rgba(255,255,255,0.35);
+    text-transform: uppercase;
+    padding: 16px 12px 6px;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 11px 14px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.65);
+    transition: all 0.20s;
+    margin-bottom: 2px;
+    border: 1px solid transparent;
+    background: none;
+    width: 100%;
+    text-align: left;
+}
+.nav-item:hover {
+    background: rgba(255,255,255,0.07);
+    color: #fff;
+}
+.nav-item.active {
+    background: linear-gradient(135deg, rgba(29,158,117,0.35), rgba(15,110,86,0.25));
+    border-color: rgba(29,158,117,0.40);
+    color: #fff;
+}
+.nav-item .nav-icon { font-size: 17px; width: 20px; text-align: center; }
+
+.nav-item.danger { color: rgba(255,100,100,0.75); }
+.nav-item.danger:hover { background: rgba(255,80,80,0.12); color: #FF7070; border-color: rgba(255,80,80,0.25); }
+
+.sidebar-footer {
+    padding: 16px 12px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+}
+.admin-info {
+    font-size: 12px;
+    color: rgba(255,255,255,0.45);
+    padding: 0 4px 10px;
+    line-height: 1.6;
+}
+.admin-info strong { color: rgba(255,255,255,0.75); }
+.logout-btn {
+    width: 100%;
+    padding: 10px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,80,80,0.30);
+    background: rgba(255,80,80,0.10);
+    color: #FF9090;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.2s;
+}
+.logout-btn:hover { background: rgba(255,80,80,0.20); }
+
+/* ── MAIN CONTENT ── */
+.main {
+    margin-left: 260px;
+    flex: 1;
+    padding: 32px;
+    min-height: 100vh;
+}
+
+/* =========================================================
+   TOP BAR
+========================================================= */
+.topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 28px;
+}
+.page-title { font-size: 26px; font-weight: 800; color: #fff; }
+.page-sub   { font-size: 13px; color: rgba(255,255,255,0.50); margin-top: 3px; }
+
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+.topbar-badge {
+    padding: 6px 14px;
+    border-radius: 20px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.12);
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.65);
+}
+
+/* =========================================================
+   CARDS / PANELS
+========================================================= */
+.card {
+    background: rgba(255,255,255,0.08);
+    backdrop-filter: blur(18px);
+    border: 1px solid rgba(255,255,255,0.13);
+    border-radius: 20px;
+    padding: 28px;
+    margin-bottom: 24px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+}
+
+.card-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.card-title span { font-size: 20px; }
+.card-sub {
+    font-size: 12.5px;
+    color: rgba(255,255,255,0.45);
+    margin-bottom: 22px;
+    line-height: 1.6;
+}
+
+/* stats row */
+.stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+}
+.stat-card {
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 16px;
+    padding: 20px;
+    text-align: center;
+}
+.stat-num  { font-size: 32px; font-weight: 800; color: #fff; }
+.stat-lbl  { font-size: 12px; color: rgba(255,255,255,0.50); margin-top: 4px; }
+.stat-card.green  { border-color: rgba(29,158,117,0.35); }
+.stat-card.purple { border-color: rgba(167,139,250,0.35); }
+.stat-card.amber  { border-color: rgba(255,193,7,0.35); }
+.stat-card.red    { border-color: rgba(255,95,109,0.35); }
+.stat-num.green  { color: #1D9E75; }
+.stat-num.purple { color: #A78BFA; }
+.stat-num.amber  { color: #FFC107; }
+.stat-num.red    { color: #FF5F6D; }
+
+/* =========================================================
+   FORM ELEMENTS  (matches login.html style)
+========================================================= */
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.form-row.three { grid-template-columns: 1fr 1fr 1fr; }
+.form-group { margin-bottom: 14px; }
+
+label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.75);
+    letter-spacing: 0.02em;
+}
+
+input, select {
+    width: 100%;
+    padding: 12px 15px;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.08);
+    color: #fff;
+    font-size: 13.5px;
+    font-family: "Segoe UI", Arial, sans-serif;
+    outline: none;
+    transition: 0.22s;
+}
+input::placeholder { color: rgba(255,255,255,0.40); }
+select option { background: #0a1f1c; color: #fff; }
+input:focus, select:focus {
+    border-color: rgba(38,255,186,0.50);
+    background: rgba(255,255,255,0.11);
+    box-shadow: 0 0 0 3px rgba(38,255,186,0.10);
+}
+
+/* =========================================================
+   BUTTONS
+========================================================= */
+.btn {
+    padding: 12px 22px;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 700;
+    font-family: "Segoe UI", Arial, sans-serif;
+    transition: 0.22s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+.btn-primary {
+    background: linear-gradient(135deg, #1D9E75, #0F6E56);
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(29,158,117,0.30);
+}
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(29,158,117,0.40); }
+
+.btn-danger {
+    background: rgba(255,80,80,0.15);
+    border: 1px solid rgba(255,80,80,0.35);
+    color: #FF8080;
+}
+.btn-danger:hover { background: rgba(255,80,80,0.25); transform: translateY(-1px); }
+
+.btn-amber {
+    background: rgba(255,193,7,0.15);
+    border: 1px solid rgba(255,193,7,0.35);
+    color: #FFC107;
+}
+.btn-amber:hover { background: rgba(255,193,7,0.25); }
+
+.btn-purple {
+    background: rgba(167,139,250,0.15);
+    border: 1px solid rgba(167,139,250,0.35);
+    color: #C4AAFF;
+}
+.btn-purple:hover { background: rgba(167,139,250,0.25); }
+
+.btn-sm { padding: 7px 14px; font-size: 12px; border-radius: 9px; }
+
+.btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+
+/* =========================================================
+   TABLE
+========================================================= */
+.table-wrap { overflow-x: auto; border-radius: 12px; }
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+thead th {
+    background: rgba(0,0,0,0.30);
+    color: rgba(255,255,255,0.65);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    padding: 12px 16px;
+    text-align: left;
+    white-space: nowrap;
+}
+tbody tr {
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    transition: 0.15s;
+}
+tbody tr:hover { background: rgba(255,255,255,0.04); }
+tbody td { padding: 13px 16px; color: rgba(255,255,255,0.80); vertical-align: middle; }
+
+.role-pill {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+}
+.pill-admin     { background: rgba(167,139,250,0.15); color: #C4AAFF; border: 1px solid rgba(167,139,250,0.30); }
+.pill-pmo       { background: rgba(29,158,117,0.15);  color: #26FFB9; border: 1px solid rgba(29,158,117,0.30); }
+.pill-itsg      { background: rgba(59,130,246,0.15);  color: #93C5FD; border: 1px solid rgba(59,130,246,0.30); }
+.pill-rm        { background: rgba(251,191,36,0.15);  color: #FDE68A; border: 1px solid rgba(251,191,36,0.30); }
+.pill-employee  { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.65); border: 1px solid rgba(255,255,255,0.15); }
+.pill-leadership{ background: rgba(244,114,182,0.15); color: #F9A8D4; border: 1px solid rgba(244,114,182,0.30); }
+
+.status-dot {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; font-weight: 600;
+}
+.status-dot::before {
+    content: "";
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+}
+.status-active   { color: #26FFB9; }
+.status-active::before { background: #1D9E75; }
+.status-inactive { color: rgba(255,255,255,0.40); }
+.status-inactive::before { background: rgba(255,255,255,0.25); }
+
+/* =========================================================
+   ALERTS
+========================================================= */
+.alert {
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    display: none;
+    margin-top: 16px;
+    line-height: 1.5;
+}
+.alert.err  { background: rgba(255,80,80,0.15);  border: 1px solid rgba(255,80,80,0.35);  color: #FFB3B8; }
+.alert.ok   { background: rgba(0,255,150,0.12);  border: 1px solid rgba(0,255,150,0.30);  color: #B0FFF0; }
+.alert.warn { background: rgba(255,193,7,0.12);  border: 1px solid rgba(255,193,7,0.30);  color: #FDE68A; }
+.alert.info { background: rgba(59,130,246,0.12); border: 1px solid rgba(59,130,246,0.30); color: #93C5FD; }
+
+/* =========================================================
+   MODAL
+========================================================= */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.65);
+    backdrop-filter: blur(6px);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+    background: linear-gradient(160deg, #063D36, #021B1A);
+    border: 1px solid rgba(255,255,255,0.14);
+    border-radius: 22px;
+    padding: 32px;
+    width: 500px;
+    max-width: 95vw;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.60);
+    animation: modalIn 0.25s cubic-bezier(0.22,1,0.36,1);
+}
+@keyframes modalIn { from{opacity:0;transform:scale(0.94)} to{opacity:1;transform:scale(1)} }
+.modal-title { font-size: 18px; font-weight: 800; color: #fff; margin-bottom: 6px; }
+.modal-sub   { font-size: 12.5px; color: rgba(255,255,255,0.45); margin-bottom: 22px; }
+.modal-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 22px; }
+
+/* =========================================================
+   DANGER ZONE
+========================================================= */
+.danger-zone {
+    border: 1px solid rgba(255,80,80,0.30);
+    border-radius: 16px;
+    padding: 22px;
+    background: rgba(255,80,80,0.05);
+}
+.danger-zone-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #FF8080;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.danger-zone-desc {
+    font-size: 12.5px;
+    color: rgba(255,255,255,0.45);
+    margin-bottom: 16px;
+    line-height: 1.65;
+}
+
+/* =========================================================
+   BACKUP HISTORY TABLE BADGE
+========================================================= */
+.backup-type {
+    font-size: 11px; font-weight: 700;
+    padding: 2px 9px; border-radius: 20px;
+}
+.backup-manual   { background: rgba(59,130,246,0.15); color: #93C5FD; border: 1px solid rgba(59,130,246,0.30); }
+.backup-auto     { background: rgba(29,158,117,0.15); color: #26FFB9; border: 1px solid rgba(29,158,117,0.30); }
+.backup-onboard  { background: rgba(255,193,7,0.15);  color: #FDE68A; border: 1px solid rgba(255,193,7,0.30); }
+
+/* =========================================================
+   SECTION TABS (within main)
+========================================================= */
+.section { display: none; }
+.section.active { display: block; }
+
+/* =========================================================
+   SEARCH BOX
+========================================================= */
+.search-box {
+    display: flex; gap: 10px; align-items: center;
+    margin-bottom: 18px;
+}
+.search-box input { max-width: 320px; }
+
+/* =========================================================
+   PROGRESS BAR (for wipe operation)
+========================================================= */
+.progress-bar-wrap {
+    background: rgba(255,255,255,0.08);
+    border-radius: 8px;
+    height: 8px;
+    overflow: hidden;
+    display: none;
+    margin-top: 14px;
+}
+.progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #1D9E75, #26FFB9);
+    border-radius: 8px;
+    transition: width 0.4s ease;
+    width: 0%;
+}
+
+/* scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 6px; }
+
+</style>
+</head>
+<body>
+
+<div class="wrapper">
+
+<!-- =====================================================
+     SIDEBAR
+====================================================== -->
+<aside class="sidebar">
+    <div class="sidebar-logo">
+        <div class="sidebar-logo-img">
+            <img src="logo.png" alt="Logo">
+        </div>
+        <div class="sidebar-app-name">IntelliOnboard</div>
+        <div class="sidebar-role-badge">SYSTEM ADMIN</div>
+    </div>
+
+    <nav class="sidebar-nav">
+
+        <div class="nav-section-label">Overview</div>
+        <button class="nav-item active" onclick="showSection('dashboard')">
+            <span class="nav-icon">🏠</span> Dashboard
+        </button>
+
+        <div class="nav-section-label">Account Management</div>
+        <button class="nav-item" onclick="showSection('create-account')">
+            <span class="nav-icon">➕</span> Create Account
+        </button>
+        <button class="nav-item" onclick="showSection('manage-users')">
+            <span class="nav-icon">👥</span> Manage Users
+        </button>
+
+        <div class="nav-section-label">Data & Audit</div>
+        <button class="nav-item" onclick="showSection('db-viewer')">
+            <span class="nav-icon">🗄️</span> Database Viewer
+        </button>
+        <button class="nav-item" onclick="showSection('backup-history')">
+            <span class="nav-icon">📦</span> Backup History
+        </button>
+
+        <div class="nav-section-label">System</div>
+        <button class="nav-item danger" onclick="showSection('danger-zone')">
+            <span class="nav-icon">⚠️</span> Danger Zone
+        </button>
+
+    </nav>
+
+    <div class="sidebar-footer">
+        <div class="admin-info">
+            Logged in as<br>
+            <strong id="adminEmailDisplay">IntelliOnboard-Admin@infinite.com</strong>
+        </div>
+        <button class="logout-btn" onclick="logout()">⬅ Logout</button>
+    </div>
+</aside>
+
+<!-- =====================================================
+     MAIN CONTENT
+====================================================== -->
+<main class="main">
+
+    <!-- TOP BAR -->
+    <div class="topbar">
+        <div>
+            <div class="page-title" id="pageTitle">Dashboard</div>
+            <div class="page-sub"  id="pageSub">System overview — IntelliOnboard Admin Portal</div>
+        </div>
+        <div class="topbar-right">
+            <div class="topbar-badge" id="currentTime"></div>
+            <div class="topbar-badge">v2.1</div>
+        </div>
+    </div>
+
+    <!-- ==================================================
+         SECTION: DASHBOARD
+    =================================================== -->
+    <div class="section active" id="sec-dashboard">
+
+        <div class="stats-row">
+            <div class="stat-card green">
+                <div class="stat-num green" id="statUsers">—</div>
+                <div class="stat-lbl">Total Users</div>
+            </div>
+            <div class="stat-card purple">
+                <div class="stat-num purple" id="statEmployees">—</div>
+                <div class="stat-lbl">Employees</div>
+            </div>
+            <div class="stat-card amber">
+                <div class="stat-num amber" id="statTickets">—</div>
+                <div class="stat-lbl">Open Tickets</div>
+            </div>
+            <div class="stat-card red">
+                <div class="stat-num red" id="statBackups">—</div>
+                <div class="stat-lbl">Saved Backups</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title"><span>👤</span> Recently Created Accounts</div>
+            <div class="card-sub">Last 5 accounts created by IntelliOnboard Admin</div>
+            <div class="table-wrap">
+                <table id="recentUsersTable">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Location</th>
+                            <th>Created</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recentUsersTbody">
+                        <tr><td colspan="6" style="text-align:center;color:rgba(255,255,255,0.35);padding:24px;">Loading…</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title"><span>📦</span> Quick Actions</div>
+            <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:4px;">
+                <button class="btn btn-primary" onclick="showSection('create-account')">➕ Create Account</button>
+                <button class="btn btn-purple"  onclick="showSection('db-viewer')">🗄️ View Database</button>
+                <button class="btn btn-amber"   onclick="triggerManualBackup()">💾 Take Backup Now</button>
+                <button class="btn btn-danger"  onclick="showSection('danger-zone')">⚠️ Danger Zone</button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ==================================================
+         SECTION: CREATE ACCOUNT
+    =================================================== -->
+    <div class="section" id="sec-create-account">
+
+        <div class="card">
+            <div class="card-title"><span>➕</span> Create Account</div>
+            <div class="card-sub">
+                Create login credentials for HC PMO, ITSG, DL Admin Team, and Account PMO.<br>
+                Employee, Reporting Manager, and Leadership can self-register via the login page.
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Full Name *</label>
+                    <input type="text" id="ca_name" placeholder="e.g. Umesh Kumar Bissa">
+                </div>
+                <div class="form-group">
+                    <label>Employee ID</label>
+                    <input type="text" id="ca_empid" placeholder="e.g. 1023456 (optional for ops roles)">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Corporate Email *</label>
+                    <input type="email" id="ca_email" placeholder="name@infinite.com">
+                </div>
+                <div class="form-group">
+                    <label>Role *</label>
+                    <select id="ca_role">
+                        <option value="">Select Role</option>
+                        <option value="ADMIN">DL Admin Team (ID Card &amp; Access)</option>
+                        <option value="ITSG">ITSG (Laptop &amp; Asset Allocation)</option>
+                        <option value="HEALTHCARE_PMO">Healthcare PMO</option>
+                        <option value="PMO">Account PMO</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row three">
+                <div class="form-group">
+                    <label>Designation</label>
+                    <input type="text" id="ca_designation" placeholder="e.g. Senior PMO Manager">
+                </div>
+                <div class="form-group">
+                    <label>Department</label>
+                    <input type="text" id="ca_department" placeholder="e.g. HC Payer Ops">
+                </div>
+                <div class="form-group">
+                    <label>Location</label>
+                    <input type="text" id="ca_location" placeholder="e.g. Hyderabad">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Password *</label>
+                    <input type="password" id="ca_password" placeholder="Min 8 characters" value="Welcome@123">
+                </div>
+                <div class="form-group" style="display:flex;align-items:flex-end;padding-bottom:14px;">
+                    <button class="btn btn-primary" style="width:100%" onclick="createAccount()">
+                        ➕ Create Account
+                    </button>
+                </div>
+            </div>
+
+            <div class="alert err" id="ca_err"></div>
+            <div class="alert ok"  id="ca_ok"></div>
+        </div>
+
+        <div class="card">
+            <div class="card-title"><span>ℹ️</span> Account Creation Rules</div>
+            <div class="card-sub">Reference — which roles can be created here vs self-register</div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Role</th><th>Created By</th><th>Self-Register?</th><th>Notes</th></tr></thead>
+                    <tbody>
+                        <tr><td><span class="role-pill pill-admin">IntelliOnboard Admin</span></td><td>SQL bootstrap (DevOps)</td><td style="color:#FF8080">No</td><td>Seeded directly in DB on first deploy</td></tr>
+                        <tr><td><span class="role-pill pill-itsg">DL Admin Team</span></td><td>IntelliOnboard Admin</td><td style="color:#FF8080">No</td><td>ID Card &amp; ODC access provisioning</td></tr>
+                        <tr><td><span class="role-pill pill-itsg">ITSG</span></td><td>IntelliOnboard Admin</td><td style="color:#FF8080">No</td><td>Laptop &amp; asset allocation tickets</td></tr>
+                        <tr><td><span class="role-pill pill-pmo">HC PMO</span></td><td>IntelliOnboard Admin</td><td style="color:#FF8080">No</td><td>Uploads allocation file, bulk onboarding</td></tr>
+                        <tr><td><span class="role-pill pill-pmo">Account PMO</span></td><td>IntelliOnboard Admin</td><td style="color:#FF8080">No</td><td>Account-scoped onboarding view</td></tr>
+                        <tr><td><span class="role-pill pill-rm">Reporting Manager</span></td><td>Self-register</td><td style="color:#26FFB9">Yes</td><td>DB email validation required</td></tr>
+                        <tr><td><span class="role-pill pill-employee">Employee</span></td><td>Self-register</td><td style="color:#26FFB9">Yes</td><td>emp_id + email validated against DB</td></tr>
+                        <tr><td><span class="role-pill pill-leadership">Leadership</span></td><td>Self-register</td><td style="color:#26FFB9">Yes</td><td>VP/Director/E8+ designation required</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ==================================================
+         SECTION: MANAGE USERS
+    =================================================== -->
+    <div class="section" id="sec-manage-users">
+
+        <div class="card">
+            <div class="card-title"><span>👥</span> All Users</div>
+            <div class="card-sub">All accounts in the system. Suspend or reactivate any account.</div>
+
+            <div class="search-box">
+                <input type="text" id="userSearch" placeholder="Search by name, email or role…" oninput="filterUsers()">
+                <button class="btn btn-primary btn-sm" onclick="loadUsers()">🔄 Refresh</button>
+            </div>
+
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th><th>Name</th><th>Email</th><th>Role</th>
+                            <th>Location</th><th>Created</th><th>Status</th><th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTbody">
+                        <tr><td colspan="8" style="text-align:center;color:rgba(255,255,255,0.35);padding:24px;">Loading…</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="alert err" id="users_err"></div>
+        </div>
+
+    </div>
+
+    <!-- ==================================================
+         SECTION: DATABASE VIEWER
+    =================================================== -->
+    <div class="section" id="sec-db-viewer">
+
+        <div class="card">
+            <div class="card-title"><span>🗄️</span> Database Viewer</div>
+            <div class="card-sub">Live read of all tables. Use this for audit and to verify system state before/after any bulk operation.</div>
+
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;">
+                <button class="btn btn-primary btn-sm" onclick="loadDbTable('users')">👤 Users</button>
+                <button class="btn btn-primary btn-sm" onclick="loadDbTable('employees')">👥 Employees</button>
+                <button class="btn btn-primary btn-sm" onclick="loadDbTable('tickets')">🎫 Tickets</button>
+                <button class="btn btn-primary btn-sm" onclick="loadDbTable('workflow_states')">🔄 Workflow States</button>
+                <button class="btn btn-primary btn-sm" onclick="loadDbTable('audit_logs')">📋 Audit Logs</button>
+                <button class="btn btn-amber btn-sm"   onclick="exportCurrentTableCSV()">⬇️ Export CSV</button>
+            </div>
+
+            <div id="dbTableLabel" style="font-size:13px;color:rgba(255,255,255,0.45);margin-bottom:10px;">
+                Select a table above to view its contents.
+            </div>
+
+            <div class="table-wrap" id="dbTableWrap" style="max-height:480px;overflow-y:auto;">
+                <table id="dbTable">
+                    <thead id="dbTableHead"></thead>
+                    <tbody id="dbTableBody">
+                        <tr><td style="padding:24px;color:rgba(255,255,255,0.35);text-align:center;">No table selected.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ==================================================
+         SECTION: BACKUP HISTORY
+    =================================================== -->
+    <div class="section" id="sec-backup-history">
+
+        <div class="card">
+            <div class="card-title"><span>📦</span> Backup History</div>
+            <div class="card-sub">
+                Every backup is stored here. Backups are taken automatically before any bulk onboarding command
+                and manually from Danger Zone. Click Download to save a copy to your machine.
+                Click Send to email a copy to <strong style="color:#7FFFD4">Vishnu.Prasanth@infinite.com</strong>.
+            </div>
+
+            <div style="display:flex;gap:10px;margin-bottom:18px;">
+                <button class="btn btn-amber" onclick="triggerManualBackup()">💾 Take Backup Now</button>
+            </div>
+
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Backup ID</th><th>Type</th><th>Tables Included</th>
+                            <th>Rows Captured</th><th>Triggered By</th>
+                            <th>Timestamp</th><th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="backupTbody">
+                        <tr><td colspan="7" style="text-align:center;color:rgba(255,255,255,0.35);padding:24px;">No backups yet.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ==================================================
+         SECTION: DANGER ZONE
+    =================================================== -->
+    <div class="section" id="sec-danger-zone">
+
+        <div class="card">
+            <div class="card-title" style="color:#FF8080;"><span>⚠️</span> Danger Zone</div>
+            <div class="card-sub">
+                These actions are irreversible. A backup is automatically taken before any wipe operation
+                and emailed to <strong style="color:#7FFFD4">Vishnu.Prasanth@infinite.com</strong> before deletion begins.
+            </div>
+
+            <!-- WIPE ALL DATA -->
+            <div class="danger-zone" style="margin-bottom:20px;">
+                <div class="danger-zone-title">🗑️ Wipe All Table Data</div>
+                <div class="danger-zone-desc">
+                    Removes ALL data from: users, employees, tickets, workflow_states, audit_logs, allocation_records.<br>
+                    Table structures are preserved. A full backup is downloaded to your machine and emailed before the wipe begins.<br>
+                    After wipe, only the IntelliOnboard Admin account is re-seeded automatically.
+                </div>
+                <button class="btn btn-danger" onclick="openWipeModal()">
+                    ⚠️ Wipe All Data
+                </button>
+            </div>
+
+            <!-- WIPE EMPLOYEES ONLY -->
+            <div class="danger-zone" style="margin-bottom:20px;">
+                <div class="danger-zone-title">👥 Wipe Employee Data Only</div>
+                <div class="danger-zone-desc">
+                    Removes all rows from employees and allocation_records tables only.<br>
+                    Users, tickets, and workflow history are preserved.<br>
+                    Use this before uploading a fresh allocation file.
+                </div>
+                <button class="btn btn-danger" onclick="openWipeEmployeesModal()">
+                    ⚠️ Wipe Employees Only
+                </button>
+            </div>
+
+            <!-- WIPE TICKETS ONLY -->
+            <div class="danger-zone">
+                <div class="danger-zone-title">🎫 Wipe Ticket Data Only</div>
+                <div class="danger-zone-desc">
+                    Removes all rows from tickets and workflow_states tables only.<br>
+                    Employees and user accounts are preserved.
+                </div>
+                <button class="btn btn-danger" onclick="openWipeTicketsModal()">
+                    ⚠️ Wipe Tickets Only
+                </button>
+            </div>
+
+            <div class="alert warn" id="danger_warn" style="margin-top:16px;display:none;">
+                ⚠️ Action in progress. Please do not close this window.
+            </div>
+            <div class="progress-bar-wrap" id="wipeProgress">
+                <div class="progress-bar" id="wipeBar"></div>
+            </div>
+            <div class="alert ok"  id="danger_ok"  style="margin-top:12px;"></div>
+            <div class="alert err" id="danger_err"  style="margin-top:12px;"></div>
+        </div>
+
+    </div>
+
+</main>
+</div>
+
+<!-- =====================================================
+     CONFIRM MODALS
+====================================================== -->
+
+<!-- Wipe All -->
+<div class="modal-overlay" id="modalWipeAll">
+    <div class="modal">
+        <div class="modal-title">⚠️ Confirm: Wipe All Data</div>
+        <div class="modal-sub">
+            This will permanently delete ALL data from all tables.<br>
+            A full backup will be downloaded to your machine and emailed to
+            <strong style="color:#7FFFD4">Vishnu.Prasanth@infinite.com</strong> first.
+        </div>
+        <div class="form-group">
+            <label>Type <strong style="color:#FF8080">WIPE ALL</strong> to confirm</label>
+            <input type="text" id="wipeAllInput" placeholder="WIPE ALL">
+        </div>
+        <div class="modal-actions">
+            <button class="btn" style="background:rgba(255,255,255,0.08);color:#fff;" onclick="closeModal('modalWipeAll')">Cancel</button>
+            <button class="btn btn-danger" onclick="executeWipeAll()">🗑️ Confirm Wipe All</button>
+        </div>
+    </div>
+</div>
+
+<!-- Wipe Employees -->
+<div class="modal-overlay" id="modalWipeEmployees">
+    <div class="modal">
+        <div class="modal-title">⚠️ Confirm: Wipe Employee Data</div>
+        <div class="modal-sub">Removes all rows from employees and allocation_records tables.</div>
+        <div class="form-group">
+            <label>Type <strong style="color:#FF8080">WIPE EMPLOYEES</strong> to confirm</label>
+            <input type="text" id="wipeEmpInput" placeholder="WIPE EMPLOYEES">
+        </div>
+        <div class="modal-actions">
+            <button class="btn" style="background:rgba(255,255,255,0.08);color:#fff;" onclick="closeModal('modalWipeEmployees')">Cancel</button>
+            <button class="btn btn-danger" onclick="executeWipeEmployees()">🗑️ Confirm</button>
+        </div>
+    </div>
+</div>
+
+<!-- Wipe Tickets -->
+<div class="modal-overlay" id="modalWipeTickets">
+    <div class="modal">
+        <div class="modal-title">⚠️ Confirm: Wipe Ticket Data</div>
+        <div class="modal-sub">Removes all rows from tickets and workflow_states tables.</div>
+        <div class="form-group">
+            <label>Type <strong style="color:#FF8080">WIPE TICKETS</strong> to confirm</label>
+            <input type="text" id="wipeTickInput" placeholder="WIPE TICKETS">
+        </div>
+        <div class="modal-actions">
+            <button class="btn" style="background:rgba(255,255,255,0.08);color:#fff;" onclick="closeModal('modalWipeTickets')">Cancel</button>
+            <button class="btn btn-danger" onclick="executeWipeTickets()">🗑️ Confirm</button>
+        </div>
+    </div>
+</div>
+
+<!-- =====================================================
+     SCRIPT
+====================================================== -->
+<script>
+"use strict";
+
+const API = "https://intellionboard.onrender.com";
+
+// In-memory backup store (persists during session)
+let backupStore = JSON.parse(sessionStorage.getItem("io_backups") || "[]");
+let allUsersCache = [];
+let currentDbTable = null;
+let currentDbData  = [];
+
+// ── CLOCK ───────────────────────────────────────────────
+function updateClock() {
+    document.getElementById("currentTime").textContent =
+        new Date().toLocaleString("en-IN", { hour12: true });
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ── SESSION CHECK ────────────────────────────────────────
+window.addEventListener("load", async () => {
+    try {
+        const res = await fetch(`${API}/api/auth/validate-session`, {
+            method: "GET", credentials: "include"
+        });
+        const data = await res.json();
+        if (!data.success || data.user?.role !== "INTELLIONBOARD_ADMIN") {
+            alert("Access denied. IntelliOnboard Admin login required.");
+            window.location.href = "login.html";
+            return;
+        }
+        document.getElementById("adminEmailDisplay").textContent =
+            data.user?.email || "IntelliOnboard-Admin@infinite.com";
+        loadDashboard();
+    } catch {
+        alert("Cannot reach server.");
+        window.location.href = "login.html";
+    }
+});
+
+// ── LOGOUT ───────────────────────────────────────────────
+async function logout() {
+    await fetch(`${API}/api/auth/logout`, { method: "POST", credentials: "include" });
+    window.location.href = "login.html";
+}
+
+// ── SECTION NAVIGATION ───────────────────────────────────
+const pageMeta = {
+    "dashboard":      ["Dashboard",       "System overview — IntelliOnboard Admin Portal"],
+    "create-account": ["Create Account",  "Create login credentials for operations roles"],
+    "manage-users":   ["Manage Users",    "View, suspend, or reactivate any user account"],
+    "db-viewer":      ["Database Viewer", "Live audit view of all system tables"],
+    "backup-history": ["Backup History",  "All snapshots — auto (pre-onboard) and manual"],
+    "danger-zone":    ["Danger Zone",     "Irreversible data operations — use with caution"],
+};
+
+function showSection(name) {
+    document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
+    document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
+    document.getElementById("sec-" + name).classList.add("active");
+    event?.currentTarget?.classList.add("active");
+    const [t, s] = pageMeta[name] || ["", ""];
+    document.getElementById("pageTitle").textContent = t;
+    document.getElementById("pageSub").textContent   = s;
+    if (name === "manage-users")   loadUsers();
+    if (name === "backup-history") renderBackupTable();
+    if (name === "dashboard")      loadDashboard();
+}
+
+// ── ROLE PILL HTML ───────────────────────────────────────
+function rolePill(role) {
+    const map = {
+        "INTELLIONBOARD_ADMIN": ["pill-admin",      "IO Admin"],
+        "ADMIN":                ["pill-itsg",       "DL Admin"],
+        "ITSG":                 ["pill-itsg",       "ITSG"],
+        "HEALTHCARE_PMO":       ["pill-pmo",        "HC PMO"],
+        "PMO":                  ["pill-pmo",        "Account PMO"],
+        "REPORTING_MANAGER":    ["pill-rm",         "RM"],
+        "EMPLOYEE":             ["pill-employee",   "Employee"],
+        "LEADERSHIP":           ["pill-leadership", "Leadership"],
+    };
+    const [cls, lbl] = map[role] || ["pill-employee", role || "—"];
+    return `<span class="role-pill ${cls}">${lbl}</span>`;
+}
+
+function fmtDate(d) {
+    if (!d) return "—";
+    return new Date(d).toLocaleDateString("en-IN", { day:"2-digit", month:"short", year:"numeric" });
+}
+
+// ────────────────────────────────────────────────────────
+// DASHBOARD
+// ────────────────────────────────────────────────────────
+async function loadDashboard() {
+    try {
+        const res  = await fetch(`${API}/api/auth/users`, { credentials: "include" });
+        const data = await res.json();
+        if (!data.success) return;
+        const users = data.users || [];
+        allUsersCache = users;
+        document.getElementById("statUsers").textContent  = users.length;
+        document.getElementById("statBackups").textContent = backupStore.length;
+
+        // recent 5
+        const recent = [...users].slice(0, 5);
+        const tbody = document.getElementById("recentUsersTbody");
+        if (!recent.length) {
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:rgba(255,255,255,0.35);padding:24px;">No users yet.</td></tr>`;
+            return;
+        }
+        tbody.innerHTML = recent.map(u => `
+            <tr>
+                <td>${u.name || "—"}</td>
+                <td style="color:rgba(255,255,255,0.55);font-size:12px;">${u.email}</td>
+                <td>${rolePill(u.role)}</td>
+                <td style="color:rgba(255,255,255,0.50);">${u.location || "—"}</td>
+                <td style="color:rgba(255,255,255,0.50);font-size:12px;">${fmtDate(u.created_at)}</td>
+                <td><span class="status-dot ${u.is_active ? "status-active" : "status-inactive"}">${u.is_active ? "Active" : "Suspended"}</span></td>
+            </tr>
+        `).join("");
+
+        // mock employee/ticket stats
+        document.getElementById("statEmployees").textContent = "—";
+        document.getElementById("statTickets").textContent   = "—";
+
+    } catch (e) { console.error(e); }
+}
+
+// ────────────────────────────────────────────────────────
+// CREATE ACCOUNT
+// ────────────────────────────────────────────────────────
+async function createAccount() {
+    clearAlert("ca_err"); clearAlert("ca_ok");
+    const payload = {
+        full_name:   document.getElementById("ca_name").value.trim(),
+        emp_id:      document.getElementById("ca_empid").value.trim(),
+        email:       document.getElementById("ca_email").value.trim().toLowerCase(),
+        role:        document.getElementById("ca_role").value.trim().toUpperCase(),
+        designation: document.getElementById("ca_designation").value.trim(),
+        department:  document.getElementById("ca_department").value.trim(),
+        location:    document.getElementById("ca_location").value.trim(),
+        password:    document.getElementById("ca_password").value.trim(),
+    };
+
+    if (!payload.full_name || !payload.email || !payload.role || !payload.password)
+        return showAlert("ca_err", "err", "Full name, email, role and password are required.");
+
+    if (!payload.email.endsWith("@infinite.com"))
+        return showAlert("ca_err", "err", "Only @infinite.com email addresses are allowed.");
+
+    if (payload.password.length < 8)
+        return showAlert("ca_err", "err", "Password must be at least 8 characters.");
+
+    try {
+        const res  = await fetch(`${API}/api/auth/admin-create-user`, {
+            method: "POST", credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (!data.success) return showAlert("ca_err", "err", data.message || "Failed.");
+        showAlert("ca_ok", "ok",
+            `✅ Account created: <strong>${payload.email}</strong> as <strong>${payload.role}</strong>. Default password: Welcome@123`);
+        // clear fields
+        ["ca_name","ca_empid","ca_email","ca_designation","ca_department","ca_location"].forEach(id => {
+            document.getElementById(id).value = "";
+        });
+        document.getElementById("ca_role").value = "";
+        document.getElementById("ca_password").value = "Welcome@123";
+        loadDashboard();
+    } catch (e) {
+        showAlert("ca_err", "err", "Server error. Try again.");
+    }
+}
+
+// ────────────────────────────────────────────────────────
+// MANAGE USERS
+// ────────────────────────────────────────────────────────
+async function loadUsers() {
+    try {
+        const res  = await fetch(`${API}/api/auth/users`, { credentials: "include" });
+        const data = await res.json();
+        if (!data.success) return showAlert("users_err", "err", data.message);
+        allUsersCache = data.users || [];
+        renderUsersTable(allUsersCache);
+    } catch { showAlert("users_err", "err", "Failed to load users."); }
+}
+
+function renderUsersTable(users) {
+    const tbody = document.getElementById("usersTbody");
+    if (!users.length) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:rgba(255,255,255,0.35);padding:24px;">No users found.</td></tr>`;
+        return;
+    }
+    tbody.innerHTML = users.map(u => `
+        <tr>
+            <td style="color:rgba(255,255,255,0.40);font-size:12px;">#${u.id}</td>
+            <td><strong>${u.name || "—"}</strong></td>
+            <td style="color:rgba(255,255,255,0.55);font-size:12px;">${u.email}</td>
+            <td>${rolePill(u.role)}</td>
+            <td style="color:rgba(255,255,255,0.50);">${u.location || "—"}</td>
+            <td style="color:rgba(255,255,255,0.45);font-size:12px;">${fmtDate(u.created_at)}</td>
+            <td><span class="status-dot ${u.is_active ? "status-active" : "status-inactive"}">${u.is_active ? "Active" : "Suspended"}</span></td>
+            <td>
+                ${u.role !== "INTELLIONBOARD_ADMIN" ? `
+                <button class="btn btn-sm ${u.is_active ? "btn-danger" : "btn-primary"}"
+                    onclick="toggleUserStatus(${u.id}, ${!u.is_active})">
+                    ${u.is_active ? "Suspend" : "Activate"}
+                </button>` : `<span style="color:rgba(255,255,255,0.25);font-size:12px;">Protected</span>`}
+            </td>
+        </tr>
+    `).join("");
+}
+
+function filterUsers() {
+    const q = document.getElementById("userSearch").value.toLowerCase();
+    if (!q) { renderUsersTable(allUsersCache); return; }
+    renderUsersTable(allUsersCache.filter(u =>
+        (u.name  || "").toLowerCase().includes(q) ||
+        (u.email || "").toLowerCase().includes(q) ||
+        (u.role  || "").toLowerCase().includes(q)
+    ));
+}
+
+async function toggleUserStatus(userId, newStatus) {
+    try {
+        const res  = await fetch(`${API}/api/auth/user/${userId}/status`, {
+            method: "POST", credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ is_active: newStatus })
+        });
+        const data = await res.json();
+        if (!data.success) return alert(data.message || "Failed.");
+        loadUsers();
+    } catch { alert("Server error."); }
+}
+
+// ────────────────────────────────────────────────────────
+// DATABASE VIEWER
+// ────────────────────────────────────────────────────────
+async function loadDbTable(tableName) {
+    currentDbTable = tableName;
+    document.getElementById("dbTableLabel").textContent =
+        `Showing: ${tableName} — loading…`;
+    document.getElementById("dbTableHead").innerHTML = "";
+    document.getElementById("dbTableBody").innerHTML =
+        `<tr><td style="padding:24px;color:rgba(255,255,255,0.35);text-align:center;">Loading…</td></tr>`;
+
+    try {
+        // Use existing users endpoint for users table
+        let rows = [];
+        if (tableName === "users") {
+            const res = await fetch(`${API}/api/auth/users`, { credentials: "include" });
+            const d   = await res.json();
+            rows = d.users || [];
+        } else if (tableName === "employees") {
+            const res = await fetch(`${API}/api/employees`, { credentials: "include" });
+            const d   = await res.json();
+            rows = d.employees || d.data || [];
+        } else if (tableName === "tickets") {
+            const res = await fetch(`${API}/api/tickets`, { credentials: "include" });
+            const d   = await res.json();
+            rows = d.tickets || d.data || [];
+        } else if (tableName === "audit_logs") {
+            const res = await fetch(`${API}/api/admin/audit-logs`, { credentials: "include" });
+            const d   = await res.json();
+            rows = d.logs || d.data || [];
+        } else if (tableName === "workflow_states") {
+            const res = await fetch(`${API}/api/admin/workflow-states`, { credentials: "include" });
+            const d   = await res.json();
+            rows = d.states || d.data || [];
+        }
+
+        currentDbData = rows;
+        document.getElementById("dbTableLabel").textContent =
+            `Table: ${tableName} — ${rows.length} row(s)`;
+
+        if (!rows.length) {
+            document.getElementById("dbTableBody").innerHTML =
+                `<tr><td style="padding:24px;color:rgba(255,255,255,0.35);text-align:center;">No data in this table.</td></tr>`;
+            return;
+        }
+
+        const cols = Object.keys(rows[0]);
+        document.getElementById("dbTableHead").innerHTML =
+            `<tr>${cols.map(c => `<th>${c}</th>`).join("")}</tr>`;
+        document.getElementById("dbTableBody").innerHTML = rows.map(row =>
+            `<tr>${cols.map(c => `<td style="font-size:12px;white-space:nowrap;max-width:200px;overflow:hidden;text-overflow:ellipsis;" title="${String(row[c]||"").replace(/"/g,"")}">${row[c] ?? "—"}</td>`).join("")}</tr>`
+        ).join("");
+
+    } catch (e) {
+        document.getElementById("dbTableLabel").textContent = `Error loading ${tableName}`;
+        document.getElementById("dbTableBody").innerHTML =
+            `<tr><td style="padding:24px;color:#FF8080;text-align:center;">Failed to load table. Endpoint may not exist for this table yet.</td></tr>`;
+    }
+}
+
+function exportCurrentTableCSV() {
+    if (!currentDbData.length) return alert("No data loaded. Select a table first.");
+    const cols = Object.keys(currentDbData[0]);
+    const csv  = [
+        cols.join(","),
+        ...currentDbData.map(row => cols.map(c => `"${String(row[c]||"").replace(/"/g,'""')}"`).join(","))
+    ].join("\n");
+    downloadFile(`intellionboard_${currentDbTable}_${Date.now()}.csv`, "text/csv", csv);
+}
+
+// ────────────────────────────────────────────────────────
+// BACKUP SYSTEM
+// ────────────────────────────────────────────────────────
+async function takeBackup(type = "MANUAL", triggeredBy = "IO Admin") {
+    // Collect user data (what we can access)
+    let snapshot = { type, triggeredBy, timestamp: new Date().toISOString(), tables: {} };
+
+    try {
+        const res  = await fetch(`${API}/api/auth/users`, { credentials: "include" });
+        const data = await res.json();
+        snapshot.tables.users = data.users || [];
+    } catch { snapshot.tables.users = []; }
+
+    try {
+        const res  = await fetch(`${API}/api/employees`, { credentials: "include" });
+        const data = await res.json();
+        snapshot.tables.employees = data.employees || data.data || [];
+    } catch { snapshot.tables.employees = []; }
+
+    try {
+        const res  = await fetch(`${API}/api/tickets`, { credentials: "include" });
+        const data = await res.json();
+        snapshot.tables.tickets = data.tickets || data.data || [];
+    } catch { snapshot.tables.tickets = []; }
+
+    // Count rows
+    snapshot.rowCount = Object.values(snapshot.tables)
+        .reduce((sum, arr) => sum + (Array.isArray(arr) ? arr.length : 0), 0);
+
+    snapshot.id = "BKP-" + Date.now();
+
+    // Store in session
+    backupStore.unshift(snapshot);
+    sessionStorage.setItem("io_backups", JSON.stringify(backupStore));
+    document.getElementById("statBackups").textContent = backupStore.length;
+
+    // Download to machine
+    const json = JSON.stringify(snapshot, null, 2);
+    downloadFile(`intellionboard_backup_${snapshot.id}.json`, "application/json", json);
+
+    // Attempt to email (calls backend endpoint if it exists)
+    try {
+        await fetch(`${API}/api/admin/send-backup-email`, {
+            method: "POST", credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                backup_id: snapshot.id,
+                to_email:  "Vishnu.Prasanth@infinite.com",
+                type:      type,
+                row_count: snapshot.rowCount,
+                data:      json,
+            })
+        });
+    } catch { /* email endpoint may not exist yet — file still downloaded */ }
+
+    return snapshot;
+}
+
+async function triggerManualBackup() {
+    showAlert("danger_warn", "warn", "📦 Taking backup…");
+    document.getElementById("danger_warn").style.display = "block";
+    const snap = await takeBackup("MANUAL");
+    document.getElementById("danger_warn").style.display = "none";
+    renderBackupTable();
+    alert(`✅ Backup ${snap.id} saved. File downloaded. Email sent to Vishnu.Prasanth@infinite.com.`);
+}
+
+function renderBackupTable() {
+    const tbody = document.getElementById("backupTbody");
+    if (!backupStore.length) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:rgba(255,255,255,0.35);padding:24px;">No backups yet.</td></tr>`;
+        return;
+    }
+    tbody.innerHTML = backupStore.map(b => {
+        const typeClass = b.type === "MANUAL" ? "backup-manual"
+                        : b.type === "AUTO"   ? "backup-auto"
+                        : "backup-onboard";
+        const tables = Object.keys(b.tables || {}).join(", ") || "—";
+        return `<tr>
+            <td style="font-size:12px;font-weight:700;color:rgba(255,255,255,0.65);">${b.id}</td>
+            <td><span class="backup-type ${typeClass}">${b.type}</span></td>
+            <td style="font-size:12px;color:rgba(255,255,255,0.50);">${tables}</td>
+            <td style="text-align:center;">${b.rowCount ?? "—"}</td>
+            <td style="font-size:12px;color:rgba(255,255,255,0.50);">${b.triggeredBy || "System"}</td>
+            <td style="font-size:12px;color:rgba(255,255,255,0.45);">${new Date(b.timestamp).toLocaleString("en-IN")}</td>
+            <td style="display:flex;gap:8px;">
+                <button class="btn btn-sm btn-purple" onclick="downloadBackup('${b.id}')">⬇️ Download</button>
+                <button class="btn btn-sm btn-amber"  onclick="emailBackup('${b.id}')">📧 Email</button>
+            </td>
+        </tr>`;
+    }).join("");
+}
+
+function downloadBackup(id) {
+    const snap = backupStore.find(b => b.id === id);
+    if (!snap) return alert("Backup not found.");
+    downloadFile(`intellionboard_backup_${id}.json`, "application/json", JSON.stringify(snap, null, 2));
+}
+
+async function emailBackup(id) {
+    const snap = backupStore.find(b => b.id === id);
+    if (!snap) return alert("Backup not found.");
+    try {
+        await fetch(`${API}/api/admin/send-backup-email`, {
+            method: "POST", credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                backup_id: snap.id,
+                to_email:  "Vishnu.Prasanth@infinite.com",
+                type:      snap.type,
+                row_count: snap.rowCount,
+                data:      JSON.stringify(snap, null, 2),
+            })
+        });
+        alert(`📧 Backup ${id} emailed to Vishnu.Prasanth@infinite.com`);
+    } catch {
+        alert("Email endpoint not available yet. File downloaded instead.");
+        downloadBackup(id);
+    }
+}
+
+// ────────────────────────────────────────────────────────
+// DANGER ZONE — WIPE OPERATIONS
+// ────────────────────────────────────────────────────────
+function openWipeModal()          { document.getElementById("modalWipeAll").classList.add("open"); }
+function openWipeEmployeesModal() { document.getElementById("modalWipeEmployees").classList.add("open"); }
+function openWipeTicketsModal()   { document.getElementById("modalWipeTickets").classList.add("open"); }
+function closeModal(id)           { document.getElementById(id).classList.remove("open"); }
+
+async function executeWipeAll() {
+    const confirm = document.getElementById("wipeAllInput").value.trim();
+    if (confirm !== "WIPE ALL") return alert('Type exactly: WIPE ALL');
+    closeModal("modalWipeAll");
+
+    // Step 1 — backup first
+    showDangerWarn("📦 Step 1/3: Taking full backup before wipe…");
+    setProgress(20);
+    const snap = await takeBackup("PRE-WIPE", "IO Admin — Full Wipe");
+
+    // Step 2 — call wipe endpoint
+    showDangerWarn("🗑️ Step 2/3: Wiping all data…");
+    setProgress(60);
+    try {
+        const res  = await fetch(`${API}/api/admin/wipe-all`, {
+            method: "POST", credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ confirm: "WIPE_ALL_CONFIRMED" })
+        });
+        const data = await res.json();
+
+        setProgress(90);
+        showDangerWarn("✅ Step 3/3: Finalising…");
+        await new Promise(r => setTimeout(r, 800));
+        setProgress(100);
+        clearAlert("danger_warn");
+        document.getElementById("danger_warn").style.display = "none";
+        showAlert("danger_ok", "ok",
+            `✅ All data wiped. Backup ${snap.id} saved and emailed to Vishnu.Prasanth@infinite.com. ${data.message || ""}`);
+        document.getElementById("wipeAllInput").value = "";
+        loadDashboard();
+    } catch {
+        clearAlert("danger_warn");
+        document.getElementById("danger_warn").style.display = "none";
+        showAlert("danger_err", "err",
+            "Wipe endpoint not available on backend yet. Backup was saved. Implement POST /api/admin/wipe-all on the server.");
+        setProgress(0);
+    }
+}
+
+async function executeWipeEmployees() {
+    const confirm = document.getElementById("wipeEmpInput").value.trim();
+    if (confirm !== "WIPE EMPLOYEES") return alert('Type exactly: WIPE EMPLOYEES');
+    closeModal("modalWipeEmployees");
+
+    showDangerWarn("📦 Taking backup before wipe…");
+    setProgress(30);
+    const snap = await takeBackup("PRE-WIPE-EMPLOYEES", "IO Admin");
+
+    showDangerWarn("🗑️ Wiping employee data…");
+    setProgress(70);
+    try {
+        const res  = await fetch(`${API}/api/admin/wipe-employees`, {
+            method: "POST", credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ confirm: "WIPE_EMPLOYEES_CONFIRMED" })
+        });
+        setProgress(100);
+        document.getElementById("danger_warn").style.display = "none";
+        showAlert("danger_ok", "ok",
+            `✅ Employee data wiped. Backup ${snap.id} saved and emailed.`);
+        document.getElementById("wipeEmpInput").value = "";
+    } catch {
+        document.getElementById("danger_warn").style.display = "none";
+        showAlert("danger_err", "err",
+            "Wipe endpoint not available. Backup was saved. Implement POST /api/admin/wipe-employees on the server.");
+        setProgress(0);
+    }
+}
+
+async function executeWipeTickets() {
+    const confirm = document.getElementById("wipeTickInput").value.trim();
+    if (confirm !== "WIPE TICKETS") return alert('Type exactly: WIPE TICKETS');
+    closeModal("modalWipeTickets");
+
+    showDangerWarn("📦 Taking backup before wipe…");
+    setProgress(30);
+    const snap = await takeBackup("PRE-WIPE-TICKETS", "IO Admin");
+
+    showDangerWarn("🗑️ Wiping ticket data…");
+    setProgress(70);
+    try {
+        const res  = await fetch(`${API}/api/admin/wipe-tickets`, {
+            method: "POST", credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ confirm: "WIPE_TICKETS_CONFIRMED" })
+        });
+        setProgress(100);
+        document.getElementById("danger_warn").style.display = "none";
+        showAlert("danger_ok", "ok",
+            `✅ Ticket data wiped. Backup ${snap.id} saved and emailed.`);
+        document.getElementById("wipeTickInput").value = "";
+    } catch {
+        document.getElementById("danger_warn").style.display = "none";
+        showAlert("danger_err", "err",
+            "Wipe endpoint not available. Backup saved. Implement POST /api/admin/wipe-tickets on backend.");
+        setProgress(0);
+    }
+}
+
+// ────────────────────────────────────────────────────────
+// HELPERS
+// ────────────────────────────────────────────────────────
+function showDangerWarn(msg) {
+    const el = document.getElementById("danger_warn");
+    el.textContent   = msg;
+    el.style.display = "block";
+    el.className     = "alert warn";
+}
+
+function setProgress(pct) {
+    const wrap = document.getElementById("wipeProgress");
+    const bar  = document.getElementById("wipeBar");
+    wrap.style.display = pct > 0 ? "block" : "none";
+    bar.style.width    = pct + "%";
+    if (pct >= 100) setTimeout(() => { wrap.style.display = "none"; bar.style.width = "0%"; }, 1200);
+}
+
+function showAlert(id, type, html) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.className     = "alert " + type;
+    el.style.display = "block";
+    el.innerHTML     = html;
+    setTimeout(() => { if(el) el.style.display = "none"; }, 7000);
+}
+
+function clearAlert(id) {
+    const el = document.getElementById(id);
+    if (el) { el.style.display = "none"; el.innerHTML = ""; }
+}
+
+function downloadFile(filename, mime, content) {
+    const blob = new Blob([content], { type: mime });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement("a");
+    a.href     = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+// ── Close modals on overlay click ───────────────────────
+document.querySelectorAll(".modal-overlay").forEach(overlay => {
+    overlay.addEventListener("click", e => {
+        if (e.target === overlay) overlay.classList.remove("open");
+    });
+});
+
+// ── Intercept bulk onboard — auto backup ────────────────
+// Any page that calls /start-onboarding or /upload-allocation
+// should trigger an auto backup first. Hook is placed here
+// for the admin portal. Other pages can call window.ioAutoBackup().
+window.ioAutoBackup = async function(action = "PRE-ONBOARD") {
+    const snap = await takeBackup("AUTO", `Auto — ${action}`);
+    renderBackupTable();
+    return snap;
+};
+
+</script>
+</body>
+</html>
