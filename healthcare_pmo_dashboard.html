@@ -34,10 +34,6 @@
     <link rel="stylesheet"
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
 
-    <!-- DASHBOARD CSS -->
-    <link rel="stylesheet"
-          href="assets/css/dashboard.css">
-
 <style>
 
 /* =========================================================
@@ -2969,7 +2965,7 @@ function viewEmployee(empId) {
 
     const safe = (v) => (!v || v === "undefined" || v === "") ? "N/A" : String(v);
 
-    let progress = Number(emp.progress_percentage || 0);
+    let progress = Number(emp.progress_percentage || emp.progress || 0);
     if (!progress) {
         const step = String(emp.current_step || "").toUpperCase();
         if (step.includes("COE"))    progress = 100;
@@ -3004,44 +3000,90 @@ function viewTicketStatus(empId) {
 function createTicket(empId) {
     openTicketPopup(empId);
 }
-
 function openTicketPopup(empId) {
     const emp = allEmployees.find(e => String(e.emp_id) === String(empId));
     if (!emp) return;
 
-    const safe = (v) => (!v || v === "undefined" || v === "") ? "N/A" : String(v);
+    // ── Safe helper ──────────────────────────────────────
+    const safe = (v) => (
+        v === undefined ||
+        v === null      ||
+        String(v).trim() === ""     ||
+        String(v).toLowerCase() === "undefined" ||
+        String(v).toLowerCase() === "null"
+    ) ? "N/A" : String(v).trim();
 
-    let progress = Number(emp.progress_percentage || 0);
+    // ── Progress ─────────────────────────────────────────
+    // backend sends 'progress' not 'progress_percentage'
+    let progress = Number(
+        emp.progress_percentage ||
+        emp.progress            ||
+        0
+    );
     if (!progress) {
         const step = String(emp.current_step || "").toUpperCase();
-        if (step.includes("COE"))    progress = 100;
-        else if (step.includes("LAPTOP")) progress = 75;
+        if      (step.includes("COE"))                                 progress = 100;
+        else if (step.includes("LAPTOP"))                              progress = 75;
         else if (step.includes("ID_CARD") || step.includes("ACCESS")) progress = 50;
-        else progress = 25;
+        else                                                            progress = 25;
     }
 
-    const idCardStatus   = safe(emp.id_card_status   || emp.id_ticket_status   || "N/A");
-    const laptopStatus   = safe(emp.laptop_status     || emp.laptop_ticket_status || "N/A");
-    const idCardTicketId = safe(emp.id_card_ticket_id || emp.ticket_id || "");
-    const laptopTicketId = safe(emp.laptop_ticket_id  || "");
+    // ── Ticket statuses ──────────────────────────────────
+    // backend fields: id_card_status, laptop_status
+    const idCardStatus = safe(
+        emp.id_card_status        ||
+        emp.id_ticket_status      ||
+        "N/A"
+    );
+    const laptopStatus = safe(
+        emp.laptop_status         ||
+        emp.laptop_ticket_status  ||
+        "N/A"
+    );
 
+    // ── Ticket IDs ───────────────────────────────────────
+    // backend fields: id_card_ticket_id, laptop_ticket_id
+    const idCardTicketId = safe(
+        emp.id_card_ticket_id ||
+        emp.id_ticket_id      ||
+        ""
+    );
+    const laptopTicketId = safe(
+        emp.laptop_ticket_id  ||
+        emp.laptop_ticket     ||
+        ""
+    );
+
+    // ── Fill text fields ─────────────────────────────────
     document.getElementById("ticketPopup_name").textContent   = safe(emp.emp_name);
     document.getElementById("ticketPopup_id").textContent     = safe(emp.emp_id);
     document.getElementById("ticketPopup_status").textContent = safe(emp.onboarding_status);
-    document.getElementById("ticketPopup_step").textContent   = safe(emp.current_step).replace(/_/g," ");
+    document.getElementById("ticketPopup_step").textContent   = safe(emp.current_step).replace(/_/g, " ");
     document.getElementById("ticketPopup_pct").textContent    = progress + "%";
     document.getElementById("ticketPopup_bar").style.width    = progress + "%";
 
-    document.getElementById("ticketPopup_id_card").innerHTML =
-    `<span class="ticket-chip ${chipClass(idCardStatus)}">${idCardStatus}</span>
-     ${idCardTicketId !== "N/A" ? `<br><span style="font-size:11px;color:#7d8da5;font-weight:600;">${idCardTicketId}</span>` : ""}`;
+    // ── ID Card ticket row ────────────────────────────────
+    const hasIdCard = idCardTicketId !== "N/A" && idCardTicketId !== "";
+    document.getElementById("ticketPopup_id_card").innerHTML = hasIdCard
+        ? `<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+               <span class="ticket-chip ${chipClass(idCardStatus)}">${idCardStatus}</span>
+               <span style="font-size:11px;color:#7d8da5;font-weight:700;">${idCardTicketId}</span>
+           </div>`
+        : `<span class="ticket-chip chip-none">No Ticket Yet</span>`;
 
-document.getElementById("ticketPopup_laptop").innerHTML =
-    `<span class="ticket-chip ${chipClass(laptopStatus)}">${laptopStatus}</span>
-     ${laptopTicketId !== "N/A" ? `<br><span style="font-size:11px;color:#7d8da5;font-weight:600;">${laptopTicketId}</span>` : ""}`;
+    // ── Laptop ticket row ─────────────────────────────────
+    const hasLaptop = laptopTicketId !== "N/A" && laptopTicketId !== "";
+    document.getElementById("ticketPopup_laptop").innerHTML = hasLaptop
+        ? `<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+               <span class="ticket-chip ${chipClass(laptopStatus)}">${laptopStatus}</span>
+               <span style="font-size:11px;color:#7d8da5;font-weight:700;">${laptopTicketId}</span>
+           </div>`
+        : `<span class="ticket-chip chip-none">No Ticket Yet</span>`;
 
+    // ── Open popup ────────────────────────────────────────
     document.getElementById("ticketPopup").classList.add("open");
 }
+
 /* =========================================================
    SAFE VALUE
 ========================================================= */
