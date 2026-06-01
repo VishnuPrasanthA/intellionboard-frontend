@@ -270,9 +270,6 @@ body::before{
 }
 
 .header:hover{
-
-    transform:translateY(-2px);
-
     box-shadow:var(--shadow-lg);
 }
 
@@ -1462,7 +1459,7 @@ tbody tr:hover{
 @media(max-width:768px){
 
     .page{
-        padding-top:160px;
+        padding-top:140px;
     }
 
     .header{
@@ -1611,7 +1608,7 @@ tbody tr:hover{
 
         </div>
 
-        <div class="processing-loader" id="processingLoader">
+        <div class="processing-loader" id="processingLoader" style="display:none;">
             🤖 AI Engine Processing Allocation Workflow...
         </div>
 
@@ -2072,11 +2069,12 @@ async function initializeDashboard() {
         try {
 
             const res = await fetch(
-                API_BASE + "/api/auth/validate-session",
-                {
-                    credentials: "include"
-                }
-            );
+    API_BASE + "/api/auth/validate-session",
+    {
+        method: "GET",
+        credentials: "include"
+    }
+);
 
             if (!res.ok) {
                 throw new Error("Auth API failed");
