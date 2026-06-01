@@ -1,862 +1,866 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>IntelliOnboard — Login</title>
+<title>IntelliOnboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 
 <style>
-/* ── RESET ─────────────────────────────────────────────── */
-*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
 
-/* ── TOKENS ─────────────────────────────────────────────── */
-:root {
-  --bg-deep:    #020E10;
-  --bg-mid:     #041A1C;
-  --brand:      #1D9E75;
-  --brand-lt:   #26FFB9;
-  --brand-dim:  rgba(29,158,117,0.18);
-  --accent:     #0FF5C1;
-  --glass:      rgba(255,255,255,0.055);
-  --glass-bd:   rgba(255,255,255,0.10);
-  --glass-h:    rgba(255,255,255,0.09);
-  --text-hi:    #FFFFFF;
-  --text-mid:   rgba(255,255,255,0.75);
-  --text-lo:    rgba(255,255,255,0.45);
-  --danger:     #FF5F6D;
-  --danger-bg:  rgba(255,95,109,0.12);
-  --success:    #26FFB9;
-  --success-bg: rgba(38,255,185,0.10);
-  --radius-lg:  20px;
-  --radius-md:  14px;
-  --radius-sm:  10px;
-  --admin-col:  #A78BFA;   /* purple tint for IntelliOnboard-Admin */
-  --admin-bg:   rgba(167,139,250,0.10);
+/* =========================================================
+   GLOBAL  (unchanged from original)
+========================================================= */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
-/* ── BODY ────────────────────────────────────────────────── */
 body {
-  font-family: 'DM Sans', sans-serif;
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--bg-deep);
-  overflow-x: hidden;
-  padding: 24px;
-  position: relative;
+    font-family: "Segoe UI", Arial, sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, #021B1A 0%, #063D36 30%, #0F6E56 100%);
+    position: relative;
+    padding: 30px;
 }
 
-/* ── BACKGROUND MESH ─────────────────────────────────────── */
-.bg-mesh {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  overflow: hidden;
-}
-.bg-mesh::before {
-  content: "";
-  position: absolute;
-  width: 700px; height: 700px;
-  background: radial-gradient(circle, rgba(29,158,117,0.22), transparent 65%);
-  top: -220px; left: -200px;
-  animation: driftA 11s ease-in-out infinite alternate;
-}
-.bg-mesh::after {
-  content: "";
-  position: absolute;
-  width: 500px; height: 500px;
-  background: radial-gradient(circle, rgba(167,139,250,0.12), transparent 65%);
-  bottom: -160px; right: -150px;
-  animation: driftB 14s ease-in-out infinite alternate;
-}
-@keyframes driftA { to { transform: translate(30px, 40px); } }
-@keyframes driftB { to { transform: translate(-30px, -20px); } }
-
-/* ── CARD ────────────────────────────────────────────────── */
-.card {
-  position: relative;
-  z-index: 5;
-  width: 440px;
-  max-width: 100%;
-  background: var(--glass);
-  border: 1px solid var(--glass-bd);
-  border-radius: var(--radius-lg);
-  padding: 36px 34px 28px;
-  backdrop-filter: blur(22px);
-  box-shadow: 0 16px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04);
-  animation: riseIn 0.55s cubic-bezier(0.22,1,0.36,1) both;
-}
-@keyframes riseIn {
-  from { opacity:0; transform: translateY(28px) scale(0.97); }
-  to   { opacity:1; transform: translateY(0)    scale(1); }
+body::before {
+    content: "";
+    position: absolute;
+    width: 700px;
+    height: 700px;
+    background: radial-gradient(circle, rgba(38,255,186,0.20), transparent 70%);
+    top: -200px;
+    left: -180px;
+    animation: float1 8s infinite alternate ease-in-out;
 }
 
-/* ── VERSION BADGE ──────────────────────────────────────── */
-.badge {
-  position: absolute;
-  top: 16px; right: 16px;
-  padding: 5px 11px;
-  border-radius: 20px;
-  background: var(--glass);
-  border: 1px solid var(--glass-bd);
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-mid);
-  font-family: 'DM Mono', monospace;
-  letter-spacing: 0.04em;
+body::after {
+    content: "";
+    position: absolute;
+    width: 550px;
+    height: 550px;
+    background: radial-gradient(circle, rgba(255,255,255,0.10), transparent 70%);
+    bottom: -180px;
+    right: -150px;
+    animation: float2 10s infinite alternate ease-in-out;
 }
 
-/* ── HEADER ──────────────────────────────────────────────── */
-.header { text-align: center; margin-bottom: 26px; }
-.logo-ring {
-  width: 80px; height: 80px;
-  margin: 0 auto 16px;
-  border-radius: 22px;
-  background: #fff;
-  display: flex; align-items: center; justify-content: center;
-  overflow: hidden;
-  box-shadow: 0 8px 28px rgba(0,0,0,0.25), 0 0 0 1px rgba(255,255,255,0.12);
-}
-.logo-ring img { width: 70%; height: 70%; object-fit: contain; }
-.app-name {
-  font-size: 30px;
-  font-weight: 700;
-  color: var(--text-hi);
-  letter-spacing: -0.02em;
-  line-height: 1.1;
-}
-.app-sub {
-  margin-top: 8px;
-  font-size: 13px;
-  color: var(--text-lo);
-  line-height: 1.65;
+@keyframes float1 {
+    from { transform: translateY(0px); }
+    to   { transform: translateY(30px); }
 }
 
-/* ── TABS ────────────────────────────────────────────────── */
-.tabs {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 22px;
-}
-.tab {
-  flex: 1;
-  padding: 11px;
-  border: 1px solid var(--glass-bd);
-  border-radius: var(--radius-md);
-  background: var(--glass);
-  color: var(--text-mid);
-  font-size: 13.5px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.22s;
-  font-family: 'DM Sans', sans-serif;
-}
-.tab:hover { background: var(--glass-h); color: var(--text-hi); }
-.tab.active {
-  background: linear-gradient(135deg, var(--brand), #0F6E56);
-  border-color: transparent;
-  color: #fff;
-  box-shadow: 0 4px 18px rgba(29,158,117,0.35);
+@keyframes float2 {
+    from { transform: translateX(0px); }
+    to   { transform: translateX(-30px); }
 }
 
-/* ── FORM ────────────────────────────────────────────────── */
-.form-section { display: none; }
-.form-section.visible { display: block; }
-.field { margin-bottom: 14px; }
-label {
-  display: block;
-  margin-bottom: 7px;
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--text-mid);
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
+.auth-card {
+    position: relative;
+    z-index: 5;
+    width: 430px;
+    padding: 34px;
+    border-radius: 28px;
+    background: rgba(255,255,255,0.10);
+    backdrop-filter: blur(18px);
+    border: 1px solid rgba(255,255,255,0.18);
+    box-shadow: 0 10px 45px rgba(0,0,0,0.35);
+    animation: fadeUp 0.6s ease;
 }
 
-.input-wrap { position: relative; }
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(25px); }
+    to   { opacity: 1; transform: translateY(0px); }
+}
+
+.version {
+    position: absolute;
+    top: 18px;
+    right: 18px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    background: rgba(255,255,255,0.12);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    border: 1px solid rgba(255,255,255,0.15);
+}
+
+.logo-wrap { text-align: center; margin-bottom: 24px; }
+
+.logo {
+    width: 82px;
+    height: 82px;
+    margin: auto;
+    border-radius: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #ffffff;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.20);
+    overflow: hidden;
+}
+
+.logo img { width: 70%; height: 70%; object-fit: contain; }
+
+.app-title { margin-top: 18px; font-size: 34px; font-weight: 800; color: white; }
+
+.sub-title { margin-top: 10px; color: rgba(255,255,255,0.80); font-size: 14px; line-height: 1.7; }
+
+.auth-tabs { margin-top: 25px; display: flex; gap: 10px; }
+
+.tab-btn {
+    flex: 1;
+    padding: 13px;
+    border: none;
+    border-radius: 14px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 700;
+    background: rgba(255,255,255,0.10);
+    color: white;
+    transition: 0.25s;
+}
+
+.tab-btn.active {
+    background: linear-gradient(135deg, #1D9E75, #0F6E56);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+}
+
+.form-section { margin-top: 22px; }
+
+.form-group { margin-top: 16px; }
+
+label { display: block; margin-bottom: 8px; font-size: 13px; font-weight: 600; color: #fff; }
+
+.input-box { position: relative; }
+
 input, select {
-  width: 100%;
-  padding: 13px 16px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--glass-bd);
-  background: rgba(255,255,255,0.06);
-  color: var(--text-hi);
-  font-size: 14px;
-  font-family: 'DM Sans', sans-serif;
-  outline: none;
-  transition: border 0.2s, box-shadow 0.2s, background 0.2s;
+    width: 100%;
+    padding: 14px 16px;
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.08);
+    color: white;
+    font-size: 14px;
+    outline: none;
+    transition: 0.25s;
 }
-input::placeholder { color: var(--text-lo); }
+
+input::placeholder { color: rgba(255,255,255,0.55); }
+select             { color: white; }
+option             { color: black; }
+
 input:focus, select:focus {
-  border-color: rgba(38,255,185,0.45);
-  background: rgba(255,255,255,0.09);
-  box-shadow: 0 0 0 3px rgba(38,255,185,0.10);
-}
-select option { background: #0a1f1c; color: #fff; }
-
-/* password eye */
-.eye {
-  position: absolute;
-  top: 50%; right: 14px;
-  transform: translateY(-50%);
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--brand-lt);
-  cursor: pointer;
-  letter-spacing: 0.05em;
-  font-family: 'DM Mono', monospace;
-  user-select: none;
+    border: 1px solid rgba(38,255,186,0.50);
+    background: rgba(255,255,255,0.12);
+    box-shadow: 0 0 0 4px rgba(38,255,186,0.12);
 }
 
-/* ── ADMIN NOTICE BANNER ─────────────────────────────────── */
-.admin-notice {
-  display: none;
-  margin-bottom: 14px;
-  padding: 11px 14px;
-  border-radius: var(--radius-sm);
-  background: var(--admin-bg);
-  border: 1px solid rgba(167,139,250,0.25);
-  font-size: 12.5px;
-  color: var(--admin-col);
-  line-height: 1.55;
-}
-.admin-notice strong { font-weight: 700; }
-
-/* ── SELF-REGISTER NOTICE ────────────────────────────────── */
-.self-reg-notice {
-  display: none;
-  margin-bottom: 14px;
-  padding: 11px 14px;
-  border-radius: var(--radius-sm);
-  background: rgba(38,255,185,0.07);
-  border: 1px solid rgba(38,255,185,0.20);
-  font-size: 12.5px;
-  color: rgba(38,255,185,0.85);
-  line-height: 1.55;
+.show-pass {
+    position: absolute;
+    top: 14px;
+    right: 15px;
+    color: #7FFFD4;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
 }
 
-/* ── SUBMIT BUTTON ───────────────────────────────────────── */
-.btn {
-  width: 100%;
-  margin-top: 6px;
-  padding: 14px;
-  border: none;
-  border-radius: var(--radius-md);
-  background: linear-gradient(135deg, var(--brand) 0%, #0F6E56 100%);
-  color: #fff;
-  font-size: 15px;
-  font-weight: 700;
-  font-family: 'DM Sans', sans-serif;
-  cursor: pointer;
-  transition: transform 0.18s, box-shadow 0.18s;
-  box-shadow: 0 4px 20px rgba(29,158,117,0.30);
+.action-btn {
+    width: 100%;
+    margin-top: 24px;
+    padding: 15px;
+    border: none;
+    border-radius: 16px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 700;
+    color: white;
+    background: linear-gradient(135deg, #1D9E75, #0F6E56);
+    transition: 0.25s;
+    font-family: "Segoe UI", Arial, sans-serif;
 }
-.btn:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(29,158,117,0.42); }
-.btn:active { transform: translateY(0); }
 
-/* loading spinner inside button */
-.btn.loading { opacity: 0.7; cursor: not-allowed; pointer-events: none; }
+.action-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(0,0,0,0.30); }
+.action-btn:disabled { opacity: 0.65; cursor: not-allowed; transform: none; }
 
-/* ── ALERTS ──────────────────────────────────────────────── */
 .alert {
-  display: none;
-  margin-top: 12px;
-  padding: 11px 14px;
-  border-radius: var(--radius-sm);
-  font-size: 13px;
-  font-weight: 500;
-  line-height: 1.5;
-}
-.alert.err  { background: var(--danger-bg);  border: 1px solid rgba(255,95,109,0.30); color: #FFB3B8; }
-.alert.ok   { background: var(--success-bg); border: 1px solid rgba(38,255,185,0.28); color: #B0FFF0; }
-
-/* ── FORGOT PASSWORD ─────────────────────────────────────── */
-.forgot {
-  display: block;
-  text-align: right;
-  margin-top: 8px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--brand-lt);
-  text-decoration: none;
-  opacity: 0.85;
-  transition: opacity 0.18s;
-}
-.forgot:hover { opacity: 1; }
-
-/* ── ROLE PILL (shows in signup when role is selected) ───── */
-.role-pill {
-  display: none;
-  margin-top: 6px;
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 11.5px;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  width: fit-content;
-}
-.role-pill.self  { background: rgba(38,255,185,0.12); color: #26FFB9; border: 1px solid rgba(38,255,185,0.25); }
-.role-pill.admin { background: var(--admin-bg); color: var(--admin-col); border: 1px solid rgba(167,139,250,0.25); }
-
-/* ── DIVIDER ─────────────────────────────────────────────── */
-.divider {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 18px 0 14px;
-  color: var(--text-lo);
-  font-size: 11.5px;
-  letter-spacing: 0.05em;
-}
-.divider::before, .divider::after {
-  content: "";
-  flex: 1;
-  height: 1px;
-  background: var(--glass-bd);
+    margin-top: 16px;
+    padding: 12px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    display: none;
+    line-height: 1.5;
 }
 
-/* ── FOOTER ──────────────────────────────────────────────── */
+.alert.error {
+    background: rgba(255,80,80,0.15);
+    color: #FFD2D2;
+    border: 1px solid rgba(255,80,80,0.35);
+}
+
+.alert.success {
+    background: rgba(0,255,150,0.15);
+    color: #D5FFF0;
+    border: 1px solid rgba(0,255,150,0.35);
+}
+
+/* ── NEW: notice banners matching existing card style ── */
+.notice-admin {
+    display: none;
+    margin-top: 14px;
+    padding: 12px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.55;
+    background: rgba(167,139,250,0.12);
+    color: #D4BBFF;
+    border: 1px solid rgba(167,139,250,0.30);
+}
+.notice-admin strong { font-weight: 700; color: #C4AAFF; }
+
+.notice-info {
+    display: none;
+    margin-top: 14px;
+    padding: 12px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.55;
+    background: rgba(38,255,186,0.10);
+    color: #B0FFF0;
+    border: 1px solid rgba(38,255,186,0.25);
+}
+
+.section-divider {
+    margin-top: 22px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: rgba(255,255,255,0.40);
+    font-size: 12px;
+}
+.section-divider::before, .section-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: rgba(255,255,255,0.15);
+}
+
 .footer {
-  margin-top: 22px;
-  text-align: center;
-  font-size: 11.5px;
-  color: var(--text-lo);
-  line-height: 1.7;
+    margin-top: 24px;
+    text-align: center;
+    font-size: 12px;
+    color: rgba(255,255,255,0.65);
+    line-height: 1.7;
 }
-.footer em { color: var(--brand-lt); font-style: normal; font-weight: 600; }
 
-/* ── RESPONSIVE ──────────────────────────────────────────── */
-@media (max-width: 500px) {
-  .card { padding: 26px 20px 22px; }
-  .app-name { font-size: 26px; }
+.footer span { color: #7FFFD4; font-weight: 700; }
+
+@media (max-width: 520px) {
+    .auth-card { width: 100%; padding: 24px; }
+    .app-title  { font-size: 28px; }
 }
+
 </style>
 </head>
+
 <body>
 
-<div class="bg-mesh"></div>
+<div class="auth-card">
 
-<div class="card">
-  <div class="badge">v2.1</div>
+    <div class="version">v2.1</div>
 
-  <!-- ── HEADER ─────────────────────────────────────────── -->
-  <div class="header">
-    <div class="logo-ring">
-      <img src="logo.png" alt="IntelliOnboard Logo">
-    </div>
-    <div class="app-name">IntelliOnboard</div>
-    <div class="app-sub">
-      AI-Powered Structured Onboarding Platform<br>
-      Healthcare Workforce Automation Engine
-    </div>
-  </div>
-
-  <!-- ── TABS ───────────────────────────────────────────── -->
-  <div class="tabs">
-    <button class="tab active" id="tabLogin"  onclick="showTab('login')">Login</button>
-    <button class="tab"        id="tabSignup" onclick="showTab('signup')">Sign Up</button>
-  </div>
-
-  <!-- ════════════════════════════════════════════════════
-       LOGIN FORM
-  ═════════════════════════════════════════════════════ -->
-  <div class="form-section visible" id="secLogin">
-
-    <div class="field">
-      <label>Corporate Email</label>
-      <input type="email" id="loginEmail" placeholder="name@infinite.com" autocomplete="email">
+    <!-- HEADER -->
+    <div class="logo-wrap">
+        <div class="logo">
+            <img src="logo.png" alt="Logo" />
+        </div>
+        <div class="app-title">IntelliOnboard</div>
+        <div class="sub-title">
+            AI Powered Structured Onboarding Platform<br>
+            Healthcare Workforce Automation Engine
+        </div>
     </div>
 
-    <div class="field">
-      <label>Password</label>
-      <div class="input-wrap">
-        <input type="password" id="loginPwd" placeholder="Enter password" autocomplete="current-password">
-        <span class="eye" onclick="togglePwd('loginPwd')">SHOW</span>
-      </div>
+    <!-- TABS -->
+    <div class="auth-tabs">
+        <button class="tab-btn active" id="loginTabBtn"  onclick="showTab('login')">Login</button>
+        <button class="tab-btn"        id="signupTabBtn" onclick="showTab('signup')">Sign Up</button>
     </div>
 
-    <div class="field">
-      <label>Role</label>
-      <select id="loginRole" onchange="onLoginRoleChange()">
-        <option value="">— Select your role —</option>
-        <!-- ── Application admin ── -->
-        <optgroup label="── System Administration ──">
-          <option value="INTELLIONBOARD_ADMIN">IntelliOnboard Admin</option>
-        </optgroup>
-        <!-- ── Operations ── -->
-        <optgroup label="── Onboarding Operations ──">
-          <option value="ADMIN">DL Admin Team (ID Card &amp; Access)</option>
-          <option value="ITSG">ITSG (Laptop &amp; Asset Allocation)</option>
-          <option value="HEALTHCARE_PMO">Healthcare PMO</option>
-          <option value="PMO">Account PMO</option>
-        </optgroup>
-        <!-- ── People ── -->
-        <optgroup label="── People Roles ──">
-          <option value="REPORTING_MANAGER">Reporting Manager</option>
-          <option value="EMPLOYEE">Employee</option>
-        </optgroup>
-        <!-- ── Executive ── -->
-        <optgroup label="── Executive ──">
-          <option value="LEADERSHIP">Leadership</option>
-        </optgroup>
-      </select>
+    <!-- ================================================
+         LOGIN FORM
+         Changes vs old:
+           • Role list uses exact backend role codes
+           • optgroups added (same plain dropdown visual)
+           • IntelliOnboard Admin added, Hiring Manager removed
+           • Purple info notice for IntelliOnboard Admin
+           • Leadership added to routing
+    ================================================= -->
+    <div class="form-section" id="loginSection">
+
+        <div class="form-group">
+            <label>Corporate Email</label>
+            <div class="input-box">
+                <input type="email" id="loginEmail" placeholder="Enter @infinite.com email">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Password</label>
+            <div class="input-box">
+                <input type="password" id="loginPassword" placeholder="Enter password">
+                <span class="show-pass" onclick="togglePassword('loginPassword')">SHOW</span>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Select Role</label>
+            <select id="loginRole" onchange="onLoginRoleChange()">
+                <option value="">Choose Role</option>
+                <optgroup label="── System Administration ──">
+                    <option value="INTELLIONBOARD_ADMIN">IntelliOnboard Admin</option>
+                </optgroup>
+                <optgroup label="── Onboarding Operations ──">
+                    <option value="ADMIN">DL Admin Team (ID Card &amp; Access)</option>
+                    <option value="ITSG">ITSG (Laptop &amp; Asset Allocation)</option>
+                    <option value="HEALTHCARE_PMO">Healthcare PMO</option>
+                    <option value="PMO">Account PMO</option>
+                </optgroup>
+                <optgroup label="── People Roles ──">
+                    <option value="REPORTING_MANAGER">Reporting Manager</option>
+                    <option value="EMPLOYEE">Employee</option>
+                </optgroup>
+                <optgroup label="── Executive ──">
+                    <option value="LEADERSHIP">Leadership</option>
+                </optgroup>
+            </select>
+        </div>
+
+        <!-- Purple notice — only shown for IntelliOnboard Admin -->
+        <div class="notice-admin" id="loginAdminNotice">
+            <strong>IntelliOnboard Admin</strong> — Application-level administrator.
+            Creates and manages login accounts for HC PMO, ITSG, DL Admin Team, and Account PMO.
+            Does not access onboarding dashboards.
+        </div>
+
+        <button class="action-btn" onclick="login()">Login to Dashboard</button>
+
+        <div style="text-align:right; margin-top:8px;">
+            <a href="forgot_password.html" style="color:#7FFFD4; font-size:12px; text-decoration:none; font-weight:600;">
+                Forgot Password?
+            </a>
+        </div>
+
+        <div class="alert error" id="loginError"></div>
+
     </div>
 
-    <!-- admin notice shown only when IntelliOnboard Admin is selected -->
-    <div class="admin-notice" id="loginAdminNotice">
-      <strong>IntelliOnboard Admin</strong> — You are logging in as the application-level administrator.
-      This account can create and manage login accounts for HC PMO, ITSG, DL Admin Team, and Account PMO.
-      It does not access onboarding dashboards.
+    <!-- ================================================
+         SIGNUP FORM
+         Changes vs old:
+           • Only Employee / Reporting Manager / Leadership
+             are shown in the role dropdown
+           • Full Name / Designation / Location removed
+             (backend derives from employees table)
+           • Role intentionally NOT sent to backend
+           • Teal info notice appears when role is selected
+           • Bottom note explains admin-created roles
+    ================================================= -->
+    <div class="form-section" id="signupSection" style="display:none">
+
+        <div class="form-group">
+            <label>Employee ID</label>
+            <input type="text" id="signupEmpId" placeholder="Enter your employee ID (e.g. 1023456)">
+        </div>
+
+        <div class="form-group">
+            <label>Corporate Email</label>
+            <input type="email" id="signupEmail" placeholder="Enter @infinite.com email">
+        </div>
+
+        <div class="form-group">
+            <label>I am registering as</label>
+            <select id="signupRole" onchange="onSignupRoleChange()">
+                <option value="">Choose Role</option>
+                <option value="EMPLOYEE">Employee</option>
+                <option value="REPORTING_MANAGER">Reporting Manager</option>
+                <option value="LEADERSHIP">Leadership (VP / Director / E8+)</option>
+            </select>
+        </div>
+
+        <!-- Teal info notice — shown when a valid role is selected -->
+        <div class="notice-info" id="signupInfoNotice">
+            Your Employee ID and email will be verified against the system before
+            your account is created. Your role is assigned automatically from
+            the database — it cannot be changed manually.
+        </div>
+
+        <div class="form-group">
+            <label>Password</label>
+            <div class="input-box">
+                <input type="password" id="signupPassword" placeholder="Create password (min 8 characters)">
+                <span class="show-pass" onclick="togglePassword('signupPassword')">SHOW</span>
+            </div>
+        </div>
+
+        <button class="action-btn" id="signupBtn" onclick="signup()">Create Account</button>
+
+        <div class="alert error"   id="signupError"></div>
+        <div class="alert success" id="signupSuccess"></div>
+
+        <!-- Note about admin-created roles -->
+        <div class="section-divider">admin-created roles only</div>
+        <p style="text-align:center; font-size:12px; color:rgba(255,255,255,0.50); line-height:1.65; margin-top:6px;">
+            DL Admin Team &nbsp;·&nbsp; ITSG &nbsp;·&nbsp; HC PMO &nbsp;·&nbsp; Account PMO<br>
+            are created by
+            <span style="color:#D4BBFF; font-weight:600;">IntelliOnboard Admin</span> only.<br>
+            Contact
+            <span style="color:#7FFFD4;">IntelliOnboard-Admin@infinite.com</span>
+        </p>
+
     </div>
 
-    <button class="btn" onclick="login()">Login to Dashboard</button>
-    <a class="forgot" href="forgot_password.html">Forgot password?</a>
-    <div class="alert err" id="loginErr"></div>
-
-  </div>
-
-  <!-- ════════════════════════════════════════════════════
-       SIGNUP FORM
-  ═════════════════════════════════════════════════════ -->
-  <div class="form-section" id="secSignup">
-
-    <!--
-      SIGNUP RULES (enforced in JS + backend):
-      ✅ Self-register allowed:  Employee, Reporting Manager, Leadership
-      🚫 Admin-created only:     DL Admin Team, ITSG, HC PMO, Account PMO
-      🚫 Never self-register:    IntelliOnboard Admin (seeded via SQL)
-    -->
-
-    <div class="field">
-      <label>Employee ID</label>
-      <input type="text" id="regEmpId" placeholder="Your employee ID (e.g. 1023456)">
+    <!-- FOOTER -->
+    <div class="footer">
+        Powered by <span>AI Orchestration Engine</span><br>
+        &copy; 2026 IntelliOnboard
     </div>
-
-    <div class="field">
-      <label>Corporate Email</label>
-      <input type="email" id="regEmail" placeholder="name@infinite.com" autocomplete="email">
-    </div>
-
-    <div class="field">
-      <label>Password</label>
-      <div class="input-wrap">
-        <input type="password" id="regPwd" placeholder="Minimum 8 characters" autocomplete="new-password">
-        <span class="eye" onclick="togglePwd('regPwd')">SHOW</span>
-      </div>
-    </div>
-
-    <div class="field">
-      <label>I am registering as</label>
-      <select id="regRole" onchange="onRegRoleChange()">
-        <option value="">— Select your role —</option>
-        <option value="EMPLOYEE">Employee</option>
-        <option value="REPORTING_MANAGER">Reporting Manager</option>
-        <option value="LEADERSHIP">Leadership (VP / Director / E8+)</option>
-      </select>
-      <div class="role-pill self" id="regRolePill"></div>
-    </div>
-
-    <!-- shown for Leadership to explain extra validation -->
-    <div class="self-reg-notice" id="regNotice">
-      Your Employee ID and email will be validated against the employees database
-      before your account is created. Role is assigned automatically from the system
-      — it cannot be changed manually.
-    </div>
-
-    <!-- notice shown when someone tries to pick an admin-only role -->
-    <div class="admin-notice" id="regAdminNotice" style="display:none">
-      <strong>This role requires an Admin to create your account.</strong><br>
-      Contact <em style="color:var(--admin-col)">IntelliOnboard-Admin@infinite.com</em> and request
-      account creation for your role. You will receive your login credentials by email.
-    </div>
-
-    <button class="btn" id="regBtn" onclick="signup()">Create Account</button>
-    <div class="alert err" id="regErr"></div>
-    <div class="alert ok"  id="regOk"></div>
-
-    <div class="divider">or</div>
-    <p style="font-size:12.5px; color:var(--text-lo); text-align:center; line-height:1.65;">
-      DL Admin Team · ITSG · HC PMO · Account PMO accounts<br>
-      are created by <strong style="color:var(--admin-col)">IntelliOnboard Admin</strong> only.
-    </p>
-
-  </div>
-
-  <!-- ── FOOTER ─────────────────────────────────────────── -->
-  <div class="footer">
-    Powered by <em>AI Orchestration Engine</em><br>
-    © 2026 IntelliOnboard — Infinite Computer Solutions
-  </div>
 
 </div>
 
-<!-- ════════════════════════════════════════════════════════
-     SCRIPT
-═════════════════════════════════════════════════════════ -->
 <script>
-"use strict";
-
-/* ────────────────────────────────────────────────────────
+/* =========================================================
    CONFIG
-──────────────────────────────────────────────────────── */
-const API = "https://intellionboard.onrender.com";
+========================================================= */
+const API_BASE = "https://intellionboard.onrender.com";
 
 /*
-  ROLE MAP — backend role code → dashboard URL
-  ─────────────────────────────────────────────
-  INTELLIONBOARD_ADMIN  → admin_portal.html     (account management only)
-  ADMIN                 → admin_dashboard.html   (DL Admin Team — ID card & access)
-  ITSG                  → itsg_dashboard.html
-  HEALTHCARE_PMO        → healthcare_pmo_dashboard.html
-  PMO                   → pmo_dashboard_pro.html
-  REPORTING_MANAGER     → rm_dashboard.html
-  EMPLOYEE              → bot.html / employee_dashboard.html (via routing)
-  LEADERSHIP            → leadership_dashboard.html
+  ROLE → DASHBOARD MAP
+  INTELLIONBOARD_ADMIN → admin_portal.html  (account management only)
+  ADMIN                → admin_dashboard.html (DL Admin Team)
+  LEADERSHIP added
+  HIRING_MANAGER removed
 */
 const ROLE_ROUTES = {
-  INTELLIONBOARD_ADMIN:  "admin_portal.html",
-  ADMIN:                 "admin_dashboard.html",
-  ITSG:                  "itsg_dashboard.html",
-  HEALTHCARE_PMO:        "healthcare_pmo_dashboard.html",
-  PMO:                   "pmo_dashboard_pro.html",
-  REPORTING_MANAGER:     "rm_dashboard.html",
-  EMPLOYEE:              null,          // special routing — see handleEmployeeRouting()
-  LEADERSHIP:            "leadership_dashboard.html",
+    "INTELLIONBOARD_ADMIN": "admin_portal.html",
+    "ADMIN":                "admin_dashboard.html",
+    "ITSG":                 "itsg_dashboard.html",
+    "HEALTHCARE_PMO":       "healthcare_pmo_dashboard.html",
+    "PMO":                  "pmo_dashboard_pro.html",
+    "REPORTING_MANAGER":    "rm_dashboard.html",
+    "EMPLOYEE":             null,
+    "LEADERSHIP":           "leadership_dashboard.html"
 };
 
-/*
-  Roles that CANNOT self-register — must be created by IntelliOnboard Admin
-*/
-const ADMIN_ONLY_ROLES = new Set([
-  "ADMIN", "ITSG", "HEALTHCARE_PMO", "PMO", "INTELLIONBOARD_ADMIN"
-]);
+/* Must be created by IntelliOnboard Admin — cannot self-register */
+const ADMIN_ONLY_ROLES  = new Set(["INTELLIONBOARD_ADMIN","ADMIN","ITSG","HEALTHCARE_PMO","PMO"]);
+/* Can self-register after DB email validation */
+const SELF_REGISTER_ROLES = new Set(["EMPLOYEE","REPORTING_MANAGER","LEADERSHIP"]);
 
-/*
-  Roles that CAN self-register (after DB email validation)
-*/
-const SELF_REGISTER_ROLES = new Set(["EMPLOYEE", "REPORTING_MANAGER", "LEADERSHIP"]);
-
-/* ────────────────────────────────────────────────────────
-   TAB SWITCH
-──────────────────────────────────────────────────────── */
+/* =========================================================
+   TAB SWITCH  (same as old)
+========================================================= */
 function showTab(tab) {
-  document.getElementById("secLogin").classList.toggle("visible",  tab === "login");
-  document.getElementById("secSignup").classList.toggle("visible", tab === "signup");
-  document.getElementById("tabLogin").classList.toggle("active",   tab === "login");
-  document.getElementById("tabSignup").classList.toggle("active",  tab === "signup");
-  clearAlerts();
+    document.getElementById("loginSection").style.display  = tab === "login"  ? "block" : "none";
+    document.getElementById("signupSection").style.display = tab === "signup" ? "block" : "none";
+    document.getElementById("loginTabBtn").classList.toggle("active",  tab === "login");
+    document.getElementById("signupTabBtn").classList.toggle("active", tab === "signup");
+    hideAlerts();
 }
 
-/* ────────────────────────────────────────────────────────
-   ROLE CHANGE HANDLERS
-──────────────────────────────────────────────────────── */
+/* =========================================================
+   PASSWORD TOGGLE  (same as old)
+========================================================= */
+function togglePassword(id) {
+    const field = document.getElementById(id);
+    field.type  = field.type === "password" ? "text" : "password";
+}
+
+/* =========================================================
+   EMAIL VALIDATION  (same as old)
+========================================================= */
+function isValidCorporateEmail(email) {
+    return email.toLowerCase().endsWith("@infinite.com");
+}
+
+/* =========================================================
+   LOGIN ROLE CHANGE — shows admin notice if IO Admin selected
+========================================================= */
 function onLoginRoleChange() {
-  const role = document.getElementById("loginRole").value;
-  document.getElementById("loginAdminNotice").style.display =
-    role === "INTELLIONBOARD_ADMIN" ? "block" : "none";
+    const role = document.getElementById("loginRole").value;
+    document.getElementById("loginAdminNotice").style.display =
+        role === "INTELLIONBOARD_ADMIN" ? "block" : "none";
 }
 
-function onRegRoleChange() {
-  const role    = document.getElementById("regRole").value;
-  const pill    = document.getElementById("regRolePill");
-  const notice  = document.getElementById("regNotice");
-  const aNotice = document.getElementById("regAdminNotice");
-  const btn     = document.getElementById("regBtn");
-
-  pill.style.display   = "none";
-  notice.style.display = "none";
-  aNotice.style.display= "none";
-  btn.style.display    = "block";
-  clearAlerts();
-
-  if (!role) return;
-
-  if (ADMIN_ONLY_ROLES.has(role)) {
-    aNotice.style.display = "block";
-    btn.style.display     = "none";
-    return;
-  }
-
-  if (SELF_REGISTER_ROLES.has(role)) {
-    const labels = {
-      EMPLOYEE: "Employee",
-      REPORTING_MANAGER: "Reporting Manager",
-      LEADERSHIP: "Leadership"
-    };
-    pill.textContent     = labels[role] || role;
-    pill.className       = "role-pill self";
-    pill.style.display   = "block";
-    notice.style.display = "block";
-  }
+/* =========================================================
+   SIGNUP ROLE CHANGE — shows info notice for valid roles
+========================================================= */
+function onSignupRoleChange() {
+    const role = document.getElementById("signupRole").value;
+    document.getElementById("signupInfoNotice").style.display =
+        SELF_REGISTER_ROLES.has(role) ? "block" : "none";
 }
 
-/* ────────────────────────────────────────────────────────
-   PASSWORD TOGGLE
-──────────────────────────────────────────────────────── */
-function togglePwd(id) {
-  const el = document.getElementById(id);
-  el.type = el.type === "password" ? "text" : "password";
-}
-
-/* ────────────────────────────────────────────────────────
-   VALIDATION HELPERS
-──────────────────────────────────────────────────────── */
-function isInfiniteEmail(email) {
-  return email.toLowerCase().trim().endsWith("@infinite.com");
-}
-
-/* ────────────────────────────────────────────────────────
+/* =========================================================
    REDIRECT BY ROLE
-──────────────────────────────────────────────────────── */
+   Same pattern as old but INTELLIONBOARD_ADMIN + LEADERSHIP
+   added, HIRING_MANAGER removed
+========================================================= */
 function redirectByRole(role) {
-  role = String(role || "").trim().toUpperCase();
-  console.log("REDIRECT → role:", role);
+    role = String(role || "").trim().toUpperCase();
+    console.log("REDIRECT ROLE =>", role);
 
-  if (role === "EMPLOYEE") {
-    handleEmployeeRouting();
-    return;
-  }
+    if (role === "EMPLOYEE") {
+        handleEmployeeRouting();
+        return;
+    }
 
-  const url = ROLE_ROUTES[role];
-  if (url) {
-    window.location.href = url;
-  } else {
-    showAlert("loginErr", "err", `Unknown role: ${role}. Contact admin.`);
-  }
+    const url = ROLE_ROUTES[role];
+    if (url) {
+        window.location.href = url;
+    } else {
+        console.error("UNKNOWN ROLE =>", role);
+        showError("loginError",
+            "Unrecognised role: " + role +
+            ". Contact IntelliOnboard-Admin@infinite.com.");
+    }
 }
 
-/* ────────────────────────────────────────────────────────
-   EMPLOYEE SPECIAL ROUTING
-   New employee → bot.html | Returning employee → employee_dashboard.html
-──────────────────────────────────────────────────────── */
+/* =========================================================
+   EMPLOYEE ROUTING  (same as old)
+========================================================= */
 async function handleEmployeeRouting() {
-  try {
-    const empId = localStorage.getItem("emp_id");
-    if (!empId || empId === "null" || empId === "undefined") {
-      alert("Session expired. Please login again.");
-      window.location.href = "login.html";
-      return;
+    try {
+        const emp_id = localStorage.getItem("emp_id");
+        console.log("LOCAL STORAGE EMP ID =>", emp_id);
+
+        if (!emp_id || emp_id === "null" || emp_id === "undefined") {
+            alert("Session expired. Please login again.");
+            window.location.href = "login.html";
+            return;
+        }
+
+        const res = await fetch(`${API_BASE}/api/auth/employee/${emp_id}`, {
+            method: "GET",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include"
+        });
+
+        if (!res.ok) {
+            console.error("API FAILED =>", res.status);
+            alert("Employee fetch failed");
+            return;
+        }
+
+        const response = await res.json();
+        console.log("EMPLOYEE API RESPONSE =>", response);
+
+        if (!response.success) {
+            alert(response.message || "Employee not found");
+            return;
+        }
+
+        const employee      = response.employee || {};
+        const employeeName  = employee.emp_name || employee.name || "Employee";
+        const employeeEmail = employee.email || "";
+        const selectedCOE   = response.selected_coe || employee.selected_coe || "";
+
+        localStorage.setItem("emp_id",    response.emp_id || emp_id);
+        localStorage.setItem("emp_name",  employeeName);
+        localStorage.setItem("emp_email", employeeEmail);
+        localStorage.setItem("coe",       selectedCOE);
+
+        console.log("EMP NAME =>", employeeName);
+        console.log("COE =>",      selectedCOE);
+
+        if (selectedCOE && selectedCOE !== "null" && selectedCOE !== "") {
+            console.log("Existing Employee -> employee_dashboard");
+            window.location.href = "employee_dashboard.html";
+        } else {
+            console.log("New Employee -> bot");
+            window.location.href = "bot.html";
+        }
+
+    } catch (err) {
+        console.error("Employee Routing Error =>", err);
+        alert("Employee routing failed. Check console.");
     }
-
-    const res = await fetch(`${API}/api/auth/employee/${empId}`, {
-      method: "GET",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include"
-    });
-
-    if (!res.ok) throw new Error("Employee API failed");
-    const data = await res.json();
-
-    const selectedCOE = data.selected_coe || data.employee?.selected_coe || "";
-    localStorage.setItem("emp_id",    data.emp_id    || empId);
-    localStorage.setItem("emp_name",  data.employee?.name  || "");
-    localStorage.setItem("emp_email", data.employee?.email || "");
-    localStorage.setItem("coe",       selectedCOE);
-
-    window.location.href = selectedCOE ? "employee_dashboard.html" : "bot.html";
-
-  } catch (err) {
-    console.error("Employee routing error:", err);
-    window.location.href = "employee_dashboard.html";
-  }
 }
 
-/* ────────────────────────────────────────────────────────
+/* =========================================================
    LOGIN
-──────────────────────────────────────────────────────── */
+   Key changes vs old:
+   • Role dropdown values ARE the backend role codes now
+     so no client-side roleMap needed
+   • backendRole compared directly to selectedRole
+   • INTELLIONBOARD_ADMIN and LEADERSHIP handled in routing
+========================================================= */
 async function login() {
-  clearAlerts();
+    try {
+        hideAlerts();
 
-  const email        = document.getElementById("loginEmail").value.trim().toLowerCase();
-  const password     = document.getElementById("loginPwd").value.trim();
-  const selectedRole = document.getElementById("loginRole").value.trim().toUpperCase();
+        const email        = document.getElementById("loginEmail").value.trim().toLowerCase();
+        const password     = document.getElementById("loginPassword").value.trim();
+        const selectedRole = document.getElementById("loginRole").value.trim().toUpperCase();
 
-  /* ── Validation ── */
-  if (!email || !password || !selectedRole) {
-    return showAlert("loginErr", "err", "Please fill all fields including your role.");
-  }
-  if (!isInfiniteEmail(email)) {
-    return showAlert("loginErr", "err", "Only @infinite.com email addresses are allowed.");
-  }
+        if (!email || !password || !selectedRole) {
+            showError("loginError", "Please fill all fields including your role.");
+            return;
+        }
+        if (!isValidCorporateEmail(email)) {
+            showError("loginError", "Only @infinite.com email addresses are allowed.");
+            return;
+        }
 
-  /* ── Call backend ── */
-  const btn = document.querySelector("#secLogin .btn");
-  btn.classList.add("loading");
-  btn.textContent = "Signing in…";
+        const btn = document.querySelector("#loginSection .action-btn");
+        btn.disabled    = true;
+        btn.textContent = "Signing in…";
 
-  try {
-    const res = await fetch(`${API}/api/auth/login`, {
-      method: "POST",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password })
-    });
+        console.log("LOGIN API =>", `${API_BASE}/api/auth/login`);
 
-    const result = await res.json().catch(() => ({}));
+        const response = await fetch(`${API_BASE}/api/auth/login`, {
+            method: "POST",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password })
+        });
 
-    if (!res.ok || !result.success) {
-      return showAlert("loginErr", "err", result.message || "Invalid credentials.");
+        console.log("LOGIN STATUS =>", response.status);
+
+        let result;
+        try {
+            result = await response.json();
+        } catch (e) {
+            console.error("JSON PARSE ERROR =>", e);
+            showError("loginError", "Invalid backend response.");
+            return;
+        }
+
+        console.log("LOGIN RESPONSE =>", result);
+
+        if (!response.ok || !result.success) {
+            showError("loginError", result.message || "Invalid credentials.");
+            return;
+        }
+
+        const backendRole = String(result.user?.role || "").trim().toUpperCase();
+        console.log("BACKEND ROLE =>", backendRole);
+
+        /* Role must match what the user selected */
+        if (backendRole !== selectedRole) {
+            showError("loginError",
+                `Incorrect role selected. This account is registered as: ${backendRole}.`);
+            return;
+        }
+
+        localStorage.setItem("token",         result.token          || "session-active");
+        localStorage.setItem("user_email",    result.user?.email    || "");
+        localStorage.setItem("user_role",     backendRole);
+        localStorage.setItem("user_location", result.user?.location || "");
+        localStorage.setItem("user_name",     result.user?.name     || "");
+        localStorage.setItem("emp_id",        result.user?.emp_id   || "");
+        localStorage.setItem("user_id",       result.user?.id       || "");
+
+        console.log("LOGIN SUCCESS");
+        redirectByRole(backendRole);
+
+    } catch (error) {
+        console.error("LOGIN ERROR =>", error);
+        showError("loginError", "Server not reachable. Check backend.");
+    } finally {
+        const btn = document.querySelector("#loginSection .action-btn");
+        if (btn) { btn.disabled = false; btn.textContent = "Login to Dashboard"; }
     }
-
-    /* ── Verify role matches ── */
-    const backendRole = String(result.user?.role || "").trim().toUpperCase();
-
-    if (backendRole !== selectedRole) {
-      return showAlert("loginErr", "err",
-        `Incorrect role selected. This account is registered as: ${backendRole}.`);
-    }
-
-    /* ── Store session ── */
-    localStorage.setItem("token",         result.token        || "session-active");
-    localStorage.setItem("user_email",    result.user?.email  || "");
-    localStorage.setItem("user_role",     backendRole);
-    localStorage.setItem("user_location", result.user?.location || "");
-    localStorage.setItem("user_name",     result.user?.name   || "");
-    localStorage.setItem("emp_id",        result.user?.emp_id || "");
-    localStorage.setItem("user_id",       result.user?.id     || "");
-
-    console.log("LOGIN OK — role:", backendRole);
-    redirectByRole(backendRole);
-
-  } catch (err) {
-    console.error("Login error:", err);
-    showAlert("loginErr", "err", "Server unreachable. Check your connection.");
-  } finally {
-    btn.classList.remove("loading");
-    btn.textContent = "Login to Dashboard";
-  }
 }
 
-/* ────────────────────────────────────────────────────────
-   SIGNUP  (Employee / RM / Leadership only)
-──────────────────────────────────────────────────────── */
+/* =========================================================
+   SIGNUP
+   Key changes vs old:
+   • Only EMPLOYEE / REPORTING_MANAGER / LEADERSHIP allowed
+   • Full Name / Designation / Location fields removed
+   • Role NOT sent to backend — derived server-side from DB
+   • emp_id + email validated against employees table by backend
+   • ADMIN_ONLY_ROLES blocked client-side with clear message
+========================================================= */
 async function signup() {
-  clearAlerts();
+    try {
+        hideAlerts();
 
-  const empId    = document.getElementById("regEmpId").value.trim();
-  const email    = document.getElementById("regEmail").value.trim().toLowerCase();
-  const password = document.getElementById("regPwd").value.trim();
-  const role     = document.getElementById("regRole").value.trim().toUpperCase();
+        const emp_id   = document.getElementById("signupEmpId").value.trim();
+        const email    = document.getElementById("signupEmail").value.trim().toLowerCase();
+        const role     = document.getElementById("signupRole").value.trim().toUpperCase();
+        const password = document.getElementById("signupPassword").value.trim();
 
-  /* ── Validation ── */
-  if (!empId || !email || !password || !role) {
-    return showAlert("regErr", "err", "Please fill all fields.");
-  }
-  if (!isInfiniteEmail(email)) {
-    return showAlert("regErr", "err", "Only @infinite.com email addresses are allowed.");
-  }
-  if (password.length < 8) {
-    return showAlert("regErr", "err", "Password must be at least 8 characters.");
-  }
-  if (ADMIN_ONLY_ROLES.has(role)) {
-    return showAlert("regErr", "err",
-      "This role cannot self-register. Contact IntelliOnboard-Admin@infinite.com.");
-  }
-  if (!SELF_REGISTER_ROLES.has(role)) {
-    return showAlert("regErr", "err", "Please select a valid role.");
-  }
+        if (!emp_id || !email || !role || !password) {
+            showError("signupError", "Please fill all mandatory fields.");
+            return;
+        }
+        if (!isValidCorporateEmail(email)) {
+            showError("signupError", "Only @infinite.com email addresses are allowed.");
+            return;
+        }
+        if (password.length < 8) {
+            showError("signupError", "Password must be at least 8 characters.");
+            return;
+        }
+        if (ADMIN_ONLY_ROLES.has(role)) {
+            showError("signupError",
+                "This role cannot self-register. Contact <strong>IntelliOnboard-Admin@infinite.com</strong> to have your account created.");
+            return;
+        }
+        if (!SELF_REGISTER_ROLES.has(role)) {
+            showError("signupError", "Please select a valid role.");
+            return;
+        }
 
-  /* ── API call ── */
-  const btn = document.getElementById("regBtn");
-  btn.classList.add("loading");
-  btn.textContent = "Creating account…";
+        const btn = document.getElementById("signupBtn");
+        btn.disabled    = true;
+        btn.textContent = "Creating account…";
 
-  try {
-    /*
-      We send emp_id + email + password.
-      Role is NOT sent — backend derives it from employees table.
-      Sending it anyway as a hint, but backend ALWAYS overrides from DB.
-    */
-    const res = await fetch(`${API}/api/auth/register`, {
-      method: "POST",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ emp_id: empId, email, password })
-      /* ↑ role intentionally omitted — backend derives from DB */
-    });
+        /*
+          SECURITY: role intentionally omitted from payload.
+          Backend derives role from employees.derived_system_role
+          using emp_id + email. Sending role would allow
+          privilege escalation.
+        */
+        const payload = {
+            emp_id:   emp_id,
+            email:    email,
+            password: password
+        };
 
-    const result = await res.json().catch(() => ({}));
+        console.log("REGISTER PAYLOAD =>", payload);
 
-    if (!res.ok || !result.success) {
-      return showAlert("regErr", "err",
-        result.message || "Registration failed. Ensure your Employee ID and email match the system.");
+        const response = await fetch(`${API_BASE}/api/auth/register`, {
+            method: "POST",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+
+        console.log("REGISTER STATUS =>", response.status);
+
+        let result;
+        try {
+            result = await response.json();
+        } catch (parseError) {
+            console.error(parseError);
+            showError("signupError", "Invalid backend response.");
+            return;
+        }
+
+        console.log("REGISTER RESPONSE =>", result);
+
+        if (!response.ok || !result.success) {
+            showError("signupError",
+                result.message ||
+                "Registration failed. Ensure your Employee ID and email match the system records.");
+            return;
+        }
+
+        showSuccess("signupSuccess",
+            "Account created successfully as <strong>" +
+            (result.role || role) +
+            "</strong>. Redirecting to login…");
+
+        setTimeout(() => showTab("login"), 1600);
+
+    } catch (error) {
+        console.error("SIGNUP ERROR =>", error);
+        showError("signupError", "Backend connection failed. Try again.");
+    } finally {
+        const btn = document.getElementById("signupBtn");
+        if (btn) { btn.disabled = false; btn.textContent = "Create Account"; }
     }
-
-    showAlert("regOk", "ok",
-      `Account created as <strong>${result.role || role}</strong>. Redirecting to login…`);
-    setTimeout(() => showTab("login"), 1800);
-
-  } catch (err) {
-    console.error("Signup error:", err);
-    showAlert("regErr", "err", "Server unreachable. Try again.");
-  } finally {
-    btn.classList.remove("loading");
-    btn.textContent = "Create Account";
-  }
 }
 
-/* ────────────────────────────────────────────────────────
-   ALERT HELPERS
-──────────────────────────────────────────────────────── */
-function showAlert(id, type, html) {
-  const el = document.getElementById(id);
-  el.className   = `alert ${type}`;
-  el.style.display = "block";
-  el.innerHTML   = html;
-}
-function clearAlerts() {
-  document.querySelectorAll(".alert").forEach(el => {
-    el.style.display = "none";
-    el.innerHTML = "";
-  });
+/* =========================================================
+   ALERT HELPERS  (same as old)
+========================================================= */
+function showError(id, message) {
+    const box = document.getElementById(id);
+    box.className    = "alert error";
+    box.style.display= "block";
+    box.innerHTML    = message;
 }
 
-/* ────────────────────────────────────────────────────────
-   SESSION AUTO-RESTORE
-   Checks for an existing backend session on page load.
-   Skipped if URL has ?manual — allows forced re-login.
-──────────────────────────────────────────────────────── */
-async function validateSession() {
-  try {
-    const res = await fetch(`${API}/api/auth/validate-session`, {
-      method: "GET",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" }
+function showSuccess(id, message) {
+    const box = document.getElementById(id);
+    box.className    = "alert success";
+    box.style.display= "block";
+    box.innerHTML    = message;
+}
+
+function hideAlerts() {
+    document.querySelectorAll(".alert").forEach(el => {
+        el.style.display = "none";
+        el.innerHTML     = "";
     });
-    if (!res.ok) return;
-
-    const result = await res.json();
-    if (!result.success) return;
-
-    const user = result.user || {};
-    const role = String(user.role || "").trim().toUpperCase();
-
-    localStorage.setItem("token",         "session-active");
-    localStorage.setItem("user_email",    user.email    || "");
-    localStorage.setItem("user_role",     role);
-    localStorage.setItem("user_location", user.location || "");
-    localStorage.setItem("user_name",     user.name     || "");
-    localStorage.setItem("emp_id",        user.emp_id   || "");
-    localStorage.setItem("user_id",       user.id       || "");
-
-    console.log("Session restored — role:", role);
-    redirectByRole(role);
-
-  } catch (err) {
-    // No active session — stay on login page
-    console.log("No active session.");
-  }
 }
 
-window.addEventListener("load", () => {
-  if (!location.search.includes("manual")) {
-    validateSession();
-  }
-});
+/* =========================================================
+   SESSION VALIDATION  (same as old — method fixed to GET)
+========================================================= */
+async function validateSession() {
+    try {
+        console.log("Checking existing session...");
+
+        const response = await fetch(`${API_BASE}/api/auth/validate-session`, {
+            method: "GET",        /* fixed: was POST in original */
+            credentials: "include",
+            headers: { "Content-Type": "application/json" }
+        });
+
+        if (!response.ok) { console.log("No valid session found."); return; }
+
+        const result = await response.json();
+        console.log("SESSION CHECK =>", result);
+
+        if (!result.success) { console.log("Session validation failed."); return; }
+
+        const user = result.user || {};
+        const role = String(user.role || "").trim().toUpperCase();
+
+        localStorage.setItem("token",         "session-active");
+        localStorage.setItem("user_email",    user.email    || "");
+        localStorage.setItem("user_role",     role);
+        localStorage.setItem("user_location", user.location || "");
+        localStorage.setItem("user_name",     user.name     || "");
+        localStorage.setItem("emp_id",        user.emp_id   || "");
+        localStorage.setItem("user_id",       user.id       || "");
+
+        console.log("SESSION RESTORED");
+        console.log("ROLE =>",   role);
+        console.log("EMP ID =>", user.emp_id);
+
+        redirectByRole(role);
+
+    } catch (error) {
+        console.log("NO ACTIVE SESSION");
+        console.error(error);
+    }
+}
+
+/* =========================================================
+   AUTO SESSION CHECK ON LOAD  (same as old)
+========================================================= */
+window.onload = () => {
+    const skipAutoLogin = window.location.search.includes("manual");
+    if (!skipAutoLogin) { validateSession(); }
+};
+
 </script>
 </body>
 </html>
