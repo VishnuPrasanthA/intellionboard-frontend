@@ -326,28 +326,19 @@ input:focus, select:focus {
         </div>
 
         <div class="form-group">
-            <label>Select Role</label>
-            <select id="loginRole" onchange="onLoginRoleChange()">
-                <option value="">Choose Role</option>
-                <optgroup label="── System Administration ──">
-                    <option value="INTELLIONBOARD_ADMIN">IntelliOnboard Admin</option>
-                </optgroup>
-                <optgroup label="── Onboarding Operations ──">
-                    <option value="ADMIN">DL Admin Team (ID Card &amp; Access)</option>
-                    <option value="ITSG">ITSG (Laptop &amp; Asset Allocation)</option>
-                    <option value="HEALTHCARE_PMO">Healthcare PMO</option>
-                    <option value="PMO">Account PMO</option>
-                </optgroup>
-                <optgroup label="── People Roles ──">
-                    <option value="REPORTING_MANAGER">Reporting Manager</option>
-                    <option value="EMPLOYEE">Employee</option>
-                </optgroup>
-                <optgroup label="── Executive ──">
-                    <option value="LEADERSHIP">Leadership</option>
-                </optgroup>
-            </select>
-        </div>
-
+    <label>Select Role</label>
+    <select id="loginRole" onchange="onLoginRoleChange()">
+        <option value="">Choose Role</option>
+        <option value="INTELLIONBOARD_ADMIN">IntelliOnboard Admin</option>
+        <option value="ADMIN">DL Admin Team</option>
+        <option value="ITSG">ITSG</option>
+        <option value="HEALTHCARE_PMO">Healthcare PMO</option>
+        <option value="PMO">Account PMO</option>
+        <option value="REPORTING_MANAGER">Reporting Manager</option>
+        <option value="EMPLOYEE">Employee</option>
+        <option value="LEADERSHIP">Leadership</option>
+    </select>
+</div>
         <!-- Purple notice — only shown for IntelliOnboard Admin -->
         <div class="notice-admin" id="loginAdminNotice">
             <strong>IntelliOnboard Admin</strong> — Application-level administrator.
