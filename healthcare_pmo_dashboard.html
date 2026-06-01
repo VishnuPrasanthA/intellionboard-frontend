@@ -122,7 +122,82 @@ body{
 
     position:relative;
 }
+/* =========================================================
+   ACTION BUTTONS — TABLE
+========================================================= */
 
+.action-buttons {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.onboard-btn {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    background: linear-gradient(135deg, #19d3a2, #0f9e75);
+    color: white;
+    white-space: nowrap;
+    transition: all 0.2s;
+    box-shadow: 0 2px 8px rgba(25,211,162,0.30);
+}
+
+.onboard-btn:hover {
+    box-shadow: 0 4px 14px rgba(25,211,162,0.45);
+}
+
+.onboard-btn:disabled {
+    background: linear-gradient(135deg, #b2f0e0, #d4f5ed);
+    color: #5db898;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.view-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    background: rgba(89,184,255,0.12);
+    color: #3498db;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    padding: 0;
+}
+
+.view-btn:hover {
+    background: rgba(89,184,255,0.25);
+    box-shadow: 0 2px 8px rgba(89,184,255,0.30);
+}
+
+.ticket-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    background: rgba(255,184,77,0.12);
+    color: #f39c12;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    padding: 0;
+}
+
+.ticket-btn:hover {
+    background: rgba(255,184,77,0.25);
+    box-shadow: 0 2px 8px rgba(255,184,77,0.30);
+}
 /* animated background */
 
 body::before{
