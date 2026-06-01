@@ -235,7 +235,115 @@ body::before{
 
     padding-top:96px;
 }
+/* =========================================================
+   POPUP MODAL
+========================================================= */
 
+.popup-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    backdrop-filter: blur(6px);
+    z-index: 9999998;
+    align-items: center;
+    justify-content: center;
+}
+.popup-overlay.open {
+    display: flex;
+}
+.popup-box {
+    background: white;
+    border-radius: 24px;
+    padding: 28px;
+    width: 480px;
+    max-width: 95vw;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.20);
+    animation: popIn 0.25s cubic-bezier(0.22,1,0.36,1);
+    position: relative;
+}
+@keyframes popIn {
+    from { opacity:0; transform:scale(0.92); }
+    to   { opacity:1; transform:scale(1); }
+}
+.popup-close {
+    position: absolute;
+    top: 16px;
+    right: 18px;
+    background: #f0f4f8;
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #7d8da5;
+    transition: 0.2s;
+}
+.popup-close:hover { background: #e0e7ef; }
+
+.popup-title {
+    font-size: 17px;
+    font-weight: 800;
+    color: #172b42;
+    margin-bottom: 4px;
+}
+.popup-sub {
+    font-size: 12px;
+    color: #7d8da5;
+    margin-bottom: 20px;
+}
+.popup-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #f0f4f8;
+    font-size: 13px;
+}
+.popup-row:last-child { border-bottom: none; }
+.popup-row-label {
+    color: #7d8da5;
+    font-weight: 600;
+    font-size: 12px;
+}
+.popup-row-value {
+    font-weight: 700;
+    color: #172b42;
+    text-align: right;
+    max-width: 60%;
+}
+
+/* progress bar inside popup */
+.popup-progress-wrap {
+    background: #e8edf2;
+    border-radius: 30px;
+    height: 10px;
+    overflow: hidden;
+    margin-top: 6px;
+}
+.popup-progress-fill {
+    height: 100%;
+    border-radius: 30px;
+    background: linear-gradient(90deg, #19d3a2, #55ffd5);
+    transition: width 0.6s ease;
+}
+
+/* ticket status chips */
+.ticket-chip {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    color: white;
+}
+.chip-open     { background: linear-gradient(135deg,#3498db,#6dc8ff); }
+.chip-closed   { background: linear-gradient(135deg,#27ae60,#5ee49b); }
+.chip-pending  { background: linear-gradient(135deg,#f39c12,#ffc760); }
+.chip-none     { background: #e0e7ef; color: #7d8da5; }
 /* =========================================================
    SCROLLBAR
 ========================================================= */
@@ -2826,28 +2934,108 @@ const pmoName = safe(
 
 }
 
-function viewTicketStatus(empId) {
+/* =========================================================
+   POPUP HELPERS
+========================================================= */
 
-    const emp = allEmployees.find(
-        e => String(e.emp_id) === String(empId)
-    );
+function closePopup(id) {
+    document.getElementById(id).classList.remove("open");
+}
 
+// close on overlay click
+document.addEventListener("click", function(e) {
+    ["empPopup","ticketPopup"].forEach(id => {
+        const el = document.getElementById(id);
+        if (el && e.target === el) el.classList.remove("open");
+    });
+});
+
+function chipClass(status) {
+    if (!status || status === "N/A" || status === "-") return "chip-none";
+    const s = status.toUpperCase();
+    if (s.includes("CLOSE") || s.includes("COMPLETE") || s.includes("DONE")) return "chip-closed";
+    if (s.includes("OPEN") || s.includes("PROGRESS") || s.includes("ACTIVE")) return "chip-open";
+    if (s.includes("PENDING")) return "chip-pending";
+    return "chip-none";
+}
+
+/* =========================================================
+   👁 VIEW EMPLOYEE — opens detail popup
+========================================================= */
+
+function viewEmployee(empId) {
+    const emp = allEmployees.find(e => String(e.emp_id) === String(empId));
     if (!emp) return;
 
-    showToast("Opening Ticket Status...", "info");
+    const safe = (v) => (!v || v === "undefined" || v === "") ? "N/A" : String(v);
 
-    addChat(
-        "AI",
-        `
-        🎫 Ticket Status<br>
-        👤 Employee: ${emp.emp_name}<br>
-        🆔 Ticket ID: ${emp.ticket_id}<br>
-        📊 Status: ${emp.ticket_status}<br>
-        ⚙ Current Step: ${emp.current_step || "N/A"}
-        `
-    );
+    let progress = Number(emp.progress_percentage || 0);
+    if (!progress) {
+        const step = String(emp.current_step || "").toUpperCase();
+        if (step.includes("COE"))    progress = 100;
+        else if (step.includes("LAPTOP")) progress = 75;
+        else if (step.includes("ID_CARD") || step.includes("ACCESS")) progress = 50;
+        else progress = 25;
+    }
 
-    if (!chatOpen) toggleChat();
+    document.getElementById("empPopup_name").textContent     = safe(emp.emp_name);
+    document.getElementById("empPopup_id").textContent       = "ID: " + safe(emp.emp_id);
+    document.getElementById("empPopup_account").textContent  = safe(emp.account_name || emp.account);
+    document.getElementById("empPopup_rm").textContent       = safe(emp.reporting_manager_name || emp.rm_name || emp.rm);
+    document.getElementById("empPopup_pmo").textContent      = safe(emp.account_pmo_name || emp.pmo_name || emp.pmo);
+    document.getElementById("empPopup_location").textContent = safe(emp.location);
+    document.getElementById("empPopup_status").textContent   = safe(emp.onboarding_status);
+    document.getElementById("empPopup_step").textContent     = safe(emp.current_step).replace(/_/g," ");
+    document.getElementById("empPopup_risk").textContent     = safe(emp.risk_level) || "LOW";
+    document.getElementById("empPopup_pct").textContent      = progress + "%";
+    document.getElementById("empPopup_bar").style.width      = progress + "%";
+
+    document.getElementById("empPopup").classList.add("open");
+}
+
+/* =========================================================
+   🎫 TICKET BUTTON — always opens ticket status popup
+========================================================= */
+
+function viewTicketStatus(empId) {
+    openTicketPopup(empId);
+}
+
+function createTicket(empId) {
+    openTicketPopup(empId);
+}
+
+function openTicketPopup(empId) {
+    const emp = allEmployees.find(e => String(e.emp_id) === String(empId));
+    if (!emp) return;
+
+    const safe = (v) => (!v || v === "undefined" || v === "") ? "N/A" : String(v);
+
+    let progress = Number(emp.progress_percentage || 0);
+    if (!progress) {
+        const step = String(emp.current_step || "").toUpperCase();
+        if (step.includes("COE"))    progress = 100;
+        else if (step.includes("LAPTOP")) progress = 75;
+        else if (step.includes("ID_CARD") || step.includes("ACCESS")) progress = 50;
+        else progress = 25;
+    }
+
+    const idCardStatus   = safe(emp.id_ticket_status   || emp.id_card_status   || "N/A");
+    const laptopStatus   = safe(emp.laptop_ticket_status|| emp.laptop_status    || "N/A");
+
+    document.getElementById("ticketPopup_name").textContent   = safe(emp.emp_name);
+    document.getElementById("ticketPopup_id").textContent     = safe(emp.emp_id);
+    document.getElementById("ticketPopup_status").textContent = safe(emp.onboarding_status);
+    document.getElementById("ticketPopup_step").textContent   = safe(emp.current_step).replace(/_/g," ");
+    document.getElementById("ticketPopup_pct").textContent    = progress + "%";
+    document.getElementById("ticketPopup_bar").style.width    = progress + "%";
+
+    document.getElementById("ticketPopup_id_card").innerHTML =
+        `<span class="ticket-chip ${chipClass(idCardStatus)}">${idCardStatus}</span>`;
+    document.getElementById("ticketPopup_laptop").innerHTML =
+        `<span class="ticket-chip ${chipClass(laptopStatus)}">${laptopStatus}</span>`;
+
+    document.getElementById("ticketPopup").classList.add("open");
 }
 /* =========================================================
    SAFE VALUE
@@ -3603,155 +3791,6 @@ function setValue(id, value) {
    TICKET CREATION
 ========================================================= */
 
-async function createTicket(empId) {
-
-    const btn = document.getElementById(`ticket-${empId}`);
-
-    try {
-
-        /* =========================================================
-           VALIDATION
-        ========================================================= */
-
-        if (!empId) {
-            showToast("Invalid Employee ID", "error");
-            return { success: false };
-        }
-
-        const employee = allEmployees.find(
-            e => String(e.emp_id) === String(empId)
-        );
-
-        if (!employee) {
-            showToast("Employee Not Found", "error");
-            return { success: false };
-        }
-
-        /* =========================================================
-           UI LOCK (PREVENT DOUBLE CLICK)
-        ========================================================= */
-
-        if (btn) {
-            btn.disabled = true;
-            btn.innerText = "⏳ Creating...";
-        }
-
-        showToast("Creating Ticket...", "info");
-
-        /* =========================================================
-           PAYLOAD BUILD
-        ========================================================= */
-
-        const payload = {
-            emp_id: employee.emp_id,
-            emp_name: employee.emp_name,
-            onboarding_status: employee.onboarding_status,
-            current_step: employee.current_step,
-            risk_level: employee.risk_level,
-            account_name: employee.account_name,
-            reporting_manager: employee.reporting_manager_name,
-            pmo: employee.account_pmo_name
-        };
-
-        /* =========================================================
-           API CALL
-        ========================================================= */
-
-        const response = await callAPI(
-            "/api/create-ticket",
-            "POST",
-            payload
-        );
-
-        /* =========================================================
-           SUCCESS FLOW
-        ========================================================= */
-
-        if (response && response.success) {
-
-            showToast(
-                `Ticket Created: ${response.ticket_id}`,
-                "success"
-            );
-
-            /* =========================================================
-               CHAT UPDATE (REALTIME AI FEEDBACK)
-            ========================================================= */
-
-            addChat(
-                "AI",
-                `🎫 Ticket ${response.ticket_id} created for ${employee.emp_name}`
-            );
-
-            /* =========================================================
-               LOCAL STATE UPDATE (OPTIONAL ENRICHMENT)
-            ========================================================= */
-
-            const empIndex = allEmployees.findIndex(
-                e => String(e.emp_id) === String(empId)
-            );
-
-            if (empIndex !== -1) {
-
-                allEmployees[empIndex].ticket_id = response.ticket_id;
-                allEmployees[empIndex].ticket_status = "OPEN";
-            }
-
-            filteredEmployees = [...allEmployees];
-
-            renderEmployees(filteredEmployees);
-
-            /* =========================================================
-               SOCKET SYNC (REALTIME PIPELINE READY)
-            ========================================================= */
-
-            if (socket) {
-                socket.emit("ticket_created", {
-                    ticket_id: response.ticket_id,
-                    emp_id: empId
-                });
-            }
-
-            return {
-                success: true,
-                ticket_id: response.ticket_id,
-                emp_id: empId
-            };
-        }
-
-        /* =========================================================
-           FAILURE FLOW
-        ========================================================= */
-
-        else {
-
-            showToast("Ticket Creation Failed", "error");
-
-            if (btn) {
-                btn.disabled = false;
-                btn.innerText = "🎫 Ticket";
-            }
-
-            return { success: false };
-        }
-
-    } catch (err) {
-
-        console.error("TICKET ERROR", err);
-
-        showToast("Ticket Error", "error");
-
-        if (btn) {
-            btn.disabled = false;
-            btn.innerText = "🎫 Ticket";
-        }
-
-        return {
-            success: false,
-            error: err.message
-        };
-    }
-}
 
 /* =========================================================
    ONBOARDING
@@ -3880,37 +3919,7 @@ async function startOnboarding(empId) {
    VIEW EMPLOYEE
 ========================================================= */
 
-function viewEmployee(empId) {
 
-    const emp =
-        allEmployees.find(
-            e =>
-                String(e.emp_id)
-                === String(empId)
-        );
-
-    if (!emp) return;
-
-    selectedEmployee = emp;
-
-    addChat(
-        "AI",
-        `
-        👤 ${emp.emp_name}
-        <br>
-        📌 Status: ${emp.onboarding_status}
-        <br>
-        📍 Step: ${emp.current_step}
-        <br>
-        ⚠ Risk: ${emp.risk_level}
-        `
-    );
-
-    if (!chatOpen) {
-
-        toggleChat();
-    }
-}
 
 /* =========================================================
    CHAT
@@ -4820,6 +4829,98 @@ async function logout() {
     window.location.href = "https://intellionboard.vercel.app/";
 }
 </script>
+
+    <!-- EMPLOYEE DETAIL POPUP -->
+<div class="popup-overlay" id="empPopup">
+    <div class="popup-box">
+        <button class="popup-close" onclick="closePopup('empPopup')">✕</button>
+        <div class="popup-title" id="empPopup_name">—</div>
+        <div class="popup-sub" id="empPopup_id">—</div>
+
+        <div class="popup-row">
+            <span class="popup-row-label">Account</span>
+            <span class="popup-row-value" id="empPopup_account">—</span>
+        </div>
+        <div class="popup-row">
+            <span class="popup-row-label">Reporting Manager</span>
+            <span class="popup-row-value" id="empPopup_rm">—</span>
+        </div>
+        <div class="popup-row">
+            <span class="popup-row-label">PMO</span>
+            <span class="popup-row-value" id="empPopup_pmo">—</span>
+        </div>
+        <div class="popup-row">
+            <span class="popup-row-label">Location</span>
+            <span class="popup-row-value" id="empPopup_location">—</span>
+        </div>
+        <div class="popup-row">
+            <span class="popup-row-label">Status</span>
+            <span class="popup-row-value" id="empPopup_status">—</span>
+        </div>
+        <div class="popup-row">
+            <span class="popup-row-label">Current Step</span>
+            <span class="popup-row-value" id="empPopup_step">—</span>
+        </div>
+        <div class="popup-row">
+            <span class="popup-row-label">Risk</span>
+            <span class="popup-row-value" id="empPopup_risk">—</span>
+        </div>
+        <div class="popup-row" style="flex-direction:column;align-items:flex-start;gap:8px;">
+            <span class="popup-row-label">Completion Progress</span>
+            <div style="width:100%;">
+                <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+                    <span style="font-size:12px;color:#7d8da5;">Progress</span>
+                    <span style="font-size:13px;font-weight:800;color:#19d3a2;" id="empPopup_pct">0%</span>
+                </div>
+                <div class="popup-progress-wrap">
+                    <div class="popup-progress-fill" id="empPopup_bar" style="width:0%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- TICKET STATUS POPUP -->
+<div class="popup-overlay" id="ticketPopup">
+    <div class="popup-box">
+        <button class="popup-close" onclick="closePopup('ticketPopup')">✕</button>
+        <div class="popup-title" id="ticketPopup_name">—</div>
+        <div class="popup-sub">Ticket Status Overview</div>
+
+        <div class="popup-row">
+            <span class="popup-row-label">Employee ID</span>
+            <span class="popup-row-value" id="ticketPopup_id">—</span>
+        </div>
+        <div class="popup-row">
+            <span class="popup-row-label">ID Card / Access Ticket</span>
+            <span class="popup-row-value" id="ticketPopup_id_card">—</span>
+        </div>
+        <div class="popup-row">
+            <span class="popup-row-label">Laptop / Asset Ticket</span>
+            <span class="popup-row-value" id="ticketPopup_laptop">—</span>
+        </div>
+        <div class="popup-row">
+            <span class="popup-row-label">Onboarding Status</span>
+            <span class="popup-row-value" id="ticketPopup_status">—</span>
+        </div>
+        <div class="popup-row">
+            <span class="popup-row-label">Current Step</span>
+            <span class="popup-row-value" id="ticketPopup_step">—</span>
+        </div>
+        <div class="popup-row" style="flex-direction:column;align-items:flex-start;gap:8px;">
+            <span class="popup-row-label">Overall Completion</span>
+            <div style="width:100%;">
+                <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+                    <span style="font-size:12px;color:#7d8da5;">Progress</span>
+                    <span style="font-size:13px;font-weight:800;color:#19d3a2;" id="ticketPopup_pct">0%</span>
+                </div>
+                <div class="popup-progress-wrap">
+                    <div class="popup-progress-fill" id="ticketPopup_bar" style="width:0%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 </body>
 
 </html>
