@@ -207,30 +207,22 @@ body::before{
 ========================================================= */
 
 .header{
-
-    position:fixed;
-
-    top:14px;
-    left:14px;
-    right:14px;
-
-    z-index:999999;
-
-    display:flex;
-
-    align-items:center;
-
-    justify-content:space-between;
-
-    flex-wrap:nowrap;
-
-    gap:14px;
-
-    padding:14px 18px;
-
-    border-radius:26px;
-
-    overflow:hidden;
+    position: fixed;
+    top: 14px;
+    left: 14px;
+    right: 14px;
+    z-index: 999999;
+    transform: translateZ(0);
+    will-change: transform;
+    -webkit-transform: translateZ(0);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: nowrap;
+    gap: 14px;
+    padding: 14px 18px;
+    border-radius: 26px;
+    overflow: hidden;
 }
 
 /* glowing animated border */
@@ -601,8 +593,6 @@ button{
 }
 
 .glass-card:hover{
-
-    transform:translateY(-4px);
 
     box-shadow:var(--shadow-lg);
 }
