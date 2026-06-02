@@ -1320,7 +1320,7 @@ RESPONSIVE
 
 <script>
 
-const API = "http://127.0.0.1:5332/api/admin";
+const API = "https://intellionboard.onrender.com/api/admin";
 
 /* =========================
    GLOBAL STATE
@@ -1668,7 +1668,7 @@ async function loadDashboard() {
            ONLY TICKET API NEEDED
         ===================================================== */
 
-        const ticketUrl = `http://127.0.0.1:5332/api/admin/tickets`;
+        const ticketUrl = `https://intellionboard.onrender.com/api/admin/tickets`;
 
         console.log("TICKET API:", ticketUrl);
 
@@ -2041,7 +2041,7 @@ function initSocket() {
             return;
         }
 
-        socket = io("http://127.0.0.1:5332", {
+        socket = io("https://intellionboard.onrender.com", {
 
             transports: ["polling"],
 
@@ -2278,8 +2278,7 @@ async function logout(){
 
     try{
 
-        await fetch(
-            BASE_URL + "/api/auth/logout",
+        await fetch("https://intellionboard.onrender.com/api/auth/logout",
             {
                 method:"POST",
                 credentials:"include"
