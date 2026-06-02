@@ -164,7 +164,6 @@ input:focus, select:focus {
     box-shadow: 0 0 0 4px rgba(38,255,186,0.12);
 }
 
-/* ── DEF-FIX: password strength bar ── */
 .pw-strength-wrap {
     margin-top: 8px;
     display: none;
@@ -313,7 +312,6 @@ input:focus, select:focus {
 
     <div class="version">v2.1</div>
 
-    <!-- HEADER -->
     <div class="logo-wrap">
         <div class="logo">
             <img src="logo.png" alt="Logo" />
@@ -325,35 +323,38 @@ input:focus, select:focus {
         </div>
     </div>
 
-    <!-- TABS -->
     <div class="auth-tabs">
         <button class="tab-btn active" id="loginTabBtn"  onclick="showTab('login')">Login</button>
         <button class="tab-btn"        id="signupTabBtn" onclick="showTab('signup')">Sign Up</button>
     </div>
 
-    <!-- ================================================
-         LOGIN FORM
-    ================================================= -->
+    <!-- LOGIN FORM -->
     <div class="form-section" id="loginSection">
 
         <div class="form-group">
             <label>Corporate Email</label>
             <div class="input-box">
-                <input type="email" id="loginEmail" placeholder="Enter @infinite.com email">
+                <input type="email" id="loginEmail"
+                       placeholder="Enter @infinite.com email"
+                       onkeydown="if(event.key==='Enter') login()">
             </div>
         </div>
 
         <div class="form-group">
             <label>Password</label>
             <div class="input-box">
-                <input type="password" id="loginPassword" placeholder="Enter password">
+                <!-- FIX 1: no .trim() on password — use raw .value -->
+                <input type="password" id="loginPassword"
+                       placeholder="Enter password"
+                       onkeydown="if(event.key==='Enter') login()">
                 <span class="show-pass" onclick="togglePassword('loginPassword')">SHOW</span>
             </div>
         </div>
 
         <div class="form-group">
             <label>Select Role</label>
-            <select id="loginRole" onchange="onLoginRoleChange()">
+            <select id="loginRole" onchange="onLoginRoleChange()"
+                    onkeydown="if(event.key==='Enter') login()">
                 <option value="">Choose Role</option>
                 <option value="INTELLIONBOARD_ADMIN">IntelliOnboard Admin</option>
                 <option value="ADMIN">DL Admin Team</option>
@@ -372,10 +373,13 @@ input:focus, select:focus {
             Does not access onboarding dashboards.
         </div>
 
-        <button class="action-btn" onclick="login()">Login to Dashboard</button>
+        <button class="action-btn" id="loginBtn" onclick="login()">
+            Login to Dashboard
+        </button>
 
         <div style="text-align:right; margin-top:8px;">
-            <a href="forgot_password.html" style="color:#7FFFD4; font-size:12px; text-decoration:none; font-weight:600;">
+            <a href="forgot_password.html"
+               style="color:#7FFFD4; font-size:12px; text-decoration:none; font-weight:600;">
                 Forgot Password?
             </a>
         </div>
@@ -384,19 +388,21 @@ input:focus, select:focus {
 
     </div>
 
-    <!-- ================================================
-         SIGNUP FORM
-    ================================================= -->
+    <!-- SIGNUP FORM -->
     <div class="form-section" id="signupSection" style="display:none">
 
         <div class="form-group">
             <label>Employee ID</label>
-            <input type="text" id="signupEmpId" placeholder="Enter your employee ID (e.g. 1023456)">
+            <input type="text" id="signupEmpId"
+                   placeholder="Enter your employee ID (e.g. 1023456)"
+                   onkeydown="if(event.key==='Enter') signup()">
         </div>
 
         <div class="form-group">
             <label>Corporate Email</label>
-            <input type="email" id="signupEmail" placeholder="Enter @infinite.com email">
+            <input type="email" id="signupEmail"
+                   placeholder="Enter @infinite.com email"
+                   onkeydown="if(event.key==='Enter') signup()">
         </div>
 
         <div class="form-group">
@@ -418,16 +424,14 @@ input:focus, select:focus {
         <div class="form-group">
             <label>Password</label>
             <div class="input-box">
-                <input
-                    type="password"
-                    id="signupPassword"
-                    placeholder="Min 8 chars, upper, lower, number, special"
-                    oninput="checkPasswordStrength(this.value)"
-                >
+                <!-- FIX 1: no .trim() — raw .value used in signup() -->
+                <input type="password" id="signupPassword"
+                       placeholder="Min 8 chars, upper, lower, number, special"
+                       oninput="checkPasswordStrength(this.value)"
+                       onkeydown="if(event.key==='Enter') signup()">
                 <span class="show-pass" onclick="togglePassword('signupPassword')">SHOW</span>
             </div>
 
-            <!-- DEF-FIX 1: Password strength indicator -->
             <div class="pw-strength-wrap" id="pwStrengthWrap">
                 <div class="pw-strength-bar">
                     <div class="pw-strength-fill" id="pwStrengthFill"></div>
@@ -443,7 +447,9 @@ input:focus, select:focus {
             </div>
         </div>
 
-        <button class="action-btn" id="signupBtn" onclick="signup()">Create Account</button>
+        <button class="action-btn" id="signupBtn" onclick="signup()">
+            Create Account
+        </button>
 
         <div class="alert error"   id="signupError"></div>
         <div class="alert success" id="signupSuccess"></div>
@@ -459,7 +465,6 @@ input:focus, select:focus {
 
     </div>
 
-    <!-- FOOTER -->
     <div class="footer">
         Powered by <span>AI Orchestration Engine</span><br>
         &copy; 2026 IntelliOnboard
@@ -488,15 +493,15 @@ const ADMIN_ONLY_ROLES    = new Set(["INTELLIONBOARD_ADMIN","ADMIN","ITSG","HEAL
 const SELF_REGISTER_ROLES = new Set(["EMPLOYEE","REPORTING_MANAGER","LEADERSHIP"]);
 
 /* =========================================================
-   DEF-FIX 1: PASSWORD POLICY ENFORCEMENT
-   Rules: min 8 chars, uppercase, lowercase, number, special
+   PASSWORD POLICY
+   Rules: min 8, uppercase, lowercase, number, special char
 ========================================================= */
 const PW_RULES = {
-    len:     { re: /.{8,}/,                    id: "ruleLen",     label: "✓ At least 8 characters" },
-    upper:   { re: /[A-Z]/,                    id: "ruleUpper",   label: "✓ At least one uppercase letter (A–Z)" },
-    lower:   { re: /[a-z]/,                    id: "ruleLower",   label: "✓ At least one lowercase letter (a–z)" },
-    num:     { re: /[0-9]/,                    id: "ruleNum",     label: "✓ At least one number (0–9)" },
-    special: { re: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]/, id: "ruleSpecial", label: "✓ At least one special character (!@#$%^&*)" },
+    len:     { re: /.{8,}/,                                           id: "ruleLen",     label: "✓ At least 8 characters" },
+    upper:   { re: /[A-Z]/,                                           id: "ruleUpper",   label: "✓ At least one uppercase letter (A–Z)" },
+    lower:   { re: /[a-z]/,                                           id: "ruleLower",   label: "✓ At least one lowercase letter (a–z)" },
+    num:     { re: /[0-9]/,                                           id: "ruleNum",     label: "✓ At least one number (0–9)" },
+    special: { re: /[!@#$%^&*()\-_=+\[\]{};':"\\|,.<>\/?`~]/,       id: "ruleSpecial", label: "✓ At least one special character (!@#$%^&*)" },
 };
 
 const PW_FAIL_LABELS = {
@@ -510,17 +515,13 @@ const PW_FAIL_LABELS = {
 function checkPasswordStrength(pw) {
     const wrap = document.getElementById("pwStrengthWrap");
     if (!wrap) return;
-
-    if (!pw) {
-        wrap.style.display = "none";
-        return;
-    }
+    if (!pw) { wrap.style.display = "none"; return; }
     wrap.style.display = "block";
 
     let passed = 0;
     for (const [key, rule] of Object.entries(PW_RULES)) {
-        const ok  = rule.re.test(pw);
-        const el  = document.getElementById(rule.id);
+        const ok = rule.re.test(pw);
+        const el = document.getElementById(rule.id);
         if (el) {
             el.textContent = ok ? rule.label : PW_FAIL_LABELS[key];
             el.className   = ok ? "ok" : "bad";
@@ -530,26 +531,16 @@ function checkPasswordStrength(pw) {
 
     const fill  = document.getElementById("pwStrengthFill");
     const label = document.getElementById("pwStrengthLabel");
-    const pct   = (passed / 5) * 100;
-
-    fill.style.width = pct + "%";
+    fill.style.width = ((passed / 5) * 100) + "%";
 
     if (passed <= 1) {
-        fill.style.background  = "#ff5f5f";
-        label.textContent      = "Weak";
-        label.style.color      = "#ff5f5f";
+        fill.style.background = "#ff5f5f"; label.textContent = "Weak";     label.style.color = "#ff5f5f";
     } else if (passed <= 3) {
-        fill.style.background  = "#ffb84d";
-        label.textContent      = "Fair";
-        label.style.color      = "#ffb84d";
+        fill.style.background = "#ffb84d"; label.textContent = "Fair";     label.style.color = "#ffb84d";
     } else if (passed === 4) {
-        fill.style.background  = "#59b8ff";
-        label.textContent      = "Good";
-        label.style.color      = "#59b8ff";
+        fill.style.background = "#59b8ff"; label.textContent = "Good";     label.style.color = "#59b8ff";
     } else {
-        fill.style.background  = "#7FFFD4";
-        label.textContent      = "Strong ✓";
-        label.style.color      = "#7FFFD4";
+        fill.style.background = "#7FFFD4"; label.textContent = "Strong ✓"; label.style.color = "#7FFFD4";
     }
 }
 
@@ -572,8 +563,8 @@ function showTab(tab) {
    PASSWORD TOGGLE
 ========================================================= */
 function togglePassword(id) {
-    const field = document.getElementById(id);
-    field.type  = field.type === "password" ? "text" : "password";
+    const f = document.getElementById(id);
+    f.type  = f.type === "password" ? "text" : "password";
 }
 
 /* =========================================================
@@ -584,7 +575,7 @@ function isValidCorporateEmail(email) {
 }
 
 /* =========================================================
-   LOGIN ROLE CHANGE
+   ROLE CHANGE HANDLERS
 ========================================================= */
 function onLoginRoleChange() {
     const role = document.getElementById("loginRole").value;
@@ -592,9 +583,6 @@ function onLoginRoleChange() {
         role === "INTELLIONBOARD_ADMIN" ? "block" : "none";
 }
 
-/* =========================================================
-   SIGNUP ROLE CHANGE
-========================================================= */
 function onSignupRoleChange() {
     const role = document.getElementById("signupRole").value;
     document.getElementById("signupInfoNotice").style.display =
@@ -606,35 +594,26 @@ function onSignupRoleChange() {
 ========================================================= */
 function redirectByRole(role) {
     role = String(role || "").trim().toUpperCase();
-    console.log("REDIRECT ROLE =>", role);
-
-    if (role === "EMPLOYEE") {
-        handleEmployeeRouting();
-        return;
-    }
-
+    if (role === "EMPLOYEE") { handleEmployeeRouting(); return; }
     const url = ROLE_ROUTES[role];
     if (url) {
         window.location.href = url;
     } else {
-        console.error("UNKNOWN ROLE =>", role);
         showError("loginError",
-            "Unrecognised role: " + role +
-            ". Contact IntelliOnboard-Admin@infinite.com.");
+            "Unrecognised role: " + role + ". Contact IntelliOnboard-Admin@infinite.com.");
     }
 }
 
 /* =========================================================
    EMPLOYEE ROUTING
+   FIX 6: replaced alert() with showError() for proper UI
 ========================================================= */
 async function handleEmployeeRouting() {
     try {
         const emp_id = localStorage.getItem("emp_id");
-        console.log("LOCAL STORAGE EMP ID =>", emp_id);
 
         if (!emp_id || emp_id === "null" || emp_id === "undefined") {
-            alert("Session expired. Please login again.");
-            window.location.href = "login.html";
+            showError("loginError", "Session expired. Please login again.");
             return;
         }
 
@@ -645,54 +624,53 @@ async function handleEmployeeRouting() {
         });
 
         if (!res.ok) {
-            console.error("API FAILED =>", res.status);
-            alert("Employee fetch failed");
+            showError("loginError", "Employee data fetch failed. Please try again.");
             return;
         }
 
         const response = await res.json();
-        console.log("EMPLOYEE API RESPONSE =>", response);
 
         if (!response.success) {
-            alert(response.message || "Employee not found");
+            showError("loginError", response.message || "Employee not found in system.");
             return;
         }
 
-        const employee      = response.employee || {};
-        const employeeName  = employee.emp_name || employee.name || "Employee";
-        const employeeEmail = employee.email || "";
-        const selectedCOE   = response.selected_coe || employee.selected_coe || "";
+        const employee     = response.employee || {};
+        const employeeName = employee.emp_name || employee.name || "Employee";
+        const selectedCOE  = response.selected_coe || employee.selected_coe || "";
 
         localStorage.setItem("emp_id",    response.emp_id || emp_id);
         localStorage.setItem("emp_name",  employeeName);
-        localStorage.setItem("emp_email", employeeEmail);
+        localStorage.setItem("emp_email", employee.email || "");
         localStorage.setItem("coe",       selectedCOE);
 
-        if (selectedCOE && selectedCOE !== "null" && selectedCOE !== "") {
-            window.location.href = "employee_dashboard.html";
-        } else {
-            window.location.href = "bot.html";
-        }
+        window.location.href = (selectedCOE && selectedCOE !== "null" && selectedCOE !== "")
+            ? "employee_dashboard.html"
+            : "bot.html";
 
     } catch (err) {
         console.error("Employee Routing Error =>", err);
-        alert("Employee routing failed. Check console.");
+        showError("loginError", "Employee routing failed. Please try again.");
     }
 }
 
 /* =========================================================
    LOGIN
-   DEF-FIX 2: Show specific error for wrong password vs
-              wrong credentials. Backend must return
-              error_code: "WRONG_PASSWORD" or "USER_NOT_FOUND"
-              for specific messages — fallback kept generic.
+   FIX 1: password read with .value — no .trim()
+   FIX 2: selected role sent to backend for server-side check
+   FIX 5: button stays disabled until redirect completes
 ========================================================= */
 async function login() {
+    const btn = document.getElementById("loginBtn");
+
+    // FIX 5: guard against double-submit
+    if (btn.disabled) return;
+
     try {
         hideAlerts();
 
         const email        = document.getElementById("loginEmail").value.trim().toLowerCase();
-        const password     = document.getElementById("loginPassword").value.trim();
+        const password     = document.getElementById("loginPassword").value;   // FIX 1: no .trim()
         const selectedRole = document.getElementById("loginRole").value.trim().toUpperCase();
 
         if (!email || !password || !selectedRole) {
@@ -704,7 +682,6 @@ async function login() {
             return;
         }
 
-        const btn = document.querySelector("#loginSection .action-btn");
         btn.disabled    = true;
         btn.textContent = "Signing in…";
 
@@ -712,40 +689,32 @@ async function login() {
             method: "POST",
             credentials: "include",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email, password })
+            // FIX 2: send selected_role so backend validates role server-side
+            body: JSON.stringify({ email, password, selected_role: selectedRole })
         });
 
         let result;
-        try {
-            result = await response.json();
-        } catch (e) {
-            showError("loginError", "Invalid backend response.");
-            return;
-        }
-
-        console.log("LOGIN RESPONSE =>", result);
+        try { result = await response.json(); }
+        catch (e) { showError("loginError", "Invalid backend response."); return; }
 
         if (!response.ok || !result.success) {
-            // ── DEF-FIX 2: specific error messages ──────────
+            // Specific error messages based on error_code from backend
             const code = result.error_code || "";
             if (code === "WRONG_PASSWORD") {
                 showError("loginError", "Incorrect password. Please try again.");
             } else if (code === "USER_NOT_FOUND") {
                 showError("loginError", "No account found with this email address.");
+            } else if (code === "ROLE_MISMATCH") {
+                // FIX 2: backend now validates role and returns this code
+                showError("loginError",
+                    `Incorrect role selected. This account is registered as: ${result.actual_role || "unknown"}.`);
             } else {
-                // Generic fallback — backend didn't send error_code
                 showError("loginError", result.message || "Incorrect password. Please try again.");
             }
             return;
         }
 
         const backendRole = String(result.user?.role || "").trim().toUpperCase();
-
-        if (backendRole !== selectedRole) {
-            showError("loginError",
-                `Incorrect role selected. This account is registered as: ${backendRole}.`);
-            return;
-        }
 
         localStorage.setItem("token",         result.token          || "session-active");
         localStorage.setItem("user_email",    result.user?.email    || "");
@@ -755,32 +724,34 @@ async function login() {
         localStorage.setItem("emp_id",        result.user?.emp_id   || "");
         localStorage.setItem("user_id",       result.user?.id       || "");
 
+        // FIX 5: button stays disabled — redirectByRole navigates away
         redirectByRole(backendRole);
 
     } catch (error) {
         console.error("LOGIN ERROR =>", error);
         showError("loginError", "Server not reachable. Check backend.");
-    } finally {
-        const btn = document.querySelector("#loginSection .action-btn");
-        if (btn) { btn.disabled = false; btn.textContent = "Login to Dashboard"; }
+        btn.disabled    = false;
+        btn.textContent = "Login to Dashboard";
     }
+    // FIX 5: no finally{} re-enable — button stays disabled during redirect
 }
 
 /* =========================================================
    SIGNUP
-   DEF-FIX 1: Full password policy enforced before submit
-   DEF-FIX 3: emp_id + email verified server-side against
-              employees table — backend rejects mismatches
-              (frontend sends emp_id so backend can cross-check)
+   FIX 1: password read with .value — no .trim()
+   FIX 4: strength check uses raw value (not trimmed)
 ========================================================= */
 async function signup() {
+    const btn = document.getElementById("signupBtn");
+    if (btn.disabled) return;
+
     try {
         hideAlerts();
 
         const emp_id   = document.getElementById("signupEmpId").value.trim();
         const email    = document.getElementById("signupEmail").value.trim().toLowerCase();
         const role     = document.getElementById("signupRole").value.trim().toUpperCase();
-        const password = document.getElementById("signupPassword").value.trim();
+        const password = document.getElementById("signupPassword").value;   // FIX 1+4: no .trim()
 
         if (!emp_id || !email || !role || !password) {
             showError("signupError", "Please fill all mandatory fields.");
@@ -791,7 +762,7 @@ async function signup() {
             return;
         }
 
-        // ── DEF-FIX 1: enforce full password policy ─────────
+        // FIX 1+4: strength check on raw password value
         if (!isStrongPassword(password)) {
             showError("signupError",
                 "Password must be at least 8 characters and include: " +
@@ -809,23 +780,11 @@ async function signup() {
             return;
         }
 
-        const btn = document.getElementById("signupBtn");
         btn.disabled    = true;
         btn.textContent = "Creating account…";
 
-        /*
-          DEF-FIX 3: emp_id sent to backend so it can verify
-          the email belongs to THIS employee in the employees table.
-          Backend must reject if employees.email !== submitted email
-          OR employees.emp_id !== submitted emp_id.
-          Role intentionally omitted — derived server-side.
-        */
-        const payload = {
-            emp_id:   emp_id,
-            email:    email,
-            password: password
-            // role NOT sent — backend derives from DB
-        };
+        // role NOT sent — backend derives from employees table
+        const payload = { emp_id, email, password };
 
         const response = await fetch(`${API_BASE}/api/auth/register`, {
             method: "POST",
@@ -835,14 +794,8 @@ async function signup() {
         });
 
         let result;
-        try {
-            result = await response.json();
-        } catch (parseError) {
-            showError("signupError", "Invalid backend response.");
-            return;
-        }
-
-        console.log("REGISTER RESPONSE =>", result);
+        try { result = await response.json(); }
+        catch (e) { showError("signupError", "Invalid backend response."); return; }
 
         if (!response.ok || !result.success) {
             showError("signupError",
@@ -862,8 +815,9 @@ async function signup() {
         console.error("SIGNUP ERROR =>", error);
         showError("signupError", "Backend connection failed. Try again.");
     } finally {
-        const btn = document.getElementById("signupBtn");
-        if (btn) { btn.disabled = false; btn.textContent = "Create Account"; }
+        // signup always re-enables — no redirect on signup
+        btn.disabled    = false;
+        btn.textContent = "Create Account";
     }
 }
 
@@ -903,7 +857,6 @@ async function validateSession() {
         });
 
         if (!response.ok) return;
-
         const result = await response.json();
         if (!result.success) return;
 
@@ -925,12 +878,9 @@ async function validateSession() {
     }
 }
 
-/* =========================================================
-   AUTO SESSION CHECK ON LOAD
-========================================================= */
 window.onload = () => {
     const skipAutoLogin = window.location.search.includes("manual");
-    if (!skipAutoLogin) { validateSession(); }
+    if (!skipAutoLogin) validateSession();
 };
 </script>
 </body>
