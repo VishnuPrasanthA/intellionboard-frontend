@@ -3640,111 +3640,35 @@ async function plotAllLocations(data) {
         markers.forEach(m => map.removeLayer(m));
         markers = [];
 
-        /* =====================================================
-           CITY ALIASES — maps any variation → canonical name
-           Add more rows as you discover new variations in DB
-        ===================================================== */
         const CITY_ALIASES = {
-            // Bengaluru / Bangalore
-            "bengaluru":         "Bengaluru",
-            "bangalore":         "Bengaluru",
-            "bangaluru":         "Bengaluru",
-            "bangaluru campus":  "Bengaluru",
-            "bengaluru campus":  "Bengaluru",
-            "bengaluru gate":    "Bengaluru",
-            "bangalore campus":  "Bengaluru",
-            "blr":               "Bengaluru",
-            "bang":              "Bengaluru",
-
-            // Hyderabad
-            "hyderabad":         "Hyderabad",
-            "hyd":               "Hyderabad",
-            "hyderabad campus":  "Hyderabad",
-            "hyderabad office":  "Hyderabad",
-
-            // Chennai
-            "chennai":           "Chennai",
-            "chennai campus":    "Chennai",
-            "chennapatha":       "Chennai",
-            "chenap pa":         "Chennai",
-            "chennai pecifia":   "Chennai",
-            "chennai pacific":   "Chennai",
-            "madras":            "Chennai",
-            "maa":               "Chennai",
-
-            // Mumbai
-            "mumbai":            "Mumbai",
-            "bombay":            "Mumbai",
-            "mumbai campus":     "Mumbai",
-            "bom":               "Mumbai",
-
-            // Pune
-            "pune":              "Pune",
-            "puna":              "Pune",
-            "pune campus":       "Pune",
-
-            // Delhi / NCR
-            "delhi":             "Delhi",
-            "new delhi":         "Delhi",
-            "delhi ncr":         "Delhi",
-            "ncr":               "Delhi",
-            "del":               "Delhi",
-
-            // Noida
-            "noida":             "Noida",
-            "noida campus":      "Noida",
-
-            // Gurugram / Gurgaon
-            "gurugram":          "Gurugram",
-            "gurgaon":           "Gurugram",
-
-            // Kolkata
-            "kolkata":           "Kolkata",
-            "calcutta":          "Kolkata",
-            "kol":               "Kolkata",
-
-            // Coimbatore
-            "coimbatore":        "Coimbatore",
-            "cbe":               "Coimbatore",
-
-            // Kochi
-            "kochi":             "Kochi",
-            "cochin":            "Kochi",
-            "ernakulam":         "Kochi",
-
-            // Vizag
-            "visakhapatnam":     "Visakhapatnam",
-            "vizag":             "Visakhapatnam",
-            "vishakhapatnam":    "Visakhapatnam",
-
-            // Ahmedabad
-            "ahmedabad":         "Ahmedabad",
-            "amdavad":           "Ahmedabad",
-            "amd":               "Ahmedabad",
-
-            // Kolhapur
-            "kolhapur":          "Kolhapur",
-
-            // Nagpur
-            "nagpur":            "Nagpur",
-
-            // Jaipur
-            "jaipur":            "Jaipur",
-
-            // Trivandrum
-            "thiruvananthapuram":"Thiruvananthapuram",
-            "trivandrum":        "Thiruvananthapuram",
-
-            // USA fallback
-            "usa":               "USA",
-            "us":                "USA",
-            "united states":     "USA",
+            "bengaluru": "Bengaluru", "bangalore": "Bengaluru",
+            "bangaluru": "Bengaluru", "bangaluru campus": "Bengaluru",
+            "bengaluru campus": "Bengaluru", "bengaluru gate": "Bengaluru",
+            "bangalore campus": "Bengaluru", "blr": "Bengaluru",
+            "hyderabad": "Hyderabad", "hyd": "Hyderabad",
+            "hyderabad campus": "Hyderabad", "hyderabad office": "Hyderabad",
+            "chennai": "Chennai", "chennai campus": "Chennai",
+            "chennapatha": "Chennai", "chenap pa": "Chennai",
+            "chennai pecifia": "Chennai", "chennai pacific": "Chennai",
+            "madras": "Chennai", "maa": "Chennai",
+            "mumbai": "Mumbai", "bombay": "Mumbai",
+            "mumbai campus": "Mumbai", "bom": "Mumbai",
+            "pune": "Pune", "puna": "Pune", "pune campus": "Pune",
+            "delhi": "Delhi", "new delhi": "Delhi",
+            "delhi ncr": "Delhi", "ncr": "Delhi", "del": "Delhi",
+            "noida": "Noida", "noida campus": "Noida",
+            "gurugram": "Gurugram", "gurgaon": "Gurugram",
+            "kolkata": "Kolkata", "calcutta": "Kolkata", "kol": "Kolkata",
+            "coimbatore": "Coimbatore", "cbe": "Coimbatore",
+            "kochi": "Kochi", "cochin": "Kochi", "ernakulam": "Kochi",
+            "visakhapatnam": "Visakhapatnam", "vizag": "Visakhapatnam",
+            "vishakhapatnam": "Visakhapatnam",
+            "ahmedabad": "Ahmedabad", "amdavad": "Ahmedabad", "amd": "Ahmedabad",
+            "kolhapur": "Kolhapur", "nagpur": "Nagpur", "jaipur": "Jaipur",
+            "thiruvananthapuram": "Thiruvananthapuram", "trivandrum": "Thiruvananthapuram",
+            "usa": "USA", "us": "USA", "united states": "USA",
         };
 
-        /* =====================================================
-           CANONICAL CITY COORDINATES
-           Only one coordinate per canonical name
-        ===================================================== */
         const CITY_COORDS = {
             "Bengaluru":          [12.9716,  77.5946],
             "Hyderabad":          [17.3850,  78.4867],
@@ -3766,44 +3690,24 @@ async function plotAllLocations(data) {
             "USA":                [37.0902, -95.7129],
         };
 
-        /* =====================================================
-           STEP 1 — Normalize every employee location to
-           a canonical city name using CITY_ALIASES.
-           Fuzzy match: strip punctuation, lowercase, trim,
-           then check if any alias is contained in the string
-           or the string is contained in the alias.
-        ===================================================== */
         function normalizeCity(raw) {
             if (!raw) return null;
+            const cleaned = raw.toLowerCase().trim()
+                .replace(/[^a-z0-9 ]/g, " ")
+                .replace(/\s+/g, " ").trim();
 
-            const cleaned = raw
-                .toLowerCase()
-                .trim()
-                .replace(/[^a-z0-9 ]/g, " ")   // remove special chars
-                .replace(/\s+/g, " ")            // collapse spaces
-                .trim();
+            if (CITY_ALIASES[cleaned]) return CITY_ALIASES[cleaned];
 
-            // Exact alias match first
-            if (CITY_ALIASES[cleaned]) {
-                return CITY_ALIASES[cleaned];
-            }
-
-            // Partial match — check if cleaned contains any alias key
             for (const [alias, canonical] of Object.entries(CITY_ALIASES)) {
                 if (cleaned.includes(alias) || alias.includes(cleaned)) {
                     return canonical;
                 }
             }
-
-            // No match — return title-cased raw value as fallback
             return raw.trim().replace(/\b\w/g, c => c.toUpperCase());
         }
 
-        /* =====================================================
-           STEP 2 — Group by canonical city name
-        ===================================================== */
+        // ── Group by canonical city ──────────────────────
         const cityGroups = {};
-
         data.forEach(emp => {
             const canonical = normalizeCity(emp.location);
             if (!canonical) return;
@@ -3815,160 +3719,100 @@ async function plotAllLocations(data) {
         });
 
         console.log("MAP CITIES:", Object.keys(cityGroups).map(
-            c => `${c}: ${cityGroups[c].count}`
+            c => `${c}:${cityGroups[c].count}`
         ).join(" | "));
 
-        /* =====================================================
-           STEP 3 — Plot one marker per canonical city
-        ===================================================== */
+        // ── Plot one pin per city ─────────────────────────
         for (const [city, group] of Object.entries(cityGroups)) {
 
             let coords = CITY_COORDS[city];
 
-            // If not in known list, try Nominatim as fallback
             if (!coords) {
                 try {
-                    const res  = await fetch(
+                    const res = await fetch(
                         `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(city)}&limit=1`
                     );
-                    const geo  = await res.json();
+                    const geo = await res.json();
                     if (geo.length) {
                         coords = [parseFloat(geo[0].lat), parseFloat(geo[0].lon)];
                     }
                 } catch (e) {
-                    console.warn(`Geocode failed for: ${city}`);
+                    console.warn(`Geocode failed: ${city}`);
                 }
             }
 
             if (!coords) {
-                console.warn(`No coordinates found for: ${city}`);
+                console.warn(`No coords for: ${city}`);
                 continue;
             }
 
-            // Scale bubble size by headcount (min 12, max 38)
-            // Custom pin icon with employee count badge
-const pinIcon = L.divIcon({
-    className: "",
-    html: `
-        <div style="
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        ">
-            <!-- Count badge -->
-            <div style="
-                background: #19d3a2;
-                color: #fff;
-                font-size: 11px;
-                font-weight: 800;
-                font-family: Arial;
-                padding: 3px 7px;
-                border-radius: 12px;
-                border: 2px solid #0a7a5e;
-                white-space: nowrap;
-                box-shadow: 0 2px 6px rgba(0,0,0,0.25);
-                margin-bottom: 2px;
-            ">${group.count}</div>
-
-            <!-- Pin stem -->
-            <svg width="24" height="32" viewBox="0 0 24 32"
-                 xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 0C5.373 0 0 5.373 0 12c0 8.25 12 20 12 20S24 20.25 24 12C24 5.373 18.627 0 12 0z"
-                      fill="#19d3a2" stroke="#0a7a5e" stroke-width="1.5"/>
-                <circle cx="12" cy="11" r="5" fill="white"/>
-            </svg>
-
-            <!-- City label -->
-            <div style="
-                background: rgba(255,255,255,0.92);
-                color: #172b42;
-                font-size: 10px;
-                font-weight: 700;
-                font-family: Arial;
-                padding: 2px 6px;
-                border-radius: 6px;
-                border: 1px solid #e0e7ef;
-                white-space: nowrap;
-                margin-top: 1px;
-                box-shadow: 0 1px 4px rgba(0,0,0,0.12);
-            ">${city}</div>
-        </div>
-    `,
-    iconSize:   [80, 80],
-    iconAnchor: [40, 46],   // tip of the pin
-    popupAnchor:[0, -48],
-});
-
-const marker = L.marker(coords, { icon: pinIcon })
-    .addTo(map)
-    .bindPopup(`
-        <div style="font-family:Arial;min-width:160px;">
-            <div style="font-size:15px;font-weight:800;color:#172b42;
-                        border-bottom:1px solid #eef3f8;padding-bottom:6px;
-                        margin-bottom:8px;">
-                📍 ${city}
-            </div>
-            <div style="font-size:13px;margin-bottom:4px;">
-                <b style="color:#19d3a2;font-size:20px;">${group.count}</b>
-                <span style="color:#7d8da5;"> employees</span>
-            </div>
-            <div style="font-size:11px;color:#555;line-height:1.9;">
-                ⏳ Pending &nbsp;&nbsp;&nbsp;: <b>${pending}</b><br>
-                🔄 In Progress : <b>${started}</b><br>
-                ✅ Completed &nbsp;: <b>${completed}</b>
-            </div>
-        </div>
-    `);
-
-markers.push(marker);
-
-            // Count onboarding statuses for popup breakdown
-            const started   = group.employees.filter(e =>
+            // ── Calculate breakdown BEFORE building popup ─
+            const started = group.employees.filter(e =>
                 String(e.onboarding_status || "").toUpperCase().includes("PROGRESS")
             ).length;
             const completed = group.employees.filter(e =>
                 String(e.onboarding_status || "").toUpperCase().includes("COMPLETE")
             ).length;
-            const pending   = group.count - started - completed;
+            const pending = group.count - started - completed;
 
-            const circle = L.circleMarker(coords, {
-                radius:      radius,
-                fillColor:   "#19d3a2",
-                color:       "#0a7a5e",
-                weight:      2,
-                opacity:     1,
-                fillOpacity: 0.75,
-            })
-            .addTo(map)
-            .bindPopup(`
-                <div style="font-family:Arial;min-width:160px;">
-                    <div style="font-size:15px;font-weight:800;color:#172b42;
-                                border-bottom:1px solid #eef3f8;padding-bottom:6px;
-                                margin-bottom:8px;">
-                        📍 ${city}
+            // ── Build pin icon ────────────────────────────
+            const pinIcon = L.divIcon({
+                className: "",
+                html: `
+                    <div style="position:relative;display:flex;flex-direction:column;align-items:center;">
+                        <div style="
+                            background:#19d3a2;color:#fff;font-size:11px;font-weight:800;
+                            font-family:Arial;padding:3px 8px;border-radius:12px;
+                            border:2px solid #0a7a5e;white-space:nowrap;
+                            box-shadow:0 2px 6px rgba(0,0,0,0.25);margin-bottom:2px;
+                        ">${group.count}</div>
+                        <svg width="24" height="32" viewBox="0 0 24 32" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 0C5.373 0 0 5.373 0 12c0 8.25 12 20 12 20S24 20.25 24 12C24 5.373 18.627 0 12 0z"
+                                  fill="#19d3a2" stroke="#0a7a5e" stroke-width="1.5"/>
+                            <circle cx="12" cy="11" r="5" fill="white"/>
+                        </svg>
+                        <div style="
+                            background:rgba(255,255,255,0.95);color:#172b42;font-size:10px;
+                            font-weight:700;font-family:Arial;padding:2px 7px;border-radius:6px;
+                            border:1px solid #e0e7ef;white-space:nowrap;margin-top:1px;
+                            box-shadow:0 1px 4px rgba(0,0,0,0.12);
+                        ">${city}</div>
                     </div>
-                    <div style="font-size:13px;margin-bottom:4px;">
-                        <b style="color:#19d3a2;font-size:20px;">${group.count}</b>
-                        <span style="color:#7d8da5;"> employees</span>
-                    </div>
-                    <div style="font-size:11px;color:#555;line-height:1.9;">
-                        ⏳ Pending &nbsp;&nbsp;&nbsp;: <b>${pending}</b><br>
-                        🔄 In Progress : <b>${started}</b><br>
-                        ✅ Completed &nbsp;: <b>${completed}</b>
-                    </div>
-                </div>
-            `);
+                `,
+                iconSize:    [90, 85],
+                iconAnchor:  [45, 50],
+                popupAnchor: [0, -52],
+            });
 
-            markers.push(circle);
+            // ── Create marker with popup ──────────────────
+            const marker = L.marker(coords, { icon: pinIcon })
+                .addTo(map)
+                .bindPopup(`
+                    <div style="font-family:Arial;min-width:170px;">
+                        <div style="font-size:15px;font-weight:800;color:#172b42;
+                                    border-bottom:1px solid #eef3f8;padding-bottom:6px;
+                                    margin-bottom:8px;">
+                            📍 ${city}
+                        </div>
+                        <div style="font-size:13px;margin-bottom:6px;">
+                            <b style="color:#19d3a2;font-size:22px;">${group.count}</b>
+                            <span style="color:#7d8da5;font-size:12px;"> employees</span>
+                        </div>
+                        <div style="font-size:12px;color:#444;line-height:2;">
+                            ⏳ Pending &nbsp;&nbsp;&nbsp;: <b>${pending}</b><br>
+                            🔄 In Progress : <b>${started}</b><br>
+                            ✅ Completed &nbsp;: <b>${completed}</b>
+                        </div>
+                    </div>
+                `);
+
+            markers.push(marker);
         }
 
-        /* =====================================================
-           STEP 4 — Auto-fit map to show all markers
-        ===================================================== */
+        // ── Auto-fit map bounds ───────────────────────────
         if (markers.length > 0) {
             const group = L.featureGroup(markers);
-            map.fitBounds(group.getBounds().pad(0.25));
+            map.fitBounds(group.getBounds().pad(0.3));
         }
 
     } catch (err) {
