@@ -3846,7 +3846,82 @@ async function plotAllLocations(data) {
             }
 
             // Scale bubble size by headcount (min 12, max 38)
-            const radius = Math.min(12 + Math.sqrt(group.count) * 2.5, 38);
+            // Custom pin icon with employee count badge
+const pinIcon = L.divIcon({
+    className: "",
+    html: `
+        <div style="
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        ">
+            <!-- Count badge -->
+            <div style="
+                background: #19d3a2;
+                color: #fff;
+                font-size: 11px;
+                font-weight: 800;
+                font-family: Arial;
+                padding: 3px 7px;
+                border-radius: 12px;
+                border: 2px solid #0a7a5e;
+                white-space: nowrap;
+                box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+                margin-bottom: 2px;
+            ">${group.count}</div>
+
+            <!-- Pin stem -->
+            <svg width="24" height="32" viewBox="0 0 24 32"
+                 xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 0C5.373 0 0 5.373 0 12c0 8.25 12 20 12 20S24 20.25 24 12C24 5.373 18.627 0 12 0z"
+                      fill="#19d3a2" stroke="#0a7a5e" stroke-width="1.5"/>
+                <circle cx="12" cy="11" r="5" fill="white"/>
+            </svg>
+
+            <!-- City label -->
+            <div style="
+                background: rgba(255,255,255,0.92);
+                color: #172b42;
+                font-size: 10px;
+                font-weight: 700;
+                font-family: Arial;
+                padding: 2px 6px;
+                border-radius: 6px;
+                border: 1px solid #e0e7ef;
+                white-space: nowrap;
+                margin-top: 1px;
+                box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+            ">${city}</div>
+        </div>
+    `,
+    iconSize:   [80, 80],
+    iconAnchor: [40, 46],   // tip of the pin
+    popupAnchor:[0, -48],
+});
+
+const marker = L.marker(coords, { icon: pinIcon })
+    .addTo(map)
+    .bindPopup(`
+        <div style="font-family:Arial;min-width:160px;">
+            <div style="font-size:15px;font-weight:800;color:#172b42;
+                        border-bottom:1px solid #eef3f8;padding-bottom:6px;
+                        margin-bottom:8px;">
+                📍 ${city}
+            </div>
+            <div style="font-size:13px;margin-bottom:4px;">
+                <b style="color:#19d3a2;font-size:20px;">${group.count}</b>
+                <span style="color:#7d8da5;"> employees</span>
+            </div>
+            <div style="font-size:11px;color:#555;line-height:1.9;">
+                ⏳ Pending &nbsp;&nbsp;&nbsp;: <b>${pending}</b><br>
+                🔄 In Progress : <b>${started}</b><br>
+                ✅ Completed &nbsp;: <b>${completed}</b>
+            </div>
+        </div>
+    `);
+
+markers.push(marker);
 
             // Count onboarding statuses for popup breakdown
             const started   = group.employees.filter(e =>
