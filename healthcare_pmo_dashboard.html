@@ -1167,6 +1167,7 @@ tbody tr:hover{ background:linear-gradient(90deg,rgba(25,211,162,.04),rgba(89,18
         <button class="quick-btn" onclick="quickAction('completed')">✅ Completed</button>
         <button class="quick-btn" onclick="quickAction('high risk')">⚠ High Risk</button>
         <button class="quick-btn" onclick="showOnboardInput()">🚀 Onboard Employee</button>
+        <button class="quick-btn" onclick="showBulkConfirm()">📦 Bulk Onboard</button>
     </div>
 
     <div class="chat-input">
@@ -3214,7 +3215,117 @@ function showOnboardInput() {
         if (inp) inp.focus();
     }, 100);
 }
+// ── Bulk Onboard with Confirmation ────────────────────────
+function showBulkConfirm() {
+    const body = document.getElementById("chatBody");
+    if (!body) return;
 
+    // Remove existing if any
+    const existing = document.getElementById("bulkConfirmGroup");
+    if (existing) existing.remove();
+
+    const pending = allEmployees.filter(emp =>
+        String(emp.onboarding_status || "").toUpperCase().includes("PENDING")
+    );
+
+    const div = document.createElement("div");
+    div.id = "bulkConfirmGroup";
+    div.className = "chat-message ai";
+    div.innerHTML = `
+        <b>AI</b>
+        <div>
+            🚀 <b>Bulk Onboarding Confirmation</b><br><br>
+            Found <b>${pending.length}</b> pending employees ready to onboard.<br><br>
+            <div style="background:#fff8e1;border-radius:10px;padding:10px 12px;
+                        margin:8px 0;border-left:3px solid #f39c12;font-size:11px;
+                        color:#7d5a00;line-height:1.7;">
+                ⚠ This will trigger onboarding emails and
+                workflow for <b>all ${pending.length} pending employees</b>.
+                This action cannot be undone.
+            </div>
+            <div style="display:flex;gap:8px;margin-top:10px;">
+                <button onclick="confirmBulkOnboard()"
+                    style="flex:1;background:linear-gradient(135deg,#19d3a2,#0f9e75);
+                           color:white;border:none;border-radius:10px;
+                           padding:9px 14px;font-size:12px;font-weight:700;
+                           cursor:pointer;height:auto;">
+                    ✅ Yes, Onboard All
+                </button>
+                <button onclick="cancelBulkOnboard()"
+                    style="flex:1;background:#f0f4f8;color:#7d8da5;
+                           border:none;border-radius:10px;
+                           padding:9px 14px;font-size:12px;font-weight:700;
+                           cursor:pointer;height:auto;">
+                    ❌ Cancel
+                </button>
+            </div>
+        </div>
+    `;
+    body.appendChild(div);
+    body.scrollTop = body.scrollHeight;
+}
+
+function cancelBulkOnboard() {
+    const group = document.getElementById("bulkConfirmGroup");
+    if (group) group.remove();
+    addChat("AI", "❌ Bulk onboarding cancelled.");
+}
+
+async function confirmBulkOnboard() {
+    // Remove confirm UI
+    const group = document.getElementById("bulkConfirmGroup");
+    if (group) group.remove();
+
+    if (BULK_RUNNING) {
+        addChat("AI", "⚠ Bulk onboarding already running. Please wait.");
+        return;
+    }
+
+    BULK_RUNNING = true;
+
+    const pending = allEmployees.filter(emp =>
+        String(emp.onboarding_status || "").toUpperCase().includes("PENDING")
+    );
+
+    if (!pending.length) {
+        addChat("AI", "⚠ No pending employees found to onboard.");
+        BULK_RUNNING = false;
+        return;
+    }
+
+    addChat("AI", `🚀 Starting bulk onboarding for <b>${pending.length}</b> employees...`);
+    addChat("AI", "🧠 Validating pipeline and sending requests...");
+
+    try {
+        const response = await callAPI("/api/bulk-onboard", "POST", {
+            employee_ids: pending.map(e => e.emp_id),
+            total_count:  pending.length,
+            initiated_at: new Date().toISOString()
+        });
+
+        if (response && response.success) {
+            showToast("Bulk Onboarding Completed", "success");
+            addChat("AI", `
+                ✅ <b>Bulk Onboarding Completed!</b><br><br>
+                👥 Total Processed : <b>${pending.length}</b><br>
+                ✅ Success Count &nbsp;: <b>${response.success_count || pending.length}</b><br>
+                ❌ Failed Count &nbsp;&nbsp;: <b>${response.failed_count || 0}</b><br><br>
+                📧 Welcome emails sent to all employees.
+            `);
+            await loadDashboard();
+        } else {
+            showToast("Bulk Onboarding Failed", "error");
+            addChat("AI", `❌ Bulk onboarding failed.<br>Reason: ${response?.message || "Backend rejected request"}`);
+        }
+
+    } catch (err) {
+        console.error("BULK ERROR", err);
+        showToast("Bulk Onboarding Error", "error");
+        addChat("AI", `❌ Unexpected error: ${err.message || "Unknown error"}`);
+    } finally {
+        BULK_RUNNING = false;
+    }
+}
 async function confirmOnboard() {
     const inp = document.getElementById("onboardEmpInput");
     if (!inp) return;
@@ -3444,40 +3555,10 @@ ${lines.join("\n")}
        🔥 UPDATED: BULK ONBOARD COMMAND
     ==================================================== */
 
-    if (
-        lower === "bulkonboard" ||
-        lower.includes("bulk onboard")
-    ) {
-
-        addChat("AI", "🚀 Starting bulk onboarding...");
-
-        try {
-
-            const res = await callAPI(
-                "/api/bulk-onboard",
-                "POST",
-                {}
-            );
-
-            addCleanResponse(
-                "📦 BULK ONBOARD RESULT",
-                [
-                    "━━━━━━━━━━━━━━━━━━",
-                    `✅ Success : ${res.success_count}`,
-                    `❌ Failed  : ${res.failed_count}`,
-                    `📊 Total   : ${res.results.length}`
-                ]
-            );
-
-        } catch (err) {
-
-            console.error(err);
-            addChat("AI", "❌ Bulk onboarding failed");
-        }
-
-        return;
-    }
-
+   if (lower === "bulkonboard" || lower.includes("bulk onboard")) {
+    showBulkConfirm();
+    return;
+}
     /* ====================================================
        EXISTING LOGIC (UNCHANGED)
     ==================================================== */
