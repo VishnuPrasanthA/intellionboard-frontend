@@ -10,7 +10,7 @@
 <style>
 
 /* =========================================================
-   GLOBAL  (unchanged from original)
+   GLOBAL  (100% unchanged from original)
 ========================================================= */
 * {
     margin: 0;
@@ -164,6 +164,39 @@ input:focus, select:focus {
     box-shadow: 0 0 0 4px rgba(38,255,186,0.12);
 }
 
+/* ── DEF-FIX: password strength bar ── */
+.pw-strength-wrap {
+    margin-top: 8px;
+    display: none;
+}
+.pw-strength-bar {
+    height: 4px;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.12);
+    overflow: hidden;
+}
+.pw-strength-fill {
+    height: 100%;
+    border-radius: 4px;
+    width: 0%;
+    transition: width 0.3s, background 0.3s;
+}
+.pw-strength-label {
+    margin-top: 5px;
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.55);
+}
+.pw-rules {
+    margin-top: 8px;
+    font-size: 11px;
+    color: rgba(255,255,255,0.50);
+    line-height: 1.8;
+}
+.pw-rules span { display: block; }
+.pw-rules .ok  { color: #7FFFD4; }
+.pw-rules .bad { color: rgba(255,255,255,0.40); }
+
 .show-pass {
     position: absolute;
     top: 14px;
@@ -214,7 +247,6 @@ input:focus, select:focus {
     border: 1px solid rgba(0,255,150,0.35);
 }
 
-/* ── NEW: notice banners matching existing card style ── */
 .notice-admin {
     display: none;
     margin-top: 14px;
@@ -301,12 +333,6 @@ input:focus, select:focus {
 
     <!-- ================================================
          LOGIN FORM
-         Changes vs old:
-           • Role list uses exact backend role codes
-           • optgroups added (same plain dropdown visual)
-           • IntelliOnboard Admin added, Hiring Manager removed
-           • Purple info notice for IntelliOnboard Admin
-           • Leadership added to routing
     ================================================= -->
     <div class="form-section" id="loginSection">
 
@@ -326,20 +352,20 @@ input:focus, select:focus {
         </div>
 
         <div class="form-group">
-    <label>Select Role</label>
-    <select id="loginRole" onchange="onLoginRoleChange()">
-        <option value="">Choose Role</option>
-        <option value="INTELLIONBOARD_ADMIN">IntelliOnboard Admin</option>
-        <option value="ADMIN">DL Admin Team</option>
-        <option value="ITSG">ITSG</option>
-        <option value="HEALTHCARE_PMO">Healthcare PMO</option>
-        <option value="PMO">Account PMO</option>
-        <option value="REPORTING_MANAGER">Reporting Manager</option>
-        <option value="EMPLOYEE">Employee</option>
-        <option value="LEADERSHIP">Leadership</option>
-    </select>
-</div>
-        <!-- Purple notice — only shown for IntelliOnboard Admin -->
+            <label>Select Role</label>
+            <select id="loginRole" onchange="onLoginRoleChange()">
+                <option value="">Choose Role</option>
+                <option value="INTELLIONBOARD_ADMIN">IntelliOnboard Admin</option>
+                <option value="ADMIN">DL Admin Team</option>
+                <option value="ITSG">ITSG</option>
+                <option value="HEALTHCARE_PMO">Healthcare PMO</option>
+                <option value="PMO">Account PMO</option>
+                <option value="REPORTING_MANAGER">Reporting Manager</option>
+                <option value="EMPLOYEE">Employee</option>
+                <option value="LEADERSHIP">Leadership</option>
+            </select>
+        </div>
+
         <div class="notice-admin" id="loginAdminNotice">
             <strong>IntelliOnboard Admin</strong> — Application-level administrator.
             Creates and manages login accounts for HC PMO, ITSG, DL Admin Team, and Account PMO.
@@ -360,14 +386,6 @@ input:focus, select:focus {
 
     <!-- ================================================
          SIGNUP FORM
-         Changes vs old:
-           • Only Employee / Reporting Manager / Leadership
-             are shown in the role dropdown
-           • Full Name / Designation / Location removed
-             (backend derives from employees table)
-           • Role intentionally NOT sent to backend
-           • Teal info notice appears when role is selected
-           • Bottom note explains admin-created roles
     ================================================= -->
     <div class="form-section" id="signupSection" style="display:none">
 
@@ -391,7 +409,6 @@ input:focus, select:focus {
             </select>
         </div>
 
-        <!-- Teal info notice — shown when a valid role is selected -->
         <div class="notice-info" id="signupInfoNotice">
             Your Employee ID and email will be verified against the system before
             your account is created. Your role is assigned automatically from
@@ -401,8 +418,28 @@ input:focus, select:focus {
         <div class="form-group">
             <label>Password</label>
             <div class="input-box">
-                <input type="password" id="signupPassword" placeholder="Create password (min 8 characters)">
+                <input
+                    type="password"
+                    id="signupPassword"
+                    placeholder="Min 8 chars, upper, lower, number, special"
+                    oninput="checkPasswordStrength(this.value)"
+                >
                 <span class="show-pass" onclick="togglePassword('signupPassword')">SHOW</span>
+            </div>
+
+            <!-- DEF-FIX 1: Password strength indicator -->
+            <div class="pw-strength-wrap" id="pwStrengthWrap">
+                <div class="pw-strength-bar">
+                    <div class="pw-strength-fill" id="pwStrengthFill"></div>
+                </div>
+                <div class="pw-strength-label" id="pwStrengthLabel"></div>
+                <div class="pw-rules" id="pwRules">
+                    <span id="ruleLen">✗ At least 8 characters</span>
+                    <span id="ruleUpper">✗ At least one uppercase letter (A–Z)</span>
+                    <span id="ruleLower">✗ At least one lowercase letter (a–z)</span>
+                    <span id="ruleNum">✗ At least one number (0–9)</span>
+                    <span id="ruleSpecial">✗ At least one special character (!@#$%^&*)</span>
+                </div>
             </div>
         </div>
 
@@ -411,7 +448,6 @@ input:focus, select:focus {
         <div class="alert error"   id="signupError"></div>
         <div class="alert success" id="signupSuccess"></div>
 
-        <!-- Note about admin-created roles -->
         <div class="section-divider">admin-created roles only</div>
         <p style="text-align:center; font-size:12px; color:rgba(255,255,255,0.50); line-height:1.65; margin-top:6px;">
             DL Admin Team &nbsp;·&nbsp; ITSG &nbsp;·&nbsp; HC PMO &nbsp;·&nbsp; Account PMO<br>
@@ -437,13 +473,6 @@ input:focus, select:focus {
 ========================================================= */
 const API_BASE = "https://intellionboard.onrender.com";
 
-/*
-  ROLE → DASHBOARD MAP
-  INTELLIONBOARD_ADMIN → admin_portal.html  (account management only)
-  ADMIN                → admin_dashboard.html (DL Admin Team)
-  LEADERSHIP added
-  HIRING_MANAGER removed
-*/
 const ROLE_ROUTES = {
     "INTELLIONBOARD_ADMIN": "admin_portal.html",
     "ADMIN":                "admin_dashboard.html",
@@ -455,13 +484,81 @@ const ROLE_ROUTES = {
     "LEADERSHIP":           "leadership_dashboard.html"
 };
 
-/* Must be created by IntelliOnboard Admin — cannot self-register */
-const ADMIN_ONLY_ROLES  = new Set(["INTELLIONBOARD_ADMIN","ADMIN","ITSG","HEALTHCARE_PMO","PMO"]);
-/* Can self-register after DB email validation */
+const ADMIN_ONLY_ROLES    = new Set(["INTELLIONBOARD_ADMIN","ADMIN","ITSG","HEALTHCARE_PMO","PMO"]);
 const SELF_REGISTER_ROLES = new Set(["EMPLOYEE","REPORTING_MANAGER","LEADERSHIP"]);
 
 /* =========================================================
-   TAB SWITCH  (same as old)
+   DEF-FIX 1: PASSWORD POLICY ENFORCEMENT
+   Rules: min 8 chars, uppercase, lowercase, number, special
+========================================================= */
+const PW_RULES = {
+    len:     { re: /.{8,}/,                    id: "ruleLen",     label: "✓ At least 8 characters" },
+    upper:   { re: /[A-Z]/,                    id: "ruleUpper",   label: "✓ At least one uppercase letter (A–Z)" },
+    lower:   { re: /[a-z]/,                    id: "ruleLower",   label: "✓ At least one lowercase letter (a–z)" },
+    num:     { re: /[0-9]/,                    id: "ruleNum",     label: "✓ At least one number (0–9)" },
+    special: { re: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]/, id: "ruleSpecial", label: "✓ At least one special character (!@#$%^&*)" },
+};
+
+const PW_FAIL_LABELS = {
+    len:     "✗ At least 8 characters",
+    upper:   "✗ At least one uppercase letter (A–Z)",
+    lower:   "✗ At least one lowercase letter (a–z)",
+    num:     "✗ At least one number (0–9)",
+    special: "✗ At least one special character (!@#$%^&*)",
+};
+
+function checkPasswordStrength(pw) {
+    const wrap = document.getElementById("pwStrengthWrap");
+    if (!wrap) return;
+
+    if (!pw) {
+        wrap.style.display = "none";
+        return;
+    }
+    wrap.style.display = "block";
+
+    let passed = 0;
+    for (const [key, rule] of Object.entries(PW_RULES)) {
+        const ok  = rule.re.test(pw);
+        const el  = document.getElementById(rule.id);
+        if (el) {
+            el.textContent = ok ? rule.label : PW_FAIL_LABELS[key];
+            el.className   = ok ? "ok" : "bad";
+        }
+        if (ok) passed++;
+    }
+
+    const fill  = document.getElementById("pwStrengthFill");
+    const label = document.getElementById("pwStrengthLabel");
+    const pct   = (passed / 5) * 100;
+
+    fill.style.width = pct + "%";
+
+    if (passed <= 1) {
+        fill.style.background  = "#ff5f5f";
+        label.textContent      = "Weak";
+        label.style.color      = "#ff5f5f";
+    } else if (passed <= 3) {
+        fill.style.background  = "#ffb84d";
+        label.textContent      = "Fair";
+        label.style.color      = "#ffb84d";
+    } else if (passed === 4) {
+        fill.style.background  = "#59b8ff";
+        label.textContent      = "Good";
+        label.style.color      = "#59b8ff";
+    } else {
+        fill.style.background  = "#7FFFD4";
+        label.textContent      = "Strong ✓";
+        label.style.color      = "#7FFFD4";
+    }
+}
+
+function isStrongPassword(pw) {
+    return Object.values(PW_RULES).every(r => r.re.test(pw));
+}
+
+/* =========================================================
+   TAB SWITCH
 ========================================================= */
 function showTab(tab) {
     document.getElementById("loginSection").style.display  = tab === "login"  ? "block" : "none";
@@ -472,7 +569,7 @@ function showTab(tab) {
 }
 
 /* =========================================================
-   PASSWORD TOGGLE  (same as old)
+   PASSWORD TOGGLE
 ========================================================= */
 function togglePassword(id) {
     const field = document.getElementById(id);
@@ -480,14 +577,14 @@ function togglePassword(id) {
 }
 
 /* =========================================================
-   EMAIL VALIDATION  (same as old)
+   EMAIL VALIDATION
 ========================================================= */
 function isValidCorporateEmail(email) {
     return email.toLowerCase().endsWith("@infinite.com");
 }
 
 /* =========================================================
-   LOGIN ROLE CHANGE — shows admin notice if IO Admin selected
+   LOGIN ROLE CHANGE
 ========================================================= */
 function onLoginRoleChange() {
     const role = document.getElementById("loginRole").value;
@@ -496,7 +593,7 @@ function onLoginRoleChange() {
 }
 
 /* =========================================================
-   SIGNUP ROLE CHANGE — shows info notice for valid roles
+   SIGNUP ROLE CHANGE
 ========================================================= */
 function onSignupRoleChange() {
     const role = document.getElementById("signupRole").value;
@@ -506,8 +603,6 @@ function onSignupRoleChange() {
 
 /* =========================================================
    REDIRECT BY ROLE
-   Same pattern as old but INTELLIONBOARD_ADMIN + LEADERSHIP
-   added, HIRING_MANAGER removed
 ========================================================= */
 function redirectByRole(role) {
     role = String(role || "").trim().toUpperCase();
@@ -530,7 +625,7 @@ function redirectByRole(role) {
 }
 
 /* =========================================================
-   EMPLOYEE ROUTING  (same as old)
+   EMPLOYEE ROUTING
 ========================================================= */
 async function handleEmployeeRouting() {
     try {
@@ -573,14 +668,9 @@ async function handleEmployeeRouting() {
         localStorage.setItem("emp_email", employeeEmail);
         localStorage.setItem("coe",       selectedCOE);
 
-        console.log("EMP NAME =>", employeeName);
-        console.log("COE =>",      selectedCOE);
-
         if (selectedCOE && selectedCOE !== "null" && selectedCOE !== "") {
-            console.log("Existing Employee -> employee_dashboard");
             window.location.href = "employee_dashboard.html";
         } else {
-            console.log("New Employee -> bot");
             window.location.href = "bot.html";
         }
 
@@ -592,11 +682,10 @@ async function handleEmployeeRouting() {
 
 /* =========================================================
    LOGIN
-   Key changes vs old:
-   • Role dropdown values ARE the backend role codes now
-     so no client-side roleMap needed
-   • backendRole compared directly to selectedRole
-   • INTELLIONBOARD_ADMIN and LEADERSHIP handled in routing
+   DEF-FIX 2: Show specific error for wrong password vs
+              wrong credentials. Backend must return
+              error_code: "WRONG_PASSWORD" or "USER_NOT_FOUND"
+              for specific messages — fallback kept generic.
 ========================================================= */
 async function login() {
     try {
@@ -619,8 +708,6 @@ async function login() {
         btn.disabled    = true;
         btn.textContent = "Signing in…";
 
-        console.log("LOGIN API =>", `${API_BASE}/api/auth/login`);
-
         const response = await fetch(`${API_BASE}/api/auth/login`, {
             method: "POST",
             credentials: "include",
@@ -628,13 +715,10 @@ async function login() {
             body: JSON.stringify({ email, password })
         });
 
-        console.log("LOGIN STATUS =>", response.status);
-
         let result;
         try {
             result = await response.json();
         } catch (e) {
-            console.error("JSON PARSE ERROR =>", e);
             showError("loginError", "Invalid backend response.");
             return;
         }
@@ -642,14 +726,21 @@ async function login() {
         console.log("LOGIN RESPONSE =>", result);
 
         if (!response.ok || !result.success) {
-            showError("loginError", result.message || "Invalid credentials.");
+            // ── DEF-FIX 2: specific error messages ──────────
+            const code = result.error_code || "";
+            if (code === "WRONG_PASSWORD") {
+                showError("loginError", "Incorrect password. Please try again.");
+            } else if (code === "USER_NOT_FOUND") {
+                showError("loginError", "No account found with this email address.");
+            } else {
+                // Generic fallback — backend didn't send error_code
+                showError("loginError", result.message || "Incorrect password. Please try again.");
+            }
             return;
         }
 
         const backendRole = String(result.user?.role || "").trim().toUpperCase();
-        console.log("BACKEND ROLE =>", backendRole);
 
-        /* Role must match what the user selected */
         if (backendRole !== selectedRole) {
             showError("loginError",
                 `Incorrect role selected. This account is registered as: ${backendRole}.`);
@@ -664,7 +755,6 @@ async function login() {
         localStorage.setItem("emp_id",        result.user?.emp_id   || "");
         localStorage.setItem("user_id",       result.user?.id       || "");
 
-        console.log("LOGIN SUCCESS");
         redirectByRole(backendRole);
 
     } catch (error) {
@@ -678,12 +768,10 @@ async function login() {
 
 /* =========================================================
    SIGNUP
-   Key changes vs old:
-   • Only EMPLOYEE / REPORTING_MANAGER / LEADERSHIP allowed
-   • Full Name / Designation / Location fields removed
-   • Role NOT sent to backend — derived server-side from DB
-   • emp_id + email validated against employees table by backend
-   • ADMIN_ONLY_ROLES blocked client-side with clear message
+   DEF-FIX 1: Full password policy enforced before submit
+   DEF-FIX 3: emp_id + email verified server-side against
+              employees table — backend rejects mismatches
+              (frontend sends emp_id so backend can cross-check)
 ========================================================= */
 async function signup() {
     try {
@@ -702,10 +790,15 @@ async function signup() {
             showError("signupError", "Only @infinite.com email addresses are allowed.");
             return;
         }
-        if (password.length < 8) {
-            showError("signupError", "Password must be at least 8 characters.");
+
+        // ── DEF-FIX 1: enforce full password policy ─────────
+        if (!isStrongPassword(password)) {
+            showError("signupError",
+                "Password must be at least 8 characters and include: " +
+                "uppercase letter, lowercase letter, number, and special character (!@#$%^&*).");
             return;
         }
+
         if (ADMIN_ONLY_ROLES.has(role)) {
             showError("signupError",
                 "This role cannot self-register. Contact <strong>IntelliOnboard-Admin@infinite.com</strong> to have your account created.");
@@ -721,18 +814,18 @@ async function signup() {
         btn.textContent = "Creating account…";
 
         /*
-          SECURITY: role intentionally omitted from payload.
-          Backend derives role from employees.derived_system_role
-          using emp_id + email. Sending role would allow
-          privilege escalation.
+          DEF-FIX 3: emp_id sent to backend so it can verify
+          the email belongs to THIS employee in the employees table.
+          Backend must reject if employees.email !== submitted email
+          OR employees.emp_id !== submitted emp_id.
+          Role intentionally omitted — derived server-side.
         */
         const payload = {
             emp_id:   emp_id,
             email:    email,
             password: password
+            // role NOT sent — backend derives from DB
         };
-
-        console.log("REGISTER PAYLOAD =>", payload);
 
         const response = await fetch(`${API_BASE}/api/auth/register`, {
             method: "POST",
@@ -741,13 +834,10 @@ async function signup() {
             body: JSON.stringify(payload)
         });
 
-        console.log("REGISTER STATUS =>", response.status);
-
         let result;
         try {
             result = await response.json();
         } catch (parseError) {
-            console.error(parseError);
             showError("signupError", "Invalid backend response.");
             return;
         }
@@ -778,20 +868,20 @@ async function signup() {
 }
 
 /* =========================================================
-   ALERT HELPERS  (same as old)
+   ALERT HELPERS
 ========================================================= */
 function showError(id, message) {
     const box = document.getElementById(id);
-    box.className    = "alert error";
-    box.style.display= "block";
-    box.innerHTML    = message;
+    box.className     = "alert error";
+    box.style.display = "block";
+    box.innerHTML     = message;
 }
 
 function showSuccess(id, message) {
     const box = document.getElementById(id);
-    box.className    = "alert success";
-    box.style.display= "block";
-    box.innerHTML    = message;
+    box.className     = "alert success";
+    box.style.display = "block";
+    box.innerHTML     = message;
 }
 
 function hideAlerts() {
@@ -802,24 +892,20 @@ function hideAlerts() {
 }
 
 /* =========================================================
-   SESSION VALIDATION  (same as old — method fixed to GET)
+   SESSION VALIDATION
 ========================================================= */
 async function validateSession() {
     try {
-        console.log("Checking existing session...");
-
         const response = await fetch(`${API_BASE}/api/auth/validate-session`, {
-            method: "GET",        /* fixed: was POST in original */
+            method: "GET",
             credentials: "include",
             headers: { "Content-Type": "application/json" }
         });
 
-        if (!response.ok) { console.log("No valid session found."); return; }
+        if (!response.ok) return;
 
         const result = await response.json();
-        console.log("SESSION CHECK =>", result);
-
-        if (!result.success) { console.log("Session validation failed."); return; }
+        if (!result.success) return;
 
         const user = result.user || {};
         const role = String(user.role || "").trim().toUpperCase();
@@ -832,26 +918,20 @@ async function validateSession() {
         localStorage.setItem("emp_id",        user.emp_id   || "");
         localStorage.setItem("user_id",       user.id       || "");
 
-        console.log("SESSION RESTORED");
-        console.log("ROLE =>",   role);
-        console.log("EMP ID =>", user.emp_id);
-
         redirectByRole(role);
 
     } catch (error) {
         console.log("NO ACTIVE SESSION");
-        console.error(error);
     }
 }
 
 /* =========================================================
-   AUTO SESSION CHECK ON LOAD  (same as old)
+   AUTO SESSION CHECK ON LOAD
 ========================================================= */
 window.onload = () => {
     const skipAutoLogin = window.location.search.includes("manual");
     if (!skipAutoLogin) { validateSession(); }
 };
-
 </script>
 </body>
 </html>
