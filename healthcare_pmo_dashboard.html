@@ -1044,7 +1044,7 @@ button{
 
     display:grid;
 
-    grid-template-columns:repeat(3,minmax(0,1fr));
+    grid-template-columns: 1fr 1fr 1.4fr;
 
     gap:14px;
 
@@ -1090,8 +1090,8 @@ button{
 
 canvas{
 
-    width:160px !important;
-    height:160px !important;
+    width:100% !important;
+    height:200px !important;
 
     transition:var(--transition);
 }
@@ -2073,54 +2073,40 @@ tbody tr:hover{
 </div>
 
 <div class="chat-panel modern-chat" id="chatPanel">
-
     <div class="chat-header">
-
-        <div>
-            🤖 PMO AI Assistant
+        <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:20px;">🤖</span>
+            <div>
+                <div style="font-weight:900;font-size:14px;">PMO AI Assistant</div>
+                <div style="font-size:11px;opacity:0.8;">Ask anything about onboarding</div>
+            </div>
         </div>
-
-        <span onclick="toggleChat()">✖</span>
-
+        <span onclick="toggleChat()" style="cursor:pointer;font-size:18px;opacity:0.8;">✖</span>
     </div>
 
     <div class="chat-body" id="chatBody">
-
         <div class="chat-welcome">
-
-            👋 Welcome to PMO AI Assistant
-
-            <br><br>
-
-            Ask about:
-            <br>
-            • Employee onboarding
-            <br>
-            • SLA escalation
-            <br>
-            • Allocation tracking
-            <br>
-            • Risk monitoring
-            <br>
-            • Delayed workflows
-
+            <div style="font-size:18px;margin-bottom:6px;">👋 Hi there!</div>
+            <div style="font-size:12px;color:#7d8da5;line-height:1.8;">
+                I'm your PMO AI Assistant. Use the quick actions below or type a command.
+            </div>
         </div>
+    </div>
 
+    <!-- Quick action buttons -->
+    <div class="chat-quick-actions" id="quickActions">
+        <button class="quick-btn" onclick="quickAction('status report')">📊 Status Report</button>
+        <button class="quick-btn" onclick="quickAction('pending')">⏳ Pending</button>
+        <button class="quick-btn" onclick="quickAction('inprogress')">🔄 In Progress</button>
+        <button class="quick-btn" onclick="quickAction('completed')">✅ Completed</button>
+        <button class="quick-btn" onclick="quickAction('high risk')">⚠ High Risk</button>
+        <button class="quick-btn" onclick="showOnboardInput()">🚀 Onboard Employee</button>
     </div>
 
     <div class="chat-input">
-
-        <input
-            id="chatInput"
-            placeholder="Ask AI Assistant..."
-        />
-
-        <button onclick="askAgent()">
-            Send
-        </button>
-
+        <input id="chatInput" placeholder="Type emp ID, 'help', or a question..." />
+        <button onclick="askAgent()">Send</button>
     </div>
-
 </div>
 <script>
 
@@ -3648,97 +3634,272 @@ function filterStatusAdvanced(stage) {
 }
     
 async function plotAllLocations(data) {
-
     try {
-
         if (!map) return;
 
-        markers.forEach(marker => {
-
-            map.removeLayer(marker);
-        });
-
+        markers.forEach(m => map.removeLayer(m));
         markers = [];
 
-        const grouped = {};
+        /* =====================================================
+           CITY ALIASES — maps any variation → canonical name
+           Add more rows as you discover new variations in DB
+        ===================================================== */
+        const CITY_ALIASES = {
+            // Bengaluru / Bangalore
+            "bengaluru":         "Bengaluru",
+            "bangalore":         "Bengaluru",
+            "bangaluru":         "Bengaluru",
+            "bangaluru campus":  "Bengaluru",
+            "bengaluru campus":  "Bengaluru",
+            "bengaluru gate":    "Bengaluru",
+            "bangalore campus":  "Bengaluru",
+            "blr":               "Bengaluru",
+            "bang":              "Bengaluru",
+
+            // Hyderabad
+            "hyderabad":         "Hyderabad",
+            "hyd":               "Hyderabad",
+            "hyderabad campus":  "Hyderabad",
+            "hyderabad office":  "Hyderabad",
+
+            // Chennai
+            "chennai":           "Chennai",
+            "chennai campus":    "Chennai",
+            "chennapatha":       "Chennai",
+            "chenap pa":         "Chennai",
+            "chennai pecifia":   "Chennai",
+            "chennai pacific":   "Chennai",
+            "madras":            "Chennai",
+            "maa":               "Chennai",
+
+            // Mumbai
+            "mumbai":            "Mumbai",
+            "bombay":            "Mumbai",
+            "mumbai campus":     "Mumbai",
+            "bom":               "Mumbai",
+
+            // Pune
+            "pune":              "Pune",
+            "puna":              "Pune",
+            "pune campus":       "Pune",
+
+            // Delhi / NCR
+            "delhi":             "Delhi",
+            "new delhi":         "Delhi",
+            "delhi ncr":         "Delhi",
+            "ncr":               "Delhi",
+            "del":               "Delhi",
+
+            // Noida
+            "noida":             "Noida",
+            "noida campus":      "Noida",
+
+            // Gurugram / Gurgaon
+            "gurugram":          "Gurugram",
+            "gurgaon":           "Gurugram",
+
+            // Kolkata
+            "kolkata":           "Kolkata",
+            "calcutta":          "Kolkata",
+            "kol":               "Kolkata",
+
+            // Coimbatore
+            "coimbatore":        "Coimbatore",
+            "cbe":               "Coimbatore",
+
+            // Kochi
+            "kochi":             "Kochi",
+            "cochin":            "Kochi",
+            "ernakulam":         "Kochi",
+
+            // Vizag
+            "visakhapatnam":     "Visakhapatnam",
+            "vizag":             "Visakhapatnam",
+            "vishakhapatnam":    "Visakhapatnam",
+
+            // Ahmedabad
+            "ahmedabad":         "Ahmedabad",
+            "amdavad":           "Ahmedabad",
+            "amd":               "Ahmedabad",
+
+            // Kolhapur
+            "kolhapur":          "Kolhapur",
+
+            // Nagpur
+            "nagpur":            "Nagpur",
+
+            // Jaipur
+            "jaipur":            "Jaipur",
+
+            // Trivandrum
+            "thiruvananthapuram":"Thiruvananthapuram",
+            "trivandrum":        "Thiruvananthapuram",
+
+            // USA fallback
+            "usa":               "USA",
+            "us":                "USA",
+            "united states":     "USA",
+        };
+
+        /* =====================================================
+           CANONICAL CITY COORDINATES
+           Only one coordinate per canonical name
+        ===================================================== */
+        const CITY_COORDS = {
+            "Bengaluru":          [12.9716,  77.5946],
+            "Hyderabad":          [17.3850,  78.4867],
+            "Chennai":            [13.0827,  80.2707],
+            "Mumbai":             [19.0760,  72.8777],
+            "Pune":               [18.5204,  73.8567],
+            "Delhi":              [28.6139,  77.2090],
+            "Noida":              [28.5355,  77.3910],
+            "Gurugram":           [28.4595,  77.0266],
+            "Kolkata":            [22.5726,  88.3639],
+            "Coimbatore":         [11.0168,  76.9558],
+            "Kochi":              [9.9312,   76.2673],
+            "Visakhapatnam":      [17.6868,  83.2185],
+            "Ahmedabad":          [23.0225,  72.5714],
+            "Kolhapur":           [16.7050,  74.2433],
+            "Nagpur":             [21.1458,  79.0882],
+            "Jaipur":             [26.9124,  75.7873],
+            "Thiruvananthapuram": [8.5241,   76.9366],
+            "USA":                [37.0902, -95.7129],
+        };
+
+        /* =====================================================
+           STEP 1 — Normalize every employee location to
+           a canonical city name using CITY_ALIASES.
+           Fuzzy match: strip punctuation, lowercase, trim,
+           then check if any alias is contained in the string
+           or the string is contained in the alias.
+        ===================================================== */
+        function normalizeCity(raw) {
+            if (!raw) return null;
+
+            const cleaned = raw
+                .toLowerCase()
+                .trim()
+                .replace(/[^a-z0-9 ]/g, " ")   // remove special chars
+                .replace(/\s+/g, " ")            // collapse spaces
+                .trim();
+
+            // Exact alias match first
+            if (CITY_ALIASES[cleaned]) {
+                return CITY_ALIASES[cleaned];
+            }
+
+            // Partial match — check if cleaned contains any alias key
+            for (const [alias, canonical] of Object.entries(CITY_ALIASES)) {
+                if (cleaned.includes(alias) || alias.includes(cleaned)) {
+                    return canonical;
+                }
+            }
+
+            // No match — return title-cased raw value as fallback
+            return raw.trim().replace(/\b\w/g, c => c.toUpperCase());
+        }
+
+        /* =====================================================
+           STEP 2 — Group by canonical city name
+        ===================================================== */
+        const cityGroups = {};
 
         data.forEach(emp => {
-
-            const location =
-                emp.location;
-
-            if (!location) return;
-
-            if (!grouped[location]) {
-
-                grouped[location] = [];
+            const canonical = normalizeCity(emp.location);
+            if (!canonical) return;
+            if (!cityGroups[canonical]) {
+                cityGroups[canonical] = { count: 0, employees: [] };
             }
-
-            grouped[location].push(emp);
+            cityGroups[canonical].count++;
+            cityGroups[canonical].employees.push(emp);
         });
 
-        for (const location in grouped) {
+        console.log("MAP CITIES:", Object.keys(cityGroups).map(
+            c => `${c}: ${cityGroups[c].count}`
+        ).join(" | "));
 
-            try {
+        /* =====================================================
+           STEP 3 — Plot one marker per canonical city
+        ===================================================== */
+        for (const [city, group] of Object.entries(cityGroups)) {
 
-                const response =
-                    await fetch(
+            let coords = CITY_COORDS[city];
 
-                        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location)}`
+            // If not in known list, try Nominatim as fallback
+            if (!coords) {
+                try {
+                    const res  = await fetch(
+                        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(city)}&limit=1`
                     );
-
-                const geo =
-                    await response.json();
-
-                if (geo.length) {
-
-                    const marker =
-                        L.marker([
-                            parseFloat(
-                                geo[0].lat
-                            ),
-                            parseFloat(
-                                geo[0].lon
-                            )
-                        ])
-
-                        .addTo(map)
-
-                        .bindPopup(`
-
-                            <b>${location}</b>
-
-                            <br>
-
-                            Employees:
-                            ${grouped[location].length}
-
-                            <br>
-
-                            AI Monitoring Active
-                        `);
-
-                    markers.push(marker);
+                    const geo  = await res.json();
+                    if (geo.length) {
+                        coords = [parseFloat(geo[0].lat), parseFloat(geo[0].lon)];
+                    }
+                } catch (e) {
+                    console.warn(`Geocode failed for: ${city}`);
                 }
-
-            } catch (err) {
-
-                console.error(
-                    "LOCATION ERROR",
-                    err
-                );
             }
+
+            if (!coords) {
+                console.warn(`No coordinates found for: ${city}`);
+                continue;
+            }
+
+            // Scale bubble size by headcount (min 12, max 38)
+            const radius = Math.min(12 + Math.sqrt(group.count) * 2.5, 38);
+
+            // Count onboarding statuses for popup breakdown
+            const started   = group.employees.filter(e =>
+                String(e.onboarding_status || "").toUpperCase().includes("PROGRESS")
+            ).length;
+            const completed = group.employees.filter(e =>
+                String(e.onboarding_status || "").toUpperCase().includes("COMPLETE")
+            ).length;
+            const pending   = group.count - started - completed;
+
+            const circle = L.circleMarker(coords, {
+                radius:      radius,
+                fillColor:   "#19d3a2",
+                color:       "#0a7a5e",
+                weight:      2,
+                opacity:     1,
+                fillOpacity: 0.75,
+            })
+            .addTo(map)
+            .bindPopup(`
+                <div style="font-family:Arial;min-width:160px;">
+                    <div style="font-size:15px;font-weight:800;color:#172b42;
+                                border-bottom:1px solid #eef3f8;padding-bottom:6px;
+                                margin-bottom:8px;">
+                        📍 ${city}
+                    </div>
+                    <div style="font-size:13px;margin-bottom:4px;">
+                        <b style="color:#19d3a2;font-size:20px;">${group.count}</b>
+                        <span style="color:#7d8da5;"> employees</span>
+                    </div>
+                    <div style="font-size:11px;color:#555;line-height:1.9;">
+                        ⏳ Pending &nbsp;&nbsp;&nbsp;: <b>${pending}</b><br>
+                        🔄 In Progress : <b>${started}</b><br>
+                        ✅ Completed &nbsp;: <b>${completed}</b>
+                    </div>
+                </div>
+            `);
+
+            markers.push(circle);
+        }
+
+        /* =====================================================
+           STEP 4 — Auto-fit map to show all markers
+        ===================================================== */
+        if (markers.length > 0) {
+            const group = L.featureGroup(markers);
+            map.fitBounds(group.getBounds().pad(0.25));
         }
 
     } catch (err) {
-
-        console.error(
-            "MAP PLOT ERROR",
-            err
-        );
+        console.error("MAP PLOT ERROR", err);
     }
 }
-
 /* =========================================================
    FILE UPLOAD
 ========================================================= */
@@ -4026,6 +4187,66 @@ function addChat(role, message) {
 /* =========================================================
    CHAT COMMAND ENGINE
 ========================================================= */
+
+
+function quickAction(cmd) {
+    const input = document.getElementById("chatInput");
+    if (input) input.value = cmd;
+    askAgent();
+}
+
+function showOnboardInput() {
+    const body = document.getElementById("chatBody");
+    if (!body) return;
+
+    // Remove existing onboard input if any
+    const existing = document.getElementById("onboardInputGroup");
+    if (existing) existing.remove();
+
+    const div = document.createElement("div");
+    div.id = "onboardInputGroup";
+    div.className = "chat-message ai";
+    div.innerHTML = `
+        <b>AI</b>
+        <div>
+            🚀 Enter the Employee ID to start onboarding:
+            <div class="onboard-input-group">
+                <input
+                    id="onboardEmpInput"
+                    placeholder="e.g. 1042836"
+                    type="text"
+                    onkeydown="if(event.key==='Enter') confirmOnboard()"
+                />
+                <button onclick="confirmOnboard()">Start Onboarding ➜</button>
+            </div>
+        </div>
+    `;
+    body.appendChild(div);
+    body.scrollTop = body.scrollHeight;
+
+    setTimeout(() => {
+        const inp = document.getElementById("onboardEmpInput");
+        if (inp) inp.focus();
+    }, 100);
+}
+
+async function confirmOnboard() {
+    const inp = document.getElementById("onboardEmpInput");
+    if (!inp) return;
+    const empId = inp.value.trim();
+    if (!empId) {
+        inp.style.border = "1px solid #ff6f6f";
+        return;
+    }
+
+    // Remove the input group
+    const group = document.getElementById("onboardInputGroup");
+    if (group) group.remove();
+
+    // Trigger onboarding via existing function
+    addChat("YOU", `onboard ${empId}`);
+    await startOnboarding(empId);
+}
 async function askAgent() {
 
     const input =
