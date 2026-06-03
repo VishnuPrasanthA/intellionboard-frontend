@@ -3489,47 +3489,27 @@ ${lines.join("\n")}
        HELP
     ==================================================== */
 
-    /* DEF-053 FIX: respond to greetings */
-const GREETINGS = ["hi","hello","hey","good morning","good afternoon",
-                   "good evening","howdy","hola","namaste","greetings","sup","yo"];
-if (GREETINGS.some(g => lower === g || lower === g + "!" || lower.startsWith(g + " "))) {
-    addCleanResponse("👋 Hello! I'm your PMO AI Assistant.", [
-        "Here's what I can help you with:",
-        "",
-        "📊 status report  — full dashboard summary",
-        "⏳ pending        — all pending employees",
-        "🔄 inprogress     — employees in onboarding",
-        "✅ completed      — completed onboardings",
-        "⚠ high risk      — at-risk employees",
-        "🚀 onboard <id>  — start onboarding",
-        "📦 bulkonboard   — onboard all pending",
-        "",
-        "Or use the quick buttons above! 👆"
-    ]);
-    return;
-}
+/* DEF-053 FIX: respond to greetings */
+    const GREETINGS = ["hi","hello","hey","good morning","good afternoon",
+                       "good evening","howdy","hola","namaste","greetings","sup","yo"];
+    if (GREETINGS.some(g => lower === g || lower === g + "!" || lower.startsWith(g + " "))) {
+        addCleanResponse("👋 Hello! I'm your PMO AI Assistant.", [
+            "Here's what I can help you with:",
+            "",
+            "📊 status report  — full dashboard summary",
+            "⏳ pending        — all pending employees",
+            "🔄 inprogress     — employees in onboarding",
+            "✅ completed      — completed onboardings",
+            "⚠ high risk      — at-risk employees",
+            "🚀 onboard <id>  — start onboarding",
+            "📦 bulkonboard   — onboard all pending",
+            "",
+            "Or use the quick buttons above! 👆"
+        ]);
+        return;
+    }
 
-if (lower === "help") {/* DEF-053 FIX: respond to greetings */
-const GREETINGS = ["hi","hello","hey","good morning","good afternoon",
-                   "good evening","howdy","hola","namaste","greetings","sup","yo"];
-if (GREETINGS.some(g => lower === g || lower === g + "!" || lower.startsWith(g + " "))) {
-    addCleanResponse("👋 Hello! I'm your PMO AI Assistant.", [
-        "Here's what I can help you with:",
-        "",
-        "📊 status report  — full dashboard summary",
-        "⏳ pending        — all pending employees",
-        "🔄 inprogress     — employees in onboarding",
-        "✅ completed      — completed onboardings",
-        "⚠ high risk      — at-risk employees",
-        "🚀 onboard <id>  — start onboarding",
-        "📦 bulkonboard   — onboard all pending",
-        "",
-        "Or use the quick buttons above! 👆"
-    ]);
-    return;
-}
-
-if (lower === "help") {
+    if (lower === "help") {
 
         addCleanResponse(
             "🤖 PMO AI COMMAND CENTER",
