@@ -164,7 +164,10 @@ body::before{
     0%{ background-position:0% 50%; }
     100%{ background-position:100% 50%; }
 }
-
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
 .header:hover{ box-shadow:var(--shadow-lg); }
 
 .header-left{ display:flex; align-items:center; gap:12px; min-width:max-content; }
@@ -497,7 +500,9 @@ tbody tr:hover{ background:linear-gradient(90deg,rgba(25,211,162,.04),rgba(89,18
 .popup-overlay{
     display:none; position:fixed; inset:0;
     background:rgba(0,0,0,0.45); backdrop-filter:blur(6px);
-    z-index:9999998; align-items:center; justify-content:center;
+    /* DEF-035/036 FIX: below header z-index, with top padding */
+    z-index:999990; align-items:flex-start; justify-content:center;
+    padding-top:90px;
 }
 .popup-overlay.open{ display:flex; }
 
@@ -756,16 +761,20 @@ tbody tr:hover{ background:linear-gradient(90deg,rgba(25,211,162,.04),rgba(89,18
                 <span class="search-icon">🔍</span>
 
                 <input
-                    class="search-box"
-                    placeholder="Search Employee / Account / RM / PMO"
-                    onkeyup="searchTable(this.value)"
-                >
+    class="search-box"
+    id="globalSearch"
+    placeholder="Search Employee / Account / RM / PMO"
+    oninput="searchTable(this.value)"
+>
+<span id="searchClearBtn"
+    style="cursor:pointer;color:#7d8da5;font-size:14px;display:none;flex-shrink:0;"
+    onclick="clearSearch()">✕</span>
 
             </div>
 
-            <button class="btn btn-refresh" onclick="loadDashboard()">
-                🔄 Refresh
-            </button>
+            <button class="btn btn-refresh" id="refreshBtn" onclick="handleRefresh()">
+    <span id="refreshIcon">🔄</span> Refresh
+</button>
 
             <button class="btn btn-bulk" onclick="bulkInitiate()">
                 🚀 Bulk Onboard
@@ -2554,6 +2563,8 @@ function renderInsights(data) {
 function searchTable(value) {
     
     CURRENT_PAGE = 1; // ✅ ADD THIS
+    const cb = document.getElementById("searchClearBtn");
+if (cb) cb.style.display = value ? "inline" : "none";
 
     value =
         String(value || "")
@@ -3478,7 +3489,47 @@ ${lines.join("\n")}
        HELP
     ==================================================== */
 
-    if (lower === "help") {
+    /* DEF-053 FIX: respond to greetings */
+const GREETINGS = ["hi","hello","hey","good morning","good afternoon",
+                   "good evening","howdy","hola","namaste","greetings","sup","yo"];
+if (GREETINGS.some(g => lower === g || lower === g + "!" || lower.startsWith(g + " "))) {
+    addCleanResponse("👋 Hello! I'm your PMO AI Assistant.", [
+        "Here's what I can help you with:",
+        "",
+        "📊 status report  — full dashboard summary",
+        "⏳ pending        — all pending employees",
+        "🔄 inprogress     — employees in onboarding",
+        "✅ completed      — completed onboardings",
+        "⚠ high risk      — at-risk employees",
+        "🚀 onboard <id>  — start onboarding",
+        "📦 bulkonboard   — onboard all pending",
+        "",
+        "Or use the quick buttons above! 👆"
+    ]);
+    return;
+}
+
+if (lower === "help") {/* DEF-053 FIX: respond to greetings */
+const GREETINGS = ["hi","hello","hey","good morning","good afternoon",
+                   "good evening","howdy","hola","namaste","greetings","sup","yo"];
+if (GREETINGS.some(g => lower === g || lower === g + "!" || lower.startsWith(g + " "))) {
+    addCleanResponse("👋 Hello! I'm your PMO AI Assistant.", [
+        "Here's what I can help you with:",
+        "",
+        "📊 status report  — full dashboard summary",
+        "⏳ pending        — all pending employees",
+        "🔄 inprogress     — employees in onboarding",
+        "✅ completed      — completed onboardings",
+        "⚠ high risk      — at-risk employees",
+        "🚀 onboard <id>  — start onboarding",
+        "📦 bulkonboard   — onboard all pending",
+        "",
+        "Or use the quick buttons above! 👆"
+    ]);
+    return;
+}
+
+if (lower === "help") {
 
         addCleanResponse(
             "🤖 PMO AI COMMAND CENTER",
@@ -4161,6 +4212,56 @@ async function logout() {
 
     // ✅ IMPORTANT: Hard redirect (force reload)
     window.location.href = "https://intellionboard.vercel.app/";
+}
+
+
+    /* ═══════════════════════════════════════════
+   DEF-039 FIX: Refresh button
+   - Resets search + filter state
+   - Soft refresh via loadDashboard()
+   - Hard fallback: window.location.reload()
+   - Visual spinner while loading
+═══════════════════════════════════════════ */
+async function handleRefresh() {
+    const btn  = document.getElementById("refreshBtn");
+    const icon = document.getElementById("refreshIcon");
+
+    // Show spinner
+    if (btn)  btn.style.opacity = "0.7";
+    if (btn)  btn.style.pointerEvents = "none";
+    if (icon) icon.style.display = "inline-block";
+    if (icon) icon.style.animation = "spin 1s linear infinite";
+
+    try {
+        // DEF-003 FIX: reset search + filter on refresh
+        clearSearch();
+        CURRENT_PAGE = 1;
+
+        // Soft refresh — re-fetch data without page reload
+        await loadDashboard();
+        showToast("Dashboard refreshed", "success", 2000);
+
+    } catch (err) {
+        console.error("Soft refresh failed, reloading page:", err);
+        // Hard fallback — guaranteed to work after any navigation
+        window.location.reload();
+
+    } finally {
+        if (btn)  btn.style.opacity = "";
+        if (btn)  btn.style.pointerEvents = "";
+        if (icon) icon.style.animation = "";
+    }
+}
+
+/* DEF-003 FIX: clear search resets table to full data */
+function clearSearch() {
+    const el = document.getElementById("globalSearch");
+    const cb = document.getElementById("searchClearBtn");
+    if (el) el.value = "";
+    if (cb) cb.style.display = "none";
+    filteredEmployees = [...allEmployees];
+    CURRENT_PAGE = 1;
+    renderEmployees(filteredEmployees);
 }
 </script>
 
