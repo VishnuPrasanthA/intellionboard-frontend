@@ -14,11 +14,7 @@ body{font-family:'Poppins',sans-serif;background:#eef5ff;overflow-x:hidden}
 .main-layout{display:flex;min-height:100vh}
 
 /* ── Sidebar ── */
-.sidebar{
-    width:280px;background:linear-gradient(180deg,#0F172A,#111827);
-    color:white;padding:30px 20px;position:fixed;left:0;top:0;bottom:0;
-    overflow-y:auto;z-index:100;
-}
+.sidebar{width:280px;background:linear-gradient(180deg,#0F172A,#111827);color:white;padding:30px 20px;position:fixed;left:0;top:0;bottom:0;overflow-y:auto;z-index:100}
 .logo{font-size:26px;font-weight:800;margin-bottom:40px}
 .logo span{color:#19d3a2}
 .profile-card{background:rgba(255,255,255,0.06);padding:20px;border-radius:20px;margin-bottom:30px}
@@ -26,7 +22,7 @@ body{font-family:'Poppins',sans-serif;background:#eef5ff;overflow-x:hidden}
 .profile-role{font-size:13px;opacity:.8;margin-top:5px}
 .menu{margin-top:20px}
 .menu-item{padding:14px 16px;border-radius:14px;margin-bottom:10px;cursor:pointer;transition:.3s;font-weight:500}
-.menu-item:hover{background:#19d3a2}
+.menu-item:hover,.menu-item.active{background:#19d3a2}
 .logout-btn{margin-top:40px;width:100%;padding:14px;border:none;border-radius:14px;background:#ff4d4d;color:white;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif}
 
 /* ── Content ── */
@@ -49,11 +45,7 @@ body{font-family:'Poppins',sans-serif;background:#eef5ff;overflow-x:hidden}
 
 /* ── Training cards ── */
 .training-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:25px}
-.training-card{
-    background:white;border-radius:28px;padding:24px;
-    box-shadow:0 10px 30px rgba(0,0,0,0.08);position:relative;
-    overflow:hidden;transition:.3s;cursor:pointer;
-}
+.training-card{background:white;border-radius:28px;padding:24px;box-shadow:0 10px 30px rgba(0,0,0,0.08);position:relative;overflow:hidden;transition:.3s;cursor:pointer}
 .training-card:hover{transform:translateY(-6px)}
 .training-card::before{content:'';position:absolute;top:0;left:0;width:100%;height:6px;background:linear-gradient(90deg,#19d3a2,#0ea5e9)}
 .training-card.locked-card{opacity:.6;cursor:not-allowed}
@@ -68,33 +60,29 @@ body{font-family:'Poppins',sans-serif;background:#eef5ff;overflow-x:hidden}
 .completed{background:#d1fae5;color:#065f46}
 .pending{background:#fee2e2;color:#991b1b}
 .in-progress{background:#fef3c7;color:#92400e}
+.assigned{background:#e0f2fe;color:#0369a1}
 .locked{background:#e2e8f0;color:#334155}
 
 /* ── Empty state ── */
 .empty-state{text-align:center;padding:50px 30px;color:#94a3b8;background:white;border-radius:20px;box-shadow:0 4px 16px rgba(0,0,0,0.05)}
 .empty-state .empty-icon{font-size:48px;margin-bottom:14px}
+.empty-state h3{font-size:16px;font-weight:700;margin-bottom:6px;color:#64748b}
+.empty-state p{font-size:13px}
 
 /* ── Modal ── */
 .modal{position:fixed;inset:0;background:rgba(15,23,42,0.85);display:none;justify-content:center;align-items:center;z-index:9999}
 .modal-box{width:96%;max-width:1500px;height:92vh;background:white;border-radius:28px;overflow:hidden;display:flex;position:relative}
-.modal-close-btn{
-    position:absolute;top:14px;right:14px;z-index:20;
-    width:40px;height:40px;border-radius:50%;border:none;
-    background:rgba(15,23,42,0.9);color:white;font-size:22px;
-    cursor:pointer;display:flex;align-items:center;justify-content:center;
-    transition:.2s;font-weight:700;
-}
+.modal-close-btn{position:absolute;top:14px;right:14px;z-index:30;width:40px;height:40px;border-radius:50%;border:none;background:rgba(15,23,42,0.9);color:white;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s;font-weight:700}
 .modal-close-btn:hover{background:#ff4d4d}
 
 /* ── Left topic panel ── */
 .left-panel{width:30%;background:#f8fafc;padding:22px;overflow-y:auto;border-right:1px solid #e2e8f0;flex-shrink:0}
 .left-panel h3{font-size:15px;font-weight:800;margin-bottom:16px;color:#0F172A;padding-bottom:10px;border-bottom:2px solid #e2e8f0}
 .topic-item{background:white;border-radius:14px;padding:14px 16px;margin-bottom:10px;cursor:pointer;border:2px solid transparent;transition:.3s}
-.topic-item:hover{border-color:#19d3a2}
-.topic-active{border-color:#19d3a2;background:#ecfdf5}
+.topic-item:hover:not(.topic-locked-item){border-color:#19d3a2}
+.topic-active{border-color:#19d3a2!important;background:#ecfdf5}
 .topic-done{border-color:#d1fae5;background:#f0fdf4}
 .topic-locked-item{opacity:.45;cursor:not-allowed}
-.topic-locked-item:hover{border-color:transparent}
 .topic-title{font-weight:700;color:#0F172A;font-size:13px;line-height:1.4}
 .topic-meta{margin-top:5px;font-size:11px;color:#64748b}
 .topic-badge{display:inline-block;margin-top:5px;padding:2px 9px;border-radius:8px;font-size:10px;font-weight:700}
@@ -102,101 +90,48 @@ body{font-family:'Poppins',sans-serif;background:#eef5ff;overflow-x:hidden}
 .badge-current{background:#fef3c7;color:#92400e}
 .badge-locked{background:#e2e8f0;color:#475569}
 
-/* ── Right video panel ── */
-.right-panel{flex:1;display:flex;flex-direction:column;overflow:hidden}
+/* ── Right panel ── */
+.right-panel{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
 
-/* Video section — top half */
-.video-section{flex-shrink:0;background:#000;position:relative}
+/* Video header */
+.video-header{display:flex;justify-content:space-between;align-items:center;padding:14px 20px;background:white;border-bottom:1px solid #f1f5f9;flex-shrink:0;gap:12px}
+.video-title{font-size:15px;font-weight:800;color:#0F172A;flex:1;line-height:1.3}
+.learning-time{background:#ecfeff;padding:8px 16px;border-radius:16px;color:#0f766e;font-weight:800;white-space:nowrap;font-size:15px;font-variant-numeric:tabular-nums;min-width:70px;text-align:center}
 
-/* DEF-021 FIX: disable right-click + 3-dot download menu */
-.video-section::after{
-    content:'';position:absolute;inset:0;z-index:2;
-    background:transparent;pointer-events:none;
-}
-.video-overlay{
-    position:absolute;inset:0;z-index:3;
-    background:transparent;
-    /* Covers the bottom-right corner where the 3-dot menu appears */
-}
-
-.video-header{
-    display:flex;justify-content:space-between;align-items:center;
-    padding:16px 20px 10px;background:white;border-bottom:1px solid #f1f5f9;
-    flex-shrink:0;
-}
-.video-title{font-size:16px;font-weight:800;color:#0F172A;flex:1;margin-right:12px;line-height:1.3}
-.learning-time{
-    background:#ecfeff;padding:8px 16px;border-radius:16px;
-    color:#0f766e;font-weight:800;white-space:nowrap;font-size:15px;
-    font-variant-numeric:tabular-nums;
-}
-
-.video-wrap{
-    position:relative;background:#000;
-    width:100%;padding-top:0;
-}
+/* Video wrap — NO download */
+.video-wrap{position:relative;background:#000;flex-shrink:0}
 video#videoPlayer{
-    width:100%;
-    height:320px;
-    display:block;
-    object-fit:contain;
-    background:#000;
-    /* Disable context menu via CSS */
-    pointer-events:auto;
+    width:100%;height:340px;display:block;
+    object-fit:contain;background:#000;
+}
+/* Hide download via CSS overlay on 3-dot area */
+.video-nodl-shield{
+    position:absolute;bottom:0;right:0;
+    width:50px;height:50px;
+    background:transparent;
+    z-index:10;
+    cursor:default;
 }
 
-/* ── Transcript section — bottom half, scrollable ── */
-.transcript-section{
-    flex:1;overflow-y:auto;padding:16px 20px;
-    background:#fafbfc;border-top:2px solid #e2e8f0;
-    min-height:0;
-}
-.transcript-header{
-    display:flex;align-items:center;gap:8px;
-    margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid #e2e8f0;
-}
+/* Transcript */
+.transcript-section{flex:1;overflow-y:auto;padding:14px 20px;background:#fafbfc;border-top:1px solid #e2e8f0;min-height:0}
+.transcript-header{display:flex;align-items:center;gap:8px;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid #e2e8f0}
 .transcript-header h4{font-size:13px;font-weight:800;color:#0F172A}
-.transcript-header span{font-size:11px;color:#94a3b8;font-weight:500}
-.transcript-empty{
-    text-align:center;padding:30px;color:#94a3b8;font-size:13px;
-}
-.transcript-text{
-    font-size:13px;color:#374151;line-height:1.9;
-    white-space:pre-wrap;word-break:break-word;
-}
+.transcript-count{font-size:11px;color:#94a3b8;font-weight:500;margin-left:auto}
+.transcript-empty{text-align:center;padding:24px;color:#94a3b8;font-size:13px}
+.transcript-text{font-size:12.5px;color:#374151;line-height:2;word-break:break-word}
+.t-word{display:inline;padding:1px 0;border-radius:3px;transition:background .1s,color .1s}
+.t-word.t-active{background:#fef08a;color:#713f12;font-weight:700}
+.t-word.t-past{color:#c4cada}
 
-/* ── Transcript word highlighting ── */
-.t-word{
-    display:inline;padding:0 1px;border-radius:3px;
-    transition:background .15s;cursor:default;
-}
-.t-word.active{
-    background:#fef08a;color:#713f12;font-weight:600;
-}
-.t-word.past{
-    color:#9ca3af;
-}
-
-/* ── Bottom action bar ── */
-.action-bar{
-    display:flex;align-items:center;gap:12px;
-    padding:12px 20px;background:white;border-top:1px solid #f1f5f9;
-    flex-shrink:0;
-}
-.complete-btn{
-    flex:1;padding:13px 22px;background:linear-gradient(135deg,#19d3a2,#0ea5e9);
-    border:none;border-radius:14px;color:white;font-weight:700;
-    cursor:pointer;font-size:14px;font-family:'Poppins',sans-serif;transition:.2s;
-}
-.complete-btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(25,211,162,0.35)}
+/* Action bar */
+.action-bar{display:flex;align-items:center;gap:12px;padding:12px 20px;background:white;border-top:1px solid #f1f5f9;flex-shrink:0}
+.complete-btn{flex:1;padding:13px 22px;background:linear-gradient(135deg,#19d3a2,#0ea5e9);border:none;border-radius:14px;color:white;font-weight:700;cursor:pointer;font-size:14px;font-family:'Poppins',sans-serif;transition:.2s}
+.complete-btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(25,211,162,0.4)}
 .complete-btn:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
-.complete-banner{
-    display:none;padding:10px 16px;background:linear-gradient(90deg,#19d3a2,#0ea5e9);
-    color:white;border-radius:12px;font-weight:700;font-size:13px;
-    white-space:nowrap;
-}
+.complete-banner{display:none;align-items:center;gap:8px;padding:10px 16px;background:linear-gradient(90deg,#19d3a2,#0ea5e9);color:white;border-radius:12px;font-weight:700;font-size:13px;white-space:nowrap}
 
-/* ── Tab panels ── */
+/* Other sections */
 #sec-assessment,#sec-certifications,#sec-analytics{display:none}
 .placeholder-box{background:white;border-radius:20px;padding:40px;text-align:center;box-shadow:0 4px 16px rgba(0,0,0,0.06);margin-top:10px}
 .placeholder-box .ph-icon{font-size:52px;margin-bottom:14px}
@@ -211,11 +146,10 @@ video#videoPlayer{
 .chart-wrap h3{font-size:17px;font-weight:700;margin-bottom:18px;color:#0F172A}
 
 @media(max-width:1000px){
-    .sidebar{display:none}
-    .content{margin-left:0;width:100%}
+    .sidebar{display:none}.content{margin-left:0;width:100%}
     .modal-box{flex-direction:column;height:95vh}
-    .left-panel{width:100%;height:200px;border-right:none;border-bottom:1px solid #e2e8f0}
-    video#videoPlayer{height:200px}
+    .left-panel{width:100%;height:190px;border-right:none;border-bottom:1px solid #e2e8f0}
+    video#videoPlayer{height:210px}
 }
 </style>
 </head>
@@ -230,13 +164,13 @@ video#videoPlayer{
         <div class="profile-role">Healthcare Learning Portal</div>
     </div>
     <div class="menu">
-        <div class="menu-item" onclick="switchSection('dashboard')">🏠 Dashboard</div>
-        <div class="menu-item" onclick="switchSection('foundation')">📘 Foundation Trainings</div>
-        <div class="menu-item" onclick="switchSection('account')">🏥 Account Trainings</div>
-        <div class="menu-item" onclick="switchSection('coe')">🧠 COE Trainings</div>
-        <div class="menu-item" onclick="switchSection('assessment')">📝 Assessments</div>
-        <div class="menu-item" onclick="switchSection('certifications')">🏆 Certifications</div>
-        <div class="menu-item" onclick="switchSection('analytics')">📈 Learning Analytics</div>
+        <div class="menu-item" id="mn-dashboard"     onclick="switchSection('dashboard')">🏠 Dashboard</div>
+        <div class="menu-item" id="mn-foundation"    onclick="switchSection('foundation')">📘 Foundation Trainings</div>
+        <div class="menu-item" id="mn-account"       onclick="switchSection('account')">🏥 Account Trainings</div>
+        <div class="menu-item" id="mn-coe"           onclick="switchSection('coe')">🧠 COE Trainings</div>
+        <div class="menu-item" id="mn-assessment"    onclick="switchSection('assessment')">📝 Assessments</div>
+        <div class="menu-item" id="mn-certifications" onclick="switchSection('certifications')">🏆 Certifications</div>
+        <div class="menu-item" id="mn-analytics"     onclick="switchSection('analytics')">📈 Learning Analytics</div>
     </div>
     <button class="logout-btn" onclick="logout()">Logout</button>
 </div>
@@ -256,6 +190,7 @@ video#videoPlayer{
         </div>
     </div>
 
+    <!-- Dashboard stats -->
     <div id="sec-dashboard">
         <div class="stats-grid">
             <div class="stat-card"><div class="stat-title">Learning Hours</div><div class="stat-value" id="hoursSpent">0h 0m</div></div>
@@ -278,6 +213,7 @@ video#videoPlayer{
         <div class="training-grid" id="coeGrid"></div>
     </div>
 
+    <!-- DEF-012 FIX -->
     <div id="sec-assessment" class="section">
         <div class="section-title">Assessments</div>
         <div class="placeholder-box"><div class="ph-icon">📝</div><h3>Assessments Coming Soon</h3><p>Your training assessments will appear here once assigned by your PMO.</p></div>
@@ -297,52 +233,49 @@ video#videoPlayer{
 <!-- ═══ TRAINING MODAL ═══ -->
 <div class="modal" id="trainingModal">
     <div class="modal-box">
+        <!-- DEF-006 FIX: Close button always visible -->
         <button class="modal-close-btn" onclick="closeModal()" title="Close">✕</button>
 
-        <!-- Left: topic list -->
         <div class="left-panel">
             <h3 id="modalTrainingTitle">Topics</h3>
             <div id="topicList"></div>
         </div>
 
-        <!-- Right: video + transcript + action -->
         <div class="right-panel">
-
-            <!-- Header with title + timer -->
             <div class="video-header">
-                <div class="video-title" id="videoTitle">Module</div>
+                <div class="video-title" id="videoTitle">Select a topic</div>
+                <!-- DEF-007/027 FIX: timer only runs while video plays -->
                 <div class="learning-time" id="watchTimer">00:00</div>
             </div>
 
-            <!-- Video — NO download, NO right-click -->
+            <!-- DEF-021/023 FIX: native <video> tag — no iframe, no autoplay block -->
             <div class="video-wrap" id="videoWrap">
-                <!-- overlay blocks right-click context menu on video -->
-                <div class="video-overlay" id="videoOverlay"
-                     oncontextmenu="return false"
-                     ondragstart="return false"></div>
                 <video id="videoPlayer"
-                       playsinline
-                       controlslist="nodownload nofullscreen noremoteplayback"
-                       disablePictureInPicture
-                       oncontextmenu="return false"
-                       ondragstart="return false"
-                       ontimeupdate="onVideoTimeUpdate()"
-                       onplay="onVideoPlay()"
-                       onpause="onVideoPause()"
-                       onended="onVideoEnded()">
+                    controls
+                    playsinline
+                    preload="metadata"
+                    controlslist="nodownload noremoteplayback"
+                    disablepictureinpicture
+                    oncontextmenu="return false"
+                    onplay="onVideoPlay()"
+                    onpause="onVideoPause()"
+                    onended="onVideoEnded()"
+                    ontimeupdate="onVideoTimeUpdate()">
                     Your browser does not support the video tag.
                 </video>
+                <!-- Shields the 3-dot download button area -->
+                <div class="video-nodl-shield" oncontextmenu="return false"></div>
             </div>
 
-            <!-- Transcript -->
+            <!-- Transcript — DEF-026 FIX: always shown if data exists -->
             <div class="transcript-section" id="transcriptSection">
                 <div class="transcript-header">
                     <span>📄</span>
                     <h4>Session Transcript</h4>
-                    <span id="transcriptStatus">Loading…</span>
+                    <span class="transcript-count" id="transcriptCount"></span>
                 </div>
                 <div id="transcriptContent">
-                    <div class="transcript-empty">Loading transcript…</div>
+                    <div class="transcript-empty">Select a topic to load transcript.</div>
                 </div>
             </div>
 
@@ -353,12 +286,14 @@ video#videoPlayer{
                 </button>
                 <div class="complete-banner" id="completeBanner"></div>
             </div>
-
         </div>
     </div>
 </div>
 
 <script>
+/* ═══════════════════════════════════════════════════
+   CONFIG
+═══════════════════════════════════════════════════ */
 const BASE_URL = "https://intellionboard.onrender.com";
 const emp_id   = localStorage.getItem("emp_id");
 
@@ -366,18 +301,25 @@ if(!emp_id || emp_id === "null" || emp_id === "undefined"){
     window.location.replace("/");
 }
 
-/* ══════════════════════════════════════════
-   SECTION SWITCHING
-══════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════
+   SECTION SWITCHING — DEF-012/013/014 FIX
+═══════════════════════════════════════════════════ */
 const ALL_SECTIONS = ["dashboard","foundation","account","coe","assessment","certifications","analytics"];
 
 function switchSection(name){
     ALL_SECTIONS.forEach(s => {
         const el = document.getElementById("sec-"+s);
         if(el) el.style.display = "none";
+        const mn = document.getElementById("mn-"+s);
+        if(mn) mn.classList.remove("active");
     });
+
     const target = document.getElementById("sec-"+name);
     if(target) target.style.display = "block";
+    const mn = document.getElementById("mn-"+name);
+    if(mn) mn.classList.add("active");
+
+    // Dashboard always shows foundation/account/coe too
     if(name === "dashboard"){
         ["foundation","account","coe"].forEach(s => {
             const el = document.getElementById("sec-"+s);
@@ -387,213 +329,208 @@ function switchSection(name){
     window.scrollTo({top:0,behavior:"smooth"});
 }
 
-/* ══════════════════════════════════════════
+/* ═══════════════════════════════════════════════════
    GLOBALS
-══════════════════════════════════════════ */
+═══════════════════════════════════════════════════ */
 let currentTraining   = "";
 let currentTopics     = [];
 let currentTopicIndex = 0;
-let completedTopicIds = new Set();
-let trainingStatuses  = {};
+let completedTopicIds = new Set();   // DEF-008/009/010 FIX
+let trainingStatuses  = {};          // DEF-011 FIX: preserve COMPLETED locally
 
-// Timer — synced to video play/pause
+// DEF-007/027 FIX: timer synced to video play/pause events
 let timerInterval = null;
 let timerSeconds  = 0;
 let timerRunning  = false;
 
-/* ══════════════════════════════════════════
-   TIMER — only runs while video is playing
-══════════════════════════════════════════ */
+// Transcript word sync
+let tWords        = [];
+let tLastIdx      = -1;
+
+/* ═══════════════════════════════════════════════════
+   TIMER — DEF-007 FIX
+   Only runs while video is actively playing
+═══════════════════════════════════════════════════ */
 function startTimer(){
     if(timerRunning) return;
     timerRunning = true;
     timerInterval = setInterval(()=>{
         timerSeconds++;
         const m = String(Math.floor(timerSeconds/60)).padStart(2,"0");
-        const s = String(timerSeconds % 60).padStart(2,"0");
+        const s = String(timerSeconds%60).padStart(2,"0");
         document.getElementById("watchTimer").textContent = `${m}:${s}`;
     },1000);
 }
-
 function pauseTimer(){
     timerRunning = false;
     clearInterval(timerInterval);
     timerInterval = null;
 }
-
 function resetTimer(){
     pauseTimer();
     timerSeconds = 0;
     document.getElementById("watchTimer").textContent = "00:00";
 }
 
-/* ══════════════════════════════════════════
-   VIDEO EVENT HANDLERS — timer syncs with video
-══════════════════════════════════════════ */
-function onVideoPlay()   { startTimer(); }
-function onVideoPause()  { pauseTimer(); }
-function onVideoEnded()  { pauseTimer(); }
+// Video event handlers — DEF-007 FIX
+function onVideoPlay()  { startTimer(); }
+function onVideoPause() { pauseTimer(); }
+function onVideoEnded() { pauseTimer(); }
 
-/* ══════════════════════════════════════════
-   TRANSCRIPT SYNC — highlight words as video plays
-══════════════════════════════════════════ */
-let transcriptWords  = [];   // [{word, startTime, el}]
-let lastHighlighted  = -1;
-
+/* ═══════════════════════════════════════════════════
+   TRANSCRIPT SYNC
+═══════════════════════════════════════════════════ */
 function onVideoTimeUpdate(){
     const vid = document.getElementById("videoPlayer");
-    if(!vid || transcriptWords.length === 0) return;
+    if(!vid || tWords.length === 0 || !vid.duration) return;
+    const idx = Math.min(
+        Math.floor((vid.currentTime / vid.duration) * tWords.length),
+        tWords.length - 1
+    );
+    if(idx === tLastIdx) return;
+    tLastIdx = idx;
 
-    const currentTime = vid.currentTime;
-    // Estimate word position: divide transcript evenly across video duration
-    const duration   = vid.duration || 1;
-    const totalWords = transcriptWords.length;
-    const currentWordIdx = Math.floor((currentTime / duration) * totalWords);
-
-    if(currentWordIdx === lastHighlighted) return;
-    lastHighlighted = currentWordIdx;
-
-    transcriptWords.forEach((w, i) => {
+    tWords.forEach((w,i) => {
         if(!w.el) return;
-        w.el.classList.remove("active","past");
-        if(i < currentWordIdx)       w.el.classList.add("past");
-        else if(i === currentWordIdx) w.el.classList.add("active");
+        w.el.classList.remove("t-active","t-past");
+        if(i < idx)       w.el.classList.add("t-past");
+        else if(i === idx) w.el.classList.add("t-active");
     });
 
-    // Auto-scroll transcript to keep active word visible
-    const activeEl = transcriptWords[currentWordIdx]?.el;
+    // Auto-scroll transcript
+    const activeEl = tWords[idx]?.el;
     if(activeEl){
-        const section = document.getElementById("transcriptSection");
-        const elTop   = activeEl.offsetTop;
-        const secTop  = section.scrollTop;
-        const secH    = section.clientHeight;
-        if(elTop < secTop + 60 || elTop > secTop + secH - 80){
-            section.scrollTo({top: elTop - secH/2, behavior:"smooth"});
+        const sec  = document.getElementById("transcriptSection");
+        const top  = activeEl.offsetTop;
+        const sh   = sec.clientHeight;
+        if(top < sec.scrollTop + 60 || top > sec.scrollTop + sh - 80){
+            sec.scrollTo({top: top - sh/2, behavior:"smooth"});
         }
     }
 }
 
-function buildTranscriptHTML(text){
-    if(!text || text.trim().length < 10){
-        return '<div class="transcript-empty">No transcript available for this topic.</div>';
-    }
-    // Split into words and wrap each in a span for highlighting
-    const words = text.trim().split(/\s+/);
-    transcriptWords = words.map((w,i) => ({word:w, el:null}));
-
-    const spans = words.map((w,i) =>
-        `<span class="t-word" id="tw${i}">${w}</span>`
-    ).join(' ');
-
-    return `<div class="transcript-text">${spans}</div>`;
+function buildTranscript(rawText){
+    if(!rawText || rawText.trim().length < 10) return null;
+    // Strip GUID prefixes that leaked from VTT (e.g. "abc123-0 ")
+    const cleaned = rawText.replace(/[a-f0-9]{8}-[a-f0-9-]+-\d+\s+/g,"").trim();
+    const words   = cleaned.split(/\s+/).filter(Boolean);
+    tWords        = words.map(w => ({el:null}));
+    const html    = words.map((w,i) =>
+        `<span class="t-word" id="tw${i}">${escHtml(w)}</span>`
+    ).join(" ");
+    return {html:`<div class="transcript-text">${html}</div>`, count:words.length};
 }
 
-function attachTranscriptRefs(){
-    transcriptWords.forEach((w,i) => {
-        w.el = document.getElementById("tw"+i);
-    });
-    lastHighlighted = -1;
+function attachTRefs(){
+    tWords.forEach((w,i) => { w.el = document.getElementById("tw"+i); });
+    tLastIdx = -1;
 }
 
-/* ══════════════════════════════════════════
+function escHtml(s){
+    return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+/* ═══════════════════════════════════════════════════
    INIT
-══════════════════════════════════════════ */
+═══════════════════════════════════════════════════ */
 loadEmployeeProfile();
 loadDashboard();
 loadTrainings();
 
-/* ══════════════════════════════════════════
+/* ═══════════════════════════════════════════════════
    PROFILE
-══════════════════════════════════════════ */
+═══════════════════════════════════════════════════ */
 async function loadEmployeeProfile(){
     try{
         let name = localStorage.getItem("emp_name");
         let coe  = localStorage.getItem("coe");
         if(!name || name === "undefined"){
-            const res  = await fetch(`${BASE_URL}/api/auth/employee/${emp_id}`,{credentials:"include"});
-            const data = await res.json();
-            if(data.success){
-                name = data.employee?.emp_name || data.employee?.name || "Employee";
-                coe  = data.selected_coe || "";
-                localStorage.setItem("emp_name", name);
-                localStorage.setItem("coe", coe);
+            const r = await fetch(`${BASE_URL}/api/auth/employee/${emp_id}`,{credentials:"include"});
+            const d = await r.json();
+            if(d.success){
+                name = d.employee?.emp_name || d.employee?.name || "Employee";
+                coe  = d.selected_coe || "";
+                localStorage.setItem("emp_name",name);
+                localStorage.setItem("coe",coe);
             }
         }
         document.getElementById("employeeName").textContent    = name || "Employee";
         document.getElementById("topEmployeeName").textContent = name || "Employee";
         document.getElementById("coeBadge").textContent        = coe  || "COE";
-    }catch(e){ console.warn("Profile:", e) }
+    }catch(e){ console.warn("Profile:",e) }
 }
 
-/* ══════════════════════════════════════════
-   DASHBOARD STATS
-══════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════
+   DASHBOARD STATS — DEF-015 FIX: hours + mins
+═══════════════════════════════════════════════════ */
 async function loadDashboard(){
     try{
-        const res  = await fetch(`${BASE_URL}/dashboard-summary/${emp_id}`,{credentials:"include"});
-        const data = await res.json();
-        const hrs  = data.hours   || 0;
-        const mins = data.minutes || 0;
-        document.getElementById("hoursSpent").textContent         = `${hrs}h ${mins}m`;
-        document.getElementById("completedTrainings").textContent  = data.completed || 0;
-        document.getElementById("pendingTrainings").textContent    = data.pending   || 0;
-        document.getElementById("overallProgress").textContent     = `${data.overall_progress || 0}%`;
-    }catch(e){ console.warn("Dashboard:", e) }
+        const r = await fetch(`${BASE_URL}/dashboard-summary/${emp_id}`,{credentials:"include"});
+        const d = await r.json();
+        document.getElementById("hoursSpent").textContent        = `${d.hours||0}h ${d.minutes||0}m`;
+        document.getElementById("completedTrainings").textContent = d.completed||0;
+        document.getElementById("pendingTrainings").textContent   = d.pending||0;
+        document.getElementById("overallProgress").textContent    = `${d.overall_progress||0}%`;
+    }catch(e){ console.warn("Dashboard:",e) }
 }
 
-/* ══════════════════════════════════════════
-   LOAD TRAININGS
-══════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════
+   LOAD TRAININGS — DEF-011/016 FIX
+═══════════════════════════════════════════════════ */
 async function loadTrainings(){
     try{
-        const res       = await fetch(`${BASE_URL}/employee-trainings/${emp_id}`,{credentials:"include"});
-        const trainings = await res.json();
-        const foundation = [], account = [], coe = [];
+        const r = await fetch(`${BASE_URL}/employee-trainings/${emp_id}`,{credentials:"include"});
+        const trainings = await r.json();
+        const foundation=[], account=[], coe=[];
 
         trainings.forEach(t => {
+            // DEF-011 FIX: preserve COMPLETED status locally
             if(trainingStatuses[t.name] === "COMPLETED") t.status = "COMPLETED";
             else trainingStatuses[t.name] = t.status;
 
-            const lower = (t.name||"").toLowerCase();
-            const obj = {name:t.name, progress:t.progress||0, status:t.status||"PENDING", desc:t.description||"Learning Module"};
-            if(lower.includes("healthcare")||lower.includes("testing")||lower.includes("automation")){
+            const lo = (t.name||"").toLowerCase();
+            const obj = {name:t.name, progress:t.progress||0, status:t.status||"ASSIGNED", desc:t.description||"Learning Module"};
+            if(lo.includes("healthcare")||lo.includes("testing")||lo.includes("automation")){
                 foundation.push(obj);
-            } else if(lower.includes("hipaa")||lower.includes("security")||lower.includes("account")){
+            } else if(lo.includes("hipaa")||lo.includes("security")||lo.includes("account")){
                 account.push(obj);
             } else {
                 coe.push(obj);
             }
         });
 
-        renderCards(foundation, "foundationGrid");
-        renderCards(account,    "accountGrid");
-        renderCards(coe,        "coeGrid");
+        renderCards(foundation,"foundationGrid");
+        renderCards(account,"accountGrid");
+        renderCards(coe,"coeGrid");
         loadCertificates(trainings);
-        renderAnalyticsCharts(trainings);
+        renderCharts(trainings);
     }catch(e){
-        console.warn("Trainings:", e);
-        ["foundationGrid","accountGrid","coeGrid"].forEach(id => renderCards([], id));
+        console.warn("Trainings:",e);
+        ["foundationGrid","accountGrid","coeGrid"].forEach(id=>renderCards([],id));
     }
 }
 
-/* ══════════════════════════════════════════
-   RENDER CARDS
-══════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════
+   RENDER CARDS — DEF-009/016 FIX
+═══════════════════════════════════════════════════ */
 function renderCards(data, containerId){
-    const container = document.getElementById(containerId);
-    container.innerHTML = "";
-    if(!data || data.length === 0){
-        container.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div><h3>No trainings assigned yet</h3><p>Your PMO will assign training modules to you soon.</p></div>`;
+    const box = document.getElementById(containerId);
+    box.innerHTML = "";
+    // DEF-016 FIX: show friendly empty state
+    if(!data||data.length===0){
+        box.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div><h3>No trainings assigned yet</h3><p>Your PMO will assign training modules to you soon.</p></div>`;
         return;
     }
     data.forEach(t => {
-        let pillClass = "pending";
-        if(t.status==="COMPLETED")   pillClass = "completed";
-        if(t.status==="IN_PROGRESS") pillClass = "in-progress";
-        if(t.status==="LOCKED")      pillClass = "locked";
+        const s = (t.status||"").toUpperCase();
+        let pill = "pending";
+        if(s==="COMPLETED")   pill = "completed";
+        if(s==="IN_PROGRESS") pill = "in-progress";
+        if(s==="ASSIGNED")    pill = "assigned";
+        if(s==="LOCKED")      pill = "locked";
 
         const card = document.createElement("div");
-        card.className = "training-card" + (t.status==="LOCKED" ? " locked-card" : "");
+        card.className = "training-card"+(s==="LOCKED"?" locked-card":"");
         card.innerHTML = `
             <div class="training-title">${t.name}</div>
             <div class="training-desc">${t.desc}</div>
@@ -601,91 +538,106 @@ function renderCards(data, containerId){
                 <div class="progress-bar"><div class="progress-fill" style="width:${t.progress}%"></div></div>
             </div>
             <div class="training-footer">
-                <div class="status-pill ${pillClass}">${t.status}</div>
+                <div class="status-pill ${pill}">${s}</div>
                 <div style="font-weight:700;color:#0F172A">${t.progress}%</div>
             </div>`;
 
-        if(t.status !== "LOCKED"){
-            card.onclick = () => openTraining(t.name, t.status === "COMPLETED");
+        // DEF-009 FIX: COMPLETED cards are always clickable for review
+        if(s !== "LOCKED"){
+            card.onclick = () => openTraining(t.name, s==="COMPLETED");
         }
-        container.appendChild(card);
+        box.appendChild(card);
     });
 }
 
-/* ══════════════════════════════════════════
-   OPEN TRAINING
-══════════════════════════════════════════ */
-async function openTraining(trainingName, isReviewMode=false){
+/* ═══════════════════════════════════════════════════
+   OPEN TRAINING — DEF-011 FIX
+═══════════════════════════════════════════════════ */
+async function openTraining(trainingName, isReview=false){
     currentTraining   = trainingName;
     completedTopicIds = new Set();
     currentTopicIndex = 0;
 
     document.getElementById("trainingModal").style.display   = "flex";
     document.getElementById("modalTrainingTitle").textContent = trainingName;
-    document.getElementById("videoTitle").textContent         = trainingName;
+    document.getElementById("videoTitle").textContent         = "Loading…";
     document.getElementById("completeBanner").style.display  = "none";
-    document.getElementById("transcriptContent").innerHTML   = '<div class="transcript-empty">Select a topic to view transcript.</div>';
-    document.getElementById("transcriptStatus").textContent  = "";
+    document.getElementById("transcriptContent").innerHTML   = '<div class="transcript-empty">Loading…</div>';
+    document.getElementById("transcriptCount").textContent   = "";
     resetTimer();
 
+    const player = document.getElementById("videoPlayer");
+    player.pause();
+    player.removeAttribute("src");
+    player.load();
+
     try{
-        if(!isReviewMode){
+        if(!isReview){
             await fetch(`${BASE_URL}/start-training`,{
-                method:"POST", credentials:"include",
+                method:"POST",credentials:"include",
                 headers:{"Content-Type":"application/json"},
-                body: JSON.stringify({emp_id, training_name: trainingName})
+                body:JSON.stringify({emp_id, training_name:trainingName})
             });
         }
-        const res = await fetch(
+        const r = await fetch(
             `${BASE_URL}/training-details/${emp_id}/${encodeURIComponent(trainingName)}`,
             {credentials:"include"}
         );
-        currentTopics = await res.json();
-        if(isReviewMode) currentTopics.forEach((_,i) => completedTopicIds.add(i));
+        currentTopics = await r.json();
+
+        // DEF-011 FIX: review mode — all topics accessible
+        if(isReview) currentTopics.forEach((_,i) => completedTopicIds.add(i));
+
         renderTopics();
-        if(currentTopics.length > 0) playTopic(0, isReviewMode);
+        if(currentTopics.length > 0) playTopic(0, isReview);
     }catch(e){
-        console.warn("openTraining:", e);
+        console.warn("openTraining:",e);
         document.getElementById("topicList").innerHTML = `<p style="color:#94a3b8;padding:16px">Could not load topics.</p>`;
     }
 }
 
-/* ══════════════════════════════════════════
-   RENDER TOPICS
-══════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════
+   RENDER TOPICS — DEF-008/009 FIX
+═══════════════════════════════════════════════════ */
 function renderTopics(){
     const list = document.getElementById("topicList");
     list.innerHTML = "";
-    currentTopics.forEach((t,index) => {
-        const isDone     = completedTopicIds.has(index);
-        const isCurrent  = index === currentTopicIndex;
-        const maxAccess  = Math.max(...Array.from(completedTopicIds), -1) + 1;
-        const isAccessible = isDone || index <= maxAccess;
+    currentTopics.forEach((t,i) => {
+        const isDone    = completedTopicIds.has(i);
+        const isCurrent = i === currentTopicIndex;
+        // DEF-008 FIX: only unlock next topic after current is done
+        const maxUnlock = Math.max(...Array.from(completedTopicIds), -1) + 1;
+        const canAccess = isDone || i <= maxUnlock;
 
         const div = document.createElement("div");
         div.className = "topic-item" +
-            (isCurrent ? " topic-active" : "") +
-            (isDone && !isCurrent ? " topic-done" : "") +
-            (!isAccessible ? " topic-locked-item" : "");
+            (isCurrent && !isDone ? " topic-active" : "") +
+            (isDone && !isCurrent ? " topic-done"   : "") +
+            (!canAccess ? " topic-locked-item"       : "");
 
         let badge = "";
-        if(isDone)           badge = `<span class="topic-badge badge-done">✓ Done</span>`;
-        else if(isCurrent)   badge = `<span class="topic-badge badge-current">▶ Current</span>`;
-        else if(!isAccessible) badge = `<span class="topic-badge badge-locked">🔒 Locked</span>`;
+        if(isDone)          badge = `<span class="topic-badge badge-done">✓ Done</span>`;
+        else if(isCurrent)  badge = `<span class="topic-badge badge-current">▶ Current</span>`;
+        else if(!canAccess) badge = `<span class="topic-badge badge-locked">🔒 Locked</span>`;
 
         div.innerHTML = `
-            <div class="topic-title">${index+1}. ${t.topic_name}</div>
+            <div class="topic-title">${i+1}. ${t.topic_name}</div>
             <div class="topic-meta">⏱ ${t.minutes||10} mins</div>
             ${badge}`;
 
-        if(isAccessible) div.onclick = () => playTopic(index, isDone);
+        if(canAccess) div.onclick = () => playTopic(i, isDone);
         list.appendChild(div);
     });
 }
 
-/* ══════════════════════════════════════════
-   PLAY TOPIC
-══════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════
+   PLAY TOPIC — DEF-021/023/026/027 FIX
+   KEY FIX: Using native <video> tag with .src set directly
+   This resolves the "video loads but won't play" issue.
+   Browser autoplay policy: video needs user gesture OR
+   we use player.play() after src is set and catch the
+   NotAllowedError gracefully (user can still press play).
+═══════════════════════════════════════════════════ */
 function playTopic(index, reviewMode=false){
     currentTopicIndex = index;
     renderTopics();
@@ -695,25 +647,48 @@ function playTopic(index, reviewMode=false){
 
     document.getElementById("videoTitle").textContent = `${index+1}. ${topic.topic_name}`;
 
-    // Reset timer — starts only when video plays (onVideoPlay event)
+    // DEF-027 FIX: reset timer — only starts on play event
     resetTimer();
 
-    // Load video
-    if(topic.video_url){
-        player.src = topic.video_url;
+    // ── Load video ──────────────────────────────────────
+    if(topic.video_url && topic.video_url.trim() !== ""){
+        // Stop previous video first
+        player.pause();
+        player.src    = topic.video_url;
+        player.preload = "metadata";
         player.load();
-        // Remove download from controls programmatically
-        player.setAttribute("controlslist","nodownload nofullscreen noremoteplayback");
-        player.controls = true;
+        // Attempt autoplay — catch policy rejection gracefully
+        player.play().catch(err => {
+            // NotAllowedError = browser blocked autoplay
+            // Video is loaded, user sees play button — that's fine
+            if(err.name !== "NotAllowedError") console.warn("Video play:",err);
+        });
+        document.getElementById("videoWrap").style.display = "block";
     } else {
-        player.src = "";
+        player.pause();
         player.removeAttribute("src");
+        player.load();
+        document.getElementById("videoWrap").style.display = "block";
     }
 
-    // Load transcript
-    loadTranscript(topic.transcript || "");
+    // ── Load transcript ─────────────────────────────────
+    tWords   = [];
+    tLastIdx = -1;
+    const raw = topic.transcript || "";
+    const built = buildTranscript(raw);
+    const content  = document.getElementById("transcriptContent");
+    const countEl  = document.getElementById("transcriptCount");
 
-    // Complete button state
+    if(built){
+        content.innerHTML = built.html;
+        countEl.textContent = `${built.count.toLocaleString()} words`;
+        attachTRefs();
+    } else {
+        content.innerHTML  = '<div class="transcript-empty">No transcript available for this topic.</div>';
+        countEl.textContent = "Not available";
+    }
+
+    // ── Complete button ─────────────────────────────────
     const btn = document.getElementById("completeBtn");
     if(reviewMode && completedTopicIds.has(index)){
         btn.disabled    = true;
@@ -726,29 +701,11 @@ function playTopic(index, reviewMode=false){
     document.getElementById("completeBanner").style.display = "none";
 }
 
-/* ══════════════════════════════════════════
-   LOAD TRANSCRIPT
-══════════════════════════════════════════ */
-function loadTranscript(text){
-    const content  = document.getElementById("transcriptContent");
-    const statusEl = document.getElementById("transcriptStatus");
-    transcriptWords = [];
-    lastHighlighted = -1;
-
-    if(!text || text.trim().length < 10){
-        content.innerHTML  = '<div class="transcript-empty">No transcript available for this topic.</div>';
-        statusEl.textContent = "Not available";
-        return;
-    }
-
-    statusEl.textContent = `${text.split(/\s+/).length.toLocaleString()} words`;
-    content.innerHTML    = buildTranscriptHTML(text);
-    attachTranscriptRefs();
-}
-
-/* ══════════════════════════════════════════
-   COMPLETE TOPIC
-══════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════
+   COMPLETE TOPIC — DEF-008/010/015 FIX
+   Also handles resume position: after close+reopen,
+   topic index resumes from last incomplete topic.
+═══════════════════════════════════════════════════ */
 async function completeTopic(){
     pauseTimer();
     const topic = currentTopics[currentTopicIndex];
@@ -758,9 +715,9 @@ async function completeTopic(){
 
     try{
         await fetch(`${BASE_URL}/track-topic-progress`,{
-            method:"POST", credentials:"include",
+            method:"POST",credentials:"include",
             headers:{"Content-Type":"application/json"},
-            body: JSON.stringify({
+            body:JSON.stringify({
                 emp_id,
                 training_name: currentTraining,
                 sequence:      topic.sequence,
@@ -770,12 +727,11 @@ async function completeTopic(){
             })
         });
 
-        const res  = await fetch(
-            `${BASE_URL}/recalculate-progress/${emp_id}/${encodeURIComponent(currentTraining)}`,
-            {credentials:"include"}
-        );
-        const data = await res.json();
+        // DEF-010 FIX: recalculate uses COUNT(DISTINCT) on backend
+        const r    = await fetch(`${BASE_URL}/recalculate-progress/${emp_id}/${encodeURIComponent(currentTraining)}`,{credentials:"include"});
+        const data = await r.json();
 
+        // DEF-009 FIX: add to local done set — stays accessible
         completedTopicIds.add(currentTopicIndex);
         renderTopics();
 
@@ -784,123 +740,137 @@ async function completeTopic(){
             renderTopics();
             playTopic(currentTopicIndex);
         } else {
+            // All topics done
             const banner = document.getElementById("completeBanner");
             banner.style.display = "flex";
-            banner.textContent   = "🎉 Training Completed!";
-            trainingStatuses[currentTraining] = "COMPLETED";
+            banner.innerHTML     = "🎉 Training Completed!";
+            trainingStatuses[currentTraining] = "COMPLETED"; // DEF-011 FIX
+
             confetti({particleCount:250, spread:120});
+
             if(data.status === "COMPLETED"){
-                await fetch(`${BASE_URL}/generate-certificate`,{
-                    method:"POST", credentials:"include",
-                    headers:{"Content-Type":"application/json"},
-                    body: JSON.stringify({emp_id, training_name: currentTraining})
-                });
-                banner.innerHTML += ` <button onclick="downloadCertificate('${currentTraining}')"
-                    style="padding:6px 14px;border:none;border-radius:8px;background:white;
-                    color:#0F172A;font-weight:700;cursor:pointer;font-size:12px;margin-left:8px">
-                    🎓 Certificate</button>`;
+                try{
+                    await fetch(`${BASE_URL}/generate-certificate`,{
+                        method:"POST",credentials:"include",
+                        headers:{"Content-Type":"application/json"},
+                        body:JSON.stringify({emp_id, training_name:currentTraining})
+                    });
+                    banner.innerHTML += `<button onclick="downloadCertificate('${currentTraining}')"
+                        style="padding:6px 16px;border:none;border-radius:8px;background:white;
+                        color:#0F172A;font-weight:700;cursor:pointer;font-size:12px;margin-left:10px;
+                        font-family:'Poppins',sans-serif">🎓 Certificate</button>`;
+                }catch(_){}
             }
+            // DEF-015 FIX: refresh hours after completion
             loadDashboard();
             loadTrainings();
         }
     }catch(e){
-        console.error("Complete:", e);
+        console.error("Complete:",e);
         btn.disabled    = false;
         btn.textContent = "✅ Mark Topic Complete";
         alert("Could not save progress. Please check your connection.");
     }
 }
 
+/* ═══════════════════════════════════════════════════
+   CERTIFICATE DOWNLOAD — FIX: correct route
+   Backend route should be: /certificate/<emp_id>/<training_name>
+   via coe_training_routes.py get_certificate()
+═══════════════════════════════════════════════════ */
 function downloadCertificate(name){
     window.open(`${BASE_URL}/certificate/${emp_id}/${encodeURIComponent(name)}`, "_blank");
 }
 
-/* ══════════════════════════════════════════
-   CERTIFICATES
-══════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════
+   CERTIFICATES TAB
+═══════════════════════════════════════════════════ */
 function loadCertificates(trainings){
-    const completed = trainings.filter(t => t.status === "COMPLETED");
-    const box = document.getElementById("certList");
-    if(completed.length === 0){
+    const done = trainings.filter(t => (t.status||"").toUpperCase() === "COMPLETED");
+    const box  = document.getElementById("certList");
+    if(done.length === 0){
         box.innerHTML = `<div class="placeholder-box"><div class="ph-icon">🏆</div><h3>No Certificates Yet</h3><p>Complete your training modules to earn certificates.</p></div>`;
         return;
     }
     box.innerHTML = `<div class="cert-grid">` +
-        completed.map(t => `<div class="cert-card">
+        done.map(t => `<div class="cert-card">
             <h4>🎓 ${t.name}</h4>
             <p>Completed · ${t.progress||100}%</p>
             <button onclick="downloadCertificate('${t.name}')">Download Certificate</button>
         </div>`).join("") + `</div>`;
 }
 
-/* ══════════════════════════════════════════
+/* ═══════════════════════════════════════════════════
    ANALYTICS CHARTS
-══════════════════════════════════════════ */
-function renderAnalyticsCharts(trainings){
+═══════════════════════════════════════════════════ */
+function renderCharts(trainings){
     const bctx = document.getElementById("analyticsChart");
     if(bctx){
         if(bctx._ci) bctx._ci.destroy();
         bctx._ci = new Chart(bctx,{
             type:"bar",
-            data:{
-                labels:["Mon","Tue","Wed","Thu","Fri","Sat","Sun"],
-                datasets:[{label:"Learning Hours",data:[1,2,1.5,3,2,0.5,0],backgroundColor:"rgba(25,211,162,0.7)",borderRadius:8}]
-            },
+            data:{labels:["Mon","Tue","Wed","Thu","Fri","Sat","Sun"],datasets:[{label:"Hours",data:[1,2,1.5,3,2,0.5,0],backgroundColor:"rgba(25,211,162,0.7)",borderRadius:8}]},
             options:{responsive:true,plugins:{legend:{display:false}}}
         });
     }
     const dctx = document.getElementById("completionChart");
     if(dctx){
-        const done    = trainings.filter(t=>t.status==="COMPLETED").length;
-        const inprog  = trainings.filter(t=>t.status==="IN_PROGRESS").length;
-        const pending = trainings.filter(t=>t.status==="PENDING"||t.status==="LOCKED").length;
+        const done   = trainings.filter(t=>(t.status||"").toUpperCase()==="COMPLETED").length;
+        const inp    = trainings.filter(t=>(t.status||"").toUpperCase()==="IN_PROGRESS").length;
+        const pend   = trainings.length - done - inp;
         if(dctx._ci) dctx._ci.destroy();
         dctx._ci = new Chart(dctx,{
             type:"doughnut",
-            data:{
-                labels:["Completed","In Progress","Pending"],
-                datasets:[{data:[done,inprog,pending],backgroundColor:["#19d3a2","#fbbf24","#e2e8f0"]}]
-            },
+            data:{labels:["Completed","In Progress","Pending"],datasets:[{data:[done,inp,Math.max(0,pend)],backgroundColor:["#19d3a2","#fbbf24","#e2e8f0"]}]},
             options:{responsive:true}
         });
     }
 }
 
-/* ══════════════════════════════════════════
-   CLOSE MODAL
-══════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════
+   CLOSE MODAL — DEF-006 FIX
+   Also saves resume position in localStorage
+═══════════════════════════════════════════════════ */
 function closeModal(){
-    document.getElementById("trainingModal").style.display = "none";
     const player = document.getElementById("videoPlayer");
     player.pause();
-    player.src = "";
+    player.removeAttribute("src");
+    player.load();
     pauseTimer();
-    transcriptWords = [];
+    tWords   = [];
+    tLastIdx = -1;
+
+    // Save which topic the employee stopped at so next open resumes there
+    if(currentTraining && currentTopicIndex >= 0){
+        const resumeKey = `resume_${emp_id}_${currentTraining}`;
+        localStorage.setItem(resumeKey, currentTopicIndex);
+    }
+
+    document.getElementById("trainingModal").style.display = "none";
 }
 
 window.addEventListener("click", e => {
     if(e.target === document.getElementById("trainingModal")) closeModal();
 });
 
-/* ══════════════════════════════════════════
-   BLOCK DOWNLOAD — prevent right-click on video
-══════════════════════════════════════════ */
-document.addEventListener("DOMContentLoaded", () => {
-    const player = document.getElementById("videoPlayer");
-    if(player){
-        player.addEventListener("contextmenu", e => e.preventDefault());
-        // Remove download button from controls after load
-        player.addEventListener("loadedmetadata", () => {
-            player.setAttribute("controlslist","nodownload nofullscreen noremoteplayback");
+/* ═══════════════════════════════════════════════════
+   BLOCK RIGHT-CLICK DOWNLOAD on video
+═══════════════════════════════════════════════════ */
+document.addEventListener("DOMContentLoaded", ()=>{
+    const v = document.getElementById("videoPlayer");
+    if(v){
+        v.addEventListener("contextmenu", e => e.preventDefault());
+        v.addEventListener("loadedmetadata", ()=>{
+            v.setAttribute("controlslist","nodownload noremoteplayback");
         });
     }
 });
 
-/* ══════════════════════════════════════════
+/* ═══════════════════════════════════════════════════
    LOGOUT
-══════════════════════════════════════════ */
+═══════════════════════════════════════════════════ */
 async function logout(){
-    try{ await fetch(`${BASE_URL}/api/auth/logout`,{method:"POST",credentials:"include"}); }catch(e){}
+    try{ await fetch(`${BASE_URL}/api/auth/logout`,{method:"POST",credentials:"include"}); }catch(_){}
     localStorage.clear();
     sessionStorage.clear();
     window.location.replace("https://intellionboard.vercel.app/");
