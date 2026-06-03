@@ -1283,1143 +1283,617 @@ tbody tr:hover td{
     }
 }</style>
 </head>
-
 <body>
-
-<!-- =========================================================
-HEADER
-========================================================= -->
-
+ 
+<!-- HEADER -->
 <div class="header">
-
-<div class="header-left">
-<h2>Reporting Manager Dashboard</h2>
-<small>AI Powered Onboarding Monitoring System</small>
+    <div class="header-left">
+        <div class="header-logo">📊</div>
+        <div>
+            <h2>Reporting Manager Dashboard</h2>
+            <small>AI Powered Onboarding Monitoring System</small>
+        </div>
+    </div>
+    <div class="header-right">
+        <div><strong id="rmName"></strong></div>
+        <div id="liveStatus" style="background:#dcfce7;padding:8px 14px;border-radius:20px;font-size:12px;font-weight:700;color:#166534;">🟢 LIVE</div>
+        <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
 </div>
-
-<div class="header-right">
-<div>
-<strong id="rmName"></strong>
-</div>
-<div id="liveStatus"
-style="
-background:#dcfce7;
-padding:8px 14px;
-border-radius:20px;
-font-size:12px;
-font-weight:700;
-color:#166534;
-">
-🟢 LIVE
-</div>
-<button class="logout-btn" onclick="logout()">
-Logout
-</button>
-</div>
-
-</div>
-
-<!-- =========================================================
-MAIN
-========================================================= -->
-
+ 
+<!-- MAIN -->
 <div class="container">
-
-<!-- AI PANEL -->
-
-<div class="ai-panel" id="aiInsights">
-Loading AI Insights...
+ 
+    <div class="ai-panel" id="aiInsights">Loading AI Insights...</div>
+ 
+    <div class="cards">
+        <div class="card"><small>Total Employees</small><h2 id="totalEmployees">0</h2></div>
+        <div class="card"><small>Pending</small><h2 id="pendingEmployees">0</h2></div>
+        <div class="card"><small>Completed</small><h2 id="completedEmployees">0</h2></div>
+        <div class="card"><small>Training Pending</small><h2 id="trainingPending">0</h2></div>
+        <div class="card"><small>SLA Risk</small><h2 id="slaRisk">0</h2></div>
+        <div class="card"><small>Delayed</small><h2 id="delayedEmployees">0</h2></div>
+    </div>
+ 
+    <div class="section">
+        <div class="section-header">
+            <h3>Team Onboarding Monitoring</h3>
+            <!-- DEF-044: search button visible; DEF-046: dropdown options fixed -->
+            <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+                <div class="search-box">
+                    <input type="text" placeholder="Search name or exact Employee ID..." id="searchInput" oninput="onSearchInput(this.value)">
+                    <button class="search-clear" id="searchClear" onclick="clearSearch()">✕</button>
+                    <button class="search-btn" onclick="applyFilter()">🔍 Search</button>
+                </div>
+                <div class="search-box">
+                    <select id="statusFilter" onchange="applyFilter()">
+                        <option value="all">All Statuses</option>
+                        <option value="pending">Pending</option>
+                        <option value="inprogress">In Progress</option>
+                        <option value="completed">Completed</option>
+                        <option value="delayed">Delayed (&gt;2 days)</option>
+                        <option value="training">Training Pending</option>
+                        <option value="high_risk">High Risk</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div id="employeeTable"></div>
+    </div>
 </div>
-
-<!-- STATS -->
-
-<div class="cards">
-
-<div class="card">
-<small>Total Employees</small>
-<h2 id="totalEmployees">0</h2>
+ 
+<!-- CHAT TOGGLE -->
+<div id="chatToggle" onclick="toggleChatbot()"
+    style="position:fixed;bottom:20px;right:20px;width:65px;height:65px;border-radius:50%;background:#0F6E56;display:flex;align-items:center;justify-content:center;color:white;font-size:28px;cursor:pointer;box-shadow:0 10px 25px rgba(0,0,0,0.25);z-index:9999;">
+    🤖
 </div>
-
-<div class="card">
-<small>Pending</small>
-<h2 id="pendingEmployees">0</h2>
+ 
+<!-- CHATBOT -->
+<div class="chatbot" id="chatPanel">
+    <div class="chat-header">🤖 RM AI Assistant</div>
+    <div class="chat-body" id="chatBody">
+        <div class="chat-ai-msg">
+            Welcome! Type <b>help</b> to see all commands — each one is clickable.<br><br>
+            Quick commands:<br>
+            — <b>show pending employees</b><br>
+            — <b>show delayed</b><br>
+            — <b>onboarding summary</b><br>
+            — <b>help-bulk reminder</b> (bulk actions)
+        </div>
+    </div>
+    <div class="chat-input">
+        <input id="chatInput" placeholder="Type command or 'help'...">
+        <button onclick="sendChat()">Send</button>
+    </div>
 </div>
-
-<div class="card">
-<small>Completed</small>
-<h2 id="completedEmployees">0</h2>
-</div>
-
-<div class="card">
-<small>Training Pending</small>
-<h2 id="trainingPending">0</h2>
-</div>
-
-<div class="card">
-<small>SLA Risk</small>
-<h2 id="slaRisk">0</h2>
-</div>
-
-<div class="card">
-<small>Delayed</small>
-<h2 id="delayedEmployees">0</h2>
-</div>
-
-</div>
-
-<!-- TABLE -->
-
-<div class="section">
-
-<div class="section-header">
-
-<h3>Team Onboarding Monitoring</h3>
-
-<div class="search-box">
-
-<input
-type="text"
-placeholder="Search employee..."
-id="searchInput"
-onkeyup="applyFilter()"
->
-
-<select id="statusFilter" onchange="applyFilter()">
-<option value="all">All</option>
-<option value="pending">Pending</option>
-<option value="completed">Completed</option>
-<option value="delayed">Delayed</option>
-<option value="training">Training Pending</option>
-</select>
-
-</div>
-
-</div>
-
-<div id="employeeTable"></div>
-
-</div>
-
-</div>
-<!-- CHAT TOGGLE BUTTON -->
-
-<div
-id="chatToggle"
-onclick="toggleChatbot()"
-style="
-position:fixed;
-bottom:20px;
-right:20px;
-width:65px;
-height:65px;
-border-radius:50%;
-background:#0F6E56;
-display:flex;
-align-items:center;
-justify-content:center;
-color:white;
-font-size:28px;
-cursor:pointer;
-box-shadow:0 10px 25px rgba(0,0,0,0.25);
-z-index:9999;
-">
-🤖
-</div>
-<!-- =========================================================
-CHATBOT
-========================================================= -->
-
-<div class="chatbot">
-
-<div class="chat-header">
-🤖 RM AI Assistant
-</div>
-
-<div class="chat-body" id="chatBody">
-
-<div>
-Welcome RM.<br><br>
-
-Examples:<br>
-- mail 101010 complete training<br>
-- show delayed employees<br>
-- escalate pending employees
-</div>
-
-</div>
-
-<div class="chat-input">
-
-<input
-id="chatInput"
-placeholder="Type command..."
->
-
-<button onclick="sendChat()">
-Send
-</button>
-
-</div>
-
-</div>
-
-<!-- =========================================================
-TIMELINE MODAL
-========================================================= -->
-
+ 
+<!-- TIMELINE MODAL -->
 <div class="modal" id="timelineModal">
-
-<div class="modal-content">
-
-<h3>Employee Timeline</h3>
-
-<br>
-
-<div id="timelineData"></div>
-
-<br>
-
-<button class="btn" onclick="closeModal()">
-Close
-</button>
-
+    <div class="modal-content">
+        <h3>Employee Timeline</h3><br>
+        <div id="timelineData"></div><br>
+        <button class="btn" onclick="closeModal('timelineModal')">Close</button>
+    </div>
 </div>
-
+ 
+<!-- DEF-057/058/059: employee analytics modal -->
+<div class="modal" id="employeeModal">
+    <div class="modal-content" style="width:800px;max-width:96vw;max-height:90vh;overflow:auto;">
+        <h2 id="empModalTitle">Employee Analytics</h2><br>
+        <div id="employeeFullDetails"></div><br>
+        <button class="btn" onclick="closeModal('employeeModal')">Close</button>
+    </div>
 </div>
-
-<!-- =========================================================
-SCRIPT
-========================================================= -->
-
+ 
+<!-- DEF-047: toast element -->
+<div class="rm-toast" id="rmToast"></div>
+ 
 <script>
-
-const API = "https://intellionboard.onrender.com/api/rm";
-
-let fullData = [];
-
-const rm = localStorage.getItem("user_name") || "RM";
-const rmEmail =
-localStorage.getItem("user_email") || "";
-
+const API      = "https://intellionboard.onrender.com/api/rm";
+let   fullData = [];
+const rm       = localStorage.getItem("user_name")  || "RM";
+const rmEmail  = localStorage.getItem("user_email") || "";
 document.getElementById("rmName").innerText = rm;
-
-/* =========================================================
-LOAD DATA
-========================================================= */
+ 
+/* ── stage badge ─────────────────────────────────────── */
 function getStageBadge(stage){
-
     if(!stage) return "Initiated";
-
-    const map = {
-
-        "ID_CARD_AND_ACCESS":"🪪 ID & Access",
-        "LAPTOP_ALLOCATION":"💻 Laptop",
-        "TRAINING":"📘 Training",
-        "ASSESSMENT":"📝 Assessment",
-        "PROJECT_ALLOCATION":"🚀 Project",
-        "COMPLETED":"✅ Completed"
-
+    const map={
+        "ID_CARD_AND_ACCESS":"🪪 ID & Access","LAPTOP_ALLOCATION":"💻 Laptop",
+        "TRAINING":"📘 Training","ASSESSMENT":"📝 Assessment",
+        "PROJECT_ALLOCATION":"🚀 Project","COMPLETED":"✅ Completed"
     };
-
-    return map[stage] || stage;
+    return map[stage]||stage;
 }
-
-let chatbotOpen = false;
-
+ 
+/* ── chatbot toggle ──────────────────────────────────── */
+let chatbotOpen=false;
 function toggleChatbot(){
-
-const bot = document.querySelector(".chatbot");
-
-chatbotOpen = !chatbotOpen;
-
-bot.style.display =
-chatbotOpen
-? "flex"
-: "none";
-
+    chatbotOpen=!chatbotOpen;
+    document.getElementById("chatPanel").style.display=chatbotOpen?"flex":"none";
 }
+ 
+/* ── load dashboard ──────────────────────────────────── */
 async function loadDashboard(){
-
-try{
-
-const res = await fetch(
-`${API}/rm-dashboard`,
-{
-method:"POST",
-
-headers:{
-"Content-Type":"application/json"
-},
-
-body:JSON.stringify({
-email:rmEmail
-})
+    try{
+        const res=await fetch(`${API}/rm-dashboard`,{
+            method:"POST",headers:{"Content-Type":"application/json"},
+            body:JSON.stringify({email:rmEmail})
+        });
+        const data=await res.json();
+        if(!data.success){console.error("API Error:",data);fullData=[];}
+        else fullData=data.data||[];
+        renderStats(fullData);
+        renderTable(fullData);
+        loadAIInsights(fullData);
+    }catch(err){console.error("Dashboard Error:",err);}
+    console.log("RM EMAIL =>",rmEmail);
 }
-);
-
-const data = await res.json();
-
-console.log(data);
-
-if (!data.success) {
-    console.error("API Error:", data);
-    fullData = [];
-} else {
-    fullData = data.data || [];
-}
-
-renderStats(fullData);
-renderTable(fullData);
-loadAIInsights(fullData);
-
-}catch(err){
-
-console.error("Dashboard Error:",err);
-
-}
-console.log("RM EMAIL =>", rmEmail);
-}
-/* =========================================================
-STATS
-========================================================= */
+ 
+/* ── stats ───────────────────────────────────────────── */
 function renderStats(data){
-
-    // ✅ TOTAL
-    document.getElementById("totalEmployees").innerText =
-        data.length || 0;
-
-    // ✅ COMPLETED (case-safe)
-    document.getElementById("completedEmployees").innerText =
-        data.filter(x =>
-            (x.onboarding_status || "")
-                .toLowerCase()
-                .includes("completed")
-        ).length;
-
-    // ✅ PENDING (everything NOT completed)
-    document.getElementById("pendingEmployees").innerText =
-        data.filter(x =>
-            !(x.onboarding_status || "")
-                .toLowerCase()
-                .includes("completed")
-        ).length;
-
-    // ✅ TRAINING PENDING (safe null handling)
-    document.getElementById("trainingPending").innerText =
-        data.filter(x =>
-            (x.training_percentage || 0) < 100
-        ).length;
-
-    // ✅ SLA HIGH RISK (safe)
-    document.getElementById("slaRisk").innerText =
-        data.filter(x =>
-            (x.risk_level || "").toUpperCase() === "HIGH"
-        ).length;
-
-    // ✅ DELAY (FIX: use created_at instead of updated_at)
-    document.getElementById("delayedEmployees").innerText =
-        data.filter(x =>
-            getDelayDays(x.created_at) > 2
-        ).length;
-
+    document.getElementById("totalEmployees").innerText    = data.length||0;
+    document.getElementById("completedEmployees").innerText=
+        data.filter(x=>(x.onboarding_status||"").toLowerCase().includes("completed")).length;
+    document.getElementById("pendingEmployees").innerText  =
+        data.filter(x=>!(x.onboarding_status||"").toLowerCase().includes("completed")).length;
+    document.getElementById("trainingPending").innerText   =
+        data.filter(x=>(x.training_percentage||0)<100).length;
+    document.getElementById("slaRisk").innerText           =
+        data.filter(x=>(x.risk_level||"").toUpperCase()==="HIGH").length;
+    document.getElementById("delayedEmployees").innerText  =
+        data.filter(x=>getDelayDays(x.created_at)>2).length;
 }
-
-
-/* =========================================================
-AI INSIGHTS
-========================================================= */
-
+ 
+/* ── AI insights ─────────────────────────────────────── */
 function loadAIInsights(data){
-
-    let delayed =
-        data.filter(x=>getDelayDays(x.updated_at)>2).length;
-
-    let highRisk =
-        data.filter(x=>x.risk_level==="HIGH").length;
-
-    let trainingPending =
-        data.filter(x=>x.training_percentage<100).length;
-
-    let completed =
-        data.filter(x=>x.onboarding_status==="Completed").length;
-
-    document.getElementById("aiInsights").innerHTML = `
-
-    <h3>🤖 AI Workforce Insights</h3>
-
-    <br>
-
-    <p>🚨 ${highRisk} employees are at HIGH onboarding risk</p>
-
-    <p>⚠️ ${delayed} employees delayed beyond SLA</p>
-
-    <p>📘 ${trainingPending} employees pending training completion</p>
-
-    <p>✅ ${completed} employees fully onboarded</p>
-
-    <br>
-
-    <p>
-    AI Recommendation:
-    Focus escalation on delayed employees with pending
-    laptop + training status.
-    </p>
-    `;
+    const delayed      =data.filter(x=>getDelayDays(x.updated_at)>2).length;
+    const highRisk     =data.filter(x=>(x.risk_level||"").toUpperCase()==="HIGH").length;
+    const trainPending =data.filter(x=>(x.training_percentage||0)<100).length;
+    const completed    =data.filter(x=>(x.onboarding_status||"").toLowerCase().includes("completed")).length;
+    document.getElementById("aiInsights").innerHTML=`
+        <h3>🤖 AI Workforce Insights</h3><br>
+        <p>🚨 ${highRisk} employees are at HIGH onboarding risk</p>
+        <p>⚠️ ${delayed} employees delayed beyond SLA</p>
+        <p>📘 ${trainPending} employees pending training completion</p>
+        <p>✅ ${completed} employees fully onboarded</p><br>
+        <p>AI Recommendation: Focus escalation on delayed employees with pending laptop + training status.</p>`;
 }
-
-/* =========================================================
-TABLE
-========================================================= */
-
+ 
+/* ── render table ────────────────────────────────────── */
 function renderTable(data){
-
-let html = `
-<table>
-
-<thead>
-
-<tr>
-<th>ID</th>
-<th>Name</th>
-<th>Status</th>
-<th>Stage</th>
-<th>Training</th>
-<th>Assessment</th>
-<th>Laptop</th>
-<th>ID Card</th>
-<th>Delay</th>
-<th>Overall Progress</th>
-<th>Risk</th>
-<th>Readiness</th>
-<th>Actions</th>
-</tr>
-
-</thead>
-
-<tbody>
-`;
-
-data.forEach(emp=>{
-
-let delay = getDelayDays(emp.updated_at);
-
-let statusClass =
-emp.onboarding_status === "Completed"
-? "completed"
-: delay > 2
-? "delayed"
-: "pending";
-
-html += `
-<tr>
-
-<td>${emp.emp_id}</td>
-
-<td>
-<div class="employee-name">
-<b>${emp.emp_name}</b>
-<small>${emp.email || ""}</small>
-</div>
-</td>
-
-<td>
-<span class="badge ${statusClass}">
-${emp.onboarding_status}
-</span>
-</td>
-
-<td>
-    <span class="badge inprogress">
-        ${getStageBadge(emp.current_step)}
-    </span>
-</td>
-
-<td>
-
-<div class="progress">
-<div class="progress-fill"
-style="width:${emp.training_percentage || 0}%">
-</div>
-</div>
-
-<small>${emp.training_percentage || 0}%</small>
-
-</td>
-
-<td>
-${emp.assessment_status || "Pending"}
-</td>
-
-<td>
-${emp.laptop_status || "Pending"}
-</td>
-
-<td>
-${emp.id_card_status || "Pending"}
-</td>
-
-<td>
-${delay} days
-</td>
-<td>
-
-<div class="progress">
-<div class="progress-fill"
-style="width:${emp.progress_percentage|| 0}%">
-</div>
-</div>
-
-<small>${emp.progress_percentage || 0}%</small>
-
-</td>
-<td>
-<span class="
-${emp.risk_level === "HIGH"
-? "risk-high"
-: emp.risk_level === "MEDIUM"
-? "risk-medium"
-: "risk-low"}
-">
-${emp.risk_level || "LOW"}
-</span>
-</td>
-
-<td>
-${emp.readiness_score || 0}%
-</td>
-
-<td>
-
-<div class="action-buttons">
-
-<button
-class="btn btn-mail"
-title="Send Reminder"
-onclick="sendReminder('${emp.emp_id}')">
-📧
-</button>
-
-<button
-class="btn btn-escalate"
-title="Escalate"
-onclick="escalate('${emp.emp_id}')">
-⚠️
-</button>
-
-<button
-class="btn btn-complete"
-title="View Analytics"
-onclick="openEmployeeDetails('${emp.emp_id}')">
-📊
-</button>
-
-</div>
-
-</td>
-
-</tr>
-`;
-
-});
-
-html += `
-</tbody>
-</table>
-`;
-
-document.getElementById("employeeTable").innerHTML = html;
-
-}
-
-/* =========================================================
-FILTER
-========================================================= */
-
-function applyFilter(){
-
-let text = document.getElementById("searchInput").value.toLowerCase();
-
-let filter = document.getElementById("statusFilter").value;
-
-let filtered = fullData.filter(emp=>{
-
-let search =
-(emp.emp_name || "").toLowerCase().includes(text);
-
-let status = true;
-
-if(filter==="pending")
-status = emp.onboarding_status !== "Completed";
-
-if(filter==="completed")
-status = emp.onboarding_status === "Completed";
-
-if(filter==="delayed")
-status = getDelayDays(emp.updated_at) > 2;
-
-if(filter==="training")
-status = emp.training_percentage < 100;
-
-return search && status;
-
-});
-
-renderTable(filtered);
-
-}
-
-/* =========================================================
-DELAY
-========================================================= */
-
-function getDelayDays(date){
-
-if(!date) return 0;
-
-let diff =
-(Date.now() - new Date(date)) /
-(1000*60*60*24);
-
-return Math.floor(diff);
-
-}
-
-/* =========================================================
-TIMELINE
-========================================================= */
-
-async function openTimeline(empId){
-
-document.getElementById("timelineModal").style.display = "flex";
-
-const res = await fetch(`${API}/timeline/${empId}`);
-const data = await res.json();
-
-let html = "";
-
-(data.data || []).forEach(t=>{
-
-html += `
-<div style="margin-bottom:15px;">
-
-<b>${t.stage}</b><br>
-
-<small>${t.status}</small><br>
-
-<small>${t.time}</small>
-
-<hr>
-
-</div>
-`;
-
-});
-
-document.getElementById("timelineData").innerHTML = html;
-
-}
-
-function closeModal(){
-document.getElementById("timelineModal").style.display = "none";
-}
-
-/* =========================================================
-ESCALATE
-========================================================= */
-
-async function escalate(empId){
-
-await fetch(`${API}/escalate/${empId}`,{
-method:"POST"
-});
-
-alert("Escalation Triggered");
-
-loadDashboard();
-
-}
-
-/* =========================================================
-SEND REMINDER
-========================================================= */
-
-async function sendReminder(empId){
-
-await fetch(`${API}/send-reminder`,{
-method:"POST",
-headers:{
-"Content-Type":"application/json"
-},
-body:JSON.stringify({
-emp_id:empId
-})
-});
-
-alert("Reminder Sent");
-
-}
-
-/* =========================================================
-CHATBOT
-========================================================= */
-/* =========================================================
-   RM AI ASSISTANT — NEXT GEN VERSION
-========================================================= */
-
-const chatBody = document.getElementById("chatBody");
-const chatInput = document.getElementById("chatInput");
-
-/* =========================================================
-   ENTER KEY SUPPORT
-========================================================= */
-
-chatInput.addEventListener("keydown", function(e){
-
-    if(e.key === "Enter"){
-        e.preventDefault();
-        sendChat();
-    }
-
-});
-
-/* =========================================================
-   ADD CHAT MESSAGE
-========================================================= */
-
-function addMessage(type, message){
-
-    const div = document.createElement("div");
-
-    div.className = type === "user"
-        ? "chat-user-msg"
-        : "chat-ai-msg";
-
-    div.innerHTML = message;
-
-    chatBody.appendChild(div);
-
-    chatBody.scrollTop = chatBody.scrollHeight;
-}
-
-/* =========================================================
-   TYPING EFFECT
-========================================================= */
-
-function showTyping(){
-
-    const typing = document.createElement("div");
-
-    typing.id = "typing";
-
-    typing.className = "chat-ai-msg";
-
-    typing.innerHTML = `
-        <span class="typing-dot"></span>
-        <span class="typing-dot"></span>
-        <span class="typing-dot"></span>
-    `;
-
-    chatBody.appendChild(typing);
-
-    chatBody.scrollTop = chatBody.scrollHeight;
-}
-
-function removeTyping(){
-
-    const typing = document.getElementById("typing");
-
-    if(typing){
-        typing.remove();
-    }
-}
-
-/* =========================================================
-   FUZZY AI DETECTION
-========================================================= */
-
-function detectIntent(msg){
-
-    msg = msg.toLowerCase();
-
-    /* Pending onboarding */
-
-    if(
-        msg.includes("pending onboarding") ||
-        msg.includes("show pending") ||
-        msg.includes("pending employees") ||
-        msg.includes("onboarding pending") ||
-        msg.includes("show me pending") ||
-        msg.includes("employees pending")
-    ){
-
-        return {
-            type:"pending_onboarding",
-            reply:"📊 Fetching pending onboarding employees..."
-        };
-    }
-
-    /* Delayed employees */
-
-    if(
-        msg.includes("delayed") ||
-        msg.includes("late onboarding") ||
-        msg.includes("delay employees")
-    ){
-
-        return {
-            type:"delayed",
-            reply:"⏳ Fetching delayed onboarding employees..."
-        };
-    }
-
-    /* High risk */
-
-    if(
-        msg.includes("high risk") ||
-        msg.includes("risk employees") ||
-        msg.includes("critical employees")
-    ){
-
-        return {
-            type:"high_risk",
-            reply:"⚠ Fetching high risk employees..."
-        };
-    }
-
-    /* Escalation mail */
-
-    if(
-        msg.includes("escalation") ||
-        msg.includes("escalate") ||
-        msg.includes("send mail to admin") ||
-        msg.includes("id card issue") ||
-        msg.includes("laptop issue")
-    ){
-
-        return {
-            type:"escalation",
-            reply:"📧 AI preparing escalation workflow..."
-        };
-    }
-
-    /* Help */
-
-    if(
-        msg === "help" ||
-        msg.includes("commands") ||
-        msg.includes("what can you do")
-    ){
-
-        return {
-            type:"help"
-        };
-    }
-
-    /* Summary */
-
-    if(
-        msg.includes("summary") ||
-        msg.includes("dashboard status") ||
-        msg.includes("rm report")
-    ){
-
-        return {
-            type:"summary",
-            reply:"📈 Generating RM onboarding summary..."
-        };
-    }
-
-    return {
-        type:"general",
-        reply:"🤖 AI analyzing your request..."
-    };
-}
-
-/* =========================================================
-   HELP COMMAND
-========================================================= */
-
-function showHelp(){
-
-    addMessage("ai", `
-
-    <div class="help-title">
-    🚀 RM AI COMMAND CENTER
-    </div>
-
-    <div class="help-grid">
-
-        <div class="help-item">
-        📧 <b>Escalation Mail</b><br>
-        send escalation mail for employee id 12193289 id card
-        </div>
-
-        <div class="help-item">
-        💻 <b>Laptop Delay</b><br>
-        escalate laptop issue employee 10023
-        </div>
-
-        <div class="help-item">
-        🪪 <b>ID Card Reminder</b><br>
-        remind employee 10122 for id card submission
-        </div>
-
-        <div class="help-item">
-        📄 <b>Pending Documents</b><br>
-        send pending document mail employee 55441
-        </div>
-
-        <div class="help-item">
-        ⚠ <b>High Risk Employees</b><br>
-        show high risk employees
-        </div>
-
-        <div class="help-item">
-        📊 <b>Pending Onboarding</b><br>
-        show me pending onboarding employees
-        </div>
-
-        <div class="help-item">
-        📅 <b>Delayed Tasks</b><br>
-        show delayed onboarding tasks
-        </div>
-
-        <div class="help-item">
-        📈 <b>RM Summary</b><br>
-        give onboarding summary
-        </div>
-
-        <div class="help-item">
-        📨 <b>Bulk Reminder</b><br>
-        send reminder to all pending employees
-        </div>
-
-    </div>
-
-    `);
-}
-
-/* =========================================================
-   MAIN SEND CHAT
-========================================================= */
-
-async function sendChat() {
-
-    let msg = chatInput.value.trim();
-
-    if (!msg) return;
-
-    // 1. show user message
-    addMessage("user", `👨 ${msg}`);
-    chatInput.value = "";
-
-    // 2. detect intent locally
-    const intent = detectIntent(msg);
-
-    // 3. handle help locally
-    if (intent.type === "help") {
-        showHelp();
+    if(!data||!data.length){
+        document.getElementById("employeeTable").innerHTML=
+            `<div style="padding:40px;text-align:center;color:#7f8ea3;">
+                <div style="font-size:36px;margin-bottom:12px;">📭</div>
+                <p style="font-weight:700;">No employees found.</p>
+            </div>`;
         return;
     }
-
-    // 4. show typing animation
-    showTyping();
-
-    try {
-
-        const res = await fetch(`${API}/chat`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                message: msg,
-                intent: intent.type,
-                rm: rm,
-                email: rmEmail
-            })
-        });
-
-        const data = await res.json();
-
-        // remove typing before showing response
-        removeTyping();
-
-        // 5. backend success
-        if (res.ok && data.success) {
-
-            addMessage("ai", `🤖 ${data.reply}`);
-
-        } else {
-
-            addMessage("ai", `
-                ⚠ ${data.reply || "Request failed"}
-                <br><br>
-                🤖 Local AI detected: <b>${intent.type.replaceAll("_", " ")}</b>
-            `);
-        }
-
-    } catch (err) {
-
-        removeTyping();
-
-        // 6. network failure fallback
-        addMessage("ai", `
-            ⚠ Unable to connect to AI server.<br><br>
-            🤖 Local AI detected: <b>${intent.type.replaceAll("_", " ")}</b>
-        `);
-
-        console.error("Chat Error:", err);
-    }
+    let html=`<table><thead><tr>
+        <th>ID</th><th>Name</th><th>Status</th><th>Stage</th>
+        <th>Training</th><th>Assessment</th><th>Laptop</th><th>ID Card</th>
+        <th>Delay</th><th>Overall Progress</th><th>Risk</th><th>Readiness</th><th>Actions</th>
+    </tr></thead><tbody>`;
+    data.forEach(emp=>{
+        const delay      =getDelayDays(emp.updated_at);
+        const statusClass=
+            (emp.onboarding_status||"").toLowerCase().includes("completed")?"completed":
+            delay>2?"delayed":"pending";
+        const riskClass  =
+            (emp.risk_level||"").toUpperCase()==="HIGH"?"risk-high":
+            (emp.risk_level||"").toUpperCase()==="MEDIUM"?"risk-medium":"risk-low";
+        html+=`<tr>
+            <td>${emp.emp_id||"-"}</td>
+            <td><div class="employee-name"><b>${emp.emp_name||"Unknown"}</b><small>${emp.email||""}</small></div></td>
+            <td><span class="badge ${statusClass}">${emp.onboarding_status||"Pending"}</span></td>
+            <td><span class="badge inprogress">${getStageBadge(emp.current_step)}</span></td>
+            <td>
+                <div class="progress"><div class="progress-fill" style="width:${emp.training_percentage||0}%"></div></div>
+                <small>${emp.training_percentage||0}%</small>
+            </td>
+            <td>${emp.assessment_status||"Pending"}</td>
+            <td>${emp.laptop_status||"Pending"}</td>
+            <td>${emp.id_card_status||"Pending"}</td>
+            <td>${delay} days</td>
+            <td>
+                <div class="progress"><div class="progress-fill" style="width:${emp.progress_percentage||0}%"></div></div>
+                <small>${emp.progress_percentage||0}%</small>
+            </td>
+            <td><span class="${riskClass}">${emp.risk_level||"LOW"}</span></td>
+            <td>${emp.readiness_score||0}%</td>
+            <td><div class="action-buttons">
+                <button class="btn btn-mail"     title="Send Reminder" onclick="sendReminder('${emp.emp_id}')">📧</button>
+                <button class="btn btn-escalate" title="Escalate"      onclick="escalate('${emp.emp_id}')">⚠️</button>
+                <button class="btn btn-complete" title="View Analytics" onclick="openEmployeeDetails('${emp.emp_id}')">📊</button>
+            </div></td>
+        </tr>`;
+    });
+    html+=`</tbody></table>`;
+    document.getElementById("employeeTable").innerHTML=html;
 }
-/* =========================================================
-LOGOUT
-========================================================= */
-async function logout() {
-
-    try {
-
-        // ✅ CALL BACKEND LOGOUT (important for session clear)
-        const res = await fetch(
-            "https://intellionboard.onrender.com/api/auth/logout",
-            {
-                method: "POST",
-                credentials: "include"
-            }
-        );
-
-        if (!res.ok) {
-            console.warn("Logout API response not OK");
-        }
-
-    } catch (err) {
-
-        console.error("❌ Logout API Error:", err);
-
-    } finally {
-
-        // ✅ ALWAYS CLEAR STORAGE (even if API fails)
-        localStorage.clear();
-        sessionStorage.clear();
-
-        // ✅ CLEAR COOKIES (EXTRA SAFETY)
-        document.cookie.split(";").forEach(function(c) {
-            document.cookie = c
-                .replace(/^ +/, "")
-                .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
-        });
-
-        // ✅ REDIRECT (USE PRODUCTION LOGIN URL)
-        window.location.replace(
-            "https://intellionboard.vercel.app/"
-        );
-    }
+ 
+/* ── DEF-034/044/046: search + filter ───────────────── */
+function onSearchInput(value){
+    document.getElementById("searchClear").style.display=value?"inline":"none";
+    applyFilter();
 }
-``
-/* =========================================================
-AUTO REFRESH
-========================================================= */
-
-setInterval(loadDashboard,10000);
-
-loadDashboard();
+function clearSearch(){
+    document.getElementById("searchInput").value="";
+    document.getElementById("searchClear").style.display="none";
+    applyFilter();
+}
+function applyFilter(){
+    const raw    =(document.getElementById("searchInput").value||"").trim();
+    const text   =raw.toLowerCase();
+    const filter =document.getElementById("statusFilter").value;
+    const isId   =/^\d+$/.test(raw); // DEF-034: exact numeric ID match
+ 
+    const filtered=fullData.filter(emp=>{
+        let searchMatch;
+        if(isId) searchMatch=String(emp.emp_id||"").trim()===raw;
+        else     searchMatch=!text||
+            (emp.emp_name||"").toLowerCase().includes(text)||
+            String(emp.emp_id||"").toLowerCase().includes(text)||
+            (emp.email||"").toLowerCase().includes(text);
+ 
+        let statusMatch=true;
+        const status=(emp.onboarding_status||"").toLowerCase();
+        const risk  =(emp.risk_level||"").toUpperCase();
+        const delay =getDelayDays(emp.updated_at||emp.created_at);
+        const tPct  =emp.training_percentage||0;
+ 
+        if(filter==="pending")    statusMatch=!status.includes("completed");
+        if(filter==="inprogress") statusMatch=status.includes("progress")||status.includes("initiated");
+        if(filter==="completed")  statusMatch=status.includes("completed");
+        if(filter==="delayed")    statusMatch=delay>2;
+        if(filter==="training")   statusMatch=tPct<100;
+        if(filter==="high_risk")  statusMatch=risk==="HIGH";
+ 
+        return searchMatch&&statusMatch;
+    });
+    renderTable(filtered);
+}
+ 
+/* ── delay helper ────────────────────────────────────── */
+function getDelayDays(date){
+    if(!date) return 0;
+    return Math.max(0,Math.floor((Date.now()-new Date(date))/(1000*60*60*24)));
+}
+ 
+/* ── timeline ────────────────────────────────────────── */
+async function openTimeline(empId){
+    document.getElementById("timelineModal").style.display="flex";
+    const res=await fetch(`${API}/timeline/${empId}`);
+    const data=await res.json();
+    let html="";
+    (data.data||[]).forEach(t=>{
+        html+=`<div style="margin-bottom:15px;"><b>${t.stage}</b><br><small>${t.status}</small><br><small>${t.time}</small><hr></div>`;
+    });
+    document.getElementById("timelineData").innerHTML=html||"<p>No timeline data.</p>";
+}
+function closeModal(id){
+    document.getElementById(id||"timelineModal").style.display="none";
+}
+ 
+/* ── DEF-047: toast helper (replaces all alert()) ────── */
+function showToast(msg,color){
+    const t=document.getElementById("rmToast");
+    t.style.background=color||"#16c79a";
+    t.innerText=msg;
+    t.classList.add("show");
+    setTimeout(()=>t.classList.remove("show"),3500);
+}
+ 
+/* ── escalate ────────────────────────────────────────── */
+async function escalate(empId){
+    try{
+        await fetch(`${API}/escalate/${empId}`,{method:"POST"});
+        showToast("⚠️ Escalation triggered for employee "+empId,"#f39c12");
+        loadDashboard();
+    }catch(e){showToast("❌ Escalation failed","#ff5f5f");}
+}
+ 
+/* ── DEF-047: send reminder with toast feedback ──────── */
+async function sendReminder(empId){
+    try{
+        const res=await fetch(`${API}/send-reminder`,{
+            method:"POST",headers:{"Content-Type":"application/json"},
+            body:JSON.stringify({emp_id:empId})
+        });
+        const data=await res.json();
+        if(res.ok&&data.success) showToast("📧 Reminder sent to employee "+empId,"#16c79a");
+        else showToast("⚠️ "+(data.message||"Check SMTP config"),"#f39c12");
+    }catch(e){showToast("❌ Could not send reminder","#ff5f5f");}
+}
+ 
+/* ── DEF-057/058/059: view analytics popup ───────────── */
 async function openEmployeeDetails(empId){
-
-    document.getElementById("employeeModal")
-        .style.display = "flex";
-
-    const res = await fetch(
-        `${API}/employee/${empId}`
-    );
-
-    const data = await res.json();
-
-    const emp = data.data || {};
-
-    document.getElementById("empModalTitle")
-        .innerText =
-        `${emp.emp_name} (${emp.emp_id})`;
-
-    document.getElementById("employeeFullDetails")
-        .innerHTML = `
-
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
-
-        <div>
-
-            <h3>Employee Info</h3>
-
-            <br>
-
-            <p><b>Email:</b> ${emp.email || "-"}</p>
-            <p><b>Designation:</b> ${emp.designation || "-"}</p>
-            <p><b>Project:</b> ${emp.project_name || "-"}</p>
-            <p><b>COE:</b> ${emp.selected_coe || "-"}</p>
-            <p><b>Status:</b> ${emp.onboarding_status || "-"}</p>
-
-        </div>
-
-        <div>
-
-            <h3>Onboarding Tracking</h3>
-
-            <br>
-
-            <p><b>ID Card:</b> ${emp.id_card_status || "-"}</p>
-            <p><b>Laptop:</b> ${emp.laptop_status || "-"}</p>
-            <p><b>Training:</b> ${emp.training_status || "-"}</p>
-            <p><b>Assessment:</b> ${emp.assessment_status || "-"}</p>
-            <p><b>Progress:</b> ${emp.progress_percentage || 0}%</p>
-
-        </div>
-
-    </div>
-
-    <br>
-
-    <h3>Risk Analysis</h3>
-
-    <br>
-
-    <p>
-    Risk Level:
-    <b>${emp.risk_level || "LOW"}</b>
-    </p>
-
-    <br>
-
-    <div class="progress">
-        <div class="progress-fill"
-        style="width:${emp.progress_percentage || 0}%">
-        </div>
-    </div>
-
-    `;
+    document.getElementById("employeeModal").style.display="flex";
+    document.getElementById("empModalTitle").innerText="Loading…";
+    document.getElementById("employeeFullDetails").innerHTML=
+        '<p style="color:#7f8ea3;padding:20px;">Fetching employee data…</p>';
+    try{
+        const res =await fetch(`${API}/employee/${empId}`);
+        const data=await res.json();
+        const emp =data.data||{};
+        // DEF-059: safe helper — never shows "undefined"
+        const safe=(v,fb="-")=>
+            (!v||v==="undefined"||v===""||String(v).toLowerCase()==="undefined")?fb:String(v);
+        const name    =safe(emp.emp_name,"Unknown Employee");
+        const id      =safe(emp.emp_id,empId);
+        // DEF-058: read multiple field names for progress
+        const progPct =Number(emp.progress_percentage||emp.progress||emp.onboarding_progress||0);
+        const trainPct=Number(emp.training_percentage||emp.training_progress||0);
+        const readiness=Number(emp.readiness_score||0);
+        const risk    =safe(emp.risk_level,"LOW");
+        const riskColor=risk.toUpperCase()==="HIGH"?"#ff5f5f":risk.toUpperCase()==="MEDIUM"?"#f39c12":"#16c79a";
+        const delay   =getDelayDays(emp.updated_at||emp.created_at);
+        const bar=(pct,label)=>`
+            <div style="margin-top:10px;">
+                <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+                    <span style="font-size:11px;color:#7f8ea3;">${label}</span>
+                    <span style="font-size:12px;font-weight:800;color:#16c79a;">${pct}%</span>
+                </div>
+                <div class="progress" style="width:100%;height:10px;">
+                    <div class="progress-fill" style="width:${pct}%"></div>
+                </div>
+            </div>`;
+        // DEF-059: title uses safe values
+        document.getElementById("empModalTitle").innerText=`${name} (${id})`;
+        // DEF-057: full two-column grid of all fields
+        document.getElementById("employeeFullDetails").innerHTML=`
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+                <div>
+                    <h3 style="color:#16c79a;margin-bottom:12px;">👤 Employee Info</h3>
+                    <table style="width:100%;font-size:13px;border-collapse:collapse;">
+                        <tr><td style="padding:6px 0;color:#7f8ea3;width:40%;">Email</td><td><b>${safe(emp.email)}</b></td></tr>
+                        <tr><td style="padding:6px 0;color:#7f8ea3;">Designation</td><td><b>${safe(emp.designation)}</b></td></tr>
+                        <tr><td style="padding:6px 0;color:#7f8ea3;">Project</td><td><b>${safe(emp.project_name||emp.project||emp.account_name)}</b></td></tr>
+                        <tr><td style="padding:6px 0;color:#7f8ea3;">COE</td><td><b>${safe(emp.selected_coe)}</b></td></tr>
+                        <tr><td style="padding:6px 0;color:#7f8ea3;">Status</td><td><b>${safe(emp.onboarding_status,"Pending")}</b></td></tr>
+                        <tr><td style="padding:6px 0;color:#7f8ea3;">Stage</td><td><b>${getStageBadge(emp.current_step)}</b></td></tr>
+                        <tr><td style="padding:6px 0;color:#7f8ea3;">Delay</td><td><b>${delay} days</b></td></tr>
+                    </table>
+                </div>
+                <div>
+                    <h3 style="color:#16c79a;margin-bottom:12px;">📋 Onboarding Tracking</h3>
+                    <table style="width:100%;font-size:13px;border-collapse:collapse;">
+                        <tr><td style="padding:6px 0;color:#7f8ea3;width:40%;">ID Card</td><td><b>${safe(emp.id_card_status,"Pending")}</b></td></tr>
+                        <tr><td style="padding:6px 0;color:#7f8ea3;">Laptop</td><td><b>${safe(emp.laptop_status,"Pending")}</b></td></tr>
+                        <tr><td style="padding:6px 0;color:#7f8ea3;">Training</td><td><b>${trainPct}%</b></td></tr>
+                        <tr><td style="padding:6px 0;color:#7f8ea3;">Assessment</td><td><b>${safe(emp.assessment_status,"Pending")}</b></td></tr>
+                        <tr><td style="padding:6px 0;color:#7f8ea3;">Readiness</td><td><b>${readiness}%</b></td></tr>
+                    </table>
+                </div>
+            </div>
+            <div style="margin-top:22px;">
+                <h3 style="color:#16c79a;margin-bottom:8px;">📊 Progress</h3>
+                ${bar(progPct,"Overall Onboarding")}
+                ${bar(trainPct,"Training Completion")}
+                ${bar(readiness,"Readiness Score")}
+            </div>
+            <div style="margin-top:20px;background:#fff8f8;border-radius:14px;padding:16px;border-left:4px solid ${riskColor};">
+                <h3 style="margin-bottom:8px;">⚠️ Risk Analysis</h3>
+                <p style="font-size:13px;">Risk Level: <b style="color:${riskColor};font-size:16px;">${risk}</b></p>
+                ${delay>2?`<p style="font-size:12px;color:#7f8ea3;margin-top:6px;">⏳ Delayed ${delay} days — consider escalation.</p>`:""}
+            </div>
+            <div style="margin-top:16px;display:flex;gap:10px;">
+                <button class="btn btn-mail"     onclick="sendReminder('${empId}');closeModal('employeeModal')">📧 Send Reminder</button>
+                <button class="btn btn-escalate" onclick="escalate('${empId}');closeModal('employeeModal')">⚠️ Escalate</button>
+            </div>`;
+    }catch(e){
+        console.error("Detail error:",e);
+        document.getElementById("empModalTitle").innerText="Error";
+        document.getElementById("employeeFullDetails").innerHTML=
+            `<p style="color:#ff5f5f;">Could not load employee data. Please try again.</p>`;
+    }
 }
-function closeEmployeeModal(){
-
-    document.getElementById("employeeModal")
-        .style.display = "none";
+function closeEmployeeModal(){ closeModal("employeeModal"); }
+ 
+/* ═══════════════════════════════════════════════════
+   CHATBOT ENGINE
+═══════════════════════════════════════════════════ */
+const chatBody  = document.getElementById("chatBody");
+const chatInput = document.getElementById("chatInput");
+chatInput.addEventListener("keydown",function(e){if(e.key==="Enter"){e.preventDefault();sendChat();}});
+ 
+function addMessage(type,message){
+    const div=document.createElement("div");
+    div.className=type==="user"?"chat-user-msg":"chat-ai-msg";
+    div.innerHTML=message;
+    chatBody.appendChild(div);
+    chatBody.scrollTop=chatBody.scrollHeight;
 }
+function showTyping(){
+    const t=document.createElement("div");t.id="typing";t.className="chat-ai-msg";
+    t.innerHTML=`<span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>`;
+    chatBody.appendChild(t);chatBody.scrollTop=chatBody.scrollHeight;
+}
+function removeTyping(){const t=document.getElementById("typing");if(t)t.remove();}
+ 
+/* ── runHelpCmd: fill input + send when help item clicked ── */
+function runHelpCmd(cmd){
+    chatInput.value=cmd;
+    sendChat();
+}
+ 
+/* ── detectIntent ─────────────────────────────────── */
+function detectIntent(msg){
+    msg=msg.toLowerCase().trim();
+    const greetings=["hi","hello","hey","good morning","good afternoon","good evening","howdy","hola","namaste"];
+    if(greetings.some(g=>msg===g||msg.startsWith(g+" "))) return {type:"greeting"};
+    if(msg==="help"||msg.includes("what can you do")||msg.includes("commands")) return {type:"help"};
+    // bulk first (before single escalate/remind)
+    if(msg==="help-bulk reminder"||msg.includes("bulk reminder")||msg.includes("remind all")||msg.includes("reminder to all")) return {type:"bulk_reminder"};
+    if(msg==="help-bulk escalation"||msg.includes("bulk escalat")||msg.includes("escalate all")||msg.includes("escalate delayed")||msg.includes("escalate high risk")) return {type:"bulk_escalation"};
+    // single
+    if(msg.includes("remind employee")||msg.includes("send reminder to employee")) return {type:"remind_single"};
+    if(msg.includes("pending onboarding")||msg.includes("show pending")||msg.includes("pending employees")||msg.includes("show me pending")||msg.includes("employees pending")) return {type:"pending_onboarding"};
+    if(msg.includes("delayed")||msg.includes("late onboarding")||msg.includes("delay employees")) return {type:"delayed"};
+    if(msg.includes("high risk")||msg.includes("risk employees")||msg.includes("critical employees")) return {type:"high_risk"};
+    if(msg.includes("show completed")||msg.includes("fully onboarded")||msg.includes("completed employees")) return {type:"completed"};
+    if(msg.includes("summary")||msg.includes("dashboard status")||msg.includes("rm report")||msg.includes("onboarding summary")) return {type:"summary"};
+    if(msg.includes("escalation")||msg.includes("escalate")||msg.includes("send mail to admin")||msg.includes("id card issue")||msg.includes("laptop issue")) return {type:"escalation"};
+    return {type:"general"};
+}
+ 
+/* ── showHelp: clickable items + bulk section ─────── */
+function showHelp(){
+    const single=[
+        {icon:"📈",title:"Onboarding Summary",    desc:"Full dashboard counts",                   cmd:"onboarding summary"},
+        {icon:"⏳",title:"Pending Employees",      desc:"All employees pending onboarding",        cmd:"show pending employees"},
+        {icon:"⚠️",title:"Delayed Employees",     desc:"Employees delayed beyond 2-day SLA",     cmd:"show delayed employees"},
+        {icon:"🚨",title:"High Risk Employees",    desc:"Employees flagged as HIGH risk",          cmd:"show high risk employees"},
+        {icon:"✅",title:"Completed Employees",    desc:"Fully onboarded employees",               cmd:"show completed employees"},
+        {icon:"📧",title:"Remind by ID",           desc:"Reminder to one employee — edit the ID", cmd:"remind employee 1042836"},
+        {icon:"🔺",title:"Escalate by ID",         desc:"Escalate one employee — edit the ID",    cmd:"escalate employee 1042836"},
+    ];
+    const bulk=[
+        {icon:"📨",title:"Bulk Reminder",    desc:"Send reminder to ALL pending employees",     cmd:"help-bulk reminder"},
+        {icon:"⚠️",title:"Bulk Escalation", desc:"Escalate ALL delayed + HIGH risk employees", cmd:"help-bulk escalation"},
+    ];
+    const makeItem=it=>`<div class="help-item" onclick="runHelpCmd('${it.cmd}')">
+        ${it.icon} <b>${it.title}</b><br>${it.desc}
+        <br><span class="cmd-tag">▶ ${it.cmd}</span>
+    </div>`;
+    addMessage("ai",`
+        <div class="help-title">🚀 RM AI COMMAND CENTER — click any item to run it</div>
+        <div class="help-section-label">Single Employee Commands</div>
+        <div class="help-grid">${single.map(makeItem).join("")}</div>
+        <div class="help-section-label" style="margin-top:10px;">Bulk Commands</div>
+        <div class="help-grid">${bulk.map(makeItem).join("")}</div>
+    `);
+}
+ 
+/* ── getLocalResponse: answers from fullData ─────── */
+function getLocalResponse(intentType,rawMsg){
+    const safe=(v,fb="-")=>(!v||String(v).toLowerCase()==="undefined"||v==="")?fb:String(v);
+    switch(intentType){
+        case "greeting":
+            return `👋 Hello! I'm your RM AI Assistant.<br><br>
+                Type <b>help</b> to see clickable commands, or try:<br>
+                — <b>show pending employees</b><br>— <b>show delayed</b><br>— <b>onboarding summary</b>`;
+        case "pending_onboarding":{
+            const list=fullData.filter(x=>!(x.onboarding_status||"").toLowerCase().includes("completed"));
+            return `⏳ <b>${list.length} Pending Employees</b><br><br>`+
+                list.slice(0,6).map(e=>`• ${safe(e.emp_name,"??")} (${safe(e.emp_id)})`).join("<br>")+
+                (list.length>6?`<br>…and ${list.length-6} more`:"");
+        }
+        case "delayed":{
+            const list=fullData.filter(x=>getDelayDays(x.updated_at||x.created_at)>2);
+            return `⚠️ <b>${list.length} Delayed Employees</b><br><br>`+
+                list.slice(0,6).map(e=>`• ${safe(e.emp_name,"??")} (${safe(e.emp_id)}) — ${getDelayDays(e.updated_at||e.created_at)} days`).join("<br>")+
+                (list.length>6?`<br>…and ${list.length-6} more`:"");
+        }
+        case "high_risk":{
+            const list=fullData.filter(x=>(x.risk_level||"").toUpperCase()==="HIGH");
+            return `🚨 <b>${list.length} High Risk Employees</b><br><br>`+
+                list.slice(0,6).map(e=>`• ${safe(e.emp_name,"??")} (${safe(e.emp_id)})`).join("<br>")+
+                (list.length>6?`<br>…and ${list.length-6} more`:"");
+        }
+        case "completed":{
+            const list=fullData.filter(x=>(x.onboarding_status||"").toLowerCase().includes("completed"));
+            return `✅ <b>${list.length} Employees Fully Onboarded</b>`;
+        }
+        case "summary":{
+            const total=fullData.length;
+            const comp=fullData.filter(x=>(x.onboarding_status||"").toLowerCase().includes("completed")).length;
+            const high=fullData.filter(x=>(x.risk_level||"").toUpperCase()==="HIGH").length;
+            const del=fullData.filter(x=>getDelayDays(x.updated_at||x.created_at)>2).length;
+            return `📈 <b>RM Onboarding Summary</b><br><br>
+                👥 Total: <b>${total}</b><br>✅ Completed: <b>${comp}</b><br>
+                ⏳ Pending: <b>${total-comp}</b><br>🚨 High Risk: <b>${high}</b><br>⚠️ Delayed: <b>${del}</b>`;
+        }
+        case "bulk_reminder":{
+            const pending=fullData.filter(x=>!(x.onboarding_status||"").toLowerCase().includes("completed"));
+            if(!pending.length) return "✅ No pending employees — everyone is onboarded!";
+            let sent=0;
+            Promise.all(pending.map(emp=>
+                fetch(`${API}/send-reminder`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({emp_id:emp.emp_id})})
+                .then(r=>{if(r.ok)sent++;}).catch(()=>{})
+            )).then(()=>showToast(`📧 Bulk reminder: ${sent}/${pending.length} sent`,"#16c79a"));
+            return `📨 <b>Bulk Reminder Triggered</b><br><br>
+                Sending to <b>${pending.length}</b> pending employees…<br>
+                <small style="color:#7f8ea3;">Confirmation toast will appear shortly.</small>`;
+        }
+        case "bulk_escalation":{
+            const targets=fullData.filter(x=>
+                (x.risk_level||"").toUpperCase()==="HIGH"||getDelayDays(x.updated_at||x.created_at)>2);
+            if(!targets.length) return "✅ No high-risk or delayed employees to escalate.";
+            Promise.all(targets.map(emp=>fetch(`${API}/escalate/${emp.emp_id}`,{method:"POST"}).catch(()=>{})))
+                .then(()=>{showToast(`⚠️ Escalated ${targets.length} employees`,"#f39c12");loadDashboard();});
+            return `⚠️ <b>Bulk Escalation Triggered</b><br><br>
+                Escalating <b>${targets.length}</b> high-risk / delayed employees…<br>
+                <small style="color:#7f8ea3;">Dashboard refreshes when complete.</small>`;
+        }
+        case "remind_single":{
+            const m=rawMsg.match(/\b\d{4,10}\b/);
+            if(!m) return "⚠️ Include Employee ID. Example: <b>remind employee 1042836</b>";
+            sendReminder(m[0]);
+            return `📧 Sending reminder to employee <b>${m[0]}</b>…`;
+        }
+        default: return null;
+    }
+}
+ 
+/* ── sendChat ─────────────────────────────────────── */
+async function sendChat(){
+    const msg=chatInput.value.trim();
+    if(!msg) return;
+    addMessage("user","👨 "+msg);
+    chatInput.value="";
+    const intent=detectIntent(msg);
+ 
+    if(intent.type==="help"){showHelp();return;}
+ 
+    // fast local path for data commands
+    if(["pending_onboarding","delayed","high_risk","completed","summary",
+        "bulk_reminder","bulk_escalation","remind_single","greeting"].includes(intent.type)){
+        const local=getLocalResponse(intent.type,msg);
+        if(local){addMessage("ai",local);return;}
+    }
+ 
+    showTyping();
+    try{
+        const res=await fetch(`${API}/chat`,{
+            method:"POST",headers:{"Content-Type":"application/json"},
+            body:JSON.stringify({message:msg,intent:intent.type,rm,email:rmEmail})
+        });
+        const data=await res.json();
+        removeTyping();
+        if(res.ok&&data.success){
+            addMessage("ai","🤖 "+data.reply);
+        } else {
+            const local=getLocalResponse(intent.type,msg);
+            addMessage("ai",local||("⚠️ "+(data.reply||"Request failed")+"<br>Type <b>help</b> for commands."));
+        }
+    }catch(err){
+        removeTyping();
+        const local=getLocalResponse(intent.type,msg);
+        addMessage("ai",local||"⚠️ Cannot reach AI server. Type <b>help</b> for local commands.");
+        console.error("Chat Error:",err);
+    }
+}
+ 
+/* ── logout ───────────────────────────────────────── */
+async function logout(){
+    try{
+        const res=await fetch("https://intellionboard.onrender.com/api/auth/logout",{method:"POST",credentials:"include"});
+        if(!res.ok) console.warn("Logout API not OK");
+    }catch(err){console.error("Logout API Error:",err);}
+    finally{
+        localStorage.clear();sessionStorage.clear();
+        document.cookie.split(";").forEach(function(c){
+            document.cookie=c.replace(/^ +/,"").replace(/=.*/,"=;expires="+new Date().toUTCString()+";path=/");
+        });
+        window.location.replace("https://intellionboard.vercel.app/");
+    }
+}
+ 
+/* ── auto refresh ─────────────────────────────────── */
+setInterval(loadDashboard,10000);
+loadDashboard();
 </script>
-<div class="modal" id="employeeModal">
-
-<div class="modal-content" style="width:800px;max-height:90vh;overflow:auto;">
-
-<h2 id="empModalTitle">Employee Details</h2>
-
-<br>
-
-<div id="employeeFullDetails"></div>
-
-<br>
-
-<button class="btn" onclick="closeEmployeeModal()">
-Close
-</button>
-
-</div>
-
-</div>
 </body>
 </html>
