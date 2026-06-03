@@ -741,9 +741,10 @@ function detectIntent(msg){
     if(msg==="help-bulk reminder"||msg.includes("bulk reminder")||msg.includes("remind all")||msg.includes("reminder to all")) return {type:"bulk_reminder"};
     if(msg==="help-bulk escalation"||msg.includes("bulk escalat")||msg.includes("escalate all")||msg.includes("escalate delayed")||msg.includes("escalate high risk")) return {type:"bulk_escalation"};
     // single
-    if(msg.includes("remind employee")||msg.includes("send reminder to employee")) return {type:"remind_single"};
-    // plain "reminder" or "send reminder" without ID → show choice
-    if(msg.includes("reminder")||msg==="remind") return {type:"remind_choice"};
+    // remind with explicit ID → send directly
+    if((msg.includes("remind employee")||msg.includes("send reminder to employee"))&&/[0-9]{4,10}/.test(msg)) return {type:"remind_single"};
+    // remind without ID, or plain "reminder" → show choice UI
+    if(msg.includes("remind")||msg.includes("reminder")) return {type:"remind_choice"};
     if(msg.includes("pending onboarding")||msg.includes("show pending")||msg.includes("pending employees")||msg.includes("show me pending")||msg.includes("employees pending")) return {type:"pending_onboarding"};
     if(msg.includes("delayed")||msg.includes("late onboarding")||msg.includes("delay employees")) return {type:"delayed"};
     if(msg.includes("high risk")||msg.includes("risk employees")||msg.includes("critical employees")) return {type:"high_risk"};
@@ -761,17 +762,22 @@ function showHelp(){
         {icon:"⚠️",title:"Delayed Employees",     desc:"Employees delayed beyond 2-day SLA",     cmd:"show delayed employees"},
         {icon:"🚨",title:"High Risk Employees",    desc:"Employees flagged as HIGH risk",          cmd:"show high risk employees"},
         {icon:"✅",title:"Completed Employees",    desc:"Fully onboarded employees",               cmd:"show completed employees"},
-        {icon:"📧",title:"Remind by ID",           desc:"Reminder to one employee — edit the ID", cmd:"remind employee 1042836"},
+        {icon:"📧",title:"Remind by ID",           desc:"Enter Employee ID to send a targeted reminder", cmd:"__prompt_remind__"},
         {icon:"🔺",title:"Escalate by ID",         desc:"Escalate one employee — edit the ID",    cmd:"escalate employee 1042836"},
     ];
     const bulk=[
         {icon:"📨",title:"Bulk Reminder",    desc:"Send reminder to ALL pending employees",     cmd:"help-bulk reminder"},
         {icon:"⚠️",title:"Bulk Escalation", desc:"Escalate ALL delayed + HIGH risk employees", cmd:"help-bulk escalation"},
     ];
-    const makeItem=it=>`<div class="help-item" onclick="runHelpCmd('${it.cmd}')">
-        ${it.icon} <b>${it.title}</b><br>${it.desc}
-        <br><span class="cmd-tag">▶ ${it.cmd}</span>
-    </div>`;
+    const makeItem=it=>{
+        const isPrompt = it.cmd === "__prompt_remind__";
+        const clickFn  = isPrompt ? "promptSingleReminder()" : `runHelpCmd('${it.cmd}')`;
+        const tagLabel = isPrompt ? "▶ click to enter Employee ID" : `▶ ${it.cmd}`;
+        return `<div class="help-item" onclick="${clickFn}">
+            ${it.icon} <b>${it.title}</b><br>${it.desc}
+            <br><span class="cmd-tag">${tagLabel}</span>
+        </div>`;
+    };
     addMessage("ai",`
         <div class="help-title">🚀 RM AI COMMAND CENTER — click any item to run it</div>
         <div class="help-section-label">Single Employee Commands</div>
