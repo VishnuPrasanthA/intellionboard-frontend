@@ -1,1290 +1,214 @@
 <!-- =========================================================
-RM_DASHBOARD.HTML
-FULL ENTERPRISE REPORTING MANAGER DASHBOARD
-INTELLIONBOARD QA SYSTEM
+RM_DASHBOARD.HTML — INTELLIONBOARD QA
+All DEF fixes + clickable help + bulk commands
 ========================================================= -->
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>RM Dashboard | IntelliOnboard QA</title>
 <style>
-/* =========================================================
-   NEXT GEN REPORTING MANAGER DASHBOARD UI
-   ULTRA MODERN • GLASSMORPHISM • AI EFFECTS
-   FULL RM DASHBOARD STYLE UPGRADE
-========================================================= */
-
-/* =========================================================
-   ROOT COLORS
-========================================================= */
-
 :root{
-
-    --primary:#16c79a;
-    --primary-dark:#0fa67f;
-    --primary-light:#e9fff8;
-
-    --secondary:#59b8ff;
-    --purple:#9b6dff;
-    --orange:#ffb84d;
-    --danger:#ff6b6b;
-    --success:#35d07f;
-
-    --text:#172b42;
-    --muted:#7f8ea3;
-
-    --glass:rgba(255,255,255,0.72);
-    --border:rgba(255,255,255,0.45);
-
-    --bg1:#f4fbff;
-    --bg2:#eef6ff;
-
-    --shadow-sm:
-    0 8px 24px rgba(15,23,42,.06);
-
-    --shadow-md:
-    0 18px 40px rgba(15,23,42,.10);
-
-    --shadow-lg:
-    0 30px 70px rgba(15,23,42,.16);
-
+    --primary:#16c79a;--primary-dark:#0fa67f;--primary-light:#e9fff8;
+    --secondary:#59b8ff;--purple:#9b6dff;--orange:#ffb84d;
+    --danger:#ff6b6b;--success:#35d07f;
+    --text:#172b42;--muted:#7f8ea3;
+    --glass:rgba(255,255,255,0.72);--border:rgba(255,255,255,0.45);
+    --bg1:#f4fbff;--bg2:#eef6ff;
+    --shadow-sm:0 8px 24px rgba(15,23,42,.06);
+    --shadow-md:0 18px 40px rgba(15,23,42,.10);
+    --shadow-lg:0 30px 70px rgba(15,23,42,.16);
     --radius:24px;
-
-    --transition:
-    all .35s cubic-bezier(.22,1,.36,1);
+    --transition:all .35s cubic-bezier(.22,1,.36,1);
 }
-
-/* =========================================================
-   GLOBAL
-========================================================= */
-
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-}
-
-html{
-    scroll-behavior:smooth;
-}
-
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
 body{
-
-    font-family:
-    "Segoe UI",
-    Inter,
-    sans-serif;
-
-    color:var(--text);
-
-    background:
-    radial-gradient(circle at top left,#dffdf3 0%,transparent 30%),
-    radial-gradient(circle at top right,#dcecff 0%,transparent 25%),
-    radial-gradient(circle at bottom right,#fff2dc 0%,transparent 30%),
-    linear-gradient(135deg,var(--bg1),var(--bg2));
-
-    min-height:100vh;
-
-    overflow-x:hidden;
-
-    position:relative;
+    font-family:"Segoe UI",Inter,sans-serif;color:var(--text);
+    background:radial-gradient(circle at top left,#dffdf3 0%,transparent 30%),
+               radial-gradient(circle at top right,#dcecff 0%,transparent 25%),
+               radial-gradient(circle at bottom right,#fff2dc 0%,transparent 30%),
+               linear-gradient(135deg,var(--bg1),var(--bg2));
+    min-height:100vh;overflow-x:hidden;position:relative;
 }
-
-/* animated background */
-
 body::before{
-
-    content:"";
-
-    position:fixed;
-
-    inset:0;
-
-    background:
-    radial-gradient(circle at 20% 20%,rgba(22,199,154,.05),transparent 18%),
-    radial-gradient(circle at 80% 25%,rgba(89,184,255,.05),transparent 18%),
-    radial-gradient(circle at 70% 80%,rgba(155,109,255,.05),transparent 18%);
-
-    z-index:-1;
-
-    animation:bgMove 20s linear infinite;
+    content:"";position:fixed;inset:0;
+    background:radial-gradient(circle at 20% 20%,rgba(22,199,154,.05),transparent 18%),
+               radial-gradient(circle at 80% 25%,rgba(89,184,255,.05),transparent 18%),
+               radial-gradient(circle at 70% 80%,rgba(155,109,255,.05),transparent 18%);
+    z-index:-1;animation:bgMove 20s linear infinite;
 }
-
-@keyframes bgMove{
-
-    0%{
-        transform:translateY(0px);
-    }
-
-    100%{
-        transform:translateY(-60px);
-    }
+@keyframes bgMove{0%{transform:translateY(0px);}100%{transform:translateY(-60px);}}
+::-webkit-scrollbar{width:10px;height:10px;}
+::-webkit-scrollbar-thumb{background:linear-gradient(180deg,var(--primary),#58ffd8);border-radius:30px;}
+::-webkit-scrollbar-track{background:#edf5fb;}
+.container{padding:18px;padding-top:110px;}
+.glass,.card,.section,.ai-panel,.header{
+    background:var(--glass);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+    border:1px solid var(--border);box-shadow:var(--shadow-sm);transition:var(--transition);
 }
-
-/* =========================================================
-   SCROLLBAR
-========================================================= */
-
-::-webkit-scrollbar{
-    width:10px;
-    height:10px;
-}
-
-::-webkit-scrollbar-thumb{
-
-    background:
-    linear-gradient(
-    180deg,
-    var(--primary),
-    #58ffd8);
-
-    border-radius:30px;
-}
-
-::-webkit-scrollbar-track{
-    background:#edf5fb;
-}
-
-/* =========================================================
-   CONTAINER
-========================================================= */
-
-.container{
-
-    padding:18px;
-
-    padding-top:110px;
-}
-
-/* =========================================================
-   GLASS EFFECT
-========================================================= */
-
-.glass,
-.card,
-.section,
-.ai-panel,
 .header{
-
-    background:var(--glass);
-
-    backdrop-filter:blur(18px);
-
-    -webkit-backdrop-filter:blur(18px);
-
-    border:1px solid var(--border);
-
-    box-shadow:var(--shadow-sm);
-
-    transition:var(--transition);
+    position:fixed;top:14px;left:14px;right:14px;z-index:99999;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:16px 22px;border-radius:28px;overflow:hidden;
 }
-
-/* =========================================================
-   HEADER
-========================================================= */
-
-.header{
-
-    position:fixed;
-
-    top:14px;
-    left:14px;
-    right:14px;
-
-    z-index:99999;
-
-    display:flex;
-
-    align-items:center;
-
-    justify-content:space-between;
-
-    padding:16px 22px;
-
-    border-radius:28px;
-
-    overflow:hidden;
-}
-
-/* animated border */
-
 .header::before{
-
-    content:"";
-
-    position:absolute;
-
-    inset:-2px;
-
-    background:
-    linear-gradient(
-    90deg,
-    rgba(22,199,154,.18),
-    rgba(89,184,255,.18),
-    rgba(155,109,255,.18),
-    rgba(22,199,154,.18));
-
-    background-size:300% 300%;
-
-    z-index:-1;
-
-    animation:borderMove 8s linear infinite;
+    content:"";position:absolute;inset:-2px;
+    background:linear-gradient(90deg,rgba(22,199,154,.18),rgba(89,184,255,.18),rgba(155,109,255,.18),rgba(22,199,154,.18));
+    background-size:300% 300%;z-index:-1;animation:borderMove 8s linear infinite;
 }
-
-@keyframes borderMove{
-
-    0%{
-        background-position:0% 50%;
-    }
-
-    100%{
-        background-position:100% 50%;
-    }
-}
-
-.header:hover{
-
-    transform:translateY(-2px);
-
-    box-shadow:var(--shadow-lg);
-}
-
-/* =========================================================
-   HEADER LEFT
-========================================================= */
-
-.header-left{
-
-    display:flex;
-
-    align-items:center;
-
-    gap:14px;
-}
-
+@keyframes borderMove{0%{background-position:0% 50%;}100%{background-position:100% 50%;}}
+.header:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg);}
+.header-left{display:flex;align-items:center;gap:14px;}
 .header-logo{
-
-    width:58px;
-    height:58px;
-
-    border-radius:20px;
-
-    display:flex;
-    align-items:center;
-    justify-content:center;
-
-    font-size:28px;
-
-    color:white;
-
-    background:
-    linear-gradient(
-    135deg,
-    var(--primary),
-    #58ffd8);
-
-    box-shadow:
-    0 14px 30px rgba(22,199,154,.25);
-
-    position:relative;
-
-    transition:var(--transition);
+    width:58px;height:58px;border-radius:20px;display:flex;align-items:center;justify-content:center;
+    font-size:28px;color:white;background:linear-gradient(135deg,var(--primary),#58ffd8);
+    box-shadow:0 14px 30px rgba(22,199,154,.25);position:relative;transition:var(--transition);
 }
-
 .header-logo::after{
-
-    content:"";
-
-    position:absolute;
-
-    inset:-7px;
-
-    border-radius:24px;
-
-    border:2px solid rgba(22,199,154,.15);
-
-    animation:pulseRing 2.8s infinite;
+    content:"";position:absolute;inset:-7px;border-radius:24px;
+    border:2px solid rgba(22,199,154,.15);animation:pulseRing 2.8s infinite;
 }
-
-@keyframes pulseRing{
-
-    0%{
-        transform:scale(.9);
-        opacity:1;
-    }
-
-    100%{
-        transform:scale(1.3);
-        opacity:0;
-    }
-}
-
-.header-logo:hover{
-
-    transform:
-    rotate(8deg)
-    scale(1.08);
-}
-
-.header-left h2{
-
-    font-size:22px;
-
-    font-weight:900;
-
-    color:#13253a;
-
-    margin-bottom:4px;
-}
-
-.header-left small{
-
-    color:var(--muted);
-
-    font-size:12px;
-}
-
-/* =========================================================
-   HEADER RIGHT
-========================================================= */
-
-.header-right{
-
-    display:flex;
-
-    align-items:center;
-
-    gap:12px;
-}
-
-/* =========================================================
-   SEARCH BOX
-========================================================= */
-
+@keyframes pulseRing{0%{transform:scale(.9);opacity:1;}100%{transform:scale(1.3);opacity:0;}}
+.header-logo:hover{transform:rotate(8deg) scale(1.08);}
+.header-left h2{font-size:22px;font-weight:900;color:#13253a;margin-bottom:4px;}
+.header-left small{color:var(--muted);font-size:12px;}
+.header-right{display:flex;align-items:center;gap:12px;}
 .search-box{
-
-    display:flex;
-
-    align-items:center;
-
-    gap:10px;
-
-    background:rgba(255,255,255,.92);
-
-    border:1px solid rgba(22,199,154,.10);
-
-    border-radius:16px;
-
-    padding:0 14px;
-
-    height:50px;
-
+    display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.92);
+    border:1px solid rgba(22,199,154,.10);border-radius:16px;padding:0 14px;height:50px;
     transition:var(--transition);
 }
-
-.search-box:hover{
-
-    transform:translateY(-2px);
-
-    box-shadow:
-    0 12px 24px rgba(0,0,0,.06);
+.search-box:hover{transform:translateY(-2px);box-shadow:0 12px 24px rgba(0,0,0,.06);}
+.search-box input,.search-box select{border:none;outline:none;background:transparent;font-size:13px;color:#162a3c;}
+/* DEF-044: visible search button */
+.search-btn{
+    background:linear-gradient(135deg,var(--primary),#58ffd8);color:white;border:none;
+    border-radius:12px;padding:8px 14px;cursor:pointer;font-weight:700;font-size:12px;
+    white-space:nowrap;transition:var(--transition);
 }
-
-.search-box input,
-.search-box select{
-
-    border:none;
-    outline:none;
-
-    background:transparent;
-
-    font-size:13px;
-
-    color:#162a3c;
+.search-btn:hover{transform:scale(1.05);}
+.search-clear{cursor:pointer;color:var(--muted);font-size:14px;display:none;background:none;border:none;padding:0 4px;}
+.btn,button,.logout-btn{border:none;cursor:pointer;border-radius:16px;font-weight:700;transition:var(--transition);position:relative;overflow:hidden;}
+.btn::before,.logout-btn::before{
+    content:"";position:absolute;top:0;left:-120%;width:100%;height:100%;
+    background:linear-gradient(120deg,transparent,rgba(255,255,255,.35),transparent);transition:.8s;
 }
-
-/* =========================================================
-   BUTTONS
-========================================================= */
-
-.btn,
-button,
-.logout-btn{
-
-    border:none;
-
-    cursor:pointer;
-
-    border-radius:16px;
-
-    font-weight:700;
-
-    transition:var(--transition);
-
-    position:relative;
-
-    overflow:hidden;
-}
-
-/* shine effect */
-
-.btn::before,
-.logout-btn::before{
-
-    content:"";
-
-    position:absolute;
-
-    top:0;
-    left:-120%;
-
-    width:100%;
-    height:100%;
-
-    background:
-    linear-gradient(
-    120deg,
-    transparent,
-    rgba(255,255,255,.35),
-    transparent);
-
-    transition:.8s;
-}
-
-.btn:hover::before,
-.logout-btn:hover::before{
-    left:120%;
-}
-
-.btn:hover,
-.logout-btn:hover{
-
-    transform:
-    translateY(-3px)
-    scale(1.02);
-
-    box-shadow:var(--shadow-md);
-}
-
-.logout-btn{
-
-    background:
-    linear-gradient(
-    135deg,
-    #ff6a6a,
-    #ff9a80);
-
-    color:white;
-
-    padding:12px 18px;
-}
-
-.btn-mail{
-
-    background:
-    linear-gradient(
-    135deg,
-    #5aaeff,
-    #7bc7ff);
-
-    color:white;
-}
-
-.btn-escalate{
-
-    background:
-    linear-gradient(
-    135deg,
-    #ffb347,
-    #ffd36d);
-
-    color:white;
-}
-
-.btn-complete{
-
-    background:
-    linear-gradient(
-    135deg,
-    #16c79a,
-    #5effcf);
-
-    color:white;
-}
-
-/* =========================================================
-   AI PANEL
-========================================================= */
-
+.btn:hover::before,.logout-btn:hover::before{left:120%;}
+.btn:hover,.logout-btn:hover{transform:translateY(-3px) scale(1.02);box-shadow:var(--shadow-md);}
+.logout-btn{background:linear-gradient(135deg,#ff6a6a,#ff9a80);color:white;padding:12px 18px;}
+.btn-mail{background:linear-gradient(135deg,#5aaeff,#7bc7ff);color:white;}
+.btn-escalate{background:linear-gradient(135deg,#ffb347,#ffd36d);color:white;}
+.btn-complete{background:linear-gradient(135deg,#16c79a,#5effcf);color:white;}
 .ai-panel{
-
-    position:relative;
-
-    overflow:hidden;
-
-    padding:28px;
-
-    border-radius:30px;
-
-    margin-bottom:22px;
-
-    background:
-    linear-gradient(
-    135deg,
-    rgba(22,199,154,.95),
-    rgba(89,184,255,.88));
-
-    color:white;
+    position:relative;overflow:hidden;padding:28px;border-radius:30px;margin-bottom:22px;
+    background:linear-gradient(135deg,rgba(22,199,154,.95),rgba(89,184,255,.88));color:white;
 }
-
 .ai-panel::after{
-
-    content:"";
-
-    position:absolute;
-
-    top:0;
-    left:-100%;
-
-    width:100%;
-    height:100%;
-
-    background:
-    linear-gradient(
-    90deg,
-    transparent,
-    rgba(255,255,255,.10),
-    transparent);
-
-    animation:shine 5s infinite;
+    content:"";position:absolute;top:0;left:-100%;width:100%;height:100%;
+    background:linear-gradient(90deg,transparent,rgba(255,255,255,.10),transparent);animation:shine 5s infinite;
 }
-
-@keyframes shine{
-
-    0%{
-        left:-100%;
-    }
-
-    100%{
-        left:120%;
-    }
-}
-
-.ai-panel h3{
-
-    font-size:24px;
-
-    margin-bottom:10px;
-}
-
-.ai-panel p{
-
-    opacity:.92;
-
-    line-height:1.7;
-}
-
-/* =========================================================
-   KPI CARDS
-========================================================= */
-
-.cards{
-
-    display:grid;
-
-    grid-template-columns:repeat(4,minmax(0,1fr));
-
-    gap:18px;
-
-    margin-bottom:24px;
-}
-
-.card{
-
-    border-radius:28px;
-
-    padding:22px;
-
-    position:relative;
-
-    overflow:hidden;
-}
-
-.card::before{
-
-    content:"";
-
-    position:absolute;
-
-    top:-40px;
-    right:-40px;
-
-    width:120px;
-    height:120px;
-
-    border-radius:50%;
-
-    background:rgba(22,199,154,.08);
-}
-
-.card:hover{
-
-    transform:
-    translateY(-6px)
-    scale(1.01);
-
-    box-shadow:var(--shadow-lg);
-}
-
-.card h2{
-
-    margin-top:10px;
-
-    font-size:30px;
-
-    color:var(--primary);
-
-    font-weight:900;
-}
-
-.card small{
-
-    color:var(--muted);
-
-    font-size:12px;
-}
-
-/* =========================================================
-   SECTION
-========================================================= */
-
-.section{
-
-    border-radius:30px;
-
-    padding:24px;
-
-    margin-bottom:24px;
-}
-
-.section:hover{
-
-    transform:translateY(-3px);
-
-    box-shadow:var(--shadow-lg);
-}
-
-.section-header{
-
-    display:flex;
-
-    justify-content:space-between;
-
-    align-items:center;
-
-    margin-bottom:20px;
-}
-
-.section-header h3{
-
-    font-size:22px;
-
-    color:var(--primary);
-
-    font-weight:900;
-}
-
-/* =========================================================
-   TABLE
-========================================================= */
-
-#employeeTable{
-
-    width:100%;
-
-    overflow-x:auto;
-
-    border-radius:22px;
-
-    background:white;
-}
-
-table{
-
-    width:100%;
-
-    min-width:1400px;
-
-    border-collapse:collapse;
-
-    background:white;
-}
-
-thead{
-
-    position:sticky;
-
-    top:0;
-
-    z-index:10;
-
-    background:
-    linear-gradient(
-    180deg,
-    #fbfdff,
-    #f2f7fd);
-}
-
-th{
-
-    padding:18px 16px;
-
-    text-align:left;
-
-    font-size:12px;
-
-    font-weight:900;
-
-    color:#5a6a7f;
-
-    white-space:nowrap;
-
-    border-bottom:1px solid #edf2f7;
-}
-
-td{
-
-    padding:16px;
-
-    font-size:12px;
-
-    white-space:nowrap;
-
-    border-bottom:1px solid #eef3f8;
-}
-
-tbody tr{
-
-    transition:var(--transition);
-}
-
-tbody tr:hover{
-
-    background:
-    linear-gradient(
-    90deg,
-    rgba(22,199,154,.04),
-    rgba(89,184,255,.03));
-
-    transform:scale(1.002);
-}
-
-tbody tr:hover td{
-
-    box-shadow:
-    0 10px 24px rgba(22,199,154,.05);
-}
-
-/* =========================================================
-   EMPLOYEE NAME
-========================================================= */
-
-.employee-name{
-
-    display:flex;
-
-    flex-direction:column;
-
-    gap:4px;
-}
-
-.employee-name b{
-
-    font-size:13px;
-
-    color:#13253a;
-}
-
-.employee-name small{
-
-    color:var(--muted);
-
-    font-size:11px;
-}
-
-/* =========================================================
-   BADGES
-========================================================= */
-
-.badge{
-
-    display:inline-flex;
-
-    align-items:center;
-    justify-content:center;
-
-    padding:7px 12px;
-
-    border-radius:30px;
-
-    font-size:10px;
-
-    font-weight:900;
-
-    color:white;
-}
-
-.completed{
-
-    background:
-    linear-gradient(
-    135deg,
-    #1abc9c,
-    #5effcf);
-}
-
-.pending{
-
-    background:
-    linear-gradient(
-    135deg,
-    #f39c12,
-    #ffd36d);
-}
-
-.delayed{
-
-    background:
-    linear-gradient(
-    135deg,
-    #ff5f5f,
-    #ff9393);
-}
-
-.inprogress{
-
-    background:
-    linear-gradient(
-    135deg,
-    #3498db,
-    #6dc8ff);
-}
-
-/* =========================================================
-   PROGRESS
-========================================================= */
-
-.progress{
-
-    width:120px;
-    height:14px;
-
-    background:#e9eef5;
-
-    border-radius:30px;
-
-    overflow:hidden;
-}
-
-.progress-fill{
-
-    height:100%;
-
-    display:flex;
-    align-items:center;
-    justify-content:center;
-
-    font-size:9px;
-
-    font-weight:900;
-
-    color:white;
-
-    background:
-    linear-gradient(
-    90deg,
-    var(--primary),
-    #58ffd8);
-}
-
-/* =========================================================
-   CHATBOT CONTAINER (FIXED + MODERN)
-========================================================= */
-
+@keyframes shine{0%{left:-100%;}100%{left:120%;}}
+.ai-panel h3{font-size:24px;margin-bottom:10px;}
+.ai-panel p{opacity:.92;line-height:1.7;}
+.cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px;margin-bottom:24px;}
+.card{border-radius:28px;padding:22px;position:relative;overflow:hidden;}
+.card::before{content:"";position:absolute;top:-40px;right:-40px;width:120px;height:120px;border-radius:50%;background:rgba(22,199,154,.08);}
+.card:hover{transform:translateY(-6px) scale(1.01);box-shadow:var(--shadow-lg);}
+.card h2{margin-top:10px;font-size:30px;color:var(--primary);font-weight:900;}
+.card small{color:var(--muted);font-size:12px;}
+.section{border-radius:30px;padding:24px;margin-bottom:24px;}
+.section:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg);}
+.section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;}
+.section-header h3{font-size:22px;color:var(--primary);font-weight:900;}
+#employeeTable{width:100%;overflow-x:auto;border-radius:22px;background:white;}
+table{width:100%;min-width:1400px;border-collapse:collapse;background:white;}
+thead{position:sticky;top:0;z-index:10;background:linear-gradient(180deg,#fbfdff,#f2f7fd);}
+th{padding:18px 16px;text-align:left;font-size:12px;font-weight:900;color:#5a6a7f;white-space:nowrap;border-bottom:1px solid #edf2f7;}
+td{padding:16px;font-size:12px;white-space:nowrap;border-bottom:1px solid #eef3f8;}
+tbody tr{transition:var(--transition);}
+tbody tr:hover{background:linear-gradient(90deg,rgba(22,199,154,.04),rgba(89,184,255,.03));transform:scale(1.002);}
+tbody tr:hover td{box-shadow:0 10px 24px rgba(22,199,154,.05);}
+.employee-name{display:flex;flex-direction:column;gap:4px;}
+.employee-name b{font-size:13px;color:#13253a;}
+.employee-name small{color:var(--muted);font-size:11px;}
+.badge{display:inline-flex;align-items:center;justify-content:center;padding:7px 12px;border-radius:30px;font-size:10px;font-weight:900;color:white;}
+.completed{background:linear-gradient(135deg,#1abc9c,#5effcf);}
+.pending{background:linear-gradient(135deg,#f39c12,#ffd36d);}
+.delayed{background:linear-gradient(135deg,#ff5f5f,#ff9393);}
+.inprogress{background:linear-gradient(135deg,#3498db,#6dc8ff);}
+.progress{width:120px;height:14px;background:#e9eef5;border-radius:30px;overflow:hidden;}
+.progress-fill{height:100%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:900;color:white;background:linear-gradient(90deg,var(--primary),#58ffd8);}
+.action-buttons{display:flex;gap:6px;}
 .chatbot{
-    position:fixed;
-    bottom:90px;
-    right:20px;
-
-    width:380px;
-    max-width:95vw;
-    height:560px;
-
-    background:#ffffff;
-
-    border-radius:24px;
-
-    box-shadow:0 25px 70px rgba(0,0,0,0.25);
-
-    display:none;              /* IMPORTANT: hidden by default */
-    flex-direction:column;
-
-    overflow:hidden;
-
-    z-index:999999;
-
-    animation:fadeUp .25s ease;
+    position:fixed;bottom:90px;right:20px;width:380px;max-width:95vw;height:560px;
+    background:#ffffff;border-radius:24px;box-shadow:0 25px 70px rgba(0,0,0,0.25);
+    display:none;flex-direction:column;overflow:hidden;z-index:999999;animation:fadeUp .25s ease;
 }
-
-/* =========================================================
-   CHAT HEADER (ADD IF NOT EXISTS)
-========================================================= */
-
 .chat-header{
-    background:linear-gradient(135deg,#16c79a,#59b8ff);
-    color:white;
-
-    padding:14px 18px;
-
-    font-weight:800;
-    font-size:14px;
-
-    display:flex;
-    align-items:center;
-    gap:10px;
+    background:linear-gradient(135deg,#16c79a,#59b8ff);color:white;
+    padding:14px 18px;font-weight:800;font-size:14px;display:flex;align-items:center;gap:10px;
 }
-
-/* =========================================================
-   CHAT BODY
-========================================================= */
-
-.chat-body{
-    flex:1;
-
-    display:flex;
-    flex-direction:column;
-
-    gap:12px;
-
-    padding:16px;
-
-    overflow-y:auto;
-
-    background:#f8fbff;
-
-    scroll-behavior:smooth;
-}
-
-/* =========================================================
-   USER MESSAGE
-========================================================= */
-
+.chat-body{flex:1;display:flex;flex-direction:column;gap:12px;padding:16px;overflow-y:auto;background:#f8fbff;scroll-behavior:smooth;}
 .chat-user-msg{
-    align-self:flex-end;
-
-    background:linear-gradient(135deg,#16c79a,#5effcf);
-
-    color:white;
-
-    padding:12px 16px;
-
-    border-radius:18px 18px 4px 18px;
-
-    max-width:80%;
-
-    font-size:13px;
-    line-height:1.5;
-
-    box-shadow:0 8px 20px rgba(22,199,154,0.25);
-
-    animation:fadeUp .2s ease;
+    align-self:flex-end;background:linear-gradient(135deg,#16c79a,#5effcf);color:white;
+    padding:12px 16px;border-radius:18px 18px 4px 18px;max-width:80%;font-size:13px;line-height:1.5;
+    box-shadow:0 8px 20px rgba(22,199,154,0.25);animation:fadeUp .2s ease;
 }
-
-/* =========================================================
-   AI MESSAGE
-========================================================= */
-
 .chat-ai-msg{
-    align-self:flex-start;
-
-    background:white;
-
-    color:#172b42;
-
-    padding:12px 16px;
-
-    border-radius:18px 18px 18px 4px;
-
-    max-width:85%;
-
-    font-size:13px;
-    line-height:1.6;
-
-    border:1px solid #edf2f7;
-
-    box-shadow:0 6px 18px rgba(0,0,0,0.08);
-
-    animation:fadeUp .2s ease;
+    align-self:flex-start;background:white;color:#172b42;padding:12px 16px;
+    border-radius:18px 18px 18px 4px;max-width:85%;font-size:13px;line-height:1.6;
+    border:1px solid #edf2f7;box-shadow:0 6px 18px rgba(0,0,0,0.08);animation:fadeUp .2s ease;
 }
-
-/* =========================================================
-   CHAT INPUT
-========================================================= */
-
-.chat-input{
-    display:flex;
-    align-items:center;
-
-    gap:10px;
-
-    padding:12px;
-
-    border-top:1px solid #e9eef5;
-
-    background:white;
-}
-
-.chat-input input{
-    flex:1;
-
-    padding:12px 14px;
-
-    border-radius:14px;
-
-    border:1px solid #e5eaf0;
-
-    outline:none;
-
-    font-size:13px;
-}
-
-.chat-input input:focus{
-    border-color:#16c79a;
-    box-shadow:0 0 0 3px rgba(22,199,154,0.15);
-}
-
-.chat-input button{
-    background:linear-gradient(135deg,#16c79a,#59b8ff);
-
-    color:white;
-
-    border:none;
-
-    padding:12px 16px;
-
-    border-radius:14px;
-
-    cursor:pointer;
-
-    font-weight:700;
-
-    transition:0.2s;
-}
-
-.chat-input button:hover{
-    transform:scale(1.05);
-}
-
-/* =========================================================
-   HELP PANEL
-========================================================= */
-
-.help-title{
-    font-size:15px;
-    font-weight:800;
-    margin-bottom:12px;
-    color:#16c79a;
-}
-
-.help-grid{
-    display:flex;
-    flex-direction:column;
-    gap:10px;
-}
-
+.chat-input{display:flex;align-items:center;gap:10px;padding:12px;border-top:1px solid #e9eef5;background:white;}
+.chat-input input{flex:1;padding:12px 14px;border-radius:14px;border:1px solid #e5eaf0;outline:none;font-size:13px;}
+.chat-input input:focus{border-color:#16c79a;box-shadow:0 0 0 3px rgba(22,199,154,0.15);}
+.chat-input button{background:linear-gradient(135deg,#16c79a,#59b8ff);color:white;border:none;padding:12px 16px;border-radius:14px;cursor:pointer;font-weight:700;transition:0.2s;}
+.chat-input button:hover{transform:scale(1.05);}
+.help-title{font-size:15px;font-weight:800;margin-bottom:12px;color:#16c79a;}
+.help-grid{display:flex;flex-direction:column;gap:8px;}
+/* CLICKABLE help items */
 .help-item{
-    background:#f8fbff;
-
-    padding:12px;
-
-    border-radius:14px;
-
-    border:1px solid #edf2f7;
-
-    font-size:12px;
-    line-height:1.5;
+    background:#f8fbff;padding:11px 12px;border-radius:14px;border:1px solid #edf2f7;
+    font-size:12px;line-height:1.5;cursor:pointer;transition:all .18s ease;user-select:none;
 }
-
-/* =========================================================
-   TYPING ANIMATION
-========================================================= */
-
-.typing-dot{
-    width:8px;
-    height:8px;
-
-    border-radius:50%;
-
-    background:#16c79a;
-
-    display:inline-block;
-
-    margin-right:4px;
-
-    animation:bounce 1s infinite;
+.help-item:hover{background:rgba(22,199,154,.13);border-color:rgba(22,199,154,.45);transform:translateX(4px);}
+.help-item:active{transform:translateX(2px) scale(.98);}
+.cmd-tag{
+    display:inline-block;margin-top:5px;background:rgba(22,199,154,.15);color:#0a6e50;
+    font-size:10px;font-weight:800;padding:2px 8px;border-radius:6px;font-family:monospace;
 }
-
-.typing-dot:nth-child(2){ animation-delay:0.2s; }
-.typing-dot:nth-child(3){ animation-delay:0.4s; }
-
-@keyframes bounce{
-    0%,80%,100%{ transform:scale(0); }
-    40%{ transform:scale(1); }
+.help-section-label{
+    font-size:10px;font-weight:900;color:#7f8ea3;text-transform:uppercase;
+    letter-spacing:.8px;padding:4px 0 2px 2px;margin-top:4px;
 }
-
-/* =========================================================
-   ANIMATION
-========================================================= */
-
-@keyframes fadeUp{
-    from{
-        opacity:0;
-        transform:translateY(10px);
-    }
-    to{
-        opacity:1;
-        transform:translateY(0);
-    }
+.typing-dot{width:8px;height:8px;border-radius:50%;background:#16c79a;display:inline-block;margin-right:4px;animation:bounce 1s infinite;}
+.typing-dot:nth-child(2){animation-delay:0.2s;}
+.typing-dot:nth-child(3){animation-delay:0.4s;}
+@keyframes bounce{0%,80%,100%{transform:scale(0);}40%{transform:scale(1);}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+.modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.45);display:none;justify-content:center;align-items:center;z-index:999999;}
+.modal-content{width:520px;background:white;border-radius:30px;padding:28px;box-shadow:var(--shadow-lg);}
+.risk-low{color:#16c79a;font-weight:900;}
+.risk-medium{color:#f39c12;font-weight:900;}
+.risk-high{color:#ff5f5f;font-weight:900;}
+/* DEF-047: toast */
+.rm-toast{
+    position:fixed;top:80px;right:20px;padding:12px 20px;border-radius:14px;
+    font-weight:700;font-size:13px;color:white;z-index:9999999;
+    opacity:0;transform:translateX(110%);transition:all .3s ease;pointer-events:none;
 }
-
-/* =========================================================
-   MOBILE RESPONSIVE FIX
-========================================================= */
-
+.rm-toast.show{opacity:1;transform:translateX(0);}
+@media(max-width:1200px){.cards{grid-template-columns:repeat(2,1fr);}.header{flex-wrap:wrap;}.header-right{width:100%;}}
 @media(max-width:768px){
-
-    .chatbot{
-        width:95%;
-        right:2.5%;
-        bottom:80px;
-        height:75vh;
-    }
+    .container{padding-top:160px;}.cards{grid-template-columns:1fr;}.header{left:10px;right:10px;}
+    .header-right{flex-wrap:wrap;}.search-box{width:100%;}.chatbot{width:95%;right:2.5%;height:82vh;}
 }
-/* =========================================================
-   MODAL
-========================================================= */
-
-.modal{
-
-    position:fixed;
-
-    top:0;
-    left:0;
-
-    width:100%;
-    height:100%;
-
-    background:rgba(0,0,0,.45);
-
-    display:none;
-
-    justify-content:center;
-    align-items:center;
-
-    z-index:999999;
-}
-
-.modal-content{
-
-    width:520px;
-
-    background:white;
-
-    border-radius:30px;
-
-    padding:28px;
-
-    box-shadow:var(--shadow-lg);
-}
-
-/* =========================================================
-   RISK COLORS
-========================================================= */
-
-.risk-low{
-    color:#16c79a;
-    font-weight:900;
-}
-
-.risk-medium{
-    color:#f39c12;
-    font-weight:900;
-}
-
-.risk-high{
-    color:#ff5f5f;
-    font-weight:900;
-}
-
-/* =========================================================
-   RESPONSIVE
-========================================================= */
-
-@media(max-width:1200px){
-
-    .cards{
-        grid-template-columns:repeat(2,1fr);
-    }
-
-    .header{
-        flex-wrap:wrap;
-    }
-
-    .header-right{
-        width:100%;
-    }
-}
-
-@media(max-width:768px){
-
-    .container{
-        padding-top:160px;
-    }
-
-    .cards{
-        grid-template-columns:1fr;
-    }
-
-    .header{
-        left:10px;
-        right:10px;
-    }
-
-    .header-right{
-        flex-wrap:wrap;
-    }
-
-    .search-box{
-        width:100%;
-    }
-
-    .chatbot{
-
-        width:95%;
-
-        right:2.5%;
-
-        height:82vh;
-    }
-}</style>
+</style>
 </head>
 <body>
- 
+
 <!-- HEADER -->
 <div class="header">
     <div class="header-left">
@@ -1300,12 +224,12 @@ tbody tr:hover td{
         <button class="logout-btn" onclick="logout()">Logout</button>
     </div>
 </div>
- 
+
 <!-- MAIN -->
 <div class="container">
- 
+
     <div class="ai-panel" id="aiInsights">Loading AI Insights...</div>
- 
+
     <div class="cards">
         <div class="card"><small>Total Employees</small><h2 id="totalEmployees">0</h2></div>
         <div class="card"><small>Pending</small><h2 id="pendingEmployees">0</h2></div>
@@ -1314,7 +238,7 @@ tbody tr:hover td{
         <div class="card"><small>SLA Risk</small><h2 id="slaRisk">0</h2></div>
         <div class="card"><small>Delayed</small><h2 id="delayedEmployees">0</h2></div>
     </div>
- 
+
     <div class="section">
         <div class="section-header">
             <h3>Team Onboarding Monitoring</h3>
@@ -1341,13 +265,13 @@ tbody tr:hover td{
         <div id="employeeTable"></div>
     </div>
 </div>
- 
+
 <!-- CHAT TOGGLE -->
 <div id="chatToggle" onclick="toggleChatbot()"
     style="position:fixed;bottom:20px;right:20px;width:65px;height:65px;border-radius:50%;background:#0F6E56;display:flex;align-items:center;justify-content:center;color:white;font-size:28px;cursor:pointer;box-shadow:0 10px 25px rgba(0,0,0,0.25);z-index:9999;">
     🤖
 </div>
- 
+
 <!-- CHATBOT -->
 <div class="chatbot" id="chatPanel">
     <div class="chat-header">🤖 RM AI Assistant</div>
@@ -1366,7 +290,7 @@ tbody tr:hover td{
         <button onclick="sendChat()">Send</button>
     </div>
 </div>
- 
+
 <!-- TIMELINE MODAL -->
 <div class="modal" id="timelineModal">
     <div class="modal-content">
@@ -1375,7 +299,7 @@ tbody tr:hover td{
         <button class="btn" onclick="closeModal('timelineModal')">Close</button>
     </div>
 </div>
- 
+
 <!-- DEF-057/058/059: employee analytics modal -->
 <div class="modal" id="employeeModal">
     <div class="modal-content" style="width:800px;max-width:96vw;max-height:90vh;overflow:auto;">
@@ -1384,17 +308,17 @@ tbody tr:hover td{
         <button class="btn" onclick="closeModal('employeeModal')">Close</button>
     </div>
 </div>
- 
+
 <!-- DEF-047: toast element -->
 <div class="rm-toast" id="rmToast"></div>
- 
+
 <script>
 const API      = "https://intellionboard.onrender.com/api/rm";
 let   fullData = [];
 const rm       = localStorage.getItem("user_name")  || "RM";
 const rmEmail  = localStorage.getItem("user_email") || "";
 document.getElementById("rmName").innerText = rm;
- 
+
 /* ── stage badge ─────────────────────────────────────── */
 function getStageBadge(stage){
     if(!stage) return "Initiated";
@@ -1405,14 +329,14 @@ function getStageBadge(stage){
     };
     return map[stage]||stage;
 }
- 
+
 /* ── chatbot toggle ──────────────────────────────────── */
 let chatbotOpen=false;
 function toggleChatbot(){
     chatbotOpen=!chatbotOpen;
     document.getElementById("chatPanel").style.display=chatbotOpen?"flex":"none";
 }
- 
+
 /* ── load dashboard ──────────────────────────────────── */
 async function loadDashboard(){
     try{
@@ -1424,12 +348,14 @@ async function loadDashboard(){
         if(!data.success){console.error("API Error:",data);fullData=[];}
         else fullData=data.data||[];
         renderStats(fullData);
-        renderTable(fullData);
         loadAIInsights(fullData);
+        /* AUTO-REFRESH FIX: re-apply active filter so table
+           does not reset while user has a filter/search active */
+        applyFilter();
     }catch(err){console.error("Dashboard Error:",err);}
     console.log("RM EMAIL =>",rmEmail);
 }
- 
+
 /* ── stats ───────────────────────────────────────────── */
 function renderStats(data){
     document.getElementById("totalEmployees").innerText    = data.length||0;
@@ -1444,7 +370,7 @@ function renderStats(data){
     document.getElementById("delayedEmployees").innerText  =
         data.filter(x=>getDelayDays(x.created_at)>2).length;
 }
- 
+
 /* ── AI insights ─────────────────────────────────────── */
 function loadAIInsights(data){
     const delayed      =data.filter(x=>getDelayDays(x.updated_at)>2).length;
@@ -1459,7 +385,7 @@ function loadAIInsights(data){
         <p>✅ ${completed} employees fully onboarded</p><br>
         <p>AI Recommendation: Focus escalation on delayed employees with pending laptop + training status.</p>`;
 }
- 
+
 /* ── render table ────────────────────────────────────── */
 function renderTable(data){
     if(!data||!data.length){
@@ -1512,7 +438,7 @@ function renderTable(data){
     html+=`</tbody></table>`;
     document.getElementById("employeeTable").innerHTML=html;
 }
- 
+
 /* ── DEF-034/044/046: search + filter ───────────────── */
 function onSearchInput(value){
     document.getElementById("searchClear").style.display=value?"inline":"none";
@@ -1528,7 +454,7 @@ function applyFilter(){
     const text   =raw.toLowerCase();
     const filter =document.getElementById("statusFilter").value;
     const isId   =/^\d+$/.test(raw); // DEF-034: exact numeric ID match
- 
+
     const filtered=fullData.filter(emp=>{
         let searchMatch;
         if(isId) searchMatch=String(emp.emp_id||"").trim()===raw;
@@ -1536,31 +462,31 @@ function applyFilter(){
             (emp.emp_name||"").toLowerCase().includes(text)||
             String(emp.emp_id||"").toLowerCase().includes(text)||
             (emp.email||"").toLowerCase().includes(text);
- 
+
         let statusMatch=true;
         const status=(emp.onboarding_status||"").toLowerCase();
         const risk  =(emp.risk_level||"").toUpperCase();
         const delay =getDelayDays(emp.updated_at||emp.created_at);
         const tPct  =emp.training_percentage||0;
- 
+
         if(filter==="pending")    statusMatch=!status.includes("completed");
         if(filter==="inprogress") statusMatch=status.includes("progress")||status.includes("initiated");
         if(filter==="completed")  statusMatch=status.includes("completed");
         if(filter==="delayed")    statusMatch=delay>2;
         if(filter==="training")   statusMatch=tPct<100;
         if(filter==="high_risk")  statusMatch=risk==="HIGH";
- 
+
         return searchMatch&&statusMatch;
     });
     renderTable(filtered);
 }
- 
+
 /* ── delay helper ────────────────────────────────────── */
 function getDelayDays(date){
     if(!date) return 0;
     return Math.max(0,Math.floor((Date.now()-new Date(date))/(1000*60*60*24)));
 }
- 
+
 /* ── timeline ────────────────────────────────────────── */
 async function openTimeline(empId){
     document.getElementById("timelineModal").style.display="flex";
@@ -1575,7 +501,7 @@ async function openTimeline(empId){
 function closeModal(id){
     document.getElementById(id||"timelineModal").style.display="none";
 }
- 
+
 /* ── DEF-047: toast helper (replaces all alert()) ────── */
 function showToast(msg,color){
     const t=document.getElementById("rmToast");
@@ -1584,7 +510,7 @@ function showToast(msg,color){
     t.classList.add("show");
     setTimeout(()=>t.classList.remove("show"),3500);
 }
- 
+
 /* ── escalate ────────────────────────────────────────── */
 async function escalate(empId){
     try{
@@ -1593,7 +519,7 @@ async function escalate(empId){
         loadDashboard();
     }catch(e){showToast("❌ Escalation failed","#ff5f5f");}
 }
- 
+
 /* ── DEF-047: send reminder with toast feedback ──────── */
 async function sendReminder(empId){
     try{
@@ -1606,98 +532,185 @@ async function sendReminder(empId){
         else showToast("⚠️ "+(data.message||"Check SMTP config"),"#f39c12");
     }catch(e){showToast("❌ Could not send reminder","#ff5f5f");}
 }
- 
-/* ── DEF-057/058/059: view analytics popup ───────────── */
-async function openEmployeeDetails(empId){
+
+/* ── DEF-057/058/059: view analytics popup — paginated 3 pages ── */
+const ANALYTICS_PAGES = 3;
+let analyticsPageIndex = 0;
+let analyticsEmpData   = null;
+
+function openEmployeeDetails(empId){
+    analyticsPageIndex = 0;
+    analyticsEmpData   = null;
     document.getElementById("employeeModal").style.display="flex";
     document.getElementById("empModalTitle").innerText="Loading…";
     document.getElementById("employeeFullDetails").innerHTML=
-        '<p style="color:#7f8ea3;padding:20px;">Fetching employee data…</p>';
-    try{
-        const res =await fetch(`${API}/employee/${empId}`);
-        const data=await res.json();
-        const emp =data.data||{};
-        // DEF-059: safe helper — never shows "undefined"
-        const safe=(v,fb="-")=>
-            (!v||v==="undefined"||v===""||String(v).toLowerCase()==="undefined")?fb:String(v);
-        const name    =safe(emp.emp_name,"Unknown Employee");
-        const id      =safe(emp.emp_id,empId);
-        // DEF-058: read multiple field names for progress
-        const progPct =Number(emp.progress_percentage||emp.progress||emp.onboarding_progress||0);
-        const trainPct=Number(emp.training_percentage||emp.training_progress||0);
-        const readiness=Number(emp.readiness_score||0);
-        const risk    =safe(emp.risk_level,"LOW");
-        const riskColor=risk.toUpperCase()==="HIGH"?"#ff5f5f":risk.toUpperCase()==="MEDIUM"?"#f39c12":"#16c79a";
-        const delay   =getDelayDays(emp.updated_at||emp.created_at);
-        const bar=(pct,label)=>`
-            <div style="margin-top:10px;">
-                <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
-                    <span style="font-size:11px;color:#7f8ea3;">${label}</span>
-                    <span style="font-size:12px;font-weight:800;color:#16c79a;">${pct}%</span>
-                </div>
-                <div class="progress" style="width:100%;height:10px;">
-                    <div class="progress-fill" style="width:${pct}%"></div>
-                </div>
-            </div>`;
-        // DEF-059: title uses safe values
-        document.getElementById("empModalTitle").innerText=`${name} (${id})`;
-        // DEF-057: full two-column grid of all fields
-        document.getElementById("employeeFullDetails").innerHTML=`
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
-                <div>
-                    <h3 style="color:#16c79a;margin-bottom:12px;">👤 Employee Info</h3>
-                    <table style="width:100%;font-size:13px;border-collapse:collapse;">
-                        <tr><td style="padding:6px 0;color:#7f8ea3;width:40%;">Email</td><td><b>${safe(emp.email)}</b></td></tr>
-                        <tr><td style="padding:6px 0;color:#7f8ea3;">Designation</td><td><b>${safe(emp.designation)}</b></td></tr>
-                        <tr><td style="padding:6px 0;color:#7f8ea3;">Project</td><td><b>${safe(emp.project_name||emp.project||emp.account_name)}</b></td></tr>
-                        <tr><td style="padding:6px 0;color:#7f8ea3;">COE</td><td><b>${safe(emp.selected_coe)}</b></td></tr>
-                        <tr><td style="padding:6px 0;color:#7f8ea3;">Status</td><td><b>${safe(emp.onboarding_status,"Pending")}</b></td></tr>
-                        <tr><td style="padding:6px 0;color:#7f8ea3;">Stage</td><td><b>${getStageBadge(emp.current_step)}</b></td></tr>
-                        <tr><td style="padding:6px 0;color:#7f8ea3;">Delay</td><td><b>${delay} days</b></td></tr>
-                    </table>
-                </div>
-                <div>
-                    <h3 style="color:#16c79a;margin-bottom:12px;">📋 Onboarding Tracking</h3>
-                    <table style="width:100%;font-size:13px;border-collapse:collapse;">
-                        <tr><td style="padding:6px 0;color:#7f8ea3;width:40%;">ID Card</td><td><b>${safe(emp.id_card_status,"Pending")}</b></td></tr>
-                        <tr><td style="padding:6px 0;color:#7f8ea3;">Laptop</td><td><b>${safe(emp.laptop_status,"Pending")}</b></td></tr>
-                        <tr><td style="padding:6px 0;color:#7f8ea3;">Training</td><td><b>${trainPct}%</b></td></tr>
-                        <tr><td style="padding:6px 0;color:#7f8ea3;">Assessment</td><td><b>${safe(emp.assessment_status,"Pending")}</b></td></tr>
-                        <tr><td style="padding:6px 0;color:#7f8ea3;">Readiness</td><td><b>${readiness}%</b></td></tr>
-                    </table>
-                </div>
-            </div>
-            <div style="margin-top:22px;">
-                <h3 style="color:#16c79a;margin-bottom:8px;">📊 Progress</h3>
-                ${bar(progPct,"Overall Onboarding")}
-                ${bar(trainPct,"Training Completion")}
-                ${bar(readiness,"Readiness Score")}
-            </div>
-            <div style="margin-top:20px;background:#fff8f8;border-radius:14px;padding:16px;border-left:4px solid ${riskColor};">
-                <h3 style="margin-bottom:8px;">⚠️ Risk Analysis</h3>
-                <p style="font-size:13px;">Risk Level: <b style="color:${riskColor};font-size:16px;">${risk}</b></p>
-                ${delay>2?`<p style="font-size:12px;color:#7f8ea3;margin-top:6px;">⏳ Delayed ${delay} days — consider escalation.</p>`:""}
-            </div>
-            <div style="margin-top:16px;display:flex;gap:10px;">
-                <button class="btn btn-mail"     onclick="sendReminder('${empId}');closeModal('employeeModal')">📧 Send Reminder</button>
-                <button class="btn btn-escalate" onclick="escalate('${empId}');closeModal('employeeModal')">⚠️ Escalate</button>
-            </div>`;
-    }catch(e){
-        console.error("Detail error:",e);
-        document.getElementById("empModalTitle").innerText="Error";
-        document.getElementById("employeeFullDetails").innerHTML=
-            `<p style="color:#ff5f5f;">Could not load employee data. Please try again.</p>`;
-    }
+        '<p style="color:#7f8ea3;padding:20px;text-align:center;">Fetching employee data…</p>';
+
+    fetch(`${API}/employee/${empId}`)
+        .then(r=>r.json())
+        .then(data=>{
+            const emp=data.data||{};
+            analyticsEmpData=emp;
+            renderAnalyticsPage(emp,0);
+        })
+        .catch(e=>{
+            console.error("Analytics error:",e);
+            document.getElementById("empModalTitle").innerText="Error";
+            document.getElementById("employeeFullDetails").innerHTML=
+                '<p style="color:#ff5f5f;padding:20px;">Could not load employee data. Please try again.</p>';
+        });
 }
+
+/* Render one of 3 pages */
+function renderAnalyticsPage(emp, page){
+    analyticsPageIndex=page;
+    // DEF-059: safe helper
+    const safe=(v,fb="-")=>(!v||String(v).toLowerCase()==="undefined"||v==="")?fb:String(v);
+    const name    =safe(emp.emp_name,"Unknown Employee");
+    const id      =safe(emp.emp_id,  "—");
+    // DEF-058: multiple field fallbacks for progress
+    const progPct  =Number(emp.progress_percentage||emp.progress||emp.onboarding_progress||0);
+    const trainPct =Number(emp.training_percentage||emp.training_progress||0);
+    const readiness=Number(emp.readiness_score||0);
+    const risk     =safe(emp.risk_level,"LOW");
+    const delay    =emp.delay_days||0;
+    const riskColor=risk.toUpperCase()==="HIGH"?"#ff5f5f":risk.toUpperCase()==="MEDIUM"?"#f39c12":"#16c79a";
+
+    document.getElementById("empModalTitle").innerText=`${name} (${id})`;
+
+    const bar=(pct,label,color="#16c79a")=>`
+        <div style="margin-top:12px;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
+                <span style="font-size:12px;color:#64748b;">${label}</span>
+                <span style="font-size:13px;font-weight:800;color:${color};">${pct}%</span>
+            </div>
+            <div style="height:10px;background:#e9eef5;border-radius:30px;overflow:hidden;">
+                <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,${color},#58ffd8);border-radius:30px;transition:width .6s ease;"></div>
+            </div>
+        </div>`;
+
+    // Pagination dots
+    const dots=[0,1,2].map(i=>
+        `<span onclick="renderAnalyticsPage(analyticsEmpData,${i})"
+            style="display:inline-block;width:${i===page?24:8}px;height:8px;border-radius:8px;
+            background:${i===page?"#16c79a":"#e2e8f0"};cursor:pointer;margin:0 3px;transition:all .2s;"></span>`
+    ).join("");
+
+    const navBtns=`
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:20px;">
+            <button onclick="renderAnalyticsPage(analyticsEmpData,${Math.max(0,page-1)})"
+                style="padding:8px 16px;border:none;border-radius:10px;background:${page===0?"#e2e8f0":"linear-gradient(135deg,#16c79a,#58ffd8)"};
+                color:${page===0?"#94a3b8":"white"};font-weight:700;cursor:${page===0?"default":"pointer"};font-size:12px;transition:.2s;">
+                ← Prev
+            </button>
+            <div>${dots}</div>
+            <button onclick="renderAnalyticsPage(analyticsEmpData,${Math.min(ANALYTICS_PAGES-1,page+1)})"
+                style="padding:8px 16px;border:none;border-radius:10px;background:${page===ANALYTICS_PAGES-1?"#e2e8f0":"linear-gradient(135deg,#16c79a,#58ffd8)"};
+                color:${page===ANALYTICS_PAGES-1?"#94a3b8":"white"};font-weight:700;cursor:${page===ANALYTICS_PAGES-1?"default":"pointer"};font-size:12px;transition:.2s;">
+                Next →
+            </button>
+        </div>`;
+
+    let content="";
+
+    /* ─── PAGE 1: Employee Info ─────────────────── */
+    if(page===0){
+        content=`
+            <div style="text-align:center;margin-bottom:16px;">
+                <div style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#16c79a,#59b8ff);
+                    margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font-size:26px;color:white;">
+                    👤
+                </div>
+                <div style="font-size:18px;font-weight:800;color:#172b42;">${name}</div>
+                <div style="font-size:12px;color:#7f8ea3;margin-top:3px;">${safe(emp.emp_id)} · ${safe(emp.designation)}</div>
+            </div>
+            <div style="background:#f8fafc;border-radius:14px;padding:18px;">
+                <h3 style="color:#16c79a;font-size:14px;margin:0 0 14px;">📋 Employee Information</h3>
+                <table style="width:100%;font-size:13px;border-collapse:collapse;">
+                    <tr><td style="padding:7px 0;color:#64748b;width:40%;">Email</td><td><b>${safe(emp.email)}</b></td></tr>
+                    <tr><td style="padding:7px 0;color:#64748b;">Designation</td><td><b>${safe(emp.designation)}</b></td></tr>
+                    <tr><td style="padding:7px 0;color:#64748b;">Department</td><td><b>${safe(emp.department)}</b></td></tr>
+                    <tr><td style="padding:7px 0;color:#64748b;">Location</td><td><b>${safe(emp.location)}</b></td></tr>
+                    <tr><td style="padding:7px 0;color:#64748b;">Project</td><td><b>${safe(emp.project_name||emp.account_name)}</b></td></tr>
+                    <tr><td style="padding:7px 0;color:#64748b;">COE</td><td><b>${safe(emp.selected_coe)}</b></td></tr>
+                    <tr><td style="padding:7px 0;color:#64748b;">Business Unit</td><td><b>${safe(emp.business_unit)}</b></td></tr>
+                    <tr><td style="padding:7px 0;color:#64748b;">Joining Date</td><td><b>${safe(emp.joining_date)}</b></td></tr>
+                    <tr><td style="padding:7px 0;color:#64748b;">Grade</td><td><b>${safe(emp.grade)}</b></td></tr>
+                </table>
+            </div>
+            ${navBtns}`;
+    }
+
+    /* ─── PAGE 2: Onboarding Tracking ──────────── */
+    else if(page===1){
+        const statusColor=(s)=>{
+            s=(s||"").toLowerCase();
+            if(s.includes("complet")) return "#16c79a";
+            if(s.includes("progress")||s.includes("active")) return "#59b8ff";
+            if(s.includes("pend")) return "#f39c12";
+            return "#94a3b8";
+        };
+        const statusPill=(s)=>`<span style="background:${statusColor(s)}22;color:${statusColor(s)};font-size:11px;font-weight:700;padding:3px 10px;border-radius:8px;">${s||"Pending"}</span>`;
+
+        content=`
+            <div style="background:#f8fafc;border-radius:14px;padding:18px;margin-bottom:14px;">
+                <h3 style="color:#16c79a;font-size:14px;margin:0 0 14px;">🏷️ Onboarding Status</h3>
+                <table style="width:100%;font-size:13px;border-collapse:collapse;">
+                    <tr><td style="padding:7px 0;color:#64748b;width:45%;">Overall Status</td><td>${statusPill(emp.onboarding_status)}</td></tr>
+                    <tr><td style="padding:7px 0;color:#64748b;">Current Step</td><td><b>${safe(emp.current_step).replace(/_/g," ")}</b></td></tr>
+                    <tr><td style="padding:7px 0;color:#64748b;">Delay</td><td><b>${delay} days</b></td></tr>
+                    <tr><td style="padding:7px 0;color:#64748b;">Risk Level</td><td><b style="color:${riskColor};">${risk}</b></td></tr>
+                </table>
+            </div>
+            <div style="background:#f8fafc;border-radius:14px;padding:18px;">
+                <h3 style="color:#16c79a;font-size:14px;margin:0 0 14px;">📋 Onboarding Tracking</h3>
+                <table style="width:100%;font-size:13px;border-collapse:collapse;">
+                    <tr><td style="padding:7px 0;color:#64748b;width:45%;">ID Card</td><td>${statusPill(emp.id_card_status)}</td></tr>
+                    <tr><td style="padding:7px 0;color:#64748b;">Laptop</td><td>${statusPill(emp.laptop_status)}</td></tr>
+                    <tr><td style="padding:7px 0;color:#64748b;">Email Setup</td><td>${statusPill(emp.email_setup_status)}</td></tr>
+                    <tr><td style="padding:7px 0;color:#64748b;">VPN</td><td>${statusPill(emp.vpn_status)}</td></tr>
+                    <tr><td style="padding:7px 0;color:#64748b;">Access Card</td><td>${statusPill(emp.access_card_status)}</td></tr>
+                    <tr><td style="padding:7px 0;color:#64748b;">Assessment</td><td>${statusPill(emp.assessment_status)}</td></tr>
+                    <tr><td style="padding:7px 0;color:#64748b;">COE Status</td><td>${statusPill(emp.coe_status)}</td></tr>
+                    <tr><td style="padding:7px 0;color:#64748b;">Training</td><td><b>${trainPct}%</b></td></tr>
+                </table>
+            </div>
+            ${navBtns}`;
+    }
+
+    /* ─── PAGE 3: Progress + Risk + Actions ─────── */
+    else if(page===2){
+        content=`
+            <div style="background:#f8fafc;border-radius:14px;padding:18px;margin-bottom:14px;">
+                <h3 style="color:#16c79a;font-size:14px;margin:0 0 4px;">📊 Progress Analytics</h3>
+                ${bar(progPct,  "Overall Onboarding","#16c79a")}
+                ${bar(trainPct, "Training Completion","#59b8ff")}
+                ${bar(readiness,"Readiness Score",    "#9b6dff")}
+            </div>
+            <div style="background:#fff8f8;border-radius:14px;padding:18px;border-left:4px solid ${riskColor};margin-bottom:14px;">
+                <h3 style="margin:0 0 10px;font-size:14px;">⚠️ Risk Analysis</h3>
+                <p style="font-size:13px;">Risk Level: <b style="color:${riskColor};font-size:16px;">${risk}</b></p>
+                ${delay>2?`<p style="font-size:12px;color:#7f8ea3;margin-top:6px;">⏳ Delayed ${delay} days — escalation recommended.</p>`:""}
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:4px;">
+                <button class="btn btn-mail" onclick="sendReminder('${safe(emp.emp_id)}');closeModal('employeeModal')">📧 Send Reminder</button>
+                <button class="btn btn-escalate" onclick="escalate('${safe(emp.emp_id)}');closeModal('employeeModal')">⚠️ Escalate</button>
+            </div>
+            ${navBtns}`;
+    }
+
+    document.getElementById("employeeFullDetails").innerHTML=content;
+}
+
 function closeEmployeeModal(){ closeModal("employeeModal"); }
- 
+
 /* ═══════════════════════════════════════════════════
    CHATBOT ENGINE
 ═══════════════════════════════════════════════════ */
 const chatBody  = document.getElementById("chatBody");
 const chatInput = document.getElementById("chatInput");
 chatInput.addEventListener("keydown",function(e){if(e.key==="Enter"){e.preventDefault();sendChat();}});
- 
+
 function addMessage(type,message){
     const div=document.createElement("div");
     div.className=type==="user"?"chat-user-msg":"chat-ai-msg";
@@ -1711,13 +724,13 @@ function showTyping(){
     chatBody.appendChild(t);chatBody.scrollTop=chatBody.scrollHeight;
 }
 function removeTyping(){const t=document.getElementById("typing");if(t)t.remove();}
- 
+
 /* ── runHelpCmd: fill input + send when help item clicked ── */
 function runHelpCmd(cmd){
     chatInput.value=cmd;
     sendChat();
 }
- 
+
 /* ── detectIntent ─────────────────────────────────── */
 function detectIntent(msg){
     msg=msg.toLowerCase().trim();
@@ -1729,6 +742,8 @@ function detectIntent(msg){
     if(msg==="help-bulk escalation"||msg.includes("bulk escalat")||msg.includes("escalate all")||msg.includes("escalate delayed")||msg.includes("escalate high risk")) return {type:"bulk_escalation"};
     // single
     if(msg.includes("remind employee")||msg.includes("send reminder to employee")) return {type:"remind_single"};
+    // plain "reminder" or "send reminder" without ID → show choice
+    if(msg.includes("reminder")||msg==="remind") return {type:"remind_choice"};
     if(msg.includes("pending onboarding")||msg.includes("show pending")||msg.includes("pending employees")||msg.includes("show me pending")||msg.includes("employees pending")) return {type:"pending_onboarding"};
     if(msg.includes("delayed")||msg.includes("late onboarding")||msg.includes("delay employees")) return {type:"delayed"};
     if(msg.includes("high risk")||msg.includes("risk employees")||msg.includes("critical employees")) return {type:"high_risk"};
@@ -1737,7 +752,7 @@ function detectIntent(msg){
     if(msg.includes("escalation")||msg.includes("escalate")||msg.includes("send mail to admin")||msg.includes("id card issue")||msg.includes("laptop issue")) return {type:"escalation"};
     return {type:"general"};
 }
- 
+
 /* ── showHelp: clickable items + bulk section ─────── */
 function showHelp(){
     const single=[
@@ -1765,7 +780,7 @@ function showHelp(){
         <div class="help-grid">${bulk.map(makeItem).join("")}</div>
     `);
 }
- 
+
 /* ── getLocalResponse: answers from fullData ─────── */
 function getLocalResponse(intentType,rawMsg){
     const safe=(v,fb="-")=>(!v||String(v).toLowerCase()==="undefined"||v==="")?fb:String(v);
@@ -1829,14 +844,104 @@ function getLocalResponse(intentType,rawMsg){
         }
         case "remind_single":{
             const m=rawMsg.match(/\b\d{4,10}\b/);
-            if(!m) return "⚠️ Include Employee ID. Example: <b>remind employee 1042836</b>";
-            sendReminder(m[0]);
-            return `📧 Sending reminder to employee <b>${m[0]}</b>…`;
+            if(!m){
+                // No ID given — show choice UI
+                return showReminderChoice();
+            }
+            const empId=m[0];
+            sendReminderWithConfirm(empId);
+            return null; // UI handled by sendReminderWithConfirm
         }
+        case "remind_choice":
+            return showReminderChoice();
+
         default: return null;
     }
 }
- 
+
+/* ── Reminder choice UI ────────────────────────────── */
+function showReminderChoice(){
+    addMessage("ai",`
+        <div style="font-weight:800;color:#16c79a;margin-bottom:12px;">📧 Send Reminder — Choose type:</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+            <div class="help-item" onclick="runHelpCmd('help-bulk reminder')" style="border-left:3px solid #16c79a;">
+                📨 <b>Bulk Reminder</b><br>
+                Send reminder to ALL pending employees<br>
+                <span class="cmd-tag">▶ help-bulk reminder</span>
+            </div>
+            <div class="help-item" onclick="promptSingleReminder()" style="border-left:3px solid #59b8ff;">
+                👤 <b>Single Employee Reminder</b><br>
+                Send reminder to one specific employee<br>
+                <span class="cmd-tag">▶ click to enter Employee ID</span>
+            </div>
+        </div>
+    `);
+    return null;
+}
+
+/* ── Single reminder: ask for ID if not provided ─── */
+function promptSingleReminder(){
+    const div=document.createElement("div");
+    div.className="chat-ai-msg";
+    div.id="singleReminderInput";
+    div.innerHTML=`
+        <b style="color:#16c79a;">👤 Single Employee Reminder</b><br>
+        Please enter the Employee ID:
+        <div style="display:flex;gap:8px;margin-top:10px;">
+            <input id="reminderEmpInput" placeholder="e.g. 1042836" type="text"
+                style="flex:1;padding:9px 12px;border-radius:10px;border:1px solid #e2e8f0;font-size:13px;outline:none;"
+                onkeydown="if(event.key==='Enter') confirmSingleReminder()">
+            <button onclick="confirmSingleReminder()"
+                style="background:linear-gradient(135deg,#16c79a,#59b8ff);color:white;border:none;border-radius:10px;padding:9px 14px;font-size:12px;font-weight:700;cursor:pointer;">
+                Send ➜
+            </button>
+        </div>`;
+    document.getElementById("chatBody").appendChild(div);
+    document.getElementById("chatBody").scrollTop=9999;
+    setTimeout(()=>{const i=document.getElementById("reminderEmpInput");if(i)i.focus();},100);
+}
+
+function confirmSingleReminder(){
+    const inp=document.getElementById("reminderEmpInput");
+    if(!inp) return;
+    const empId=inp.value.trim();
+    const grp=document.getElementById("singleReminderInput");
+    if(grp) grp.remove();
+    if(!empId){ addMessage("ai","⚠️ No Employee ID entered."); return; }
+    sendReminderWithConfirm(empId);
+}
+
+/* ── sendReminderWithConfirm: sends + shows receipt card ─ */
+async function sendReminderWithConfirm(empId){
+    addMessage("user","📧 remind employee "+empId);
+    addMessage("ai","⏳ Sending reminder to employee <b>"+empId+"</b>…");
+
+    try{
+        const res=await fetch(`${API}/send-reminder`,{
+            method:"POST",headers:{"Content-Type":"application/json"},
+            body:JSON.stringify({emp_id:empId})
+        });
+        const data=await res.json();
+        if(res.ok&&data.success){
+            addMessage("ai",`
+                <div style="background:#f0fdf4;border-radius:12px;padding:14px;border-left:4px solid #16c79a;">
+                    ✅ <b>Reminder Sent!</b><br><br>
+                    <table style="font-size:12px;width:100%;border-collapse:collapse;">
+                        <tr><td style="padding:4px 0;color:#64748b;width:40%;">Employee ID</td><td><b>${data.emp_id||empId}</b></td></tr>
+                        <tr><td style="padding:4px 0;color:#64748b;">Name</td><td><b>${data.emp_name||"-"}</b></td></tr>
+                        <tr><td style="padding:4px 0;color:#64748b;">Email Sent To</td><td><b>${data.email||"-"}</b></td></tr>
+                        <tr><td style="padding:4px 0;color:#64748b;">Type</td><td><b>Training Onboarding Reminder</b></td></tr>
+                    </table>
+                </div>`);
+            showToast("📧 Reminder sent to "+empId,"#16c79a");
+        } else {
+            addMessage("ai","⚠️ "+(data.message||"Reminder failed. Check SMTP config."));
+        }
+    }catch(e){
+        addMessage("ai","❌ Network error. Could not send reminder.");
+    }
+}
+
 /* ── sendChat ─────────────────────────────────────── */
 async function sendChat(){
     const msg=chatInput.value.trim();
@@ -1844,16 +949,16 @@ async function sendChat(){
     addMessage("user","👨 "+msg);
     chatInput.value="";
     const intent=detectIntent(msg);
- 
+
     if(intent.type==="help"){showHelp();return;}
- 
+
     // fast local path for data commands
     if(["pending_onboarding","delayed","high_risk","completed","summary",
-        "bulk_reminder","bulk_escalation","remind_single","greeting"].includes(intent.type)){
+        "bulk_reminder","bulk_escalation","remind_single","remind_choice","greeting"].includes(intent.type)){
         const local=getLocalResponse(intent.type,msg);
         if(local){addMessage("ai",local);return;}
     }
- 
+
     showTyping();
     try{
         const res=await fetch(`${API}/chat`,{
@@ -1875,7 +980,7 @@ async function sendChat(){
         console.error("Chat Error:",err);
     }
 }
- 
+
 /* ── logout ───────────────────────────────────────── */
 async function logout(){
     try{
@@ -1890,7 +995,7 @@ async function logout(){
         window.location.replace("https://intellionboard.vercel.app/");
     }
 }
- 
+
 /* ── auto refresh ─────────────────────────────────── */
 setInterval(loadDashboard,10000);
 loadDashboard();
