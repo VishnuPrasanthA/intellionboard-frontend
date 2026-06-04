@@ -1,2154 +1,787 @@
-<!-- =========================================================
-FILE : leadership_dashboard.html
-NEXT GEN LEADERSHIP AI COMMAND CENTER
-========================================================= -->
-
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
-<meta charset="UTF-8" />
+<meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-
-<title>Leadership AI Command Center</title>
-
+<title>Leadership AI Command Center | IntelliOnboard</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
-
 <style>
-
-/* =========================================================
-ROOT
-========================================================= */
-
 :root{
-
-    --primary:#19d3a2;
-    --primary-dark:#0fa77f;
-    --primary-light:#ecfff9;
-
-    --blue:#59b8ff;
-    --purple:#9f74ff;
-    --orange:#ffb84d;
-    --red:#ff6f6f;
-    --green:#34d47f;
-
-    --text:#172b42;
-    --muted:#7d8da5;
-
-    --glass:rgba(255,255,255,0.72);
-
-    --border:rgba(255,255,255,0.4);
-
-    --bg1:#f5fbff;
-    --bg2:#eef5ff;
-
-    --shadow-sm:
-    0 6px 18px rgba(15,23,42,.06);
-
-    --shadow-md:
-    0 16px 38px rgba(15,23,42,.10);
-
-    --shadow-lg:
-    0 30px 70px rgba(15,23,42,.16);
-
-    --radius:24px;
-
-    --transition:
-    all .35s cubic-bezier(.22,1,.36,1);
+    --primary:#19d3a2;--primary-dark:#0fa77f;--primary-light:#ecfff9;
+    --blue:#59b8ff;--purple:#9f74ff;--orange:#ffb84d;--red:#ff6f6f;--green:#34d47f;
+    --text:#172b42;--muted:#7d8da5;
+    --glass:rgba(255,255,255,0.72);--border:rgba(255,255,255,0.4);
+    --bg1:#f5fbff;--bg2:#eef5ff;
+    --shadow-sm:0 6px 18px rgba(15,23,42,.06);
+    --shadow-md:0 16px 38px rgba(15,23,42,.10);
+    --shadow-lg:0 30px 70px rgba(15,23,42,.16);
+    --radius:24px;--transition:all .35s cubic-bezier(.22,1,.36,1);
 }
-
-/* =========================================================
-GLOBAL
-========================================================= */
-
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-}
-
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
 body{
-
     font-family:'Poppins',sans-serif;
-
-    background:
-    radial-gradient(circle at top left,#dbfff4 0%,transparent 30%),
-    radial-gradient(circle at top right,#ddeeff 0%,transparent 26%),
-    radial-gradient(circle at bottom right,#fff4df 0%,transparent 28%),
-    linear-gradient(135deg,var(--bg1),var(--bg2));
-
-    min-height:100vh;
-
-    color:var(--text);
-
-    overflow-x:hidden;
-}
-
-body::before{
-
-    content:"";
-
-    position:fixed;
-
-    inset:0;
-
-    background:
-    radial-gradient(circle at 20% 20%,rgba(25,211,162,.05),transparent 18%),
-    radial-gradient(circle at 80% 25%,rgba(89,184,255,.05),transparent 18%),
-    radial-gradient(circle at 70% 80%,rgba(159,116,255,.05),transparent 18%);
-
-    animation:bgMove 22s linear infinite;
-
-    z-index:-1;
-}
-
-@keyframes bgMove{
-
-    from{
-        transform:translateY(0);
-    }
-
-    to{
-        transform:translateY(-60px);
-    }
-}
-
-.page{
-
-    padding:18px;
-
-    padding-top:110px;
-}
-
-/* =========================================================
-SCROLLBAR
-========================================================= */
-
-::-webkit-scrollbar{
-    width:8px;
-    height:8px;
-}
-
-::-webkit-scrollbar-thumb{
-
-    background:
-    linear-gradient(180deg,var(--primary),#54ffe2);
-
-    border-radius:20px;
-}
-
-/* =========================================================
-GLASS
-========================================================= */
-
-.glass{
-
-    background:var(--glass);
-
-    backdrop-filter:blur(18px);
-
-    -webkit-backdrop-filter:blur(18px);
-
-    border:1px solid var(--border);
-
-    box-shadow:var(--shadow-sm);
-}
-
-/* =========================================================
-HEADER
-========================================================= */
-
-.header{
-
-    position:fixed;
-
-    top:14px;
-    left:14px;
-    right:14px;
-
-    z-index:99999;
-
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-
-    padding:16px 22px;
-
-    border-radius:28px;
-
-    overflow:hidden;
-}
-
-.header::before{
-
-    content:"";
-
-    position:absolute;
-
-    inset:-2px;
-
-    background:
-    linear-gradient(
-    90deg,
-    rgba(25,211,162,.18),
-    rgba(89,184,255,.18),
-    rgba(159,116,255,.18),
-    rgba(25,211,162,.18));
-
-    background-size:300% 300%;
-
-    z-index:-1;
-
-    animation:borderMove 8s linear infinite;
-}
-
-@keyframes borderMove{
-
-    0%{
-        background-position:0% 50%;
-    }
-
-    100%{
-        background-position:100% 50%;
-    }
-}
-
-.header-left{
-
-    display:flex;
-    align-items:center;
-    gap:16px;
-}
-
-.logo{
-
-    width:60px;
-    height:60px;
-
-    border-radius:18px;
-
-    background:
-    linear-gradient(135deg,var(--primary),#58ffd9);
-
-    display:flex;
-    align-items:center;
-    justify-content:center;
-
-    color:white;
-
-    font-size:28px;
-
-    font-weight:800;
-
-    box-shadow:
-    0 12px 30px rgba(25,211,162,.28);
-}
-
-.header-title h1{
-
-    font-size:24px;
-
-    font-weight:800;
-}
-
-.header-title p{
-
-    color:var(--muted);
-
-    font-size:12px;
-
-    margin-top:4px;
-}
-
-.header-right{
-
-    display:flex;
-    align-items:center;
-    gap:12px;
-}
-
-.live-chip{
-
-    padding:10px 18px;
-
-    border-radius:40px;
-
-    background:
-    linear-gradient(
-    135deg,
-    rgba(25,211,162,.12),
-    rgba(25,211,162,.03));
-
-    color:var(--primary);
-
-    font-weight:800;
-
-    font-size:11px;
-
-    border:1px solid rgba(25,211,162,.18);
-}
-
-.btn{
-
-    border:none;
-
-    height:46px;
-
-    padding:0 18px;
-
-    border-radius:14px;
-
-    cursor:pointer;
-
-    font-weight:700;
-
-    transition:var(--transition);
-
-    color:white;
-}
-
-.btn:hover{
-
-    transform:translateY(-3px);
-
-    box-shadow:var(--shadow-md);
-}
-
-.btn-refresh{
-
-    background:
-    linear-gradient(135deg,#3ea6ff,#73c7ff);
-}
-
-.btn-logout{
-
-    background:
-    linear-gradient(135deg,#ff6767,#ff9a7a);
-}
-
-/* =========================================================
-KPI GRID
-========================================================= */
-
-.kpi-grid{
-
-    display:grid;
-
-    grid-template-columns:
-    repeat(auto-fit,minmax(220px,1fr));
-
-    gap:16px;
-
-    margin-bottom:20px;
-}
-
-.kpi{
-
-    position:relative;
-
-    overflow:hidden;
-
-    border-radius:26px;
-
-    padding:22px;
-
-    min-height:145px;
-
-    transition:var(--transition);
-}
-
-.kpi:hover{
-
-    transform:
-    translateY(-6px)
-    scale(1.01);
-
-    box-shadow:var(--shadow-lg);
-}
-
-.kpi::before{
-
-    content:"";
-
-    position:absolute;
-
-    top:-30px;
-    right:-30px;
-
-    width:120px;
-    height:120px;
-
-    border-radius:50%;
-
-    opacity:.08;
-}
-
-.kpi:nth-child(1)::before{
-    background:var(--primary);
-}
-
-.kpi:nth-child(2)::before{
-    background:var(--green);
-}
-
-.kpi:nth-child(3)::before{
-    background:var(--blue);
-}
-
-.kpi:nth-child(4)::before{
-    background:var(--red);
-}
-
-.kpi:nth-child(5)::before{
-    background:var(--purple);
-}
-
-.kpi:nth-child(6)::before{
-    background:var(--orange);
-}
-
-.kpi:nth-child(7)::before{
-    background:#0ea5e9;
-}
-
-.kpi:nth-child(8)::before{
-    background:#f43f5e;
-}
-
-.kpi-icon{
-
-    font-size:26px;
-
-    margin-bottom:12px;
-}
-
-.kpi-title{
-
-    font-size:12px;
-
-    color:var(--muted);
-
-    margin-bottom:6px;
-}
-
-.kpi-value{
-
-    font-size:34px;
-
-    font-weight:800;
-}
-
-.kpi-sub{
-
-    margin-top:8px;
-
-    font-size:11px;
-
-    color:#6b7280;
-}
-
-/* =========================================================
-GRID
-========================================================= */
-
-.grid-2{
-
-    display:grid;
-
-    grid-template-columns:2fr 1fr;
-
-    gap:18px;
-
-    margin-bottom:18px;
-}
-
-.grid-3{
-
-    display:grid;
-
-    grid-template-columns:repeat(3,1fr);
-
-    gap:18px;
-
-    margin-bottom:18px;
-}
-
-.card{
-
-    border-radius:28px;
-
-    padding:20px;
-
-    overflow:hidden;
-
-    position:relative;
-}
-
-.card:hover{
-
-    box-shadow:var(--shadow-lg);
-}
-
-.card-title{
-
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-
-    margin-bottom:18px;
-}
-
-.card-title h3{
-
-    font-size:17px;
-
-    font-weight:700;
-}
-
-.card-title span{
-
-    font-size:11px;
-
-    color:var(--muted);
-}
-
-/* =========================================================
-CHART FIX
-========================================================= */
-
-.chart-box{
-
-    position:relative;
-
-    height:340px;
-}
-
-.chart-box canvas{
-
-    width:100% !important;
-    height:100% !important;
-}
-
-/* =========================================================
-TABLE
-========================================================= */
-
-.table-wrapper{
-
-    overflow:auto;
-
-    border-radius:18px;
-}
-
-table{
-
-    width:100%;
-
-    border-collapse:collapse;
-
-    min-width:1200px;
-}
-
-thead{
-
-    background:
-    linear-gradient(
-    180deg,
-    #fbfdff,
-    #f2f7fd);
-
-    position:sticky;
-
-    top:0;
-
-    z-index:2;
-}
-
-th{
-
-    padding:16px;
-
-    font-size:11px;
-
-    text-align:left;
-
-    color:#5f7187;
-
-    font-weight:800;
-
-    border-bottom:1px solid #edf2f7;
-}
-
-td{
-
-    padding:14px 16px;
-
-    font-size:12px;
-
-    border-bottom:1px solid #eef2f7;
-}
-
-tbody tr{
-
-    transition:var(--transition);
-}
-
-tbody tr:hover{
-
-    background:
-    linear-gradient(
-    90deg,
-    rgba(25,211,162,.04),
-    rgba(89,184,255,.03));
-}
-
-/* =========================================================
-BADGES
-========================================================= */
-
-.badge{
-
-    padding:6px 10px;
-
-    border-radius:40px;
-
-    font-size:10px;
-
-    color:white;
-
-    font-weight:800;
-}
-
-.high{
-    background:linear-gradient(135deg,#ff5f5f,#ff9090);
-}
-
-.medium{
-    background:linear-gradient(135deg,#f39c12,#ffc760);
-}
-
-.low{
-    background:linear-gradient(135deg,#16c79a,#57f4cb);
-}
-
-/* =========================================================
-INSIGHTS
-========================================================= */
-
-.insights{
-
-    display:grid;
-
-    grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
-
-    gap:16px;
-
-    margin-bottom:18px;
-}
-
-.insight{
-
-    border-radius:24px;
-
-    padding:20px;
-
-    display:flex;
-    align-items:center;
-    gap:16px;
-}
-
-.insight:hover{
-
-    transform:translateY(-5px);
-
-    box-shadow:var(--shadow-lg);
-}
-
-.insight-icon{
-
-    width:58px;
-    height:58px;
-
-    border-radius:18px;
-
-    display:flex;
-    align-items:center;
-    justify-content:center;
-
-    color:white;
-
-    font-size:24px;
-}
-
-.insight.warning .insight-icon{
-    background:linear-gradient(135deg,#f39c12,#ffd369);
-}
-
-.insight.critical .insight-icon{
-    background:linear-gradient(135deg,#ff5f5f,#ff9090);
-}
-
-.insight.info .insight-icon{
-    background:linear-gradient(135deg,#3498db,#7fd0ff);
-}
-
-.insight h2{
-
-    font-size:28px;
-
-    font-weight:800;
-}
-
-.insight p{
-
-    font-size:12px;
-
-    color:var(--muted);
-}
-
-/* =========================================================
-CHATBOT
-========================================================= */
-
-.ai-fab{
-
-    position:fixed;
-
-    right:24px;
-    bottom:24px;
-
-    width:68px;
-    height:68px;
-
-    border-radius:50%;
-
-    background:
-    linear-gradient(
-    135deg,
-    var(--primary),
-    #58ffd9);
-
-    display:flex;
-    align-items:center;
-    justify-content:center;
-
-    color:white;
-
-    font-size:30px;
-
-    cursor:pointer;
-
-    box-shadow:
-    0 20px 40px rgba(25,211,162,.35);
-
-    z-index:99999;
-
-    transition:var(--transition);
-}
-
-.ai-fab:hover{
-
-    transform:
-    scale(1.08)
-    rotate(5deg);
-}
-
-.chat-panel{
-
-    position:fixed;
-
-    right:24px;
-    bottom:105px;
-
-    width:390px;
-    height:560px;
-
-    background:white;
-
-    border-radius:30px;
-
-    overflow:hidden;
-
-    display:none;
-    flex-direction:column;
-
-    z-index:99999;
-
-    box-shadow:
-    0 25px 60px rgba(0,0,0,.18);
-}
-
-.chat-header{
-
-    background:
-    linear-gradient(
-    135deg,
-    var(--primary),
-    #49ffd5);
-
-    color:white;
-
-    padding:18px;
-
-    font-weight:800;
-
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-}
-
-.chat-body{
-
-    flex:1;
-
-    overflow-y:auto;
-
-    padding:18px;
-
-    background:#f8fbff;
-}
-
-.chat-message{
-
-    margin-bottom:14px;
-
-    padding:14px;
-
-    border-radius:16px;
-
-    font-size:12px;
-
-    line-height:1.7;
-}
-
-.bot{
-
-    background:white;
-}
-
-.user{
-
-    background:#dcfff4;
-
-    margin-left:40px;
-}
-
-.chat-input{
-
-    display:flex;
-
-    border-top:1px solid #edf2f7;
-}
-
-.chat-input input{
-
-    flex:1;
-
-    border:none;
-    outline:none;
-
-    padding:16px;
-
-    font-size:12px;
-}
-
-.chat-input button{
-
-    border:none;
-
-    background:var(--primary);
-
-    color:white;
-
-    padding:0 24px;
-
-    font-weight:800;
-
-    cursor:pointer;
-}
-
-/* =========================================================
-RESPONSIVE
-========================================================= */
-
-@media(max-width:1200px){
-
-    .grid-2,
-    .grid-3{
-
-        grid-template-columns:1fr;
-    }
-}
-
-@media(max-width:768px){
-
-    .page{
-        padding-top:170px;
-    }
-
-    .header{
-
-        flex-direction:column;
-        align-items:flex-start;
-    }
-
-    .header-right{
-        width:100%;
-        justify-content:space-between;
-    }
-
-    .chat-panel{
-
-        width:95%;
-
-        right:2.5%;
-    }
-}
-
+    background:radial-gradient(circle at top left,#dbfff4 0%,transparent 30%),
+               radial-gradient(circle at top right,#ddeeff 0%,transparent 26%),
+               radial-gradient(circle at bottom right,#fff4df 0%,transparent 28%),
+               linear-gradient(135deg,var(--bg1),var(--bg2));
+    min-height:100vh;color:var(--text);overflow-x:hidden;
+}
+body::before{content:"";position:fixed;inset:0;z-index:-1;
+    background:radial-gradient(circle at 20% 20%,rgba(25,211,162,.05),transparent 18%),
+               radial-gradient(circle at 80% 25%,rgba(89,184,255,.05),transparent 18%),
+               radial-gradient(circle at 70% 80%,rgba(159,116,255,.05),transparent 18%);
+    animation:bgMove 22s linear infinite;}
+@keyframes bgMove{from{transform:translateY(0);}to{transform:translateY(-60px);}}
+.page{padding:18px;padding-top:110px;}
+::-webkit-scrollbar{width:8px;height:8px;}
+::-webkit-scrollbar-thumb{background:linear-gradient(180deg,var(--primary),#54ffe2);border-radius:20px;}
+.glass{background:var(--glass);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid var(--border);box-shadow:var(--shadow-sm);}
+
+/* HEADER */
+.header{position:fixed;top:14px;left:14px;right:14px;z-index:99999;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:16px 22px;border-radius:28px;overflow:hidden;gap:14px;}
+.header::before{content:"";position:absolute;inset:-2px;z-index:-1;
+    background:linear-gradient(90deg,rgba(25,211,162,.18),rgba(89,184,255,.18),rgba(159,116,255,.18),rgba(25,211,162,.18));
+    background-size:300% 300%;animation:borderMove 8s linear infinite;}
+@keyframes borderMove{0%{background-position:0% 50%;}100%{background-position:100% 50%;}}
+.header-left{display:flex;align-items:center;gap:16px;}
+.logo{width:60px;height:60px;border-radius:18px;background:linear-gradient(135deg,var(--primary),#58ffd9);
+    display:flex;align-items:center;justify-content:center;color:white;font-size:28px;
+    box-shadow:0 12px 30px rgba(25,211,162,.28);transition:var(--transition);}
+.logo:hover{transform:rotate(8deg) scale(1.08);}
+.header-title h1{font-size:22px;font-weight:800;}
+.header-title p{color:var(--muted);font-size:12px;margin-top:4px;}
+.header-right{display:flex;align-items:center;gap:12px;}
+.live-chip{padding:10px 18px;border-radius:40px;background:rgba(25,211,162,.12);
+    color:var(--primary);font-weight:800;font-size:11px;border:1px solid rgba(25,211,162,.18);}
+.btn{border:none;height:46px;padding:0 18px;border-radius:14px;cursor:pointer;
+    font-weight:700;transition:var(--transition);color:white;display:inline-flex;align-items:center;gap:6px;}
+.btn:hover{transform:translateY(-3px);box-shadow:var(--shadow-md);}
+/* DEF-048 FIX: refreshing state */
+.btn-refresh{background:linear-gradient(135deg,#3ea6ff,#73c7ff);}
+.btn-refresh.refreshing{opacity:.7;pointer-events:none;}
+@keyframes spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+.spin{display:inline-block;animation:spin 1s linear infinite;}
+.btn-logout{background:linear-gradient(135deg,#ff6767,#ff9a7a);}
+
+/* KPI GRID */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:20px;}
+.kpi{border-radius:26px;padding:22px;min-height:138px;transition:var(--transition);position:relative;overflow:hidden;cursor:pointer;}
+.kpi:hover{transform:translateY(-6px) scale(1.01);box-shadow:var(--shadow-lg);}
+.kpi::before{content:"";position:absolute;top:-30px;right:-30px;width:120px;height:120px;border-radius:50%;opacity:.08;}
+.kpi:nth-child(1)::before{background:var(--primary);}
+.kpi:nth-child(2)::before{background:var(--green);}
+.kpi:nth-child(3)::before{background:var(--blue);}
+.kpi:nth-child(4)::before{background:var(--red);}
+.kpi:nth-child(5)::before{background:var(--purple);}
+.kpi:nth-child(6)::before{background:var(--orange);}
+.kpi:nth-child(7)::before{background:#0ea5e9;}
+.kpi:nth-child(8)::before{background:#f43f5e;}
+.kpi:nth-child(9)::before{background:#19d3a2;}
+.kpi-icon{font-size:24px;margin-bottom:10px;}
+.kpi-title{font-size:11px;color:var(--muted);margin-bottom:6px;}
+.kpi-value{font-size:32px;font-weight:800;}
+.kpi-sub{margin-top:6px;font-size:11px;color:#6b7280;}
+
+/* INSIGHTS */
+.insights{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-bottom:20px;}
+.insight{border-radius:24px;padding:20px;display:flex;align-items:center;gap:16px;transition:var(--transition);}
+.insight:hover{transform:translateY(-5px);box-shadow:var(--shadow-lg);}
+.insight-icon{width:58px;height:58px;border-radius:18px;display:flex;align-items:center;justify-content:center;color:white;font-size:24px;flex-shrink:0;}
+.insight.warning .insight-icon{background:linear-gradient(135deg,#f39c12,#ffd369);}
+.insight.critical .insight-icon{background:linear-gradient(135deg,#ff5f5f,#ff9090);}
+.insight.info    .insight-icon{background:linear-gradient(135deg,#3498db,#7fd0ff);}
+.insight h2{font-size:14px;font-weight:800;margin-bottom:4px;}
+.insight p{font-size:12px;color:var(--muted);line-height:1.5;}
+
+/* GRID */
+.grid-2{display:grid;grid-template-columns:2fr 1fr;gap:18px;margin-bottom:18px;}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-bottom:18px;}
+.card{border-radius:28px;padding:20px;overflow:hidden;position:relative;transition:var(--transition);}
+.card:hover{box-shadow:var(--shadow-lg);}
+.card-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+.card-title h3{font-size:16px;font-weight:700;}
+.card-title span{font-size:11px;color:var(--muted);}
+.chart-box{position:relative;height:300px;}
+.chart-box canvas{width:100%!important;height:100%!important;}
+
+/* TABLE */
+.table-wrapper{overflow:auto;border-radius:18px;}
+table{width:100%;border-collapse:collapse;min-width:900px;}
+thead{background:linear-gradient(180deg,#fbfdff,#f2f7fd);position:sticky;top:0;z-index:2;}
+th{padding:14px;font-size:11px;text-align:left;color:#5f7187;font-weight:800;border-bottom:1px solid #edf2f7;}
+td{padding:13px 14px;font-size:12px;border-bottom:1px solid #eef2f7;}
+tbody tr{transition:var(--transition);}
+tbody tr:hover{background:linear-gradient(90deg,rgba(25,211,162,.04),rgba(89,184,255,.03));}
+.badge{padding:5px 10px;border-radius:40px;font-size:10px;color:white;font-weight:800;}
+.high{background:linear-gradient(135deg,#ff5f5f,#ff9090);}
+.medium{background:linear-gradient(135deg,#f39c12,#ffc760);}
+.low{background:linear-gradient(135deg,#16c79a,#57f4cb);}
+
+/* SKILL CARD CLICKABLE */
+.skill-card{cursor:pointer;transition:var(--transition);}
+.skill-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-md);border:1.5px solid rgba(25,211,162,.4);}
+
+/* MODAL */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(5px);
+    display:none;justify-content:center;align-items:flex-start;z-index:999999;padding:100px 20px 20px;}
+.modal.open{display:flex;}
+.modal-box{background:white;border-radius:28px;padding:28px;width:600px;max-width:96vw;
+    max-height:80vh;overflow-y:auto;box-shadow:0 24px 60px rgba(0,0,0,.18);position:relative;animation:popIn .25s ease;}
+@keyframes popIn{from{opacity:0;transform:scale(.92);}to{opacity:1;transform:scale(1);}}
+.modal-close{position:absolute;top:14px;right:16px;background:#f0f4f8;border:none;border-radius:50%;
+    width:32px;height:32px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#7d8da5;}
+.modal-close:hover{background:#e0e7ef;}
+.modal-title{font-size:18px;font-weight:800;color:#172b42;margin-bottom:16px;}
+.skill-modal-row{display:flex;justify-content:space-between;align-items:center;
+    padding:10px 0;border-bottom:1px solid #f0f4f8;font-size:13px;}
+.skill-modal-row:last-child{border-bottom:none;}
+.skill-bar-wrap{width:140px;height:10px;background:#e9eef5;border-radius:30px;overflow:hidden;}
+.skill-bar-fill{height:100%;background:linear-gradient(90deg,var(--primary),#58ffd8);border-radius:30px;}
+
+/* CHATBOT */
+.ai-fab{position:fixed;right:24px;bottom:24px;width:68px;height:68px;border-radius:50%;
+    background:linear-gradient(135deg,var(--primary),#58ffd9);display:flex;align-items:center;
+    justify-content:center;color:white;font-size:30px;cursor:pointer;
+    box-shadow:0 20px 40px rgba(25,211,162,.35);z-index:99999;transition:var(--transition);}
+.ai-fab:hover{transform:scale(1.08) rotate(5deg);}
+.chat-panel{position:fixed;right:24px;bottom:105px;width:400px;height:580px;background:white;
+    border-radius:30px;overflow:hidden;display:none;flex-direction:column;z-index:99999;
+    box-shadow:0 25px 60px rgba(0,0,0,.18);}
+.chat-header{background:linear-gradient(135deg,var(--primary),#49ffd5);color:white;padding:16px 18px;
+    font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:space-between;}
+.chat-body{flex:1;overflow-y:auto;padding:14px;background:#f8fbff;display:flex;flex-direction:column;gap:8px;}
+.chat-msg{font-size:12px;line-height:1.6;}
+.chat-msg.bot>div{background:white;border-radius:4px 16px 16px 16px;padding:10px 14px;
+    border:1px solid #e4edf8;color:#172b42;box-shadow:0 2px 8px rgba(0,0,0,.04);}
+.chat-msg.user>div{background:linear-gradient(135deg,#19d3a2,#0f9e75);color:white;
+    border-radius:16px 16px 4px 16px;padding:10px 14px;margin-left:30px;}
+
+/* Clickable help items */
+.help-grid{display:flex;flex-direction:column;gap:7px;margin-top:8px;}
+.help-item{background:#f8fbff;padding:10px 12px;border-radius:12px;border:1px solid #edf2f7;
+    font-size:12px;line-height:1.4;cursor:pointer;transition:all .18s ease;user-select:none;}
+.help-item:hover{background:rgba(25,211,162,.12);border-color:rgba(25,211,162,.4);transform:translateX(3px);}
+.cmd-tag{display:inline-block;margin-top:4px;background:rgba(25,211,162,.15);color:#0a6e50;
+    font-size:10px;font-weight:800;padding:2px 7px;border-radius:6px;font-family:monospace;}
+.help-section-label{font-size:10px;font-weight:900;color:#7f8ea3;text-transform:uppercase;
+    letter-spacing:.7px;padding:5px 0 2px 2px;margin-top:6px;}
+.chat-quick{display:flex;flex-wrap:wrap;gap:6px;padding:10px 14px;border-top:1px solid #edf2f7;
+    background:#f0fbf8;flex-shrink:0;max-height:76px;overflow-y:auto;}
+.quick-btn{padding:5px 11px;border-radius:18px;border:1.5px solid rgba(25,211,162,.3);
+    background:rgba(25,211,162,.08);color:#0a7a5e;font-size:11px;font-weight:700;
+    cursor:pointer;white-space:nowrap;transition:all .2s;}
+.quick-btn:hover{background:rgba(25,211,162,.20);transform:translateY(-1px);}
+.chat-input{display:flex;border-top:1px solid #edf2f7;background:white;flex-shrink:0;}
+.chat-input input{flex:1;border:none;outline:none;padding:14px 16px;font-size:12px;color:#172b42;}
+.chat-input button{border:none;background:var(--primary);color:white;padding:0 20px;font-weight:900;font-size:13px;}
+.chat-input button:hover{background:var(--primary-dark);}
+
+/* TOAST */
+.l-toast{position:fixed;top:90px;right:20px;padding:12px 20px;border-radius:14px;
+    font-weight:700;font-size:13px;color:white;z-index:9999999;
+    opacity:0;transform:translateX(110%);transition:all .3s ease;}
+.l-toast.show{opacity:1;transform:translateX(0);}
+
+@media(max-width:1200px){.grid-2,.grid-3{grid-template-columns:1fr;}}
+@media(max-width:768px){.page{padding-top:170px;}.header{flex-direction:column;align-items:flex-start;}.chat-panel{width:95%;right:2.5%;}}
 </style>
-
 </head>
-
 <body>
 
-<!-- =========================================================
-HEADER
-========================================================= -->
-
+<!-- HEADER -->
 <div class="header glass">
-
     <div class="header-left">
-
-        <div class="logo">
-            🧠
-        </div>
-
+        <div class="logo">🧠</div>
         <div class="header-title">
-
-            <h1>
-                Leadership AI Command Center
-            </h1>
-
-            <p>
-                Enterprise Workforce Intelligence & Realtime Governance
-            </p>
-
+            <h1>Leadership AI Command Center</h1>
+            <p>Enterprise Workforce Intelligence & Realtime Governance</p>
         </div>
-
     </div>
-
     <div class="header-right">
-
-        <div class="live-chip">
-            ● LIVE REALTIME ANALYTICS
-        </div>
-
-        <button
-        class="btn btn-refresh"
-        onclick="loadDashboard()">
-            🔄 Refresh
+        <div class="live-chip">● LIVE REALTIME ANALYTICS</div>
+        <!-- DEF-048 FIX: handleRefresh() with spinner -->
+        <button class="btn btn-refresh" id="refreshBtn" onclick="handleRefresh()">
+            <span id="refreshIcon">🔄</span> Refresh
         </button>
-
-        <button
-        class="btn btn-logout"
-        onclick="logout()">
-            🚪 Logout
-        </button>
-
+        <button class="btn btn-logout" onclick="logout()">🚪 Logout</button>
     </div>
-
 </div>
 
 <div class="page">
 
-<!-- =========================================================
-KPI GRID
-========================================================= -->
-
+<!-- KPI GRID -->
 <div class="kpi-grid">
-
-    <div class="kpi glass">
-        <div class="kpi-icon">👨‍💼</div>
-        <div class="kpi-title">Total Workforce</div>
-        <div class="kpi-value" id="totalEmployees">0</div>
-        <div class="kpi-sub">Total enterprise employees</div>
+    <div class="kpi glass"><div class="kpi-icon">👨‍💼</div><div class="kpi-title">Total Workforce</div><div class="kpi-value" id="totalEmployees">0</div><div class="kpi-sub">All enterprise employees</div></div>
+    <div class="kpi glass"><div class="kpi-icon">✅</div><div class="kpi-title">Completed</div><div class="kpi-value" id="completed">0</div><div class="kpi-sub">Onboarding completed</div></div>
+    <div class="kpi glass"><div class="kpi-icon">🚀</div><div class="kpi-title">In Progress</div><div class="kpi-value" id="progress">0</div><div class="kpi-sub">Active onboarding</div></div>
+    <div class="kpi glass"><div class="kpi-icon">⚠️</div><div class="kpi-title">High Risk</div><div class="kpi-value" id="escalations">0</div><div class="kpi-sub">Needs immediate attention</div></div>
+    <div class="kpi glass"><div class="kpi-icon">🏢</div><div class="kpi-title">Accounts</div><div class="kpi-value" id="accounts">0</div><div class="kpi-sub">Enterprise accounts</div></div>
+    <div class="kpi glass"><div class="kpi-icon">👔</div><div class="kpi-title">Managers</div><div class="kpi-value" id="managers">0</div><div class="kpi-sub">Reporting managers</div></div>
+    <div class="kpi glass"><div class="kpi-icon">💻</div><div class="kpi-title">Pending Laptop</div><div class="kpi-value" id="pendingLaptop">0</div><div class="kpi-sub">Awaiting provisioning</div></div>
+    <div class="kpi glass"><div class="kpi-icon">🪪</div><div class="kpi-title">Pending ID</div><div class="kpi-value" id="pendingId">0</div><div class="kpi-sub">Access not issued</div></div>
+    <div class="kpi glass" onclick="openSkillModal()" title="Click to see skill breakdown" style="cursor:pointer;">
+        <div class="kpi-icon">🏆</div><div class="kpi-title">Top COE</div>
+        <div class="kpi-value" id="topCOE" style="font-size:16px;margin-top:4px;">-</div>
+        <div class="kpi-sub">Click for COE breakdown</div>
     </div>
-
-    <div class="kpi glass">
-        <div class="kpi-icon">✅</div>
-        <div class="kpi-title">Completed</div>
-        <div class="kpi-value" id="completed">0</div>
-        <div class="kpi-sub">Completed onboarding</div>
-    </div>
-
-    <div class="kpi glass">
-        <div class="kpi-icon">🚀</div>
-        <div class="kpi-title">In Progress</div>
-        <div class="kpi-value" id="progress">0</div>
-        <div class="kpi-sub">Active onboarding</div>
-    </div>
-
-    <div class="kpi glass">
-        <div class="kpi-icon">⚠️</div>
-        <div class="kpi-title">High Risk</div>
-        <div class="kpi-value" id="escalations">0</div>
-        <div class="kpi-sub">Escalated employees</div>
-    </div>
-
-    <div class="kpi glass">
-        <div class="kpi-icon">🏢</div>
-        <div class="kpi-title">Accounts</div>
-        <div class="kpi-value" id="accounts">0</div>
-        <div class="kpi-sub">Enterprise accounts</div>
-    </div>
-
-    <div class="kpi glass">
-        <div class="kpi-icon">👔</div>
-        <div class="kpi-title">Managers</div>
-        <div class="kpi-value" id="managers">0</div>
-        <div class="kpi-sub">Reporting managers</div>
-    </div>
-
-    <div class="kpi glass">
-        <div class="kpi-icon">💻</div>
-        <div class="kpi-title">Pending Laptop</div>
-        <div class="kpi-value" id="pendingLaptop">0</div>
-        <div class="kpi-sub">Pending provisioning</div>
-    </div>
-
-    <div class="kpi glass">
-        <div class="kpi-icon">🪪</div>
-        <div class="kpi-title">Pending ID</div>
-        <div class="kpi-value" id="pendingId">0</div>
-        <div class="kpi-sub">Pending ID access</div>
-    </div>
-    <div class="kpi glass">
-    <div class="kpi-icon">🏆</div>
-    <div class="kpi-title">Top COE</div>
-    <div class="kpi-value" id="topCOE">-</div>
-    <div class="kpi-sub">Highest workforce</div>
-    </div>
-
 </div>
 
-<!-- =========================================================
-AI INSIGHTS
-========================================================= -->
-
+<!-- INSIGHTS -->
 <div class="insights" id="insightContainer"></div>
 
-<!-- =========================================================
-CHARTS
-========================================================= -->
-
+<!-- CHARTS ROW 1 -->
 <div class="grid-2">
-
-    <div class="card glass">
-
-        <div class="card-title">
-            <h3>Onboarding Status Analytics</h3>
-            <span>Realtime Distribution</span>
-        </div>
-
-        <div class="chart-box">
-            <canvas id="statusChart"></canvas>
-        </div>
-
-    </div>
-
-    <div class="card glass">
-
-        <div class="card-title">
-            <h3>Risk Distribution</h3>
-            <span>AI Risk Intelligence</span>
-        </div>
-
-        <div class="chart-box">
-            <canvas id="riskChart"></canvas>
-        </div>
-
-    </div>
-
+    <div class="card glass"><div class="card-title"><h3>Onboarding Status Analytics</h3><span>Realtime Distribution</span></div><div class="chart-box"><canvas id="statusChart"></canvas></div></div>
+    <div class="card glass"><div class="card-title"><h3>Risk Distribution</h3><span>AI Risk Intelligence</span></div><div class="chart-box"><canvas id="riskChart"></canvas></div></div>
 </div>
 
+<!-- CHARTS ROW 2 -->
 <div class="grid-3">
+    <div class="card glass"><div class="card-title"><h3>Location Analytics</h3><span>Geographic Distribution</span></div><div class="chart-box"><canvas id="locationChart"></canvas></div></div>
+    <div class="card glass"><div class="card-title"><h3>Account Analytics</h3><span>Top Accounts</span></div><div class="chart-box"><canvas id="accountChart"></canvas></div></div>
+    <div class="card glass"><div class="card-title"><h3>Training Analytics</h3><span>Learning Progress</span></div><div class="chart-box"><canvas id="trainingChart"></canvas></div></div>
 
-    <div class="card glass">
-
-        <div class="card-title">
-            <h3>Location Analytics</h3>
-            <span>Geographic Distribution</span>
-        </div>
-
-        <div class="chart-box">
-            <canvas id="locationChart"></canvas>
-        </div>
-
+    <!-- DEF-049 FIX: COE chart with clickable card -->
+    <div class="card glass skill-card" onclick="openSkillModal('coe')" title="Click to see COE details">
+        <div class="card-title"><h3>COE Distribution</h3><span>🖱 Click for detail</span></div>
+        <div class="chart-box"><canvas id="coeChart"></canvas></div>
     </div>
 
-    <div class="card glass">
-
-        <div class="card-title">
-            <h3>Account Analytics</h3>
-            <span>Top Accounts</span>
-        </div>
-
-        <div class="chart-box">
-            <canvas id="accountChart"></canvas>
-        </div>
-
+    <!-- DEF-050 FIX: Skill chart with clickable card -->
+    <div class="card glass skill-card" onclick="openSkillModal('skill')" title="Click to see skill details">
+        <div class="card-title"><h3>Skill Distribution</h3><span>🖱 Click for detail</span></div>
+        <div class="chart-box"><canvas id="skillChart"></canvas></div>
     </div>
-
-    <div class="card glass">
-
-        <div class="card-title">
-            <h3>Training Analytics</h3>
-            <span>Learning Progress</span>
-        </div>
-
-        <div class="chart-box">
-            <canvas id="trainingChart"></canvas>
-        </div>
-
-    </div>
-     <div class="card glass">
-
-    <div class="card-title">
-        <h3>COE Distribution</h3>
-        <span>Skill Grouping</span>
-    </div>
-
-    <div class="chart-box">
-        <canvas id="coeChart"></canvas>
-    </div>
-
 </div>
 
-<div class="card glass">
-
-    <div class="card-title">
-        <h3>Skill Distribution</h3>
-        <span>Technology Mapping</span>
-    </div>
-
-    <div class="chart-box">
-        <canvas id="skillChart"></canvas>
-    </div>
-
-</div>
-
-</div>
-
-<!-- =========================================================
-HIGH RISK TABLE
-========================================================= -->
-
-<div class="card glass">
-
-    <div class="card-title">
-
-        <h3>
-            High Risk Employee Intelligence
-        </h3>
-
-        <span>
-            AI Escalation Monitoring
-        </span>
-
-    </div>
-
+<!-- HIGH RISK TABLE -->
+<div class="card glass" style="margin-bottom:18px;">
+    <div class="card-title"><h3>High Risk Employee Intelligence</h3><span>AI Escalation Monitoring</span></div>
     <div class="table-wrapper">
-
         <table>
-
-            <thead>
-
-                <tr>
-
-                    <th>EMP ID</th>
-                    <th>EMPLOYEE</th>
-                    <th>ACCOUNT</th>
-                    <th>LOCATION</th>
-                    <th>CURRENT STEP</th>
-                    <th>STATUS</th>
-                    <th>RISK</th>
-
-                </tr>
-
-            </thead>
-
+            <thead><tr><th>EMP ID</th><th>EMPLOYEE</th><th>ACCOUNT</th><th>LOCATION</th><th>CURRENT STEP</th><th>STATUS</th><th>RISK</th></tr></thead>
             <tbody id="highRiskTable"></tbody>
-
         </table>
-
     </div>
-
 </div>
 
-<!-- =========================================================
-LOCATION TABLE
-========================================================= -->
-
-<div class="card glass">
-
-    <div class="card-title">
-
-        <h3>
-            Location Performance Matrix
-        </h3>
-
-        <span>
-            Leadership Intelligence
-        </span>
-
-    </div>
-
+<!-- LOCATION TABLE -->
+<div class="card glass" style="margin-bottom:18px;">
+    <div class="card-title"><h3>Location Performance Matrix</h3><span>Leadership Intelligence</span></div>
     <div class="table-wrapper">
-
         <table>
-
-            <thead>
-
-                <tr>
-
-                    <th>LOCATION</th>
-                    <th>TOTAL</th>
-                    <th>PENDING</th>
-                    <th>COMPLETED</th>
-                    <th>MANAGERS</th>
-                    <th>ESCALATIONS</th>
-                    <th>TRAINING</th>
-                    <th>ITSG</th>
-                    <th>ADMIN</th>
-
-                </tr>
-
-            </thead>
-
+            <thead><tr><th>LOCATION</th><th>TOTAL</th><th>PENDING</th><th>COMPLETED</th><th>MANAGERS</th><th>ESCALATIONS</th><th>TRAINING</th><th>ITSG</th><th>ADMIN</th></tr></thead>
             <tbody id="locationTable"></tbody>
-
         </table>
-
     </div>
-
 </div>
 
+</div><!-- /page -->
+
+<!-- SKILL/COE MODAL -->
+<div class="modal" id="skillModal">
+    <div class="modal-box">
+        <button class="modal-close" onclick="closeSkillModal()">✕</button>
+        <div class="modal-title" id="skillModalTitle">Skill Distribution</div>
+        <div id="skillModalBody"></div>
+    </div>
 </div>
 
-<!-- =========================================================
-AI CHATBOT
-========================================================= -->
-
-<div
-class="ai-fab"
-onclick="toggleChat()">
-🤖
-</div>
-
-<div
-class="chat-panel"
-id="chatPanel">
-
+<!-- AI CHATBOT -->
+<div class="ai-fab" onclick="toggleChat()">🤖</div>
+<div class="chat-panel" id="chatPanel">
     <div class="chat-header">
-
-        <span>
-            Leadership AI Assistant
-        </span>
-
-        <span
-        style="cursor:pointer"
-        onclick="toggleChat()">
-            ✖
-        </span>
-
-    </div>
-
-    <div
-    class="chat-body"
-    id="chatBody">
-
-        <div class="chat-message bot">
-
-            👋 Welcome to Leadership AI Assistant.<br><br>
-
-            You can ask:
-            <br><br>
-
-            • High risk employees<br>
-            • Pending onboarding<br>
-            • Laptop provisioning delays<br>
-            • Ticket escalation trends<br>
-            • Location performance<br>
-            • Training completion analytics
-
+        <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:20px;">🤖</span>
+            <div><div>Leadership AI Assistant</div><div style="font-size:11px;opacity:.8;">Enterprise Intelligence</div></div>
         </div>
-
+        <span onclick="toggleChat()" style="cursor:pointer;font-size:18px;opacity:.8;">✖</span>
     </div>
-
+    <div class="chat-body" id="chatBody">
+        <div class="chat-msg bot"><div>
+            👋 Hello! I'm your Leadership AI Assistant.<br><br>
+            Type <b>help</b> to see all commands — each is clickable.<br>
+            Or use the quick buttons below.
+        </div></div>
+    </div>
+    <div class="chat-quick">
+        <button class="quick-btn" onclick="runCmd('executive summary')">📊 Summary</button>
+        <button class="quick-btn" onclick="runCmd('high risk employees')">⚠️ High Risk</button>
+        <button class="quick-btn" onclick="runCmd('pending laptop')">💻 Laptop</button>
+        <button class="quick-btn" onclick="runCmd('location report')">📍 Locations</button>
+        <button class="quick-btn" onclick="runCmd('coe distribution')">🧠 COE</button>
+        <button class="quick-btn" onclick="runCmd('skill breakdown')">🔧 Skills</button>
+        <button class="quick-btn" onclick="runCmd('training status')">📚 Training</button>
+        <button class="quick-btn" onclick="runCmd('escalation report')">🚨 Escalations</button>
+    </div>
     <div class="chat-input">
-
-        <input
-        id="chatInput"
-        placeholder="Ask AI leadership insights..." />
-
-        <button
-        onclick="sendMessage()">
-            Send
-        </button>
-
+        <input id="chatInput" placeholder="Ask leadership insights...">
+        <button onclick="sendMessage()">Send</button>
     </div>
-
 </div>
+
+<!-- TOAST -->
+<div class="l-toast" id="lToast"></div>
 
 <script>
+const API_BASE     = "https://intellionboard.onrender.com";
+const DASH_API     = `${API_BASE}/api/leadership/dashboard`;
+let   allEmployees = [];
+let   dashData     = {};
+let   charts       = {};
 
-/* =========================================================
-GLOBAL
-========================================================= */
+/* ── toast ─────────────────────────────────── */
+function showToast(msg,color){
+    const t=document.getElementById("lToast");
+    t.style.background=color||"#19d3a2";t.innerText=msg;
+    t.classList.add("show");setTimeout(()=>t.classList.remove("show"),3000);
+}
 
-const API = "https://intellionboard.onrender.com/api/leadership/dashboard";
+/* ── DEF-048: handleRefresh ─────────────────── */
+async function handleRefresh(){
+    const btn=document.getElementById("refreshBtn");
+    const icon=document.getElementById("refreshIcon");
+    if(btn) btn.classList.add("refreshing");
+    if(icon){icon.classList.add("spin");}
+    try{
+        await loadDashboard();
+        showToast("✅ Dashboard refreshed","#19d3a2");
+    }catch(e){
+        showToast("❌ Refresh failed","#ff6f6f");
+    }finally{
+        if(btn) btn.classList.remove("refreshing");
+        if(icon) icon.classList.remove("spin");
+    }
+}
 
-const socket = io("https://intellionboard.onrender.com", {
-    withCredentials: true
+/* ── SOCKET ─────────────────────────────────── */
+try{
+    const socket=io(API_BASE,{withCredentials:true,transports:["websocket","polling"]});
+    socket.on("realtime_update",()=>loadDashboard());
+}catch(e){console.warn("Socket:",e);}
+
+/* ── LOAD DASHBOARD ─────────────────────────── */
+async function loadDashboard(){
+    try{
+        const res=await fetch(DASH_API,{credentials:"include"});
+        const json=await res.json();
+        if(!json.success) return;
+        dashData     = json;
+        allEmployees = json.all_employees||[];
+        const s=json.summary;
+        document.getElementById("totalEmployees").innerText = s.total_employees||0;
+        document.getElementById("completed").innerText       = s.completed||0;
+        document.getElementById("progress").innerText        = s.in_progress||0;
+        document.getElementById("escalations").innerText     = s.escalations||0;
+        document.getElementById("accounts").innerText        = s.accounts||0;
+        document.getElementById("managers").innerText        = s.managers||0;
+        document.getElementById("pendingLaptop").innerText   = s.pending_laptop||0;
+        document.getElementById("pendingId").innerText       = s.pending_id||0;
+
+        renderCharts(json);
+        renderLocationTable(json.location_data||[]);
+        renderHighRiskTable(json.high_risk_employees||[]);
+        renderInsights(json.leadership_insights||[]);
+
+        /* DEF-049/050: COE + Skill from API data */
+        renderCOEChart(json.coe_data||[]);
+        renderSkillChart(json.skill_data||[]);
+
+    }catch(err){console.error("Dashboard load error:",err);}
+}
+
+/* ── CHARTS ─────────────────────────────────── */
+function destroyChart(key){ if(charts[key]){charts[key].destroy();delete charts[key];} }
+
+const COLORS=["#19d3a2","#59b8ff","#9f74ff","#ffb84d","#ff6f6f","#34d47f","#f43f5e","#0ea5e9","#a78bfa","#fb923c"];
+
+function renderCharts(json){
+    destroyChart("status");
+    const sd=json.status_data||[];
+    charts["status"]=new Chart(document.getElementById("statusChart"),{
+        type:"bar",
+        data:{labels:sd.map(x=>x.onboarding_status),datasets:[{label:"Employees",data:sd.map(x=>x.total),
+            backgroundColor:COLORS,borderRadius:10}]},
+        options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}
+    });
+
+    destroyChart("risk");
+    const rd=json.risk_data||[];
+    charts["risk"]=new Chart(document.getElementById("riskChart"),{
+        type:"doughnut",
+        data:{labels:rd.map(x=>x.risk_level),datasets:[{data:rd.map(x=>x.total),backgroundColor:["#ff5f5f","#f39c12","#16c79a"]}]},
+        options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom"}}}
+    });
+
+    destroyChart("location");
+    const ld=json.location_data||[];
+    charts["location"]=new Chart(document.getElementById("locationChart"),{
+        type:"pie",
+        data:{labels:ld.map(x=>x.location),datasets:[{data:ld.map(x=>x.total),backgroundColor:COLORS}]},
+        options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom"}}}
+    });
+
+    destroyChart("account");
+    const ad=json.account_data||[];
+    charts["account"]=new Chart(document.getElementById("accountChart"),{
+        type:"polarArea",
+        data:{labels:ad.map(x=>x.account_name),datasets:[{data:ad.map(x=>x.total),backgroundColor:COLORS}]},
+        options:{responsive:true,maintainAspectRatio:false}
+    });
+
+    destroyChart("training");
+    const td=json.training_data||[];
+    charts["training"]=new Chart(document.getElementById("trainingChart"),{
+        type:"line",
+        data:{labels:td.map(x=>x.training_status),datasets:[{label:"Employees",data:td.map(x=>x.total),
+            tension:.4,fill:true,borderColor:"#19d3a2",backgroundColor:"rgba(25,211,162,.15)"}]},
+        options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}
+    });
+}
+
+/* DEF-049: COE chart from API coe_data */
+function renderCOEChart(data){
+    destroyChart("coe");
+    if(!data||!data.length){
+        document.getElementById("coeChart").parentElement.innerHTML+=
+            `<div style="text-align:center;padding:30px;color:#94a3b8;font-size:13px;">📭 No COE data available</div>`;
+        return;
+    }
+    // Top COE KPI
+    const top=data.sort((a,b)=>b.total-a.total)[0];
+    if(top) document.getElementById("topCOE").innerText=`${top.coe_name} (${top.total})`;
+
+    charts["coe"]=new Chart(document.getElementById("coeChart"),{
+        type:"doughnut",
+        data:{labels:data.map(x=>x.coe_name),datasets:[{data:data.map(x=>x.total),backgroundColor:COLORS}]},
+        options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom"}}}
+    });
+}
+
+/* DEF-050: Skill chart from API skill_data */
+function renderSkillChart(data){
+    destroyChart("skill");
+    if(!data||!data.length){
+        document.getElementById("skillChart").parentElement.innerHTML+=
+            `<div style="text-align:center;padding:30px;color:#94a3b8;font-size:13px;">📭 No skill data available</div>`;
+        return;
+    }
+    charts["skill"]=new Chart(document.getElementById("skillChart"),{
+        type:"bar",
+        data:{labels:data.map(x=>x.skill),datasets:[{label:"Employees",data:data.map(x=>x.total),
+            backgroundColor:COLORS,borderRadius:8}]},
+        options:{responsive:true,maintainAspectRatio:false,
+            plugins:{legend:{display:false}},
+            scales:{x:{ticks:{font:{size:9},maxRotation:40}}}}
+    });
+}
+
+/* ── SKILL / COE MODAL ─────────────────────── */
+function openSkillModal(type){
+    const isSkill=(!type||type==="skill");
+    const data = isSkill ? (dashData.skill_data||[]) : (dashData.coe_data||[]);
+    const title= isSkill ? "🔧 Skill Distribution — All Employees" : "🧠 COE Distribution — All Employees";
+    const total= data.reduce((s,r)=>s+(r.total||0),0);
+
+    document.getElementById("skillModalTitle").innerText=title;
+
+    if(!data.length){
+        document.getElementById("skillModalBody").innerHTML=
+            `<div style="text-align:center;padding:30px;color:#94a3b8;">No data available</div>`;
+    } else {
+        document.getElementById("skillModalBody").innerHTML=`
+            <div style="margin-bottom:14px;font-size:12px;color:#64748b;">
+                Total: <b>${total}</b> employees across <b>${data.length}</b> ${isSkill?"skills":"COEs"}
+            </div>
+            ${data.map(r=>{
+                const pct=total>0?Math.round((r.total/total)*100):0;
+                return `<div class="skill-modal-row">
+                    <span style="font-weight:700;min-width:140px;">${r.skill||r.coe_name}</span>
+                    <div style="display:flex;align-items:center;gap:10px;flex:1;justify-content:flex-end;">
+                        <div class="skill-bar-wrap"><div class="skill-bar-fill" style="width:${pct}%"></div></div>
+                        <span style="font-size:12px;font-weight:700;color:#19d3a2;min-width:40px;text-align:right;">${r.total}</span>
+                        <span style="font-size:11px;color:#94a3b8;min-width:36px;">${pct}%</span>
+                        ${(r.high_risk||0)>0?`<span style="background:#ff5f5f22;color:#ff5f5f;font-size:10px;font-weight:700;padding:2px 7px;border-radius:6px;">⚠ ${r.high_risk} risk</span>`:""}
+                    </div>
+                </div>`;
+            }).join("")}`;
+    }
+    document.getElementById("skillModal").classList.add("open");
+}
+function closeSkillModal(){document.getElementById("skillModal").classList.remove("open");}
+window.addEventListener("click",e=>{if(e.target===document.getElementById("skillModal"))closeSkillModal();});
+
+/* ── TABLES ─────────────────────────────────── */
+function renderLocationTable(data){
+    const tbody=document.getElementById("locationTable");
+    tbody.innerHTML="";
+    data.forEach(r=>{
+        tbody.innerHTML+=`<tr>
+            <td><b>${r.location||"-"}</b></td>
+            <td>${r.total}</td><td>${r.pending}</td><td>${r.completed}</td>
+            <td>${r.managers}</td>
+            <td><span class="badge high">${r.escalations}</span></td>
+            <td>${r.training||0}</td><td>${r.itsg_pending||0}</td><td>${r.admin_pending||0}</td>
+        </tr>`;
+    });
+}
+function renderHighRiskTable(data){
+    const tbody=document.getElementById("highRiskTable");
+    tbody.innerHTML="";
+    if(!data.length){
+        tbody.innerHTML=`<tr><td colspan="7" style="text-align:center;padding:20px;color:#94a3b8;">✅ No high risk employees</td></tr>`;
+        return;
+    }
+    data.forEach(emp=>{
+        tbody.innerHTML+=`<tr>
+            <td>${emp.emp_id}</td><td><b>${emp.emp_name}</b><br><small style="color:#94a3b8;">${emp.rm_name||"-"}</small></td>
+            <td>${emp.account_name||"-"}</td><td>${emp.location||"-"}</td>
+            <td>${emp.current_step||"-"}</td><td>${emp.onboarding_status||"-"}</td>
+            <td><span class="badge high">${emp.risk_level}</span></td>
+        </tr>`;
+    });
+}
+function renderInsights(data){
+    const c=document.getElementById("insightContainer");
+    c.innerHTML="";
+    data.forEach(ins=>{
+        const icon=ins.type==="critical"?"🚨":ins.type==="warning"?"⚠️":"📊";
+        c.innerHTML+=`<div class="insight glass ${ins.type}">
+            <div class="insight-icon">${icon}</div>
+            <div><h2>${ins.type.toUpperCase()}</h2><p>${ins.message}</p></div>
+        </div>`;
+    });
+}
+
+/* ═══════════════════════════════════════════
+   DEF-051: CHATBOT — full leadership commands
+   + clickable help + skill/COE drill-down
+═══════════════════════════════════════════ */
+let chatOpen=false;
+function toggleChat(){
+    chatOpen=!chatOpen;
+    document.getElementById("chatPanel").style.display=chatOpen?"flex":"none";
+}
+function addMsg(role,html){
+    const body=document.getElementById("chatBody");
+    const div=document.createElement("div");
+    div.className=`chat-msg ${role}`;
+    div.innerHTML=`<div>${html}</div>`;
+    body.appendChild(div);
+    body.scrollTop=body.scrollHeight;
+}
+function runCmd(cmd){
+    document.getElementById("chatInput").value=cmd;
+    sendMessage();
+}
+
+function showHelp(){
+    const single=[
+        {icon:"📊",label:"Executive Summary",         cmd:"executive summary"},
+        {icon:"⚠️",label:"High Risk Employees",       cmd:"high risk employees"},
+        {icon:"💻",label:"Pending Laptop",             cmd:"pending laptop"},
+        {icon:"🪪",label:"Pending ID Cards",           cmd:"pending id cards"},
+        {icon:"📍",label:"Location Report",            cmd:"location report"},
+        {icon:"🏢",label:"Account Distribution",       cmd:"account distribution"},
+        {icon:"🧠",label:"COE Distribution",           cmd:"coe distribution"},
+        {icon:"🔧",label:"Skill Breakdown",            cmd:"skill breakdown"},
+        {icon:"📚",label:"Training Status",            cmd:"training status"},
+        {icon:"🚨",label:"Escalation Report",          cmd:"escalation report"},
+        {icon:"⏱️",label:"Delay Analysis",             cmd:"delay analysis"},
+        {icon:"🗺️",label:"Top Location",              cmd:"top location"},
+        {icon:"🏆",label:"Top Account",                cmd:"top account"},
+        {icon:"📈",label:"Completion Rate",            cmd:"completion rate"},
+        {icon:"🔒",label:"Workflow Locked Employees",  cmd:"workflow locked"},
+    ];
+    const html=`<b style="color:#19d3a2;font-size:13px;">🚀 LEADERSHIP AI — Click any command</b>
+        <div class="help-grid">
+            ${single.map(it=>`
+                <div class="help-item" onclick="runCmd('${it.cmd}')">
+                    ${it.icon} <b>${it.label}</b><br>
+                    <span class="cmd-tag">▶ ${it.cmd}</span>
+                </div>`).join("")}
+        </div>`;
+    addMsg("bot",html);
+}
+
+function sendMessage(){
+    const input=document.getElementById("chatInput");
+    const text=(input.value||"").trim();
+    if(!text) return;
+    addMsg("user",text);
+    input.value="";
+    const msg=text.toLowerCase();
+
+    /* Greetings */
+    if(["hi","hello","hey","good morning","good afternoon","namaste"].some(g=>msg===g||msg.startsWith(g+" "))){
+        addMsg("bot",`👋 Hello! I'm your Leadership AI Assistant.<br><br>
+            I have full visibility into your <b>${allEmployees.length.toLocaleString()}</b> employee workforce.<br><br>
+            Type <b>help</b> for all commands, or use the quick buttons above.`);
+        return;
+    }
+    if(msg==="help"||msg.includes("what can you do")||msg.includes("commands")){showHelp();return;}
+
+    /* ── Data commands ── */
+    if(msg.includes("executive summary")||msg.includes("dashboard summary")||msg.includes("summary")){
+        const s=dashData.summary||{};
+        addMsg("bot",`<b>📊 EXECUTIVE SUMMARY</b><br>━━━━━━━━━━━━━━━━<br>
+            👨‍💼 Total Workforce: <b>${s.total_employees||0}</b><br>
+            ✅ Completed: <b>${s.completed||0}</b><br>
+            🚀 In Progress: <b>${s.in_progress||0}</b><br>
+            ⏳ Onboarding: <b>${s.onboarding||0}</b><br>
+            ⚠️ High Risk: <b>${s.escalations||0}</b><br>
+            🏢 Accounts: <b>${s.accounts||0}</b><br>
+            👔 Managers: <b>${s.managers||0}</b><br>
+            💻 Pending Laptop: <b>${s.pending_laptop||0}</b><br>
+            🪪 Pending ID: <b>${s.pending_id||0}</b><br>
+            📈 Avg Progress: <b>${s.avg_progress||0}%</b>`);
+        return;
+    }
+    if(msg.includes("high risk")){
+        const list=allEmployees.filter(e=>(e.risk_level||"").toUpperCase()==="HIGH");
+        addMsg("bot",`<b>⚠️ HIGH RISK EMPLOYEES</b><br>━━━━━━━━━━━━━━━━<br>
+            Count: <b>${list.length}</b><br><br>
+            ${list.slice(0,8).map(e=>`• <b>${e.emp_name}</b> (${e.emp_id}) — ${e.account_name||"-"} — ${e.location||"-"}`).join("<br>")}
+            ${list.length>8?`<br>…and ${list.length-8} more`:""}
+            <br><br>Action: Escalate immediately and review SLA breaches.`);
+        return;
+    }
+    if(msg.includes("pending laptop")||msg.includes("laptop pending")){
+        const list=allEmployees.filter(e=>String(e.current_step||"").toUpperCase().includes("LAPTOP"));
+        const s=dashData.summary||{};
+        addMsg("bot",`<b>💻 LAPTOP PROVISIONING STATUS</b><br>━━━━━━━━━━━━━━━━<br>
+            Pending: <b>${s.pending_laptop||list.length}</b> employees<br>
+            ITSG Workload: <b>${(s.pending_laptop||0)>20?"HIGH ⚠️":"NORMAL ✅"}</b><br><br>
+            Recommendation: ${(s.pending_laptop||0)>20?"Escalate to ITSG for immediate provisioning.":"Continue normal ITSG workflow."}`);
+        return;
+    }
+    if(msg.includes("pending id")||msg.includes("id card")){
+        const s=dashData.summary||{};
+        addMsg("bot",`<b>🪪 ID CARD ACCESS STATUS</b><br>━━━━━━━━━━━━━━━━<br>
+            Pending: <b>${s.pending_id||0}</b> employees<br>
+            Risk: <b>${(s.pending_id||0)>20?"HIGH — compliance risk":"NORMAL"}</b>`);
+        return;
+    }
+    if(msg.includes("location report")||msg.includes("location")){
+        const data=dashData.location_data||[];
+        addMsg("bot",`<b>📍 LOCATION PERFORMANCE REPORT</b><br>━━━━━━━━━━━━━━━━<br>
+            ${data.map(r=>`📍 <b>${r.location}</b>: ${r.total} employees | ✅ ${r.completed} done | ⚠ ${r.escalations} at risk`).join("<br>")}`);
+        return;
+    }
+    if(msg.includes("top location")){
+        const data=(dashData.location_data||[]).sort((a,b)=>b.total-a.total)[0];
+        addMsg("bot",data?`<b>🗺️ TOP LOCATION</b><br>━━━━━━━━━━━━━━━━<br>
+            📍 ${data.location}: <b>${data.total}</b> employees<br>
+            ✅ Completed: ${data.completed} | ⚠️ Risk: ${data.escalations}`
+            :"No location data available.");
+        return;
+    }
+    if(msg.includes("account distribution")||msg.includes("account")){
+        const data=dashData.account_data||[];
+        addMsg("bot",`<b>🏢 ACCOUNT DISTRIBUTION</b><br>━━━━━━━━━━━━━━━━<br>
+            ${data.slice(0,8).map(r=>`🏢 <b>${r.account_name}</b>: ${r.total} | ⚠ ${r.escalations||0} risk | Avg ${r.avg_progress||0}%`).join("<br>")}`);
+        return;
+    }
+    if(msg.includes("top account")){
+        const data=(dashData.account_data||[]).sort((a,b)=>b.total-a.total)[0];
+        addMsg("bot",data?`<b>🏆 TOP ACCOUNT</b><br>━━━━━━━━━━━━━━━━<br>
+            🏢 ${data.account_name}: <b>${data.total}</b> employees<br>Avg Progress: ${data.avg_progress||0}%`
+            :"No account data.");
+        return;
+    }
+    if(msg.includes("coe distribution")||msg.includes("coe")){
+        const data=dashData.coe_data||[];
+        const total=data.reduce((s,r)=>s+(r.total||0),0);
+        addMsg("bot",`<b>🧠 COE DISTRIBUTION</b><br>━━━━━━━━━━━━━━━━<br>
+            Total: <b>${total}</b> across <b>${data.length}</b> COEs<br><br>
+            ${data.map(r=>`🔹 <b>${r.coe_name}</b>: ${r.total} (${total?Math.round(r.total/total*100):0}%) | ✅ ${r.completed||0} done | ⚠ ${r.high_risk||0} risk`).join("<br>")}`);
+        return;
+    }
+    if(msg.includes("skill breakdown")||msg.includes("skill")){
+        const data=dashData.skill_data||[];
+        const total=data.reduce((s,r)=>s+(r.total||0),0);
+        addMsg("bot",`<b>🔧 SKILL DISTRIBUTION</b><br>━━━━━━━━━━━━━━━━<br>
+            ${data.slice(0,10).map(r=>`• <b>${r.skill}</b>: ${r.total} (${total?Math.round(r.total/total*100):0}%) | ⚠ ${r.high_risk||0} risk`).join("<br>")}<br><br>
+            <span style="cursor:pointer;color:#19d3a2;font-weight:700;" onclick="openSkillModal('skill')">📊 Open detailed skill breakdown →</span>`);
+        return;
+    }
+    if(msg.includes("training status")||msg.includes("training")){
+        const data=dashData.training_data||[];
+        addMsg("bot",`<b>📚 TRAINING STATUS</b><br>━━━━━━━━━━━━━━━━<br>
+            ${data.map(r=>`📖 <b>${r.training_status}</b>: ${r.total} employees`).join("<br>")}<br><br>
+            Insight: ${(dashData.summary?.training_pending||0)>50?"High training backlog — compliance risk increasing.":"Training on track."}`);
+        return;
+    }
+    if(msg.includes("escalation report")||msg.includes("escalation")){
+        const s=dashData.summary||{};
+        const ts=dashData.ticket_summary||{};
+        addMsg("bot",`<b>🚨 ESCALATION REPORT</b><br>━━━━━━━━━━━━━━━━<br>
+            High Risk Employees: <b>${s.escalations||0}</b><br>
+            Escalated Tickets: <b>${ts.escalated_tickets||0}</b><br>
+            Open Tickets: <b>${ts.open_tickets||0}</b><br>
+            Total Tickets: <b>${ts.total_tickets||0}</b><br><br>
+            Action: ${(s.escalations||0)>10?"URGENT — Immediate leadership review required.":"Monitor closely."}`);
+        return;
+    }
+    if(msg.includes("delay analysis")||msg.includes("delay")){
+        const s=dashData.summary||{};
+        addMsg("bot",`<b>⏱️ DELAY ANALYSIS</b><br>━━━━━━━━━━━━━━━━<br>
+            💻 Laptop Provisioning Delay: <b>${s.pending_laptop||0}</b><br>
+            🪪 ID Card Delay: <b>${s.pending_id||0}</b><br>
+            🔒 Workflow Locked: <b>${s.workflow_locked||0}</b><br>
+            🏢 ITSG Pending: <b>${s.itsg_pending||0}</b><br>
+            📋 Admin Pending: <b>${s.admin_pending||0}</b><br><br>
+            Bottleneck: ${(s.pending_laptop||0)>(s.pending_id||0)?"IT Asset Provisioning (Laptop)":"ID/Access Management"}`);
+        return;
+    }
+    if(msg.includes("completion rate")){
+        const s=dashData.summary||{};
+        const total=s.total_employees||1;
+        const rate=Math.round(((s.completed||0)/total)*100);
+        addMsg("bot",`<b>📈 COMPLETION RATE</b><br>━━━━━━━━━━━━━━━━<br>
+            Total Employees: <b>${total.toLocaleString()}</b><br>
+            Completed: <b>${s.completed||0}</b><br>
+            Completion Rate: <b>${rate}%</b><br>
+            Avg Progress: <b>${s.avg_progress||0}%</b><br><br>
+            Status: ${rate>=75?"🟢 On track":"rate>=50?"🟡 Monitor":"🔴 Below target"}`);
+        return;
+    }
+    if(msg.includes("workflow locked")){
+        const s=dashData.summary||{};
+        const locked=allEmployees.filter(e=>e.workflow_locked);
+        addMsg("bot",`<b>🔒 WORKFLOW LOCKED</b><br>━━━━━━━━━━━━━━━━<br>
+            Locked Employees: <b>${s.workflow_locked||locked.length}</b><br><br>
+            ${locked.slice(0,5).map(e=>`• <b>${e.emp_name}</b> (${e.emp_id})`).join("<br>")||"No locked workflows detected."}`);
+        return;
+    }
+
+    /* Default */
+    addMsg("bot",`🧠 <b>LEADERSHIP AI INSIGHT</b><br>━━━━━━━━━━━━━━━━<br>
+        Query analyzed: "<i>${text}</i>"<br><br>
+        Workforce: <b>${allEmployees.length.toLocaleString()}</b> employees<br><br>
+        Type <b>help</b> to see all ${15} available commands.`);
+}
+
+/* ── LOGOUT ─────────────────────────────────── */
+async function logout(){
+    try{await fetch(`${API_BASE}/api/auth/logout`,{method:"POST",credentials:"include"});}catch(_){}
+    localStorage.clear();sessionStorage.clear();
+    window.location.replace("https://intellionboard.vercel.app/");
+}
+
+/* ── ENTER KEY ──────────────────────────────── */
+document.getElementById("chatInput").addEventListener("keydown",e=>{
+    if(e.key==="Enter"){e.preventDefault();sendMessage();}
 });
 
-let statusChart;
-let riskChart;
-let locationChart;
-let accountChart;
-let trainingChart;
-let coeChart;
-let skillChart;
-/* =========================================================
-SOCKET
-========================================================= */
-
-socket.on(
-"realtime_update",
-() => {
-    loadDashboard();
-}
-);
-
-/* =========================================================
-LOAD DASHBOARD
-========================================================= */
-
-async function loadDashboard(){
-
-
-    try{
-
-        const res = await fetch(API,{
-            credentials:"include"
-        });
-
-        const json = await res.json();
-
-        if(!json.success){
-            return;
-        }      
-window.allEmployees = json.all_employees || [];
-
-        const s = json.summary;
-
-        setValue(
-            "totalEmployees",
-            s.total_employees
-        );
-
-        setValue(
-            "completed",
-            s.completed
-        );
-
-        setValue(
-            "progress",
-            s.in_progress
-        );
-
-        setValue(
-            "escalations",
-            s.escalations
-        );
-
-        setValue(
-            "accounts",
-            s.accounts
-        );
-
-        setValue(
-            "managers",
-            s.managers
-        );
-
-        setValue(
-            "pendingLaptop",
-            s.pending_laptop
-        );
-
-        setValue(
-            "pendingId",
-            s.pending_id
-        );
-
-        renderStatusChart(
-            json.status_data
-        );
-
-        renderRiskChart(
-            json.risk_data
-        );
-
-        renderLocationChart(
-            json.location_data
-        );
-
-        renderAccountChart(
-            json.account_data
-        );
-
-        renderTrainingChart(
-            json.training_data
-        );
-
-        renderLocationTable(
-            json.location_data
-        );
-
-        renderHighRiskTable(
-            json.high_risk_employees
-        );
-
-        renderInsights(
-            json.leadership_insights
-        );
-
-        renderCOEChart(window.allEmployees);
-        renderSkillChart(window.allEmployees);
-
-    }catch(err){
-
-        console.error(err);
-    }
-}
-
-/* =========================================================
-UTIL
-========================================================= */
-
-function setValue(id,value){
-
-    document.getElementById(id)
-    .innerText = value || 0;
-}
-
-/* =========================================================
-CHARTS
-========================================================= */
-
-function renderCOEChart(data){
-
-    if (!data || data.length === 0) return;
-
-    destroyChart(coeChart);
-
-    const map = {};
-
-    // ✅ Step 1: Build COE count map
-    data.forEach(emp => {
-        const coe = emp.selected_coe || "UNKNOWN";
-        map[coe] = (map[coe] || 0) + 1;
-    });
-
-    // ✅ Step 2: Calculate top COE
-    const topCOE = Object.entries(map)
-        .sort((a, b) => b[1] - a[1])[0];
-
-    // ✅ Step 3: Update KPI UI safely
-    if (topCOE && document.getElementById("topCOE")) {
-        document.getElementById("topCOE").innerText =
-            `${topCOE[0]} (${topCOE[1]})`;
-    }
-
-    // ✅ Step 4: Render chart
-    coeChart = new Chart(
-        document.getElementById("coeChart"),
-        {
-            type: "doughnut",
-            data: {
-                labels: Object.keys(map),
-                datasets: [{
-                    data: Object.values(map),
-                    backgroundColor: [
-                        "#19d3a2",
-                        "#59b8ff",
-                        "#9f74ff",
-                        "#ffb84d",
-                        "#ff6f6f"
-                    ]
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: "bottom"
-                    }
-                }
-            }
-        }
-    );
-}
-function renderCOEChart(data){
-
-    if (!data || data.length === 0) return;
-
-    destroyChart(coeChart);
-
-    const map = {};
-    if (topCOE) {
-    document.getElementById("topCOE").innerText =
-        `${topCOE[0]} (${topCOE[1]})`;
-}
-
-    data.forEach(emp => {
-        const coe = emp.selected_coe || "UNKNOWN";
-        map[coe] = (map[coe] || 0) + 1;
-    });
-
-    const topCOE = Object.entries(map)
-        .sort((a,b)=>b[1]-a[1])[0];
-
-    coeChart = new Chart(
-        document.getElementById("coeChart"),
-        {
-            type: "doughnut",
-            data: {
-                labels: Object.keys(map),
-                datasets: [{
-                    data: Object.values(map)
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false
-            }
-        }
-    );
-}
-
-
-function destroyChart(chart){
-
-    if(chart){
-        chart.destroy();
-    }
-}
-
-function renderStatusChart(data){
-
-    destroyChart(statusChart);
-
-    statusChart = new Chart(
-
-        document.getElementById(
-            "statusChart"
-        ),
-
-        {
-            type:"bar",
-
-            data:{
-
-                labels:data.map(
-                    x=>x.onboarding_status
-                ),
-
-                datasets:[{
-
-                    label:"Employees",
-
-                    data:data.map(
-                        x=>x.total
-                    ),
-
-                    borderRadius:12
-                }]
-            },
-
-            options:{
-
-                responsive:true,
-
-                maintainAspectRatio:false,
-
-                plugins:{
-                    legend:{
-                        display:false
-                    }
-                }
-            }
-        }
-    );
-}
-function renderSkillChart(data){
-
-    if (!data || data.length === 0) return;
-
-    destroyChart(skillChart);
-
-    const map = {};
-
-    data.forEach(emp => {
-
-        const skill =
-            emp.primary_skill ||
-            emp.skill ||
-            "UNKNOWN";
-
-        map[skill] = (map[skill] || 0) + 1;
-    });
-
-    skillChart = new Chart(
-        document.getElementById("skillChart"),
-        {
-            type: "bar",
-            data: {
-                labels: Object.keys(map),
-                datasets: [{
-                    label: "Employees",
-                    data: Object.values(map),
-                    borderRadius: 10
-                }]
-            },
-            options:{
-                responsive:true,
-                maintainAspectRatio:false
-            }
-        }
-    );
-}
-``
-function renderRiskChart(data){
-
-    destroyChart(riskChart);
-
-    riskChart = new Chart(
-
-        document.getElementById(
-            "riskChart"
-        ),
-
-        {
-            type:"doughnut",
-
-            data:{
-
-                labels:data.map(
-                    x=>x.risk_level
-                ),
-
-                datasets:[{
-
-                    data:data.map(
-                        x=>x.total
-                    )
-                }]
-            },
-
-            options:{
-                responsive:true,
-                maintainAspectRatio:false
-            }
-        }
-    );
-}
-
-function renderLocationChart(data){
-
-    destroyChart(locationChart);
-
-    locationChart = new Chart(
-
-        document.getElementById(
-            "locationChart"
-        ),
-
-        {
-            type:"pie",
-
-            data:{
-
-                labels:data.map(
-                    x=>x.location
-                ),
-
-                datasets:[{
-
-                    data:data.map(
-                        x=>x.total
-                    )
-                }]
-            },
-
-            options:{
-                responsive:true,
-                maintainAspectRatio:false
-            }
-        }
-    );
-}
-
-function renderAccountChart(data){
-
-    destroyChart(accountChart);
-
-    accountChart = new Chart(
-
-        document.getElementById(
-            "accountChart"
-        ),
-
-        {
-            type:"polarArea",
-
-            data:{
-
-                labels:data.map(
-                    x=>x.account_name
-                ),
-
-                datasets:[{
-
-                    data:data.map(
-                        x=>x.total
-                    )
-                }]
-            },
-
-            options:{
-                responsive:true,
-                maintainAspectRatio:false
-            }
-        }
-    );
-}
-
-function renderTrainingChart(data){
-
-    destroyChart(trainingChart);
-
-    trainingChart = new Chart(
-
-        document.getElementById(
-            "trainingChart"
-        ),
-
-        {
-            type:"line",
-
-            data:{
-
-                labels:data.map(
-                    x=>x.training_status
-                ),
-
-                datasets:[{
-
-                    label:"Employees",
-
-                    data:data.map(
-                        x=>x.total
-                    ),
-
-                    tension:.4,
-
-                    fill:true
-                }]
-            },
-
-            options:{
-                responsive:true,
-                maintainAspectRatio:false
-            }
-        }
-    );
-}
-
-/* =========================================================
-TABLES
-========================================================= */
-
-function renderLocationTable(data){
-
-    const tbody =
-    document.getElementById(
-        "locationTable"
-    );
-
-    tbody.innerHTML = "";
-
-    data.forEach(row=>{
-
-        tbody.innerHTML += `
-
-        <tr>
-
-            <td>${row.location || "-"}</td>
-
-            <td>${row.total}</td>
-
-            <td>${row.pending}</td>
-
-            <td>${row.completed}</td>
-
-            <td>${row.managers}</td>
-
-            <td>
-                <span class="badge high">
-                    ${row.escalations}
-                </span>
-            </td>
-
-            <td>${row.training}</td>
-
-            <td>${row.itsg_pending}</td>
-
-            <td>${row.admin_pending}</td>
-
-        </tr>
-        `;
-    });
-}
-
-function renderHighRiskTable(data){
-
-    const tbody =
-    document.getElementById(
-        "highRiskTable"
-    );
-
-    tbody.innerHTML = "";
-
-    data.forEach(emp=>{
-
-        tbody.innerHTML += `
-
-        <tr>
-
-            <td>${emp.emp_id}</td>
-
-            <td>${emp.emp_name}</td>
-
-            <td>${emp.account_name || "-"}</td>
-
-            <td>${emp.location || "-"}</td>
-
-            <td>${emp.current_step || "-"}</td>
-
-            <td>${emp.onboarding_status || "-"}</td>
-
-            <td>
-                <span class="badge high">
-                    ${emp.risk_level}
-                </span>
-            </td>
-
-        </tr>
-        `;
-    });
-}
-
-/* =========================================================
-INSIGHTS
-========================================================= */
-
-function renderInsights(data){
-
-    const container =
-    document.getElementById(
-        "insightContainer"
-    );
-
-    container.innerHTML = "";
-
-    data.forEach(ins=>{
-
-        const icon =
-        ins.type === "critical"
-        ? "🚨"
-        : ins.type === "warning"
-        ? "⚠️"
-        : "📊";
-
-        container.innerHTML += `
-
-        <div class="insight glass ${ins.type}">
-
-            <div class="insight-icon">
-                ${icon}
-            </div>
-
-            <div>
-
-                <h2>
-                    ${ins.type.toUpperCase()}
-                </h2>
-
-                <p>
-                    ${ins.message}
-                </p>
-
-            </div>
-
-        </div>
-        `;
-    });
-}
-
-/* =========================================================
-CHATBOT
-========================================================= */
-
-function toggleChat(){
-
-    const panel =
-    document.getElementById(
-        "chatPanel"
-    );
-
-    panel.style.display =
-    panel.style.display === "flex"
-    ? "none"
-    : "flex";
-}
-
-function sendMessage() {
-
-    const input = document.getElementById("chatInput");
-    const text = input.value.trim();
-
-    if (!text) return;
-
-    const body = document.getElementById("chatBody");
-
-    body.innerHTML += `
-        <div class="chat-message user">
-            ${text}
-        </div>
-    `;
-
-    const msg = text.toLowerCase();
-
-    let reply = "📊 Leadership AI processed your request. Analyzing workforce intelligence...";
-
-    /* =========================================================
-       KPI COMMANDS
-    ========================================================= */
-
-    if (msg.includes("pending laptop") || msg.includes("laptop pending")) {
-
-        const count = allEmployees.filter(e =>
-            String(e.current_step || "").toUpperCase().includes("LAPTOP")
-        ).length;
-
-        reply =
-        `💻 LAPTOP ALLOCATION PENDING\n━━━━━━━━━━━━━━━━━━\nTotal Pending Laptop Requests: ${count}\n\nInsight: ITSG workload is ${count > 20 ? "HIGH" : "NORMAL"}`;
-    }
-
-    else if (msg.includes("id pending") || msg.includes("id card")) {
-
-        const count = allEmployees.filter(e =>
-            String(e.current_step || "").toUpperCase().includes("ID_CARD")
-        ).length;
-
-        reply =
-        `🪪 ID CARD ALLOCATION PENDING\n━━━━━━━━━━━━━━━━━━\nTotal Pending ID Cards: ${count}\n\nInsight: Access provisioning delays detected.`;
-    }
-
-    else if (msg.includes("location")) {
-
-        const locationMap = {};
-
-        allEmployees.forEach(e => {
-
-            const loc = e.location || "UNKNOWN";
-
-            locationMap[loc] = (locationMap[loc] || 0) + 1;
-        });
-
-        reply =
-        `📍 LOCATION INSIGHTS\n━━━━━━━━━━━━━━━━━━\n` +
-        Object.entries(locationMap)
-            .map(([k, v]) => `${k}: ${v}`)
-            .join("\n");
-    }
-
-    else if (msg.includes("risk")) {
-
-        const highRisk = allEmployees.filter(e =>
-            (e.risk_level || "").toUpperCase() === "HIGH"
-        ).length;
-
-        reply =
-        `⚠️ RISK ANALYSIS\n━━━━━━━━━━━━━━━━━━\nHigh Risk Employees: ${highRisk}\n\nInsight: Escalation trend requires leadership review.`;
-    }
-
-    else if (msg.includes("escalation")) {
-
-        const escalated = allEmployees.filter(e =>
-            String(e.onboarding_status || "").toUpperCase().includes("ESCALATED")
-        ).length;
-
-        reply =
-        `🚨 ESCALATION SUMMARY\n━━━━━━━━━━━━━━━━━━\nTotal Escalated Cases: ${escalated}\n\nAction: Review SLA breaches immediately.`;
-    }
-
-    else if (msg.includes("training")) {
-
-        const training = allEmployees.filter(e =>
-            String(e.training_status || "").toUpperCase().includes("PENDING")
-        ).length;
-
-        reply =
-        `📚 TRAINING STATUS\n━━━━━━━━━━━━━━━━━━\nPending Training: ${training}\n\nInsight: Compliance risk may increase if delayed.`;
-    }
-
-    else if (msg.includes("summary") || msg.includes("dashboard")) {
-
-        const total = allEmployees.length;
-
-        const pending = allEmployees.filter(e =>
-            String(e.onboarding_status || "").toUpperCase().includes("PENDING")
-        ).length;
-
-        const progress = allEmployees.filter(e =>
-            String(e.onboarding_status || "").toUpperCase().includes("PROGRESS")
-        ).length;
-
-        const completed = allEmployees.filter(e =>
-            String(e.onboarding_status || "").toUpperCase().includes("COMPLETE")
-        ).length;
-
-        reply =
-        `📊 EXECUTIVE DASHBOARD SUMMARY\n━━━━━━━━━━━━━━━━━━\n` +
-        `Total Employees: ${total}\n` +
-        `Pending: ${pending}\n` +
-        `In Progress: ${progress}\n` +
-        `Completed: ${completed}\n\n` +
-        `Insight: Onboarding flow is ${pending > progress ? "backlogged" : "stable"}.`;
-    }
-
-    else if (msg.includes("delay")) {
-
-        const laptopDelay = allEmployees.filter(e =>
-            String(e.current_step || "").includes("LAPTOP")
-        ).length;
-
-        const idDelay = allEmployees.filter(e =>
-            String(e.current_step || "").includes("ID_CARD")
-        ).length;
-
-        reply =
-        `⏱️ DELAY ANALYSIS\n━━━━━━━━━━━━━━━━━━\nLaptop Delays: ${laptopDelay}\nID Card Delays: ${idDelay}\n\nInsight: IT provisioning bottleneck detected.`;
-    }
-
-    else if (msg.includes("account")) {
-
-        const accountMap = {};
-
-        allEmployees.forEach(e => {
-
-            const acc = e.account_name || "UNKNOWN";
-
-            accountMap[acc] = (accountMap[acc] || 0) + 1;
-        });
-
-        reply =
-        `🏢 ACCOUNT DISTRIBUTION\n━━━━━━━━━━━━━━━━━━\n` +
-        Object.entries(accountMap)
-            .map(([k, v]) => `${k}: ${v}`)
-            .join("\n");
-    }
-
-    else {
-
-        /* =========================================================
-           DEFAULT AI INSIGHT MODE
-        ========================================================= */
-
-        const total = allEmployees.length;
-
-        reply =
-        `🧠 AI LEADERSHIP INSIGHT\n━━━━━━━━━━━━━━━━━━\n` +
-        `I analyzed your query: "${text}"\n\n` +
-        `System Status:\n` +
-        `• Total Workforce: ${total}\n\n` +
-        `Try asking:\n` +
-        `• laptop pending\n` +
-        `• id card pending\n` +
-        `• risk analysis\n` +
-        `• location report\n` +
-        `• executive summary`;
-    }
-
-    body.innerHTML += `
-        <div class="chat-message bot">
-            ${reply}
-        </div>
-    `;
-
-    body.scrollTop = body.scrollHeight;
-    input.value = "";
-}
-
-/* =========================================================
-LOGOUT
-========================================================= */
-
-async function logout() {
-
-    try {
-
-        await fetch(
-            "https://intellionboard.onrender.com/api/auth/logout",
-            {
-                method: "POST",
-                credentials: "include"
-            }
-        );
-
-    } catch (err) {
-        console.error("Logout Error:", err);
-    } finally {
-
-        localStorage.clear();
-        sessionStorage.clear();
-
-        window.location.replace(
-            "https://intellionboard.vercel.app/"
-        );
-    }
-}
-   
-/* =========================================================
-INIT
-========================================================= */
-
+/* ── INIT ───────────────────────────────────── */
 loadDashboard();
-
-setInterval(
-    loadDashboard,
-    30000
-);
-
+setInterval(loadDashboard,30000);
 </script>
-
 </body>
 </html>
