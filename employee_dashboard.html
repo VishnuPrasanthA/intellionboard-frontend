@@ -204,7 +204,24 @@ video#videoPlayer{width:100%;height:340px;display:block;object-fit:contain;backg
         <div class="right-panel">
             <div class="video-header">
                 <div class="video-title" id="videoTitle">Select a topic</div>
-                <div class="learning-time" id="watchTimer">00:00</div>
+            </div>
+            <!-- Timer bar — always visible, clearly below title -->
+            <div id="timerBar" style="display:flex;align-items:center;justify-content:space-between;
+                padding:10px 20px;background:linear-gradient(90deg,#ecfdf5,#e0f2fe);
+                border-bottom:1px solid #d1fae5;flex-shrink:0;">
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <span style="font-size:13px;color:#0f766e;font-weight:700;">⏱ Watch Time</span>
+                    <div class="learning-time" id="watchTimer"
+                        style="background:white;border:2px solid #19d3a2;color:#0f766e;
+                        font-size:18px;font-weight:800;padding:6px 18px;border-radius:20px;
+                        font-variant-numeric:tabular-nums;min-width:90px;text-align:center;
+                        box-shadow:0 2px 8px rgba(25,211,162,0.2);">
+                        00:00
+                    </div>
+                </div>
+                <div id="timerStatus" style="font-size:11px;color:#64748b;font-weight:600;">
+                    ⏸ Paused
+                </div>
             </div>
 
             <div class="video-wrap" id="videoWrap">
@@ -255,6 +272,25 @@ if(!emp_id || emp_id==="null" || emp_id==="undefined") window.location.replace("
 const ALL_SECTIONS = ["dashboard","foundation","account","coe","assessment","certifications","analytics"];
 
 function switchSection(name){
+    /* FIX: pause video + clear iframe when navigating tabs */
+    const player = document.getElementById("videoPlayer");
+    if(player && !player.paused){
+        player.pause();
+        pauseTimer();
+    }
+    const spFrame = document.getElementById("spVideoFrame");
+    if(spFrame && spFrame.src){
+        spFrame.src = "";
+        spFrame.style.display = "none";
+        pauseTimer();
+    }
+    /* If modal is open and user navigates away, close it cleanly */
+    const modal = document.getElementById("trainingModal");
+    if(modal && modal.style.display === "flex" && name !== "foundation"
+        && name !== "account" && name !== "coe" && name !== "dashboard"){
+        closeModal();
+    }
+
     ALL_SECTIONS.forEach(s => {
         const el = document.getElementById("sec-"+s);
         if(el) el.style.display = "none";
@@ -317,9 +353,21 @@ function resetTimer(){
 }
 
 // Video event handlers
-function onVideoPlay()  { startTimer(); }
-function onVideoPause() { pauseTimer(); }
-function onVideoEnded() { pauseTimer(); }
+function onVideoPlay()  {
+    startTimer();
+    const s=document.getElementById("timerStatus");
+    if(s) s.innerHTML='<span style="color:#19d3a2;">▶ Recording</span>';
+}
+function onVideoPause() {
+    pauseTimer();
+    const s=document.getElementById("timerStatus");
+    if(s) s.innerHTML='⏸ Paused';
+}
+function onVideoEnded() {
+    pauseTimer();
+    const s=document.getElementById("timerStatus");
+    if(s) s.innerHTML='⏹ Ended';
+}
 
 /* ═══════════════════════════════════════════════
    TRANSCRIPT SYNC
@@ -339,9 +387,14 @@ function onVideoTimeUpdate(){
     const activeEl = tWords[idx]?.el;
     if(activeEl){
         const sec=document.getElementById("transcriptSection");
-        const top=activeEl.offsetTop, sh=sec.clientHeight;
-        if(top<sec.scrollTop+60||top>sec.scrollTop+sh-80)
-            sec.scrollTo({top:top-sh/2,behavior:"smooth"});
+        // Keep highlighted word visible — scroll relative to container
+        const relTop = activeEl.offsetTop - sec.offsetTop;
+        const sh     = sec.clientHeight;
+        const current = sec.scrollTop;
+        // Only scroll if word is outside the middle 60% of visible area
+        if(relTop < current + (sh * 0.2) || relTop > current + (sh * 0.7)){
+            sec.scrollTo({top: Math.max(0, relTop - (sh * 0.4)), behavior:"smooth"});
+        }
     }
 }
 
@@ -389,12 +442,25 @@ async function loadEmployeeProfile(){
 async function loadDashboard(){
     try{
         const r=await fetch(`${BASE_URL}/dashboard-summary/${emp_id}`,{credentials:"include"});
+        if(!r.ok) throw new Error("API "+r.status);
         const d=await r.json();
-        document.getElementById("hoursSpent").textContent         = `${d.hours||0}h ${d.minutes||0}m`;
-        document.getElementById("completedTrainings").textContent  = d.completed||0;
-        document.getElementById("pendingTrainings").textContent    = d.pending||0;
-        document.getElementById("overallProgress").textContent     = `${d.overall_progress||0}%`;
-    }catch(e){console.warn("Dashboard:",e)}
+        const hrs  = d.hours   || d.learning_hours || 0;
+        const mins = d.minutes || 0;
+        // Show real hours from DB
+        document.getElementById("hoursSpent").textContent =
+            hrs===0&&mins===0 ? "0h 0m" : `${hrs}h ${mins}m`;
+        document.getElementById("completedTrainings").textContent = d.completed||0;
+        document.getElementById("pendingTrainings").textContent   = d.pending||0;
+        document.getElementById("overallProgress").textContent    = `${d.overall_progress||0}%`;
+    }catch(e){
+        console.warn("Dashboard summary error:",e);
+        // Fallback: calculate from current session
+        const sessionMins = Math.floor(timerSeconds/60);
+        if(sessionMins>0){
+            document.getElementById("hoursSpent").textContent =
+                `${Math.floor(sessionMins/60)}h ${sessionMins%60}m`;
+        }
+    }
 }
 
 /* ═══════════════════════════════════════════════
@@ -593,20 +659,56 @@ function playTopic(index, reviewMode=false){
         document.getElementById("watchTimer").textContent=`${m}:${s}`;
     }
 
-    /* Load video */
-    if(topic.video_url && topic.video_url.trim()!==""){
-        player.pause();
-        player.src=topic.video_url;
-        player.preload="metadata";
-        player.load();
-        player.play().catch(err=>{
-            if(err.name!=="NotAllowedError") console.warn("Video play:",err);
-        });
-        document.getElementById("videoWrap").style.display="block";
+    /* Load video — SharePoint/iframe aware */
+    const videoWrap = document.getElementById("videoWrap");
+    const videoUrl  = (topic.video_url||"").trim();
+
+    if(videoUrl){
+        const isSharePoint = videoUrl.includes("sharepoint.com") ||
+                             videoUrl.includes(":v:") ||
+                             videoUrl.includes("microsoftonline") ||
+                             videoUrl.includes("sharepoint") ||
+                             videoUrl.includes("stream.microsoft");
+
+        if(isSharePoint){
+            /* SharePoint sharing links → embed as iframe */
+            player.pause();
+            player.removeAttribute("src");
+            player.style.display = "none";
+
+            let spFrame = document.getElementById("spVideoFrame");
+            if(!spFrame){
+                spFrame = document.createElement("iframe");
+                spFrame.id = "spVideoFrame";
+                spFrame.style.cssText = "width:100%;aspect-ratio:16/9;border:none;border-radius:14px;background:#000;";
+                spFrame.allow = "autoplay; fullscreen";
+                spFrame.allowFullscreen = true;
+                videoWrap.insertBefore(spFrame, player);
+            }
+            spFrame.style.display = "block";
+            spFrame.src = videoUrl;
+            videoWrap.style.display = "block";
+
+        } else {
+            /* Normal MP4 → use <video> tag */
+            let spFrame = document.getElementById("spVideoFrame");
+            if(spFrame) spFrame.style.display = "none";
+            player.style.display = "block";
+            player.pause();
+            player.src = videoUrl;
+            player.preload = "metadata";
+            player.load();
+            player.play().catch(err=>{
+                if(err.name!=="NotAllowedError") console.warn("Video play:", err);
+            });
+            videoWrap.style.display = "block";
+        }
     } else {
         player.pause();
         player.removeAttribute("src");
-        player.load();
+        player.style.display = "block";
+        let spFrame = document.getElementById("spVideoFrame");
+        if(spFrame){spFrame.style.display="none"; spFrame.src="";}
         document.getElementById("videoWrap").style.display="block";
     }
 
@@ -693,8 +795,14 @@ async function completeTopic(){
                         font-family:'Poppins',sans-serif">🎓 Certificate</button>`;
                 }catch(_){}
             }
-            /* DEF-015 FIX: refresh dashboard hours after completion */
-            setTimeout(()=>{ loadDashboard(); loadTrainings(); },500);
+            /* Refresh dashboard stats + charts after completion */
+            setTimeout(async ()=>{
+                await loadDashboard();
+                await loadTrainings();
+                // Also refresh hours chart
+                const r2=await fetch(`${BASE_URL}/employee-trainings/${emp_id}`,{credentials:"include"}).catch(()=>null);
+                if(r2&&r2.ok){ const t=await r2.json(); renderHoursChart(t); }
+            },800);
         }
     }catch(e){
         console.error("Complete:",e);
@@ -744,20 +852,52 @@ function loadCertificates(trainings){
         </div>`).join("")+`</div>`;
 }
 
-/* ANALYTICS CHARTS */
+/* ANALYTICS CHARTS — real data from API */
 function renderCharts(trainings){
-    const bctx=document.getElementById("analyticsChart");
-    if(bctx){
-        if(bctx._ci) bctx._ci.destroy();
-        bctx._ci=new Chart(bctx,{type:"bar",data:{labels:["Mon","Tue","Wed","Thu","Fri","Sat","Sun"],datasets:[{label:"Hours",data:[1,2,1.5,3,2,0.5,0],backgroundColor:"rgba(25,211,162,0.7)",borderRadius:8}]},options:{responsive:true,plugins:{legend:{display:false}}}});
-    }
+    // Completion doughnut — from training statuses
     const dctx=document.getElementById("completionChart");
     if(dctx){
         const done=trainings.filter(t=>(t.status||"").toUpperCase()==="COMPLETED").length;
-        const inp=trainings.filter(t=>(t.status||"").toUpperCase()==="IN_PROGRESS").length;
-        const pend=trainings.length-done-inp;
+        const inp =trainings.filter(t=>(t.status||"").toUpperCase()==="IN_PROGRESS").length;
+        const pend=Math.max(0,trainings.length-done-inp);
         if(dctx._ci) dctx._ci.destroy();
-        dctx._ci=new Chart(dctx,{type:"doughnut",data:{labels:["Completed","In Progress","Pending"],datasets:[{data:[done,inp,Math.max(0,pend)],backgroundColor:["#19d3a2","#fbbf24","#e2e8f0"]}]},options:{responsive:true}});
+        dctx._ci=new Chart(dctx,{type:"doughnut",
+            data:{labels:["Completed","In Progress","Pending"],
+                datasets:[{data:[done,inp,pend],
+                    backgroundColor:["#19d3a2","#fbbf24","#e2e8f0"]}]},
+            options:{responsive:true,plugins:{legend:{position:"bottom"}}}});
+    }
+    // Bar chart — real hours per training from API
+    renderHoursChart(trainings);
+}
+
+async function renderHoursChart(trainings){
+    try{
+        const r=await fetch(`${BASE_URL}/learning-analytics/${emp_id}`,{credentials:"include"});
+        const data=await r.json();
+        const bctx=document.getElementById("analyticsChart");
+        if(!bctx) return;
+        if(bctx._ci) bctx._ci.destroy();
+        if(Array.isArray(data)&&data.length>0){
+            const labels=data.map(d=>d.training.length>20?d.training.substring(0,18)+"…":d.training);
+            const hours =data.map(d=>parseFloat(d.hours||0).toFixed(1));
+            bctx._ci=new Chart(bctx,{type:"bar",
+                data:{labels,datasets:[{label:"Hours Spent",data:hours,
+                    backgroundColor:"rgba(25,211,162,0.75)",borderRadius:8,
+                    borderColor:"#19d3a2",borderWidth:1.5}]},
+                options:{responsive:true,
+                    plugins:{legend:{display:false},
+                        tooltip:{callbacks:{label:ctx=>`${ctx.raw}h`}}},
+                    scales:{x:{ticks:{font:{size:10},maxRotation:35}},
+                            y:{beginAtZero:true,ticks:{callback:v=>v+"h"}}}}});
+        } else {
+            // No data yet — show placeholder
+            bctx._ci=new Chart(bctx,{type:"bar",
+                data:{labels:["No data yet"],datasets:[{data:[0],backgroundColor:"#e2e8f0"}]},
+                options:{responsive:true,plugins:{legend:{display:false}}}});
+        }
+    }catch(e){
+        console.warn("Hours chart:",e);
     }
 }
 
@@ -767,6 +907,10 @@ function renderCharts(trainings){
 function closeModal(){
     const player=document.getElementById("videoPlayer");
     player.pause(); player.removeAttribute("src"); player.load();
+    /* Clear SharePoint iframe too */
+    const spFrame=document.getElementById("spVideoFrame");
+    if(spFrame){spFrame.src=""; spFrame.style.display="none";}
+    player.style.display="block";
     pauseTimer();
     tWords=[]; tLastIdx=-1;
     if(currentTraining&&currentTopicIndex>=0){
