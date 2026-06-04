@@ -353,21 +353,74 @@ function resetTimer(){
     document.getElementById("watchTimer").textContent = "00:00";
 }
 
+// ── AUTO-SAVE: persist watch seconds to DB every 30s while playing ──
+let autoSaveInterval = null;
+
+async function saveWatchProgress(){
+    if(!currentTraining || currentTopicIndex < 0 || timerSeconds < 5) return;
+    const topic = currentTopics[currentTopicIndex];
+    if(!topic) return;
+    try{
+        await fetch(`${BASE_URL}/track-topic-progress`,{
+            method:"POST", credentials:"include",
+            headers:{"Content-Type":"application/json"},
+            body:JSON.stringify({
+                emp_id,
+                training_name: currentTraining,
+                sequence:      topic.sequence,
+                topic_name:    topic.topic_name,
+                watch_seconds: timerSeconds,
+                completed:     false   // just saving time, not marking complete
+            })
+        });
+        // Refresh dashboard hours card immediately
+        refreshHoursCard();
+    }catch(e){ console.warn("Auto-save:", e); }
+}
+
+async function refreshHoursCard(){
+    try{
+        const r = await fetch(`${BASE_URL}/dashboard-summary/${emp_id}`,{credentials:"include"});
+        if(!r.ok) throw new Error(r.status);
+        const d = await r.json();
+        const hrs  = d.hours  || d.learning_hours || 0;
+        const mins = d.minutes || 0;
+        const el = document.getElementById("hoursSpent");
+        if(el) el.textContent = `${hrs}h ${mins}m`;
+    }catch(e){
+        // Fallback: show session time directly
+        const el = document.getElementById("hoursSpent");
+        if(el && timerSeconds > 0){
+            const totalMins = Math.floor(timerSeconds/60);
+            el.textContent = `${Math.floor(totalMins/60)}h ${totalMins%60}m`;
+        }
+    }
+}
+
 // Video event handlers
 function onVideoPlay()  {
     startTimer();
     const s=document.getElementById("timerStatus");
     if(s) s.innerHTML='<span style="color:#19d3a2;">▶ Recording</span>';
+    // Start auto-save every 30 seconds
+    if(autoSaveInterval) clearInterval(autoSaveInterval);
+    autoSaveInterval = setInterval(saveWatchProgress, 30000);
 }
 function onVideoPause() {
     pauseTimer();
     const s=document.getElementById("timerStatus");
     if(s) s.innerHTML='⏸ Paused';
+    // Save on pause
+    saveWatchProgress();
+    if(autoSaveInterval){ clearInterval(autoSaveInterval); autoSaveInterval=null; }
 }
 function onVideoEnded() {
     pauseTimer();
     const s=document.getElementById("timerStatus");
     if(s) s.innerHTML='⏹ Ended';
+    // Save on end
+    saveWatchProgress();
+    if(autoSaveInterval){ clearInterval(autoSaveInterval); autoSaveInterval=null; }
 }
 
 /* ═══════════════════════════════════════════════
@@ -860,23 +913,65 @@ async function renderHoursChart(trainings){
         const bctx=document.getElementById("analyticsChart");
         if(!bctx) return;
         if(bctx._ci) bctx._ci.destroy();
-        if(Array.isArray(data)&&data.length>0){
-            const labels=data.map(d=>d.training.length>20?d.training.substring(0,18)+"…":d.training);
-            const hours =data.map(d=>parseFloat(d.hours||0).toFixed(1));
+
+        // Merge API data with current session time (in case not saved yet)
+        let chartData = Array.isArray(data) ? [...data] : [];
+
+        // If current training has session time but not yet in API data, add it
+        if(currentTraining && timerSeconds > 10){
+            const existing = chartData.find(d=>d.training===currentTraining);
+            const sessionHours = timerSeconds/3600;
+            if(existing){
+                existing.hours = Math.max(parseFloat(existing.hours||0), sessionHours);
+            } else {
+                chartData.push({training:currentTraining, hours:sessionHours});
+            }
+        }
+
+        if(chartData.length>0 && chartData.some(d=>parseFloat(d.hours||0)>0)){
+            const labels=chartData.map(d=>d.training.length>22?d.training.substring(0,20)+"…":d.training);
+            const hours =chartData.map(d=>{
+                const h=parseFloat(d.hours||0);
+                return h>0 ? parseFloat(h.toFixed(2)) : 0;
+            });
             bctx._ci=new Chart(bctx,{type:"bar",
-                data:{labels,datasets:[{label:"Hours Spent",data:hours,
-                    backgroundColor:"rgba(25,211,162,0.75)",borderRadius:8,
-                    borderColor:"#19d3a2",borderWidth:1.5}]},
+                data:{labels,datasets:[{
+                    label:"Hours Spent",data:hours,
+                    backgroundColor:hours.map(h=>h>0?"rgba(25,211,162,0.8)":"rgba(226,232,240,0.6)"),
+                    borderRadius:10,borderColor:"#19d3a2",borderWidth:1.5
+                }]},
                 options:{responsive:true,
                     plugins:{legend:{display:false},
-                        tooltip:{callbacks:{label:ctx=>`${ctx.raw}h`}}},
-                    scales:{x:{ticks:{font:{size:10},maxRotation:35}},
-                            y:{beginAtZero:true,ticks:{callback:v=>v+"h"}}}}});
+                        tooltip:{callbacks:{label:ctx=>{
+                            const h=Math.floor(ctx.raw);
+                            const m=Math.round((ctx.raw-h)*60);
+                            return m>0?`${h}h ${m}m`:`${h}h`;
+                        }}}},
+                    scales:{
+                        x:{ticks:{font:{size:10},maxRotation:35}},
+                        y:{beginAtZero:true,ticks:{callback:v=>{
+                            const h=Math.floor(v);
+                            const m=Math.round((v-h)*60);
+                            return m>0?`${h}h${m}m`:`${h}h`;
+                        }}}
+                    }}});
         } else {
-            // No data yet — show placeholder
+            // Show training names with 0 bars — at least labels are real
+            const labels=(Array.isArray(trainings)&&trainings.length>0)
+                ? trainings.map(t=>t.name.length>20?t.name.substring(0,18)+"…":t.name)
+                : ["No trainings"];
             bctx._ci=new Chart(bctx,{type:"bar",
-                data:{labels:["No data yet"],datasets:[{data:[0],backgroundColor:"#e2e8f0"}]},
-                options:{responsive:true,plugins:{legend:{display:false}}}});
+                data:{labels,datasets:[{
+                    label:"Hours Spent",
+                    data:new Array(labels.length).fill(0),
+                    backgroundColor:"rgba(226,232,240,0.8)",borderRadius:8
+                }]},
+                options:{responsive:true,
+                    plugins:{legend:{display:false},
+                        title:{display:true,text:"Start watching to track hours",
+                            color:"#94a3b8",font:{size:12}}},
+                    scales:{y:{beginAtZero:true,max:1,
+                        ticks:{callback:v=>v+"h"}}}}});
         }
     }catch(e){
         console.warn("Hours chart:",e);
@@ -888,7 +983,12 @@ async function renderHoursChart(trainings){
 ═══════════════════════════════════════════════ */
 function closeModal(){
     const player=document.getElementById("videoPlayer");
-    player.pause(); player.removeAttribute("src"); player.load();
+    player.pause();
+    // ── Save watch time before closing ──
+    if(autoSaveInterval){ clearInterval(autoSaveInterval); autoSaveInterval=null; }
+    saveWatchProgress();   // fire-and-forget, non-blocking
+    setTimeout(refreshHoursCard, 1200);  // refresh card after save completes
+    player.removeAttribute("src"); player.load();
     player.style.display="block";
     document.getElementById("videoWrap").style.display="block";
     pauseTimer();
