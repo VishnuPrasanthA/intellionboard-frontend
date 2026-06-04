@@ -93,9 +93,30 @@ body::before{
 .btn:hover{transform:translateY(-3px) scale(1.02);box-shadow:var(--shadow-md);}
 .btn-refresh{background:linear-gradient(135deg,#3ea6ff,#73c7ff);}
 .btn-logout{background:linear-gradient(135deg,#ff6767,#ff8f7d);}
-.btn-allocate{background:linear-gradient(135deg,var(--primary),#58ffd8);font-size:11px;height:34px;padding:0 14px;border-radius:10px;}
-.btn-allocate:disabled,.btn-done{background:linear-gradient(135deg,#a8f0d8,#c7faea);color:#0a6e50;height:34px;padding:0 14px;border-radius:10px;font-size:11px;cursor:not-allowed;}
-.btn-ticket{background:linear-gradient(135deg,var(--purple),#c4b5fd);font-size:11px;height:34px;padding:0 14px;border-radius:10px;}
+.btn-allocate{
+    background:linear-gradient(135deg,var(--primary),#58ffd8);
+    color:white;font-size:11px;font-weight:700;
+    height:32px;padding:0 14px;border-radius:20px;
+    border:none;cursor:pointer;white-space:nowrap;
+    box-shadow:0 4px 12px rgba(25,211,162,.30);
+    transition:var(--transition);
+}
+.btn-allocate:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(25,211,162,.45);}
+.btn-done{
+    background:#e8fdf5;color:#0a6e50;
+    font-size:11px;font-weight:700;
+    height:32px;padding:0 14px;border-radius:20px;
+    border:1.5px solid #86efac;cursor:not-allowed;white-space:nowrap;
+}
+.btn-ticket{
+    background:linear-gradient(135deg,var(--purple),#c4b5fd);
+    color:white;font-size:11px;font-weight:700;
+    height:32px;padding:0 14px;border-radius:20px;
+    border:none;cursor:pointer;white-space:nowrap;
+    box-shadow:0 4px 12px rgba(155,109,255,.25);
+    transition:var(--transition);
+}
+.btn-ticket:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(155,109,255,.40);}
 
 /* ── AI PANEL ── */
 .ai-panel{
@@ -508,14 +529,14 @@ function renderTable(data){
             </td>
             <td><span class="${riskClass}">${risk}</span></td>
             <td>
-                <div class="action-groups">
+                <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-start;">
                     ${isAlloc
-                        ?`<button class="btn btn-done" disabled>✅ Allocated</button>`
-                        :`<button class="btn btn-allocate" onclick="allocateLaptop('${safe(emp.emp_id)}','${safe(emp.emp_name,"Employee")}')">💻 Allocate</button>`
+                        ?`<button class="btn-done" disabled>✅ Allocated</button>`
+                        :`<button class="btn-allocate" onclick="allocateLaptop('${safe(emp.emp_id)}','${safe(emp.emp_name,'Employee')}')">💻 Allocate Laptop</button>`
                     }
                     ${emp.ticket_id
-                        ?`<button class="btn btn-ticket" style="margin-top:6px;" onclick="viewTicket('${safe(emp.emp_id)}')">🎫 Ticket</button>`
-                        :""
+                        ?`<button class="btn-ticket" onclick="viewTicket('${safe(emp.emp_id)}')">🎫 View Ticket</button>`
+                        :``
                     }
                 </div>
             </td>
@@ -532,21 +553,29 @@ async function allocateLaptop(empId, empName){
     try{
         const res=await fetch(`${API_BASE}/itsg/allocate/${empId}`,{
             method:"PUT",credentials:"include",
-            headers:{"Content-Type":"application/json"}
+            headers:{"Content-Type":"application/json"},
+            body:JSON.stringify({})
         });
-        const json=await res.json();
+
+        let json={};
+        try{ json=await res.json(); }catch(_){}
+
         if(res.ok&&json.success){
             showToast(`✅ Laptop allocated to ${empName}`,"#19d3a2");
-            // Update local state immediately
             const emp=allEmployees.find(e=>String(e.emp_id)===String(empId));
-            if(emp){emp.ticket_status="CLOSED";emp.ticket_id=json.ticket_id||emp.ticket_id;}
+            if(emp){
+                emp.ticket_status="CLOSED";
+                emp.ticket_id=json.ticket_id||emp.ticket_id||"LTKT-NEW";
+            }
             renderAll();
         } else {
-            showToast("⚠️ "+(json.message||"Allocation failed"),"#f39c12");
+            const msg=json.message||"Allocation failed";
+            showToast("⚠️ "+msg,"#f39c12");
+            console.error("Allocate failed:",res.status, json);
         }
     }catch(e){
-        console.error(e);
-        showToast("❌ Could not connect to server","#ff6b6b");
+        console.error("Allocate network error:",e);
+        showToast("❌ Network error — check connection","#ff6b6b");
     }
 }
 
