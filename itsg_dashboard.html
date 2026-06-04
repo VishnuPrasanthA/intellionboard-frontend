@@ -147,15 +147,15 @@ body::before{
 .table-wrap{width:100%;overflow-x:auto;border-radius:20px;border:1px solid rgba(230,237,245,.7);background:white;}
 .table-wrap::-webkit-scrollbar{height:8px;}
 .table-wrap::-webkit-scrollbar-thumb{background:linear-gradient(90deg,var(--primary),#58ffd9);border-radius:30px;}
-table{width:100%;min-width:1000px;border-collapse:collapse;background:white;}
+table{width:100%;min-width:0;border-collapse:collapse;background:white;table-layout:fixed;}
 thead{position:sticky;top:0;z-index:10;background:linear-gradient(180deg,#fbfdff,#f2f7fd);}
-th{padding:16px;text-align:left;font-size:11px;font-weight:900;color:#55657b;white-space:nowrap;border-bottom:1px solid #edf2f7;}
-td{padding:14px 16px;border-bottom:1px solid #eef3f8;font-size:12px;white-space:nowrap;}
+th{padding:12px 14px;text-align:left;font-size:11px;font-weight:900;color:#55657b;white-space:normal;border-bottom:1px solid #edf2f7;}
+td{padding:12px 14px;border-bottom:1px solid #eef3f8;font-size:12px;white-space:normal;word-break:break-word;}
 tbody tr{transition:var(--transition);}
 tbody tr:hover{background:linear-gradient(90deg,rgba(25,211,162,.04),rgba(89,184,255,.03));transform:scale(1.001);}
 .emp-cell{display:flex;flex-direction:column;gap:3px;}
 .emp-cell b{font-size:13px;color:#13253a;}
-.emp-cell small{color:var(--muted);font-size:11px;}
+.emp-cell small{color:var(--muted);font-size:11px;white-space:normal;word-break:break-all;}
 
 /* ── BADGES ── */
 .badge{display:inline-flex;align-items:center;justify-content:center;padding:5px 11px;border-radius:30px;font-size:10px;font-weight:900;}
@@ -169,11 +169,12 @@ tbody tr:hover{background:linear-gradient(90deg,rgba(25,211,162,.04),rgba(89,184
 .badge-high {color:#ff5f5f;font-weight:900;font-size:11px;}
 
 /* ── PROGRESS BAR ── */
-.prog-wrap{width:110px;height:10px;background:#e9eef5;border-radius:30px;overflow:hidden;}
+.prog-wrap{width:100%;max-width:100px;height:10px;background:#e9eef5;border-radius:30px;overflow:hidden;}
 .prog-fill{height:100%;background:linear-gradient(90deg,var(--primary),#58ffd8);border-radius:30px;}
 
 /* ── ACTION BUTTONS ── */
-.action-group{display:flex;gap:6px;align-items:center;}
+.action-group{display:flex;flex-direction:column;gap:5px;align-items:flex-start;}
+.action-groups{display:flex;flex-direction:column;gap:5px;align-items:flex-start;}
 
 /* ── EMPTY / TOAST ── */
 .empty-state{text-align:center;padding:48px;color:var(--muted);}
@@ -450,10 +451,20 @@ function renderTable(data){
         return;
     }
 
-    let html=`<table><thead><tr>
-        <th>Employee</th><th>Status</th><th>Current Step</th>
-        <th>Ticket</th><th>Progress</th><th>Risk</th><th>Actions</th>
-    </tr></thead><tbody>`;
+    let html=`<table>
+        <colgroup>
+            <col style="width:24%">
+            <col style="width:16%">
+            <col style="width:16%">
+            <col style="width:14%">
+            <col style="width:12%">
+            <col style="width:7%">
+            <col style="width:11%">
+        </colgroup>
+        <thead><tr>
+            <th>Employee</th><th>Status</th><th>Current Step</th>
+            <th>Ticket</th><th>Progress</th><th>Risk</th><th>Actions</th>
+        </tr></thead><tbody>`;
 
     data.forEach(emp=>{
         const tStatus=(emp.ticket_status||"OPEN").toUpperCase();
