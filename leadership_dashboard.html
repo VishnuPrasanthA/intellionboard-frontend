@@ -748,7 +748,7 @@ function sendMessage(){
             Completed: <b>${s.completed||0}</b><br>
             Completion Rate: <b>${rate}%</b><br>
             Avg Progress: <b>${s.avg_progress||0}%</b><br><br>
-            Status: ${rate>=75?"🟢 On track":"rate>=50?"🟡 Monitor":"🔴 Below target"}`);
+            Status: ${rate>=75?"🟢 On track":rate>=50?"🟡 Monitor":"🔴 Below target"}`);
         return;
     }
     if(msg.includes("workflow locked")){
