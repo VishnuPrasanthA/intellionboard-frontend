@@ -644,53 +644,95 @@ async function suStep2(){
    LOGIN
 ═══════════════════════════════════════ */
 async function login(){
-    const btn=document.getElementById("loginBtn");
+    const btn = document.getElementById("loginBtn");
     if(btn.disabled) return;
+
     try{
         hideAlerts();
+
         const email        = document.getElementById("loginEmail").value.trim().toLowerCase();
         const password     = document.getElementById("loginPassword").value;
         const selectedRole = document.getElementById("loginRole").value.trim().toUpperCase();
-        if(!email||!password||!selectedRole){
-            showError("loginError","Please fill all fields including your role."); return;
-        }
-        if(!isValidCorporateEmail(email)){
-            showError("loginError","Only @infinite.com email addresses are allowed."); return;
-        }
-        btn.disabled=true;btn.textContent="Signing in…";
-        const response=await fetch(`${API_BASE}/api/auth/login`,{
-            method:"POST",credentials:"include",
-            headers:{"Content-Type":"application/json"},
-            body:JSON.stringify({email,password,selected_role:selectedRole})
-        });
-        let result;
-        try{result=await response.json()}
-        catch(e){showError("loginError","Invalid backend response.");return}
-        if(!response.ok||!result.success){
-            const code=result.error_code||"";
-            if(code==="WRONG_PASSWORD")   showError("loginError","Incorrect password. Please try again.");
-            else if(code==="USER_NOT_FOUND") showError("loginError","No account found with this email address.");
-            else if(code==="ROLE_MISMATCH")  showError("loginError","Invalid role selected. Please select your correct role and try again.");
-            else if(code==="ACCOUNT_SUSPENDED") showError("loginError","Your account has been suspended. Contact IntelliOnboard-Admin@infinite.com.");
-            else showError("loginError",result.message||"Incorrect password. Please try again.");
+
+        // ✅ Validation
+        if(!email || !password || !selectedRole){
+            showError("loginError","Please fill all fields including your role.");
             return;
         }
-        const backendRole=String(result.user?.role||"").trim().toUpperCase();
-        localStorage.setItem("token",         result.token         ||"session-active");
-        localStorage.setItem("user_email",    result.user?.email   ||"");
+
+        if(!isValidCorporateEmail(email)){
+            showError("loginError","Only @infinite.com email addresses are allowed.");
+            return;
+        }
+
+        // ✅ Disable button
+        btn.disabled = true;
+        btn.textContent = "Signing in…";
+
+        const response = await fetch(`${API_BASE}/api/auth/login`,{
+            method:"POST",
+            credentials:"include",
+            headers:{"Content-Type":"application/json"},
+            body:JSON.stringify({email, password, selected_role:selectedRole})
+        });
+
+        let result;
+        try {
+            result = await response.json();
+        } catch(e){
+            showError("loginError","Invalid backend response.");
+
+            // ✅ FIX: re-enable button
+            btn.disabled = false;
+            btn.textContent = "Login to Dashboard";
+            return;
+        }
+
+        // ✅ Handle errors
+        if(!response.ok || !result.success){
+
+            const code = result.error_code || "";
+
+            if(code === "WRONG_PASSWORD")
+                showError("loginError","Incorrect password. Please try again.");
+            else if(code === "USER_NOT_FOUND")
+                showError("loginError","No account found with this email address.");
+            else if(code === "ROLE_MISMATCH")
+                showError("loginError","Invalid role selected. Please select your correct role and try again.");
+            else if(code === "ACCOUNT_SUSPENDED")
+                showError("loginError","Your account has been suspended. Contact IntelliOnboard-Admin@infinite.com.");
+            else
+                showError("loginError", result.message || "Login failed.");
+
+            // ✅ FIX: re-enable button HERE
+            btn.disabled = false;
+            btn.textContent = "Login to Dashboard";
+
+            return;
+        }
+
+        // ✅ SUCCESS
+        const backendRole = String(result.user?.role || "").trim().toUpperCase();
+
+        localStorage.setItem("token",         result.token         || "session-active");
+        localStorage.setItem("user_email",    result.user?.email   || "");
         localStorage.setItem("user_role",     backendRole);
-        localStorage.setItem("user_location", result.user?.location||"");
-        localStorage.setItem("user_name",     result.user?.name    ||"");
-        localStorage.setItem("emp_id",        result.user?.emp_id  ||"");
-        localStorage.setItem("user_id",       result.user?.id      ||"");
+        localStorage.setItem("user_location", result.user?.location|| "");
+        localStorage.setItem("user_name",     result.user?.name    || "");
+        localStorage.setItem("emp_id",        result.user?.emp_id  || "");
+        localStorage.setItem("user_id",       result.user?.id      || "");
+
         redirectByRole(backendRole);
+
     } catch(e){
+
         showError("loginError","Server not reachable. Check backend.");
-        document.getElementById("loginBtn").disabled=false;
-        document.getElementById("loginBtn").textContent="Login to Dashboard";
+
+        // ✅ FIX: re-enable button in catch
+        btn.disabled = false;
+        btn.textContent = "Login to Dashboard";
     }
 }
-
 function redirectByRole(role){
     role=String(role||"").trim().toUpperCase();
     if(role==="EMPLOYEE"){handleEmployeeRouting();return}
