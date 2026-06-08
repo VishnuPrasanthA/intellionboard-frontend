@@ -702,28 +702,56 @@ function redirectByRole(role){
 async function handleEmployeeRouting(){
     try{
         const emp_id=localStorage.getItem("emp_id");
+
+        console.log("EMP ID:", emp_id);  // ✅ DEBUG
+
         if(!emp_id||emp_id==="null"||emp_id==="undefined"){
-            showError("loginError","Session expired. Please login again.");return;
+            showError("loginError","Session expired. Please login again.");
+            return;
         }
-        const res=await fetch(`${API_BASE}/api/auth/employee/${emp_id}`,{
-            method:"GET",headers:{"Content-Type":"application/json"},credentials:"include"
+
+        const apiUrl = `${API_BASE}/api/auth/employee/${emp_id}`;
+        console.log("Calling API:", apiUrl);  // ✅ DEBUG
+
+        const res=await fetch(apiUrl,{
+            method:"GET",
+            headers:{"Content-Type":"application/json"},
+            credentials:"include"
         });
-        if(!res.ok){showError("loginError","Employee data fetch failed. Please try again.");return}
+
+        console.log("Response status:", res.status);  // ✅ DEBUG
+
         const response=await res.json();
-        if(!response.success){showError("loginError",response.message||"Employee not found in system.");return}
+        console.log("Response data:", response);  // ✅ DEBUG
+
+        if(!res.ok){
+            showError("loginError","Employee data fetch failed.");
+            return;
+        }
+
+        if(!response.success){
+            showError("loginError",response.message||"Employee not found in system.");
+            return;
+        }
+
         const employee=response.employee||{};
         const selectedCOE=response.selected_coe||employee.selected_coe||"";
-        localStorage.setItem("emp_id",   response.emp_id||emp_id);
-        localStorage.setItem("emp_name", employee.emp_name||employee.name||"Employee");
+
+        localStorage.setItem("emp_id",response.emp_id||emp_id);
+        localStorage.setItem("emp_name",employee.emp_name||employee.name||"Employee");
         localStorage.setItem("emp_email",employee.email||"");
-        localStorage.setItem("coe",      selectedCOE);
-        window.location.href=(selectedCOE&&selectedCOE!=="null"&&selectedCOE!=="")?
-            "employee_dashboard.html":"bot.html";
+        localStorage.setItem("coe",selectedCOE);
+
+        window.location.href =
+            (selectedCOE && selectedCOE !== "null" && selectedCOE !== "")
+            ? "employee_dashboard.html"
+            : "bot.html";
+
     } catch(e){
+        console.error("Routing error:", e);   // ✅ DEBUG
         showError("loginError","Employee routing failed. Please try again.");
     }
 }
-
 async function validateSession(){
     try{
         const response=await fetch(`${API_BASE}/api/auth/validate-session`,{
