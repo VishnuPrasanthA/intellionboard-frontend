@@ -327,6 +327,28 @@ let timerRunning  = false;
 // Transcript sync
 let tWords   = [];
 let tLastIdx = -1;
+(async () => {
+    try {
+        const res = await fetch(`${BASE_URL}/api/auth/validate-session`, {
+            credentials: "include"
+        });
+
+        const data = await res.json();
+
+        if (!data.success) {
+            // ✅ Session invalid → force logout
+            localStorage.clear();
+            sessionStorage.clear();
+            window.location.href = "https://intellionboard.vercel.app/";
+        }
+
+    } catch (e) {
+        // ✅ API failed → treat as logout
+        localStorage.clear();
+        sessionStorage.clear();
+        window.location.href = "https://intellionboard.vercel.app/";
+    }
+})();
 
 /* ═══════════════════════════════════════════════
    DEF-007 FIX — TIMER
@@ -1016,9 +1038,25 @@ document.addEventListener("DOMContentLoaded",()=>{
 
 /* LOGOUT */
 async function logout(){
-    try{ await fetch(`${BASE_URL}/api/auth/logout`,{method:"POST",credentials:"include"}); }catch(_){}
-    localStorage.clear(); sessionStorage.clear();
-    window.location.replace("https://intellionboard.vercel.app/");
+    try{
+        await fetch(`${BASE_URL}/api/auth/logout`, {
+            method:"POST",
+            credentials:"include"
+        });
+    }catch(e){}
+
+    // ✅ clear everything
+    localStorage.clear();
+    sessionStorage.clear();
+
+    // ✅ clear cookies (important for ngrok)
+    document.cookie.split(";").forEach(c => {
+        document.cookie = c.trim().split("=")[0] +
+            "=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/";
+    });
+
+    // ✅ force reload to login page
+    window.location.href = "https://intellionboard.vercel.app/";
 }
 </script>
 </body>
