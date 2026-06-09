@@ -1008,7 +1008,7 @@ window.addEventListener("load", async () => {
 // ── LOGOUT ───────────────────────────────────────────────
 async function logout() {
     await fetch(`${API}/api/auth/logout`, { method: "POST", credentials: "include" });
-    window.location.href = "https://intellionboard.vercel.app/";
+    window.location.href = "https://intellionboard.vercel.app/?manual=true";
 }
 
 // ── SECTION NAVIGATION ───────────────────────────────────
