@@ -1542,7 +1542,7 @@ async function callAPI(
 ) {
 
     const {
-        timeout = 15000,
+        timeout = 60000, // increased: SMTP can take 30-60s
         retry = 0
     } = options;
 
