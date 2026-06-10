@@ -354,7 +354,7 @@ input:focus,select:focus{
 </div>
 
 <script>
-const API_BASE = "https://intellionboard.onrender.com";
+const API_BASE = "http://127.0.0.1:5332";
 
 const ROLE_ROUTES = {
     "INTELLIONBOARD_ADMIN": "admin_portal.html",
@@ -369,6 +369,15 @@ const ROLE_ROUTES = {
 
 const ADMIN_ONLY_ROLES    = new Set(["INTELLIONBOARD_ADMIN","ADMIN","ITSG","HEALTHCARE_PMO","PMO"]);
 const SELF_REGISTER_ROLES = new Set(["EMPLOYEE","REPORTING_MANAGER","LEADERSHIP"]);
+
+// ── ngrok bypass: add header to all backend fetch calls ──
+function apiFetch(url, opts = {}) {
+    opts.headers = Object.assign({
+        "ngrok-skip-browser-warning": "true"
+    }, opts.headers || {});
+    opts.credentials = opts.credentials || "include";
+    return fetch(url, opts);
+}
 
 // Signup state
 let _suEmail = "", _suEmpId = "", _suPassword = "", _suRole = "";
@@ -531,7 +540,7 @@ async function suStep1(){
     btn.disabled=true;btn.textContent="Verifying & sending code…";
 
     try{
-        const res  = await fetch(`${API_BASE}/api/auth/send-signup-otp`,{
+        const res  = await apiFetch(`${API_BASE}/api/auth/send-signup-otp`,{
             method:"POST",
             credentials:"include",
             headers:{"Content-Type":"application/json"},
@@ -566,7 +575,7 @@ async function suResend(){
     suClearOtp();
     document.getElementById("suResendBtn").disabled=true;
     try{
-        const res  = await fetch(`${API_BASE}/api/auth/send-signup-otp`,{
+        const res  = await apiFetch(`${API_BASE}/api/auth/send-signup-otp`,{
             method:"POST",
             credentials:"include",
             headers:{"Content-Type":"application/json"},
@@ -604,7 +613,7 @@ async function suStep2(){
     btn.disabled=true;btn.textContent="Creating account…";
 
     try{
-        const res  = await fetch(`${API_BASE}/api/auth/register`,{
+        const res  = await apiFetch(`${API_BASE}/api/auth/register`,{
             method:"POST",
             credentials:"include",
             headers:{"Content-Type":"application/json"},
@@ -658,7 +667,7 @@ async function login(){
             showError("loginError","Only @infinite.com email addresses are allowed."); return;
         }
         btn.disabled=true;btn.textContent="Signing in…";
-        const response=await fetch(`${API_BASE}/api/auth/login`,{
+        const response=await apiFetch(`${API_BASE}/api/auth/login`,{
             method:"POST",credentials:"include",
             headers:{"Content-Type":"application/json"},
             body:JSON.stringify({email,password,selected_role:selectedRole})
@@ -705,7 +714,7 @@ async function handleEmployeeRouting(){
         if(!emp_id||emp_id==="null"||emp_id==="undefined"){
             showError("loginError","Session expired. Please login again.");return;
         }
-        const res=await fetch(`${API_BASE}/api/auth/employee/${emp_id}`,{
+        const res=await apiFetch(`${API_BASE}/api/auth/employee/${emp_id}`,{
             method:"GET",headers:{"Content-Type":"application/json"},credentials:"include"
         });
         if(!res.ok){showError("loginError","Employee data fetch failed. Please try again.");return}
@@ -726,7 +735,7 @@ async function handleEmployeeRouting(){
 
 async function validateSession(){
     try{
-        const response=await fetch(`${API_BASE}/api/auth/validate-session`,{
+        const response=await apiFetch(`${API_BASE}/api/auth/validate-session`,{
             method:"GET",credentials:"include",headers:{"Content-Type":"application/json"}
         });
         if(!response.ok) return;
