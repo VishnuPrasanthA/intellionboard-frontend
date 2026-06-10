@@ -872,7 +872,7 @@ document.getElementById("chatInput").addEventListener("keydown",e=>{if(e.key==="
 
 /* ── LOGOUT ──────────────────────────────────────── */
 async function logout(){
-    try{await apiFetch("https://intellionboard.onrender.com/api/auth/logout",{method:"POST",credentials:"include"});}catch(_){}
+    try{await apiFetch("https://manatee-dislike-lifting.ngrok-free.dev/api/auth/logout",{method:"POST",credentials:"include"});}catch(_){}
     localStorage.clear();sessionStorage.clear();
     window.location.replace("https://intellionboard.vercel.app/");
 }
