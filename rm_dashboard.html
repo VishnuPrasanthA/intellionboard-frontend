@@ -805,12 +805,12 @@ function detectIntent(msg){
     if(msg.includes("summary")||msg.includes("dashboard status")||msg.includes("rm report")||msg.includes("onboarding summary")||msg==="status"||msg==="report"||msg==="overview") return {type:"summary"};
     // Who commands
     if(msg.startsWith("who is ")||msg.startsWith("find ")||msg.startsWith("search ")) {
-        const m = msg.match(/(\d{4,10})/);
+        const m = msg.match(/\b(\d{4,10})\b/);
         if(m) return {type:"emp_lookup", empId: m[1]};
     }
     // Check on specific employee
     if(msg.startsWith("check ")||msg.startsWith("status of ")||msg.startsWith("details of ")||msg.startsWith("show ")) {
-        const m = msg.match(/(\d{4,10})/);
+        const m = msg.match(/\b(\d{4,10})\b/);
         if(m) return {type:"emp_lookup", empId: m[1]};
     }
     // Single escalation: "escalate employee 1042836" or "escalate 1042836"
@@ -823,7 +823,7 @@ function detectIntent(msg){
     // Bare employee ID (e.g. "1042825") → look up employee
     if(/^\d{4,10}$/.test(msg.trim())) return {type:"emp_lookup", empId: msg.trim()};
     // Message contains an ID but no command → also lookup
-    if(/\d{5,10}/.test(msg)&&!msg.includes(" ")) return {type:"emp_lookup", empId: msg.match(/(\d{5,10})/)[1]};
+    if(/\b\d{5,10}\b/.test(msg)&&!msg.includes(" ")) return {type:"emp_lookup", empId: msg.match(/\b(\d{5,10})\b/)[1]};
     return {type:"general"};
 }
 
@@ -990,7 +990,7 @@ function getLocalResponse(intentType,rawMsg,intentObj){
         }
         case "emp_lookup":{
             // Bare ID typed → show employee details or "not in your team"
-            const empId = (intent && intent.empId) || rawMsg.match(/(\d{4,10})/)?.[1] || rawMsg.trim();
+            const empId = (intent && intent.empId) || rawMsg.match(/\b(\d{4,10})\b/)?.[1] || rawMsg.trim();
             const emp = fullData.find(e=>String(e.emp_id)===String(empId));
             if(!emp){
                 return `⚠️ Employee <b>${empId}</b> is not under your team, or does not exist in the system.`;
