@@ -326,6 +326,15 @@ tbody tr:hover{background:linear-gradient(90deg,rgba(25,211,162,.04),rgba(89,184
 
 <script>
 const API_BASE   = "https://manatee-dislike-lifting.ngrok-free.dev";
+
+// ── ngrok bypass ─────────────────────────────────────────
+function apiFetch(url, opts = {}) {
+    opts.headers = Object.assign({
+        "ngrok-skip-browser-warning": "true"
+    }, opts.headers || {});
+    opts.credentials = opts.credentials || "include";
+    return fetch(url, opts);
+}
 let allEmployees = [];
 let currentTab   = "pending";
 let chartInst    = null;
@@ -348,7 +357,7 @@ async function loadData(){
     const icon=document.getElementById("refreshIcon");
     if(icon){icon.style.animation="spin 1s linear infinite";}
     try{
-        const res=await fetch(`${API_BASE}/itsg/laptop-tickets`,{
+        const res=await apiFetch(`${API_BASE}/itsg/laptop-tickets`,{
             method:"GET",credentials:"include",
             headers:{"Content-Type":"application/json"}
         });
@@ -551,7 +560,7 @@ function renderTable(data){
 async function allocateLaptop(empId, empName){
     if(!confirm(`Allocate laptop to ${empName} (${empId})?`)) return;
     try{
-        const res=await fetch(`${API_BASE}/itsg/allocate/${empId}`,{
+        const res=await apiFetch(`${API_BASE}/itsg/allocate/${empId}`,{
             method:"PUT",credentials:"include",
             headers:{"Content-Type":"application/json"},
             body:JSON.stringify({})
@@ -628,7 +637,7 @@ try{
 
 /* ── LOGOUT ──────────────────────────────────────── */
 async function logout(){
-    try{await fetch(`${API_BASE}/api/auth/logout`,{method:"POST",credentials:"include"});}
+    try{await apiFetch(`${API_BASE}/api/auth/logout`,{method:"POST",credentials:"include"});}
     catch(e){}
     localStorage.clear();sessionStorage.clear();
     window.location.replace("https://intellionboard.vercel.app/");
