@@ -1625,7 +1625,16 @@ TABLE
 CONFIG
 ========================================= */
 
-const BASE_URL = "https://intellionboard.onrender.com";
+const BASE_URL = "https://manatee-dislike-lifting.ngrok-free.dev";
+
+// ── ngrok bypass ─────────────────────────────────────────
+function apiFetch(url, opts = {}) {
+    opts.headers = Object.assign({
+        "ngrok-skip-browser-warning": "true"
+    }, opts.headers || {});
+    opts.credentials = opts.credentials || "include";
+    return fetch(url, opts);
+}
 
 /* ✅ RM LOGIN CONTEXT (SAFE) */
 let rm_email = localStorage.getItem("email");
@@ -1650,7 +1659,7 @@ async function callAPI(url, options = {}){
 
     try{
 
-        const res = await fetch(url, {
+        const res = await apiFetch(url, {
 
             method: options.method || "GET",
 
@@ -2003,7 +2012,7 @@ async function logout(){
 
     try{
 
-        await fetch(
+        await apiFetch(
             BASE_URL + "/api/auth/logout",
             {
                 method:"POST",
