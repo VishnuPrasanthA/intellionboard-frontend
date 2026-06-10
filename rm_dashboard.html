@@ -302,10 +302,10 @@ tbody tr:hover td{box-shadow:0 10px 24px rgba(22,199,154,.05);}
 
 <!-- DEF-057/058/059: employee analytics modal -->
 <div class="modal" id="employeeModal">
-    <div class="modal-content" style="width:600px;max-width:95vw;max-height:90vh;overflow-y:auto;overflow-x:auto;">
+    <div class="modal-content" style="width:580px;max-width:95vw;max-height:88vh;overflow-y:auto;overflow-x:hidden;">
         <h2 id="empModalTitle">Employee Analytics</h2><br>
         <div id="employeeFullDetails"></div><br>
-        <button class="btn" onclick="closeModal('employeeModal')">Close</button>
+        <button onclick="closeModal('employeeModal')" style="margin-top:4px;padding:11px 28px;border:none;border-radius:14px;background:linear-gradient(135deg,#ff6b6b,#ff9a80);color:white;font-weight:700;font-size:14px;cursor:pointer;transition:.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">✕ Close</button>
     </div>
 </div>
 
@@ -606,142 +606,151 @@ function openEmployeeDetails(empId){
 
 /* Render one of 3 pages */
 function renderAnalyticsPage(emp, page){
-    analyticsPageIndex=page;
-    // DEF-059: safe helper
-    const safe=(v,fb="-")=>(!v||String(v).toLowerCase()==="undefined"||v==="")?fb:String(v);
-    const name    =safe(emp.emp_name,"Unknown Employee");
-    const id      =safe(emp.emp_id,  "—");
-    // DEF-058: multiple field fallbacks for progress
-    const progPct  =Number(emp.progress_percentage||emp.progress||emp.onboarding_progress||0);
-    const trainPct =Number(emp.training_percentage||emp.training_progress||0);
-    const readiness=Number(emp.readiness_score||0);
-    const risk     =safe(emp.risk_level,"LOW");
-    // Always recalculate from created_at for consistency
-    const delay = emp.delay_days !== undefined && !isNaN(emp.delay_days)
+    analyticsPageIndex = page;
+    const safe = (v, fb="-") => (!v || String(v).toLowerCase() === "undefined" || v === "") ? fb : String(v);
+    const name     = safe(emp.emp_name, "Unknown Employee");
+    const id       = safe(emp.emp_id, "—");
+    const progPct  = Number(emp.progress_percentage || emp.progress || 0);
+    const trainPct = Number(emp.training_percentage || 0);
+    const readiness= Number(emp.readiness_score || 0);
+    const risk     = safe(emp.risk_level, "LOW");
+    const delay    = emp.delay_days !== undefined && !isNaN(emp.delay_days)
         ? emp.delay_days
-        : Math.max(0, Math.floor(
-            (Date.now()-new Date(String(emp.created_at||"").replace(" ","T").replace(/\.\d+$/,"")||Date.now()))
-            /(1000*60*60*24)
-          ));
-    const riskColor=risk.toUpperCase()==="HIGH"?"#ff5f5f":risk.toUpperCase()==="MEDIUM"?"#f39c12":"#16c79a";
+        : Math.max(0, Math.floor((Date.now() - new Date(String(emp.created_at||"").replace(" ","T").replace(/\.\d+$/,"")||Date.now())) / (1000*60*60*24)));
+    const riskColor = risk.toUpperCase()==="HIGH" ? "#ff5f5f" : risk.toUpperCase()==="MEDIUM" ? "#f39c12" : "#16c79a";
 
-    document.getElementById("empModalTitle").innerText=`${name} (${id})`;
+    document.getElementById("empModalTitle").innerText = `${name} (${id})`;
 
-    const bar=(pct,label,color="#16c79a")=>`
-        <div style="margin-top:12px;">
+    // ── Shared helpers ────────────────────────────────────
+    const row = (label, value, valueStyle="") =>
+        `<div style="padding:9px 10px 9px 0;color:#64748b;font-size:12px;border-bottom:1px solid #edf2f7;white-space:nowrap;">${label}</div>
+         <div style="padding:9px 0;font-weight:700;font-size:13px;border-bottom:1px solid #edf2f7;word-break:break-all;overflow-wrap:anywhere;${valueStyle}">${value}</div>`;
+
+    const pill = (s) => {
+        s = s || "Pending";
+        const sl = s.toLowerCase();
+        const c = sl.includes("complet")||sl.includes("closed") ? "#16c79a"
+                : sl.includes("progress")||sl.includes("active") ? "#59b8ff"
+                : sl.includes("pend") ? "#f39c12" : "#94a3b8";
+        return `<span style="background:${c}22;color:${c};font-size:11px;font-weight:700;padding:3px 10px;border-radius:8px;">${s}</span>`;
+    };
+
+    const bar = (pct, label, color="#16c79a") =>
+        `<div style="margin-top:14px;">
             <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
                 <span style="font-size:12px;color:#64748b;">${label}</span>
                 <span style="font-size:13px;font-weight:800;color:${color};">${pct}%</span>
             </div>
             <div style="height:10px;background:#e9eef5;border-radius:30px;overflow:hidden;">
-                <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,${color},#58ffd8);border-radius:30px;transition:width .6s ease;"></div>
+                <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,${color},#58ffd8);border-radius:30px;transition:width .6s;"></div>
             </div>
         </div>`;
 
-    // Pagination dots
-    const dots=[0,1,2].map(i=>
+    const grid = (rows) =>
+        `<div style="display:grid;grid-template-columns:140px 1fr;font-size:13px;">${rows}</div>`;
+
+    // ── Pagination ────────────────────────────────────────
+    const dots = [0,1,2].map(i =>
         `<span onclick="renderAnalyticsPage(analyticsEmpData,${i})"
             style="display:inline-block;width:${i===page?24:8}px;height:8px;border-radius:8px;
             background:${i===page?"#16c79a":"#e2e8f0"};cursor:pointer;margin:0 3px;transition:all .2s;"></span>`
     ).join("");
 
-    const navBtns=`
+    const navBtns = `
         <div style="display:flex;align-items:center;justify-content:space-between;margin-top:20px;">
             <button onclick="renderAnalyticsPage(analyticsEmpData,${Math.max(0,page-1)})"
-                style="padding:8px 16px;border:none;border-radius:10px;background:${page===0?"#e2e8f0":"linear-gradient(135deg,#16c79a,#58ffd8)"};
-                color:${page===0?"#94a3b8":"white"};font-weight:700;cursor:${page===0?"default":"pointer"};font-size:12px;transition:.2s;">
-                ← Prev
-            </button>
+                style="padding:8px 18px;border:none;border-radius:12px;
+                background:${page===0?"#e2e8f0":"linear-gradient(135deg,#16c79a,#58ffd8)"};
+                color:${page===0?"#94a3b8":"white"};font-weight:700;cursor:${page===0?"default":"pointer"};
+                font-size:12px;transition:.2s;">← Prev</button>
             <div>${dots}</div>
-            <button onclick="renderAnalyticsPage(analyticsEmpData,${Math.min(ANALYTICS_PAGES-1,page+1)})"
-                style="padding:8px 16px;border:none;border-radius:10px;background:${page===ANALYTICS_PAGES-1?"#e2e8f0":"linear-gradient(135deg,#16c79a,#58ffd8)"};
-                color:${page===ANALYTICS_PAGES-1?"#94a3b8":"white"};font-weight:700;cursor:${page===ANALYTICS_PAGES-1?"default":"pointer"};font-size:12px;transition:.2s;">
-                Next →
-            </button>
+            <button onclick="renderAnalyticsPage(analyticsEmpData,${Math.min(2,page+1)})"
+                style="padding:8px 18px;border:none;border-radius:12px;
+                background:${page===2?"#e2e8f0":"linear-gradient(135deg,#16c79a,#58ffd8)"};
+                color:${page===2?"#94a3b8":"white"};font-weight:700;cursor:${page===2?"default":"pointer"};
+                font-size:12px;transition:.2s;">Next →</button>
         </div>`;
 
-    let content="";
-
-    /* ─── PAGE 1: Employee Info ─────────────────── */
-    if(page===0){
-        content=`
-            <div style="text-align:center;margin-bottom:16px;">
+    // ── Page 1: Employee Info ─────────────────────────────
+    let content = "";
+    if(page === 0){
+        content = `
+            <div style="text-align:center;margin-bottom:18px;">
                 <div style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#16c79a,#59b8ff);
-                    margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font-size:26px;color:white;">
-                    👤
-                </div>
-                <div style="font-size:16px;font-weight:800;color:#172b42;word-break:break-word;">${name}</div>
-                <div style="font-size:12px;color:#7f8ea3;margin-top:3px;word-break:break-word;">${safe(emp.emp_id)} · ${safe(emp.designation)}</div>
+                    margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font-size:26px;color:white;">👤</div>
+                <div style="font-size:17px;font-weight:800;color:#172b42;">${name}</div>
+                <div style="font-size:12px;color:#7f8ea3;margin-top:3px;">${safe(emp.emp_id)} · ${safe(emp.designation)}</div>
             </div>
             <div style="background:#f8fafc;border-radius:14px;padding:16px 18px;">
-                <h3 style="color:#16c79a;font-size:14px;margin:0 0 14px;">📋 Employee Information</h3>
-                <div style="display:grid;grid-template-columns:140px 1fr;font-size:13px;">
-                    ${[["Email",safe(emp.email)],["Designation",safe(emp.designation)],["Department",safe(emp.department)],["Location",safe(emp.location)],["Project",safe(emp.project_name||emp.account_name)],["COE",safe(emp.selected_coe)],["Business Unit",safe(emp.business_unit)],["Joining Date",safe(emp.joining_date)],["Grade",safe(emp.grade)]].map(([l,v])=>`<div style="padding:9px 8px 9px 0;color:#64748b;border-bottom:1px solid #e9eef5;font-size:12px;">${l}</div><div style="padding:9px 0;font-weight:700;border-bottom:1px solid #e9eef5;word-break:break-all;overflow-wrap:anywhere;">${v}</div>`).join("")}
-                </div>
+                <h3 style="color:#16c79a;font-size:14px;margin:0 0 12px;">📋 Employee Information</h3>
+                ${grid([
+                    row("Email",         safe(emp.email)),
+                    row("Designation",   safe(emp.designation)),
+                    row("Department",    safe(emp.department)),
+                    row("Location",      safe(emp.location)),
+                    row("Project",       safe(emp.project_name||emp.account_name)),
+                    row("COE",           safe(emp.selected_coe)),
+                    row("Business Unit", safe(emp.business_unit)),
+                    row("Joining Date",  safe(emp.joining_date)),
+                    row("Grade",         safe(emp.grade)),
+                ].join(""))}
             </div>
             ${navBtns}`;
     }
 
-    /* ─── PAGE 2: Onboarding Tracking ──────────── */
-    else if(page===1){
-        const statusColor=(s)=>{
-            s=(s||"").toLowerCase();
-            if(s.includes("complet")) return "#16c79a";
-            if(s.includes("progress")||s.includes("active")) return "#59b8ff";
-            if(s.includes("pend")) return "#f39c12";
-            return "#94a3b8";
-        };
-        const statusPill=(s)=>`<span style="background:${statusColor(s)}22;color:${statusColor(s)};font-size:11px;font-weight:700;padding:3px 10px;border-radius:8px;">${s||"Pending"}</span>`;
-
-        content=`
-            <div style="background:#f8fafc;border-radius:14px;padding:18px;margin-bottom:14px;">
-                <h3 style="color:#16c79a;font-size:14px;margin:0 0 14px;">🏷️ Onboarding Status</h3>
-                <table style="width:100%;font-size:13px;border-collapse:collapse;">
-                    <tr><td style="padding:7px 0;color:#64748b;width:45%;">Overall Status</td><td>${statusPill(emp.onboarding_status)}</td></tr>
-                    <tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:8px 0;color:#64748b;white-space:nowrap;font-size:12px;">Current Step</td><td style="word-break:break-word;overflow-wrap:anywhere;padding:8px 12px 8px 0;"><b>${safe(emp.current_step).replace(/_/g," ")}</b></td></tr>
-                    <tr><td style="padding:7px 0;color:#64748b;">Delay</td><td><b>${delay} days</b></td></tr>
-                    <tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:8px 0;color:#64748b;font-size:12px;">Risk Level</td><td><b style="color:${riskColor};">${risk}</b></td></tr>
-                </table>
+    // ── Page 2: Onboarding Tracking ──────────────────────
+    else if(page === 1){
+        content = `
+            <div style="background:#f8fafc;border-radius:14px;padding:16px 18px;margin-bottom:12px;">
+                <h3 style="color:#16c79a;font-size:14px;margin:0 0 12px;">🏷️ Onboarding Status</h3>
+                ${grid([
+                    row("Overall Status", pill(emp.onboarding_status)),
+                    row("Current Step",   `<b>${safe(emp.current_step).replace(/_/g," ")}</b>`),
+                    row("Delay",          `<b>${delay} days</b>`),
+                    row("Risk Level",     `<b style="color:${riskColor};">${risk}</b>`),
+                    row("Progress",       `<b style="color:#16c79a;">${progPct}%</b>`),
+                ].join(""))}
             </div>
             <div style="background:#f8fafc;border-radius:14px;padding:16px 18px;">
-                <h3 style="color:#16c79a;font-size:14px;margin:0 0 14px;">📋 Onboarding Tracking</h3>
-                <table style="width:100%;font-size:13px;border-collapse:collapse;table-layout:fixed;">
-                        <col style="width:45%"><col style="width:55%">
-                    <tr><td style="padding:7px 0;color:#64748b;width:45%;">ID Card</td><td>${statusPill(emp.id_card_status)}</td></tr>
-                    <tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:8px 0;color:#64748b;font-size:12px;">Laptop</td><td style="padding:8px 0;">${statusPill(emp.laptop_status)}</td></tr>
-                    <tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:8px 0;color:#64748b;font-size:12px;">Email Setup</td><td style="padding:8px 0;">${statusPill(emp.email_setup_status)}</td></tr>
-                    <tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:8px 0;color:#64748b;font-size:12px;">VPN</td><td style="padding:8px 0;">${statusPill(emp.vpn_status)}</td></tr>
-                    <tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:8px 0;color:#64748b;font-size:12px;">Access Card</td><td style="padding:8px 0;">${statusPill(emp.access_card_status)}</td></tr>
-                    <tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:8px 0;color:#64748b;font-size:12px;">Assessment</td><td style="padding:8px 0;">${statusPill(emp.assessment_status)}</td></tr>
-                    <tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:8px 0;color:#64748b;font-size:12px;">COE Status</td><td style="padding:8px 0;">${statusPill(emp.coe_status)}</td></tr>
-                    <tr><td style="padding:7px 0;color:#64748b;">Training</td><td><b>${trainPct}%</b></td></tr>
-                </table>
+                <h3 style="color:#16c79a;font-size:14px;margin:0 0 12px;">📋 Onboarding Tracking</h3>
+                ${grid([
+                    row("ID Card",      pill(emp.id_card_status)),
+                    row("Laptop",       pill(emp.laptop_status)),
+                    row("Email Setup",  pill(emp.email_setup_status)),
+                    row("VPN",          pill(emp.vpn_status)),
+                    row("Access Card",  pill(emp.access_card_status)),
+                    row("Assessment",   pill(emp.assessment_status)),
+                    row("COE Status",   pill(emp.coe_status)),
+                    row("Training",     `<b>${trainPct}%</b>`),
+                ].join(""))}
             </div>
             ${navBtns}`;
     }
 
-    /* ─── PAGE 3: Progress + Risk + Actions ─────── */
-    else if(page===2){
-        content=`
-            <div style="background:#f8fafc;border-radius:14px;padding:18px;margin-bottom:14px;">
+    // ── Page 3: Progress + Risk + Actions ────────────────
+    else if(page === 2){
+        content = `
+            <div style="background:#f8fafc;border-radius:14px;padding:16px 18px;margin-bottom:12px;">
                 <h3 style="color:#16c79a;font-size:14px;margin:0 0 4px;">📊 Progress Analytics</h3>
-                ${bar(progPct,  "Overall Onboarding","#16c79a")}
-                ${bar(trainPct, "Training Completion","#59b8ff")}
-                ${bar(readiness,"Readiness Score",    "#9b6dff")}
+                ${bar(progPct,   "Overall Onboarding", "#16c79a")}
+                ${bar(trainPct,  "Training Completion", "#59b8ff")}
+                ${bar(readiness, "Readiness Score",     "#9b6dff")}
             </div>
-            <div style="background:#fff8f8;border-radius:14px;padding:18px;border-left:4px solid ${riskColor};margin-bottom:14px;">
+            <div style="background:#fff8f8;border-radius:14px;padding:16px 18px;border-left:4px solid ${riskColor};margin-bottom:12px;">
                 <h3 style="margin:0 0 10px;font-size:14px;">⚠️ Risk Analysis</h3>
                 <p style="font-size:13px;">Risk Level: <b style="color:${riskColor};font-size:16px;">${risk}</b></p>
-                ${delay>2?`<p style="font-size:12px;color:#7f8ea3;margin-top:6px;">⏳ Delayed ${delay} days — escalation recommended.</p>`:""}
+                ${delay>2 ? `<p style="font-size:12px;color:#7f8ea3;margin-top:6px;">⏳ Delayed ${delay} days — escalation recommended.</p>` : ""}
             </div>
             <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:4px;">
-                <button class="btn btn-mail" onclick="sendReminder('${safe(emp.emp_id)}');closeModal('employeeModal')">📧 Send Reminder</button>
-                <button class="btn btn-escalate" onclick="escalate('${safe(emp.emp_id)}');closeModal('employeeModal')">⚠️ Escalate</button>
+                <button class="btn btn-mail" onclick="sendReminder('${safe(emp.emp_id)}');closeModal('employeeModal')"
+                    style="padding:10px 18px;font-size:13px;">📧 Send Reminder</button>
+                <button class="btn btn-escalate" onclick="escalate('${safe(emp.emp_id)}');closeModal('employeeModal')"
+                    style="padding:10px 18px;font-size:13px;">⚠️ Escalate</button>
             </div>
             ${navBtns}`;
     }
 
-    document.getElementById("employeeFullDetails").innerHTML=content;
+    document.getElementById("employeeFullDetails").innerHTML = content;
 }
 
 function closeEmployeeModal(){ closeModal("employeeModal"); }
