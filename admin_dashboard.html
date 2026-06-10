@@ -218,7 +218,10 @@ tbody tr:hover{background:linear-gradient(90deg,rgba(25,211,162,.04),rgba(89,184
         <button class="btn-refresh" id="refreshBtn" onclick="handleRefresh()">
             <span id="refreshIcon">🔄</span> Refresh
         </button>
-        <button class="btn-logout" onclick="logout()">🚪 Logout</button>
+<button class="btn-logout" onclick="logout()">
+<i class="fas fa-right-from-bracket"></i>
+Logout
+</button>
     </div>
 </div>
 
@@ -322,10 +325,15 @@ tbody tr:hover{background:linear-gradient(90deg,rgba(25,211,162,.04),rgba(89,184
         <button class="quick-btn" onclick="botCmd('escalations')">⚠️ Risk</button>
     </div>
     <div class="chat-input">
-        <input id="chatInput" placeholder="Type ticket ID, employee name, or command...">
+        <input
+id="chatInput"
+list="employeeSuggestions"
+placeholder="Type ticket ID, employee name, or command..."
+>
         <button onclick="sendBotMsg()">Send</button>
     </div>
 </div>
+    <datalist id="employeeSuggestions"></datalist>
 
 <script>
 const API = "https://manatee-dislike-lifting.ngrok-free.dev/api/admin";
@@ -353,7 +361,20 @@ function showToast(msg,color){
     t.style.background=color||"#19d3a2";t.innerText=msg;
     t.classList.add("show");setTimeout(()=>t.classList.remove("show"),3500);
 }
+function loadSuggestions(){
 
+    const dl =
+      document.getElementById("employeeSuggestions");
+
+    if(!dl) return;
+
+    dl.innerHTML =
+       allEmployees.map(emp => `
+          <option value="${emp.emp_name}">
+          <option value="${emp.emp_id}">
+          <option value="${emp.ticket_id}">
+       `).join("");
+}
 /* ── handleRefresh — DEF fix ────────────────────── */
 async function handleRefresh(){
     const btn=document.getElementById("refreshBtn");
@@ -406,6 +427,7 @@ async function loadDashboard(){
     updateKPIs();
     renderCharts();
     applyTabFilter();
+    loadSuggestions();
 }
 
 /* ── KPI ────────────────────────────────────────── */
@@ -463,9 +485,26 @@ function applyTabFilter(){
     let data=[...allEmployees];
     const q=(document.querySelector(".search-box-wrap input")?.value||"").toLowerCase().trim();
     if(currentTab==="open")      data=data.filter(e=>e.ticket_status==="OPEN");
-    if(currentTab==="progress")  data=data.filter(e=>e.ticket_status!=="CLOSED");
-    if(currentTab==="completed") data=data.filter(e=>e.ticket_status==="CLOSED");
-    if(q) data=data.filter(e=>JSON.stringify(e).toLowerCase().includes(q));
+   if(currentTab==="progress")
+    data=data.filter(
+       e =>
+          e.ticket_status==="OPEN" ||
+          e.onboarding_status!=="COMPLETED"
+    );
+    if(currentTab==="completed")
+    data=data.filter(
+       e =>
+          e.ticket_status==="CLOSED" &&
+          e.onboarding_status==="COMPLETED"
+    );
+    if(q){
+    data=data.filter(e =>
+        String(e.emp_id).toLowerCase().includes(q) ||
+        String(e.emp_name).toLowerCase().includes(q) ||
+        String(e.ticket_id).toLowerCase().includes(q) ||
+        String(e.email).toLowerCase().includes(q)
+    );
+}
     renderTable(data);
 }
 
@@ -554,7 +593,12 @@ async function submitClosure(){
             showToast(`✅ Ticket closed for ${json.emp_name||currentEmpId}`,"#19d3a2");
             // DEF-060/061 FIX: update local state immediately
             const emp=allEmployees.find(e=>e.ticket_id===currentTicketId);
-            if(emp){emp.ticket_status="CLOSED";emp.is_open=false;emp.onboarding_status="COMPLETED";emp.progress=50;}
+            if(emp){
+    emp.ticket_status="CLOSED";
+    emp.is_open=false;
+    emp.onboarding_status="COMPLETED";
+    emp.progress=100;
+}
             updateKPIs(); renderCharts(); applyTabFilter();
             // Background re-fetch to get server-confirmed state
             setTimeout(loadDashboard, 800);
@@ -659,8 +703,18 @@ function norm(v){ return String(v||"").toLowerCase().trim().replace(/[\s_-]/g,""
 
 function findEmp(query){
     const q=norm(query);
-    return allEmployees.find(e=>norm(e.emp_id)===q||norm(e.emp_name).includes(q)||norm(e.ticket_id)===q)
-        || allEmployees.find(e=>norm(e.emp_id).includes(q)||norm(e.emp_name).includes(q));
+
+    return allEmployees.find(e =>
+        norm(e.emp_id)===q ||
+        norm(e.ticket_id)===q ||
+        norm(e.emp_name)===q
+    )
+    ||
+    allEmployees.find(e =>
+        norm(e.emp_id).includes(q) ||
+        norm(e.ticket_id).includes(q) ||
+        norm(e.emp_name).includes(q)
+    );
 }
 
 async function sendBotMsg(){
@@ -678,7 +732,12 @@ async function sendBotMsg(){
             Type <b>help</b> for all commands.`);
         return;
     }
-    if(msg==="help"||msg.includes("commands")){showBotHelp();return;}
+    if(
+    msg==="help" ||
+    msg===".help" ||
+    msg==="/help" ||
+    msg.includes("commands")
+){showBotHelp();return;}
 
     if(msg==="stats"||msg.includes("summary")){
         const open   =allEmployees.filter(e=>e.ticket_status==="OPEN").length;
