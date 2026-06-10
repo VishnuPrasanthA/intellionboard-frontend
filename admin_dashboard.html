@@ -329,6 +329,15 @@ tbody tr:hover{background:linear-gradient(90deg,rgba(25,211,162,.04),rgba(89,184
 
 <script>
 const API = "https://manatee-dislike-lifting.ngrok-free.dev/api/admin";
+
+// ── ngrok bypass ─────────────────────────────────────────
+function apiFetch(url, opts = {}) {
+    opts.headers = Object.assign({
+        "ngrok-skip-browser-warning": "true"
+    }, opts.headers || {});
+    opts.credentials = opts.credentials || "include";
+    return fetch(url, opts);
+}
 let allEmployees  = [];
 let currentTicketId  = null;
 let currentEmpId     = null;
@@ -364,7 +373,7 @@ async function handleRefresh(){
 
 /* ── LOAD DASHBOARD ────────────────────────────── */
 async function loadDashboard(){
-    const res=await fetch(`${API}/tickets`,{method:"GET",credentials:"include",headers:{"Content-Type":"application/json"}});
+    const res=await apiFetch(`${API}/tickets`,{method:"GET",credentials:"include",headers:{"Content-Type":"application/json"}});
     if(res.status===401||res.status===403){
         showToast("⚠️ Session expired","#ff6f6f");
         setTimeout(()=>window.location.replace("https://intellionboard.vercel.app/"),2000);
@@ -534,7 +543,7 @@ async function submitClosure(){
     if(!currentTicketId) return showToast("No ticket selected","#ff6f6f");
     if(!comment)         return showToast("Please enter remarks","#f39c12");
     try{
-        const res=await fetch(`${API}/tickets/close`,{
+        const res=await apiFetch(`${API}/tickets/close`,{
             method:"POST",credentials:"include",
             headers:{"Content-Type":"application/json"},
             body:JSON.stringify({ticket_id:currentTicketId,remarks:comment})
@@ -560,7 +569,7 @@ async function submitIdProvided(){
     const comment=document.getElementById("idProvidedComment").value.trim()||"ID card and ODC access provided";
     if(!currentTicketId) return showToast("No ticket selected","#ff6f6f");
     try{
-        const res=await fetch(`${API}/tickets/close`,{
+        const res=await apiFetch(`${API}/tickets/close`,{
             method:"POST",credentials:"include",
             headers:{"Content-Type":"application/json"},
             body:JSON.stringify({ticket_id:currentTicketId,remarks:comment})
@@ -804,7 +813,7 @@ document.getElementById("chatInput").addEventListener("keydown",e=>{if(e.key==="
 
 /* ── LOGOUT ──────────────────────────────────────── */
 async function logout(){
-    try{await fetch("https://intellionboard.onrender.com/api/auth/logout",{method:"POST",credentials:"include"});}catch(_){}
+    try{await apiFetch("https://intellionboard.onrender.com/api/auth/logout",{method:"POST",credentials:"include"});}catch(_){}
     localStorage.clear();sessionStorage.clear();
     window.location.replace("https://intellionboard.vercel.app/");
 }
