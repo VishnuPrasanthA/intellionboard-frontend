@@ -189,7 +189,7 @@ tbody tr:hover td{box-shadow:0 10px 24px rgba(22,199,154,.05);}
 @keyframes bounce{0%,80%,100%{transform:scale(0);}40%{transform:scale(1);}}
 @keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
 .modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.45);display:none;justify-content:center;align-items:center;z-index:999999;}
-.modal-content{width:520px;background:white;border-radius:30px;padding:28px;box-shadow:var(--shadow-lg);}
+.modal-content{width:540px;max-width:96vw;background:white;border-radius:30px;padding:28px;box-shadow:var(--shadow-lg);}
 .risk-low{color:#16c79a;font-weight:900;}
 .risk-medium{color:#f39c12;font-weight:900;}
 .risk-high{color:#ff5f5f;font-weight:900;}
@@ -302,7 +302,7 @@ tbody tr:hover td{box-shadow:0 10px 24px rgba(22,199,154,.05);}
 
 <!-- DEF-057/058/059: employee analytics modal -->
 <div class="modal" id="employeeModal">
-    <div class="modal-content" style="width:800px;max-width:96vw;max-height:90vh;overflow:auto;">
+    <div class="modal-content" style="width:640px;max-width:96vw;max-height:90vh;overflow-y:auto;overflow-x:hidden;">
         <h2 id="empModalTitle">Employee Analytics</h2><br>
         <div id="employeeFullDetails"></div><br>
         <button class="btn" onclick="closeModal('employeeModal')">Close</button>
@@ -670,21 +670,22 @@ function renderAnalyticsPage(emp, page){
                     margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font-size:26px;color:white;">
                     👤
                 </div>
-                <div style="font-size:18px;font-weight:800;color:#172b42;">${name}</div>
+                <div style="font-size:16px;font-weight:800;color:#172b42;word-break:break-word;">${name}</div>
                 <div style="font-size:12px;color:#7f8ea3;margin-top:3px;">${safe(emp.emp_id)} · ${safe(emp.designation)}</div>
             </div>
             <div style="background:#f8fafc;border-radius:14px;padding:18px;">
                 <h3 style="color:#16c79a;font-size:14px;margin:0 0 14px;">📋 Employee Information</h3>
-                <table style="width:100%;font-size:13px;border-collapse:collapse;">
-                    <tr><td style="padding:7px 0;color:#64748b;width:40%;">Email</td><td><b>${safe(emp.email)}</b></td></tr>
-                    <tr><td style="padding:7px 0;color:#64748b;">Designation</td><td><b>${safe(emp.designation)}</b></td></tr>
-                    <tr><td style="padding:7px 0;color:#64748b;">Department</td><td><b>${safe(emp.department)}</b></td></tr>
-                    <tr><td style="padding:7px 0;color:#64748b;">Location</td><td><b>${safe(emp.location)}</b></td></tr>
-                    <tr><td style="padding:7px 0;color:#64748b;">Project</td><td><b>${safe(emp.project_name||emp.account_name)}</b></td></tr>
-                    <tr><td style="padding:7px 0;color:#64748b;">COE</td><td><b>${safe(emp.selected_coe)}</b></td></tr>
-                    <tr><td style="padding:7px 0;color:#64748b;">Business Unit</td><td><b>${safe(emp.business_unit)}</b></td></tr>
-                    <tr><td style="padding:7px 0;color:#64748b;">Joining Date</td><td><b>${safe(emp.joining_date)}</b></td></tr>
-                    <tr><td style="padding:7px 0;color:#64748b;">Grade</td><td><b>${safe(emp.grade)}</b></td></tr>
+                <table style="width:100%;font-size:13px;border-collapse:collapse;table-layout:fixed;">
+                    <col style="width:42%"><col style="width:58%">
+                    <tr><td style="padding:7px 0;color:#64748b;">Email</td><td style="word-break:break-all;overflow-wrap:anywhere;"><b>${safe(emp.email)}</b></td></tr>
+                    <tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:8px 0;color:#64748b;white-space:nowrap;font-size:12px;">Designation</td><td style="word-break:break-word;overflow-wrap:anywhere;padding:7px 0;"><b>${safe(emp.designation)}</b></td></tr>
+                    <tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:8px 0;color:#64748b;white-space:nowrap;font-size:12px;">Department</td><td style="word-break:break-word;overflow-wrap:anywhere;padding:7px 0;"><b>${safe(emp.department)}</b></td></tr>
+                    <tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:8px 0;color:#64748b;white-space:nowrap;font-size:12px;">Location</td><td style="word-break:break-word;overflow-wrap:anywhere;padding:7px 0;"><b>${safe(emp.location)}</b></td></tr>
+                    <tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:8px 0;color:#64748b;white-space:nowrap;font-size:12px;">Project</td><td style="word-break:break-word;overflow-wrap:anywhere;padding:7px 0;"><b>${safe(emp.project_name||emp.account_name)}</b></td></tr>
+                    <tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:8px 0;color:#64748b;white-space:nowrap;font-size:12px;">COE</td><td style="word-break:break-word;overflow-wrap:anywhere;padding:7px 0;"><b>${safe(emp.selected_coe)}</b></td></tr>
+                    <tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:8px 0;color:#64748b;white-space:nowrap;font-size:12px;">Business Unit</td><td style="word-break:break-word;overflow-wrap:anywhere;padding:7px 0;"><b>${safe(emp.business_unit)}</b></td></tr>
+                    <tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:8px 0;color:#64748b;white-space:nowrap;font-size:12px;">Joining Date</td><td style="word-break:break-word;overflow-wrap:anywhere;padding:7px 0;"><b>${safe(emp.joining_date)}</b></td></tr>
+                    <tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:8px 0;color:#64748b;white-space:nowrap;font-size:12px;">Grade</td><td style="word-break:break-word;overflow-wrap:anywhere;padding:7px 0;"><b>${safe(emp.grade)}</b></td></tr>
                 </table>
             </div>
             ${navBtns}`;
@@ -706,21 +707,22 @@ function renderAnalyticsPage(emp, page){
                 <h3 style="color:#16c79a;font-size:14px;margin:0 0 14px;">🏷️ Onboarding Status</h3>
                 <table style="width:100%;font-size:13px;border-collapse:collapse;">
                     <tr><td style="padding:7px 0;color:#64748b;width:45%;">Overall Status</td><td>${statusPill(emp.onboarding_status)}</td></tr>
-                    <tr><td style="padding:7px 0;color:#64748b;">Current Step</td><td><b>${safe(emp.current_step).replace(/_/g," ")}</b></td></tr>
+                    <tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:8px 0;color:#64748b;white-space:nowrap;font-size:12px;">Current Step</td><td style="word-break:break-word;overflow-wrap:anywhere;padding:7px 0;"><b>${safe(emp.current_step).replace(/_/g," ")}</b></td></tr>
                     <tr><td style="padding:7px 0;color:#64748b;">Delay</td><td><b>${delay} days</b></td></tr>
-                    <tr><td style="padding:7px 0;color:#64748b;">Risk Level</td><td><b style="color:${riskColor};">${risk}</b></td></tr>
+                    <tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:8px 0;color:#64748b;font-size:12px;">Risk Level</td><td><b style="color:${riskColor};">${risk}</b></td></tr>
                 </table>
             </div>
             <div style="background:#f8fafc;border-radius:14px;padding:18px;">
                 <h3 style="color:#16c79a;font-size:14px;margin:0 0 14px;">📋 Onboarding Tracking</h3>
-                <table style="width:100%;font-size:13px;border-collapse:collapse;">
+                <table style="width:100%;font-size:13px;border-collapse:collapse;table-layout:fixed;">
+                        <col style="width:45%"><col style="width:55%">
                     <tr><td style="padding:7px 0;color:#64748b;width:45%;">ID Card</td><td>${statusPill(emp.id_card_status)}</td></tr>
-                    <tr><td style="padding:7px 0;color:#64748b;">Laptop</td><td>${statusPill(emp.laptop_status)}</td></tr>
-                    <tr><td style="padding:7px 0;color:#64748b;">Email Setup</td><td>${statusPill(emp.email_setup_status)}</td></tr>
-                    <tr><td style="padding:7px 0;color:#64748b;">VPN</td><td>${statusPill(emp.vpn_status)}</td></tr>
-                    <tr><td style="padding:7px 0;color:#64748b;">Access Card</td><td>${statusPill(emp.access_card_status)}</td></tr>
-                    <tr><td style="padding:7px 0;color:#64748b;">Assessment</td><td>${statusPill(emp.assessment_status)}</td></tr>
-                    <tr><td style="padding:7px 0;color:#64748b;">COE Status</td><td>${statusPill(emp.coe_status)}</td></tr>
+                    <tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:8px 0;color:#64748b;font-size:12px;">Laptop</td><td style="padding:8px 0;">${statusPill(emp.laptop_status)}</td></tr>
+                    <tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:8px 0;color:#64748b;font-size:12px;">Email Setup</td><td style="padding:8px 0;">${statusPill(emp.email_setup_status)}</td></tr>
+                    <tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:8px 0;color:#64748b;font-size:12px;">VPN</td><td style="padding:8px 0;">${statusPill(emp.vpn_status)}</td></tr>
+                    <tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:8px 0;color:#64748b;font-size:12px;">Access Card</td><td style="padding:8px 0;">${statusPill(emp.access_card_status)}</td></tr>
+                    <tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:8px 0;color:#64748b;font-size:12px;">Assessment</td><td style="padding:8px 0;">${statusPill(emp.assessment_status)}</td></tr>
+                    <tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:8px 0;color:#64748b;font-size:12px;">COE Status</td><td style="padding:8px 0;">${statusPill(emp.coe_status)}</td></tr>
                     <tr><td style="padding:7px 0;color:#64748b;">Training</td><td><b>${trainPct}%</b></td></tr>
                 </table>
             </div>
