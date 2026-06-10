@@ -413,10 +413,13 @@ function renderTable(data){
     data.forEach(emp=>{
         const delay = (emp.onboarding_status||"").toLowerCase().includes("completed") ? 0 : getDelayDays(emp.created_at);
         const isEscalated = emp.escalated || (emp.risk_level||"").toUpperCase()==="HIGH";
+        // Treat 'Escalated' status same as 'In Progress' — don't use red badge for it
+        const displayStatus = (emp.onboarding_status||"").toLowerCase() === "escalated"
+            ? "Onboarding In Progress"
+            : (emp.onboarding_status||"Pending");
         const statusClass=
-            (emp.onboarding_status||"").toLowerCase().includes("completed")?"completed":
-            isEscalated?"delayed":
-            (emp.onboarding_status||"").toLowerCase().includes("progress")?"inprogress":
+            displayStatus.toLowerCase().includes("completed")?"completed":
+            displayStatus.toLowerCase().includes("progress")?"inprogress":
             delay>2?"delayed":"pending";
         const riskClass  =
             (emp.risk_level||"").toUpperCase()==="HIGH"?"risk-high":
@@ -424,7 +427,7 @@ function renderTable(data){
         html+=`<tr>
             <td>${emp.emp_id||"-"}</td>
             <td><div class="employee-name"><b>${emp.emp_name||"Unknown"}</b><small>${emp.email||""}</small></div></td>
-            <td><span class="badge ${statusClass}">${emp.onboarding_status||"Pending"}</span>${emp.escalated||emp.risk_level==="HIGH"?'<span class="badge" style="background:linear-gradient(135deg,#ff6b6b,#ff9a80);margin-left:4px;font-size:9px;">🚨 Escalated</span>':""}</td>
+            <td><span class="badge ${statusClass}">${displayStatus}</span>${emp.escalated||emp.risk_level==="HIGH"?'<span class="badge" style="background:linear-gradient(135deg,#ff6b6b,#ff9a80);margin-left:4px;font-size:9px;">🚨 Escalated</span>':""}</td>
             <td><span class="badge inprogress">${getStageBadge(emp.current_step)}</span></td>
             <td>
                 <div class="progress"><div class="progress-fill" style="width:${emp.training_percentage||0}%"></div></div>
@@ -848,7 +851,7 @@ function getLocalResponse(intentType,rawMsg){
                 (list.length>6?`<br>…and ${list.length-6} more`:"");
         }
         case "delayed":{
-            const list=fullData.filter(x=>getDelayDays(x.created_at)>2);
+            const list=fullData.filter(x=>getDelayDays(x.created_at)>2&&!(x.onboarding_status||"").toLowerCase().includes("completed"));
             return `⚠️ <b>${list.length} Delayed Employees</b><br><br>`+
                 list.slice(0,6).map(e=>`• ${safe(e.emp_name,"??")} (${safe(e.emp_id)}) — ${getDelayDays(e.created_at)} days`).join("<br>")+
                 (list.length>6?`<br>…and ${list.length-6} more`:"");
