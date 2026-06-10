@@ -267,6 +267,15 @@ video#videoPlayer{width:100%;height:220px;display:block;object-fit:contain;backg
 
 <script>
 const BASE_URL = "https://manatee-dislike-lifting.ngrok-free.dev";
+
+// ── ngrok bypass ─────────────────────────────────────────
+function apiFetch(url, opts = {}) {
+    opts.headers = Object.assign({
+        "ngrok-skip-browser-warning": "true"
+    }, opts.headers || {});
+    opts.credentials = opts.credentials || "include";
+    return fetch(url, opts);
+}
 const emp_id   = localStorage.getItem("emp_id");
 if(!emp_id || emp_id==="null" || emp_id==="undefined") window.location.replace("/");
 
@@ -329,7 +338,7 @@ let tWords   = [];
 let tLastIdx = -1;
 (async () => {
     try {
-        const res = await fetch(`${BASE_URL}/api/auth/validate-session`, {
+        const res = await apiFetch(`${BASE_URL}/api/auth/validate-session`, {
             credentials: "include"
         });
 
@@ -383,7 +392,7 @@ async function saveWatchProgress(){
     const topic = currentTopics[currentTopicIndex];
     if(!topic) return;
     try{
-        await fetch(`${BASE_URL}/track-topic-progress`,{
+        await apiFetch(`${BASE_URL}/track-topic-progress`,{
             method:"POST", credentials:"include",
             headers:{"Content-Type":"application/json"},
             body:JSON.stringify({
@@ -402,7 +411,7 @@ async function saveWatchProgress(){
 
 async function refreshHoursCard(){
     try{
-        const r = await fetch(`${BASE_URL}/dashboard-summary/${emp_id}`,{credentials:"include"});
+        const r = await apiFetch(`${BASE_URL}/dashboard-summary/${emp_id}`,{credentials:"include"});
         if(!r.ok) throw new Error(r.status);
         const d = await r.json();
         const hrs  = d.hours  || d.learning_hours || 0;
@@ -496,7 +505,7 @@ async function loadEmployeeProfile(){
         let name=localStorage.getItem("emp_name");
         let coe=localStorage.getItem("coe");
         if(!name||name==="undefined"){
-            const r=await fetch(`${BASE_URL}/api/auth/employee/${emp_id}`,{credentials:"include"});
+            const r=await apiFetch(`${BASE_URL}/api/auth/employee/${emp_id}`,{credentials:"include"});
             const d=await r.json();
             if(d.success){
                 name=d.employee?.emp_name||d.employee?.name||"Employee";
@@ -517,7 +526,7 @@ async function loadEmployeeProfile(){
 ═══════════════════════════════════════════════ */
 async function loadDashboard(){
     try{
-        const r=await fetch(`${BASE_URL}/dashboard-summary/${emp_id}`,{credentials:"include"});
+        const r=await apiFetch(`${BASE_URL}/dashboard-summary/${emp_id}`,{credentials:"include"});
         if(!r.ok) throw new Error("API "+r.status);
         const d=await r.json();
         const hrs  = d.hours   || d.learning_hours || 0;
@@ -544,7 +553,7 @@ async function loadDashboard(){
 ═══════════════════════════════════════════════ */
 async function loadTrainings(){
     try{
-        const r=await fetch(`${BASE_URL}/employee-trainings/${emp_id}`,{credentials:"include"});
+        const r=await apiFetch(`${BASE_URL}/employee-trainings/${emp_id}`,{credentials:"include"});
         const trainings=await r.json();
         const foundation=[],account=[],coe=[];
         trainings.forEach(t=>{
@@ -626,13 +635,13 @@ async function openTraining(trainingName, isReview=false){
 
     try{
         if(!isReview){
-            await fetch(`${BASE_URL}/start-training`,{
+            await apiFetch(`${BASE_URL}/start-training`,{
                 method:"POST",credentials:"include",
                 headers:{"Content-Type":"application/json"},
                 body:JSON.stringify({emp_id,training_name:trainingName})
             });
         }
-        const r=await fetch(
+        const r=await apiFetch(
             `${BASE_URL}/training-details/${emp_id}/${encodeURIComponent(trainingName)}`,
             {credentials:"include"}
         );
@@ -803,7 +812,7 @@ async function completeTopic(){
     btn.disabled=true; btn.textContent="Saving…";
 
     try{
-        await fetch(`${BASE_URL}/track-topic-progress`,{
+        await apiFetch(`${BASE_URL}/track-topic-progress`,{
             method:"POST",credentials:"include",
             headers:{"Content-Type":"application/json"},
             body:JSON.stringify({
@@ -816,7 +825,7 @@ async function completeTopic(){
             })
         });
 
-        const r=await fetch(`${BASE_URL}/recalculate-progress/${emp_id}/${encodeURIComponent(currentTraining)}`,{credentials:"include"});
+        const r=await apiFetch(`${BASE_URL}/recalculate-progress/${emp_id}/${encodeURIComponent(currentTraining)}`,{credentials:"include"});
         const data=await r.json();
 
         /* DEF-009 FIX: persist in local set — stays accessible */
@@ -841,7 +850,7 @@ async function completeTopic(){
 
             if(data.status==="COMPLETED"){
                 try{
-                    await fetch(`${BASE_URL}/generate-certificate`,{
+                    await apiFetch(`${BASE_URL}/generate-certificate`,{
                         method:"POST",credentials:"include",
                         headers:{"Content-Type":"application/json"},
                         body:JSON.stringify({emp_id,training_name:currentTraining})
@@ -857,7 +866,7 @@ async function completeTopic(){
                 await loadDashboard();
                 await loadTrainings();
                 // Also refresh hours chart
-                const r2=await fetch(`${BASE_URL}/employee-trainings/${emp_id}`,{credentials:"include"}).catch(()=>null);
+                const r2=await apiFetch(`${BASE_URL}/employee-trainings/${emp_id}`,{credentials:"include"}).catch(()=>null);
                 if(r2&&r2.ok){ const t=await r2.json(); renderHoursChart(t); }
             },800);
         }
@@ -930,7 +939,7 @@ function renderCharts(trainings){
 
 async function renderHoursChart(trainings){
     try{
-        const r=await fetch(`${BASE_URL}/learning-analytics/${emp_id}`,{credentials:"include"});
+        const r=await apiFetch(`${BASE_URL}/learning-analytics/${emp_id}`,{credentials:"include"});
         const data=await r.json();
         const bctx=document.getElementById("analyticsChart");
         if(!bctx) return;
@@ -1039,7 +1048,7 @@ document.addEventListener("DOMContentLoaded",()=>{
 /* LOGOUT */
 async function logout(){
     try{
-        await fetch(`${BASE_URL}/api/auth/logout`, {
+        await apiFetch(`${BASE_URL}/api/auth/logout`, {
             method:"POST",
             credentials:"include"
         });
