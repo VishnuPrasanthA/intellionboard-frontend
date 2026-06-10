@@ -377,12 +377,12 @@ function renderStats(data){
     document.getElementById("slaRisk").innerText           =
         data.filter(x=>(x.risk_level||"").toUpperCase()==="HIGH").length;
     document.getElementById("delayedEmployees").innerText  =
-        data.filter(x=>!(x.onboarding_status||"").toLowerCase().includes("completed")&&getDelayDays(x.updated_at||x.created_at)>2).length;
+        data.filter(x=>!(x.onboarding_status||"").toLowerCase().includes("completed")&&getDelayDays(x.created_at)>2).length;
 }
 
 /* ── AI insights ─────────────────────────────────────── */
 function loadAIInsights(data){
-    const delayed      =data.filter(x=>!(x.onboarding_status||"").toLowerCase().includes("completed")&&getDelayDays(x.updated_at||x.created_at)>2).length;
+    const delayed      =data.filter(x=>!(x.onboarding_status||"").toLowerCase().includes("completed")&&getDelayDays(x.created_at)>2).length;
     const highRisk     =data.filter(x=>(x.risk_level||"").toUpperCase()==="HIGH").length;
     const trainPending =data.filter(x=>(x.training_percentage||0)<100).length;
     const completed    =data.filter(x=>(x.onboarding_status||"").toLowerCase().includes("completed")).length;
@@ -411,7 +411,7 @@ function renderTable(data){
         <th>Delay</th><th>Overall Progress</th><th>Risk</th><th>Readiness</th><th>Actions</th>
     </tr></thead><tbody>`;
     data.forEach(emp=>{
-        const delay = (emp.onboarding_status||"").toLowerCase().includes("completed") ? 0 : getDelayDays(emp.updated_at||emp.created_at);
+        const delay = (emp.onboarding_status||"").toLowerCase().includes("completed") ? 0 : getDelayDays(emp.created_at);
         const statusClass=
             (emp.onboarding_status||"").toLowerCase().includes("completed")?"completed":
             delay>2?"delayed":"pending";
@@ -475,7 +475,7 @@ function applyFilter(){
         let statusMatch=true;
         const status=(emp.onboarding_status||"").toLowerCase();
         const risk  =(emp.risk_level||"").toUpperCase();
-        const delay =getDelayDays(emp.updated_at||emp.created_at);
+        const delay =getDelayDays(emp.created_at);
         const tPct  =emp.training_percentage||0;
 
         if(filter==="pending")    statusMatch=!status.includes("completed");
@@ -493,7 +493,11 @@ function applyFilter(){
 /* ── delay helper ────────────────────────────────────── */
 function getDelayDays(date){
     if(!date) return 0;
-    return Math.max(0,Math.floor((Date.now()-new Date(date))/(1000*60*60*24)));
+    // Normalize MSSQL datetime string: '2026-06-10 13:40:49.230000' → ISO format
+    const normalized = String(date).replace(' ', 'T').replace(/\.\d+$/, '');
+    const d = new Date(normalized);
+    if(isNaN(d.getTime())) return 0;  // invalid date → 0, never NaN
+    return Math.max(0, Math.floor((Date.now() - d.getTime()) / (1000*60*60*24)));
 }
 
 /* ── timeline ────────────────────────────────────────── */
@@ -604,10 +608,11 @@ function renderAnalyticsPage(emp, page){
     const trainPct =Number(emp.training_percentage||emp.training_progress||0);
     const readiness=Number(emp.readiness_score||0);
     const risk     =safe(emp.risk_level,"LOW");
-    const delay = emp.delay_days !== undefined
+    // Always recalculate from created_at for consistency
+    const delay = emp.delay_days !== undefined && !isNaN(emp.delay_days)
         ? emp.delay_days
         : Math.max(0, Math.floor(
-            (Date.now()-new Date(emp.updated_at||emp.created_at||Date.now()))
+            (Date.now()-new Date(String(emp.created_at||"").replace(" ","T").replace(/\.\d+$/,"")||Date.now()))
             /(1000*60*60*24)
           ));
     const riskColor=risk.toUpperCase()==="HIGH"?"#ff5f5f":risk.toUpperCase()==="MEDIUM"?"#f39c12":"#16c79a";
@@ -838,9 +843,9 @@ function getLocalResponse(intentType,rawMsg){
                 (list.length>6?`<br>…and ${list.length-6} more`:"");
         }
         case "delayed":{
-            const list=fullData.filter(x=>getDelayDays(x.updated_at||x.created_at)>2);
+            const list=fullData.filter(x=>getDelayDays(x.created_at)>2);
             return `⚠️ <b>${list.length} Delayed Employees</b><br><br>`+
-                list.slice(0,6).map(e=>`• ${safe(e.emp_name,"??")} (${safe(e.emp_id)}) — ${getDelayDays(e.updated_at||e.created_at)} days`).join("<br>")+
+                list.slice(0,6).map(e=>`• ${safe(e.emp_name,"??")} (${safe(e.emp_id)}) — ${getDelayDays(e.created_at)} days`).join("<br>")+
                 (list.length>6?`<br>…and ${list.length-6} more`:"");
         }
         case "high_risk":{
@@ -857,7 +862,7 @@ function getLocalResponse(intentType,rawMsg){
             const total=fullData.length;
             const comp=fullData.filter(x=>(x.onboarding_status||"").toLowerCase().includes("completed")).length;
             const high=fullData.filter(x=>(x.risk_level||"").toUpperCase()==="HIGH").length;
-            const del=fullData.filter(x=>getDelayDays(x.updated_at||x.created_at)>2).length;
+            const del=fullData.filter(x=>getDelayDays(x.created_at)>2).length;
             return `📈 <b>RM Onboarding Summary</b><br><br>
                 👥 Total: <b>${total}</b><br>✅ Completed: <b>${comp}</b><br>
                 ⏳ Pending: <b>${total-comp}</b><br>🚨 High Risk: <b>${high}</b><br>⚠️ Delayed: <b>${del}</b>`;
@@ -876,7 +881,7 @@ function getLocalResponse(intentType,rawMsg){
         }
         case "bulk_escalation":{
             const targets=fullData.filter(x=>
-                (x.risk_level||"").toUpperCase()==="HIGH"||getDelayDays(x.updated_at||x.created_at)>2);
+                (x.risk_level||"").toUpperCase()==="HIGH"||getDelayDays(x.created_at)>2);
             if(!targets.length) return "✅ No high-risk or delayed employees to escalate.";
             Promise.all(targets.map(emp=>apiFetch(`${API}/escalate/${emp.emp_id}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({rm_name:rm,rm_email:rmEmail})}).catch(()=>{})))
                 .then(()=>{showToast(`⚠️ Escalated ${targets.length} employees`,"#f39c12");loadDashboard();});
