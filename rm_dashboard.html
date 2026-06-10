@@ -798,11 +798,21 @@ function detectIntent(msg){
     if((msg.includes("remind employee")||msg.includes("send reminder to employee"))&&/[0-9]{4,10}/.test(msg)) return {type:"remind_single"};
     // remind without ID, or plain "reminder" → show choice UI
     if(msg.includes("remind")||msg.includes("reminder")) return {type:"remind_choice"};
-    if(msg.includes("pending onboarding")||msg.includes("show pending")||msg.includes("pending employees")||msg.includes("show me pending")||msg.includes("employees pending")) return {type:"pending_onboarding"};
-    if(msg.includes("delayed")||msg.includes("late onboarding")||msg.includes("delay employees")) return {type:"delayed"};
-    if(msg.includes("high risk")||msg.includes("risk employees")||msg.includes("critical employees")) return {type:"high_risk"};
-    if(msg.includes("show completed")||msg.includes("fully onboarded")||msg.includes("completed employees")) return {type:"completed"};
-    if(msg.includes("summary")||msg.includes("dashboard status")||msg.includes("rm report")||msg.includes("onboarding summary")) return {type:"summary"};
+    if(msg.includes("pending onboarding")||msg.includes("show pending")||msg.includes("pending employees")||msg.includes("show me pending")||msg.includes("employees pending")||msg==="pending"||msg==="list pending") return {type:"pending_onboarding"};
+    if(msg.includes("delayed")||msg.includes("late onboarding")||msg.includes("delay employees")||msg==="delay"||msg==="delayed employees") return {type:"delayed"};
+    if(msg.includes("high risk")||msg.includes("risk employees")||msg.includes("critical employees")||msg==="risk"||msg==="at risk") return {type:"high_risk"};
+    if(msg.includes("show completed")||msg.includes("fully onboarded")||msg.includes("completed employees")||msg==="completed"||msg==="done") return {type:"completed"};
+    if(msg.includes("summary")||msg.includes("dashboard status")||msg.includes("rm report")||msg.includes("onboarding summary")||msg==="status"||msg==="report"||msg==="overview") return {type:"summary"};
+    // Who commands
+    if(msg.startsWith("who is ")||msg.startsWith("find ")||msg.startsWith("search ")) {
+        const m = msg.match(/(\d{4,10})/);
+        if(m) return {type:"emp_lookup", empId: m[1]};
+    }
+    // Check on specific employee
+    if(msg.startsWith("check ")||msg.startsWith("status of ")||msg.startsWith("details of ")||msg.startsWith("show ")) {
+        const m = msg.match(/(\d{4,10})/);
+        if(m) return {type:"emp_lookup", empId: m[1]};
+    }
     // Single escalation: "escalate employee 1042836" or "escalate 1042836"
     if((msg.includes("escalate")||msg.includes("escalation"))&&/\b\d{4,10}\b/.test(msg)){
         const m=msg.match(/\b(\d{4,10})\b/);
@@ -810,6 +820,10 @@ function detectIntent(msg){
     }
     // General escalation (no specific ID) → prompt user to choose
     if(msg.includes("escalation")||msg.includes("escalate")||msg.includes("send mail to admin")||msg.includes("id card issue")||msg.includes("laptop issue")) return {type:"escalation"};
+    // Bare employee ID (e.g. "1042825") → look up employee
+    if(/^\d{4,10}$/.test(msg.trim())) return {type:"emp_lookup", empId: msg.trim()};
+    // Message contains an ID but no command → also lookup
+    if(/\d{5,10}/.test(msg)&&!msg.includes(" ")) return {type:"emp_lookup", empId: msg.match(/(\d{5,10})/)[1]};
     return {type:"general"};
 }
 
@@ -851,7 +865,7 @@ function showHelp(){
 }
 
 /* ── getLocalResponse: answers from fullData ─────── */
-function getLocalResponse(intentType,rawMsg){
+function getLocalResponse(intentType,rawMsg,intentObj){
     const safe=(v,fb="-")=>(!v||String(v).toLowerCase()==="undefined"||v==="")?fb:String(v);
     switch(intentType){
         case "greeting":
@@ -973,6 +987,40 @@ function getLocalResponse(intentType,rawMsg){
                 </div>
             `);
             return null;
+        }
+        case "emp_lookup":{
+            // Bare ID typed → show employee details or "not in your team"
+            const empId = (intent && intent.empId) || rawMsg.match(/(\d{4,10})/)?.[1] || rawMsg.trim();
+            const emp = fullData.find(e=>String(e.emp_id)===String(empId));
+            if(!emp){
+                return `⚠️ Employee <b>${empId}</b> is not under your team, or does not exist in the system.`;
+            }
+            const delay = getDelayDays(emp.created_at);
+            const riskColor = (emp.risk_level||"").toUpperCase()==="HIGH" ? "#ff5f5f"
+                            : (emp.risk_level||"").toUpperCase()==="MEDIUM" ? "#f39c12" : "#16c79a";
+            const statusDisplay = (emp.onboarding_status||"").toLowerCase()==="escalated"
+                ? "Onboarding In Progress 🚨"
+                : (emp.onboarding_status||"Pending");
+            return `<div style="background:#f8fafc;border-radius:12px;padding:14px;border-left:4px solid #16c79a;">
+                <div style="font-size:14px;font-weight:800;color:#172b42;margin-bottom:10px;">
+                    👤 ${emp.emp_name||"Unknown"} <span style="font-size:11px;color:#7f8ea3;">(${empId})</span>
+                </div>
+                <div style="display:grid;grid-template-columns:110px 1fr;font-size:12px;gap:2px;">
+                    <span style="color:#64748b;">Status</span><b>${statusDisplay}</b>
+                    <span style="color:#64748b;">Step</span><b>${(emp.current_step||"-").replace(/_/g," ")}</b>
+                    <span style="color:#64748b;">Progress</span><b>${emp.progress_percentage||0}%</b>
+                    <span style="color:#64748b;">Risk</span><b style="color:${riskColor}">${emp.risk_level||"LOW"}</b>
+                    <span style="color:#64748b;">Delay</span><b>${delay} days</b>
+                    <span style="color:#64748b;">Laptop</span><b>${emp.laptop_status||"Pending"}</b>
+                    <span style="color:#64748b;">ID Card</span><b>${emp.id_card_status||"Pending"}</b>
+                    <span style="color:#64748b;">Training</span><b>${emp.training_percentage||0}%</b>
+                </div>
+                <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
+                    <span class="cmd-tag" onclick="sendReminder('${empId}')" style="cursor:pointer;padding:4px 10px;">📧 Remind</span>
+                    <span class="cmd-tag" onclick="escalate('${empId}')" style="cursor:pointer;padding:4px 10px;background:rgba(255,179,71,.2);color:#a0620a;">⚠️ Escalate</span>
+                    <span class="cmd-tag" onclick="openEmployeeDetails('${empId}');toggleChatbot()" style="cursor:pointer;padding:4px 10px;background:rgba(89,184,255,.15);color:#0a5a9e;">📊 Analytics</span>
+                </div>
+            </div>`;
         }
         default: return null;
     }
@@ -1099,11 +1147,14 @@ async function sendChat(){
 
     if(intent.type==="help"){showHelp();return;}
 
-    // fast local path for data commands
-    if(["pending_onboarding","delayed","high_risk","completed","summary",
-        "bulk_reminder","bulk_escalation","remind_single","remind_choice","greeting","escalation","escalate_single"].includes(intent.type)){
-        const local=getLocalResponse(intent.type,msg);
-        if(local){addMessage("ai",local);return;}
+    // fast local path — always return, even if null (null = handled via addMessage internally)
+    const LOCAL_INTENTS = ["pending_onboarding","delayed","high_risk","completed","summary",
+        "bulk_reminder","bulk_escalation","remind_single","remind_choice","greeting",
+        "escalation","escalate_single","emp_lookup"];
+    if(LOCAL_INTENTS.includes(intent.type)){
+        const local=getLocalResponse(intent.type,msg,intent);
+        if(local) addMessage("ai",local);
+        return; // ← always return; null means already handled via addMessage()
     }
 
     showTyping();
@@ -1117,12 +1168,12 @@ async function sendChat(){
         if(res.ok&&data.success){
             addMessage("ai","🤖 "+data.reply);
         } else {
-            const local=getLocalResponse(intent.type,msg);
+            const local=getLocalResponse(intent.type,msg,intent);
             addMessage("ai",local||("⚠️ "+(data.reply||"Request failed")+"<br>Type <b>help</b> for commands."));
         }
     }catch(err){
         removeTyping();
-        const local=getLocalResponse(intent.type,msg);
+        const local=getLocalResponse(intent.type,msg,intent);
         addMessage("ai",local||"⚠️ Cannot reach AI server. Type <b>help</b> for local commands.");
         console.error("Chat Error:",err);
     }
