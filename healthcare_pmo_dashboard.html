@@ -3098,7 +3098,8 @@ async function startOnboarding(empId) {
 
         else {
 
-            showToast("Failed To Start", "error");
+            const errMsg = (response && response.message) ? response.message : "Onboarding failed — check server logs";
+            showToast("❌ " + errMsg, "error");
 
             if (btn) {
                 btn.disabled = false;
@@ -3112,21 +3113,15 @@ async function startOnboarding(empId) {
 
         console.error("START ERROR", err);
 
-        showToast("Onboarding Error", "error");
-
-        /* =========================================================
-           RESET BUTTON ON ERROR
-        ========================================================= */
+        const catchMsg = err.message || "Network error — check backend";
+        showToast("❌ " + catchMsg, "error");
 
         if (btn) {
             btn.disabled = false;
             btn.innerText = "🚀 Onboard";
         }
 
-        return {
-            success: false,
-            error: err.message
-        };
+        return { success: false, error: err.message };
     }
 }
 /* =========================================================
@@ -3409,30 +3404,12 @@ async function askAgent() {
     };
 
     const calculateRisk = (emp) => {
-
-        const step =
-            String(emp?.current_step || "")
-                .toUpperCase();
-
-        const status =
-            String(emp?.onboarding_status || "")
-                .toUpperCase();
-
-        if (
-            status.includes("ESCALATED") ||
-            status.includes("DELAY")
-        ) {
-            return "HIGH";
-        }
-
-        if (
-            step.includes("ID_CARD") ||
-            step.includes("ACCESS") ||
-            step.includes("LAPTOP")
-        ) {
-            return "MEDIUM";
-        }
-
+        const dbRisk = String(emp?.risk_level || "").toUpperCase();
+        if (dbRisk === "HIGH" || dbRisk === "MEDIUM" || dbRisk === "LOW") return dbRisk;
+        const status = String(emp?.onboarding_status || "").toUpperCase();
+        const step   = String(emp?.current_step || "").toUpperCase();
+        if (status.includes("ESCALATED") || status.includes("DELAY")) return "HIGH";
+        if (step.includes("ID_CARD") || step.includes("ACCESS") || step.includes("LAPTOP")) return "MEDIUM";
         return "LOW";
     };
 
