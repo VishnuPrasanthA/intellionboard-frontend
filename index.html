@@ -354,7 +354,7 @@ input:focus,select:focus{
 </div>
 
 <script>
-const API_BASE = "https://manatee-dislike-lifting.ngrok-free.dev";
+const API_BASE = "http://127.0.0.1:5332";
 
 const ROLE_ROUTES = {
     "INTELLIONBOARD_ADMIN": "admin_portal.html",
@@ -369,6 +369,15 @@ const ROLE_ROUTES = {
 
 const ADMIN_ONLY_ROLES    = new Set(["INTELLIONBOARD_ADMIN","ADMIN","ITSG","HEALTHCARE_PMO","PMO"]);
 const SELF_REGISTER_ROLES = new Set(["EMPLOYEE","REPORTING_MANAGER","LEADERSHIP"]);
+
+// ── ngrok bypass: add header to all backend fetch calls ──
+function apiFetch(url, opts = {}) {
+    opts.headers = Object.assign({
+        "ngrok-skip-browser-warning": "true"
+    }, opts.headers || {});
+    opts.credentials = opts.credentials || "include";
+    return fetch(url, opts);
+}
 
 // Signup state
 let _suEmail = "", _suEmpId = "", _suPassword = "", _suRole = "";
@@ -531,7 +540,7 @@ async function suStep1(){
     btn.disabled=true;btn.textContent="Verifying & sending code…";
 
     try{
-        const res  = await fetch(`${API_BASE}/api/auth/send-signup-otp`,{
+        const res  = await apiFetch(`${API_BASE}/api/auth/send-signup-otp`,{
             method:"POST",
             credentials:"include",
             headers:{"Content-Type":"application/json"},
@@ -566,7 +575,7 @@ async function suResend(){
     suClearOtp();
     document.getElementById("suResendBtn").disabled=true;
     try{
-        const res  = await fetch(`${API_BASE}/api/auth/send-signup-otp`,{
+        const res  = await apiFetch(`${API_BASE}/api/auth/send-signup-otp`,{
             method:"POST",
             credentials:"include",
             headers:{"Content-Type":"application/json"},
@@ -604,7 +613,7 @@ async function suStep2(){
     btn.disabled=true;btn.textContent="Creating account…";
 
     try{
-        const res  = await fetch(`${API_BASE}/api/auth/register`,{
+        const res  = await apiFetch(`${API_BASE}/api/auth/register`,{
             method:"POST",
             credentials:"include",
             headers:{"Content-Type":"application/json"},
@@ -644,95 +653,53 @@ async function suStep2(){
    LOGIN
 ═══════════════════════════════════════ */
 async function login(){
-    const btn = document.getElementById("loginBtn");
+    const btn=document.getElementById("loginBtn");
     if(btn.disabled) return;
-
     try{
         hideAlerts();
-
         const email        = document.getElementById("loginEmail").value.trim().toLowerCase();
         const password     = document.getElementById("loginPassword").value;
         const selectedRole = document.getElementById("loginRole").value.trim().toUpperCase();
-
-        // ✅ Validation
-        if(!email || !password || !selectedRole){
-            showError("loginError","Please fill all fields including your role.");
-            return;
+        if(!email||!password||!selectedRole){
+            showError("loginError","Please fill all fields including your role."); return;
         }
-
         if(!isValidCorporateEmail(email)){
-            showError("loginError","Only @infinite.com email addresses are allowed.");
-            return;
+            showError("loginError","Only @infinite.com email addresses are allowed."); return;
         }
-
-        // ✅ Disable button
-        btn.disabled = true;
-        btn.textContent = "Signing in…";
-
-        const response = await fetch(`${API_BASE}/api/auth/login`,{
-            method:"POST",
-            credentials:"include",
+        btn.disabled=true;btn.textContent="Signing in…";
+        const response=await apiFetch(`${API_BASE}/api/auth/login`,{
+            method:"POST",credentials:"include",
             headers:{"Content-Type":"application/json"},
-            body:JSON.stringify({email, password, selected_role:selectedRole})
+            body:JSON.stringify({email,password,selected_role:selectedRole})
         });
-
         let result;
-        try {
-            result = await response.json();
-        } catch(e){
-            showError("loginError","Invalid backend response.");
-
-            // ✅ FIX: re-enable button
-            btn.disabled = false;
-            btn.textContent = "Login to Dashboard";
+        try{result=await response.json()}
+        catch(e){showError("loginError","Invalid backend response.");return}
+        if(!response.ok||!result.success){
+            const code=result.error_code||"";
+            if(code==="WRONG_PASSWORD")   showError("loginError","Incorrect password. Please try again.");
+            else if(code==="USER_NOT_FOUND") showError("loginError","No account found with this email address.");
+            else if(code==="ROLE_MISMATCH")  showError("loginError","Invalid role selected. Please select your correct role and try again.");
+            else if(code==="ACCOUNT_SUSPENDED") showError("loginError","Your account has been suspended. Contact IntelliOnboard-Admin@infinite.com.");
+            else showError("loginError",result.message||"Incorrect password. Please try again.");
             return;
         }
-
-        // ✅ Handle errors
-        if(!response.ok || !result.success){
-
-            const code = result.error_code || "";
-
-            if(code === "WRONG_PASSWORD")
-                showError("loginError","Incorrect password. Please try again.");
-            else if(code === "USER_NOT_FOUND")
-                showError("loginError","No account found with this email address.");
-            else if(code === "ROLE_MISMATCH")
-                showError("loginError","Invalid role selected. Please select your correct role and try again.");
-            else if(code === "ACCOUNT_SUSPENDED")
-                showError("loginError","Your account has been suspended. Contact IntelliOnboard-Admin@infinite.com.");
-            else
-                showError("loginError", result.message || "Login failed.");
-
-            // ✅ FIX: re-enable button HERE
-            btn.disabled = false;
-            btn.textContent = "Login to Dashboard";
-
-            return;
-        }
-
-        // ✅ SUCCESS
-        const backendRole = String(result.user?.role || "").trim().toUpperCase();
-
-        localStorage.setItem("token",         result.token         || "session-active");
-        localStorage.setItem("user_email",    result.user?.email   || "");
+        const backendRole=String(result.user?.role||"").trim().toUpperCase();
+        localStorage.setItem("token",         result.token         ||"session-active");
+        localStorage.setItem("user_email",    result.user?.email   ||"");
         localStorage.setItem("user_role",     backendRole);
-        localStorage.setItem("user_location", result.user?.location|| "");
-        localStorage.setItem("user_name",     result.user?.name    || "");
-        localStorage.setItem("emp_id",        result.user?.emp_id  || "");
-        localStorage.setItem("user_id",       result.user?.id      || "");
-
+        localStorage.setItem("user_location", result.user?.location||"");
+        localStorage.setItem("user_name",     result.user?.name    ||"");
+        localStorage.setItem("emp_id",        result.user?.emp_id  ||"");
+        localStorage.setItem("user_id",       result.user?.id      ||"");
         redirectByRole(backendRole);
-
     } catch(e){
-
         showError("loginError","Server not reachable. Check backend.");
-
-        // ✅ FIX: re-enable button in catch
-        btn.disabled = false;
-        btn.textContent = "Login to Dashboard";
+        document.getElementById("loginBtn").disabled=false;
+        document.getElementById("loginBtn").textContent="Login to Dashboard";
     }
 }
+
 function redirectByRole(role){
     role=String(role||"").trim().toUpperCase();
     if(role==="EMPLOYEE"){handleEmployeeRouting();return}
@@ -744,59 +711,31 @@ function redirectByRole(role){
 async function handleEmployeeRouting(){
     try{
         const emp_id=localStorage.getItem("emp_id");
-
-        console.log("EMP ID:", emp_id);  // ✅ DEBUG
-
         if(!emp_id||emp_id==="null"||emp_id==="undefined"){
-            showError("loginError","Session expired. Please login again.");
-            return;
+            showError("loginError","Session expired. Please login again.");return;
         }
-
-        const apiUrl = `${API_BASE}/api/auth/employee/${emp_id}`;
-        console.log("Calling API:", apiUrl);  // ✅ DEBUG
-
-        const res=await fetch(apiUrl,{
-            method:"GET",
-            headers:{"Content-Type":"application/json"},
-            credentials:"include"
+        const res=await apiFetch(`${API_BASE}/api/auth/employee/${emp_id}`,{
+            method:"GET",headers:{"Content-Type":"application/json"},credentials:"include"
         });
-
-        console.log("Response status:", res.status);  // ✅ DEBUG
-
+        if(!res.ok){showError("loginError","Employee data fetch failed. Please try again.");return}
         const response=await res.json();
-        console.log("Response data:", response);  // ✅ DEBUG
-
-        if(!res.ok){
-            showError("loginError","Employee data fetch failed.");
-            return;
-        }
-
-        if(!response.success){
-            showError("loginError",response.message||"Employee not found in system.");
-            return;
-        }
-
+        if(!response.success){showError("loginError",response.message||"Employee not found in system.");return}
         const employee=response.employee||{};
         const selectedCOE=response.selected_coe||employee.selected_coe||"";
-
-        localStorage.setItem("emp_id",response.emp_id||emp_id);
-        localStorage.setItem("emp_name",employee.emp_name||employee.name||"Employee");
+        localStorage.setItem("emp_id",   response.emp_id||emp_id);
+        localStorage.setItem("emp_name", employee.emp_name||employee.name||"Employee");
         localStorage.setItem("emp_email",employee.email||"");
-        localStorage.setItem("coe",selectedCOE);
-
-        window.location.href =
-            (selectedCOE && selectedCOE !== "null" && selectedCOE !== "")
-            ? "employee_dashboard.html"
-            : "bot.html";
-
+        localStorage.setItem("coe",      selectedCOE);
+        window.location.href=(selectedCOE&&selectedCOE!=="null"&&selectedCOE!=="")?
+            "employee_dashboard.html":"bot.html";
     } catch(e){
-        console.error("Routing error:", e);   // ✅ DEBUG
         showError("loginError","Employee routing failed. Please try again.");
     }
 }
+
 async function validateSession(){
     try{
-        const response=await fetch(`${API_BASE}/api/auth/validate-session`,{
+        const response=await apiFetch(`${API_BASE}/api/auth/validate-session`,{
             method:"GET",credentials:"include",headers:{"Content-Type":"application/json"}
         });
         if(!response.ok) return;
