@@ -314,6 +314,15 @@ tbody tr:hover td{box-shadow:0 10px 24px rgba(22,199,154,.05);}
 
 <script>
 const API      = "https://manatee-dislike-lifting.ngrok-free.dev/api/rm";
+
+// ── ngrok bypass ─────────────────────────────────────────
+function apiFetch(url, opts = {}) {
+    opts.headers = Object.assign({
+        "ngrok-skip-browser-warning": "true"
+    }, opts.headers || {});
+    opts.credentials = opts.credentials || "include";
+    return fetch(url, opts);
+}
 let   fullData = [];
 const rm       = localStorage.getItem("user_name")  || "RM";
 const rmEmail  = localStorage.getItem("user_email") || "";
@@ -340,7 +349,7 @@ function toggleChatbot(){
 /* ── load dashboard ──────────────────────────────────── */
 async function loadDashboard(){
     try{
-        const res=await fetch(`${API}/rm-dashboard`,{
+        const res=await apiFetch(`${API}/rm-dashboard`,{
             method:"POST",headers:{"Content-Type":"application/json"},
             body:JSON.stringify({email:rmEmail})
         });
@@ -490,7 +499,7 @@ function getDelayDays(date){
 /* ── timeline ────────────────────────────────────────── */
 async function openTimeline(empId){
     document.getElementById("timelineModal").style.display="flex";
-    const res=await fetch(`${API}/timeline/${empId}`);
+    const res=await apiFetch(`${API}/timeline/${empId}`);
     const data=await res.json();
     let html="";
     (data.data||[]).forEach(t=>{
@@ -514,7 +523,7 @@ function showToast(msg,color){
 /* ── escalate ────────────────────────────────────────── */
 async function escalate(empId){
     try{
-        await fetch(`${API}/escalate/${empId}`,{method:"POST"});
+        await apiFetch(`${API}/escalate/${empId}`,{method:"POST"});
         showToast("⚠️ Escalation triggered for employee "+empId,"#f39c12");
         loadDashboard();
     }catch(e){showToast("❌ Escalation failed","#ff5f5f");}
@@ -523,7 +532,7 @@ async function escalate(empId){
 /* ── DEF-047: send reminder with toast feedback ──────── */
 async function sendReminder(empId){
     try{
-        const res=await fetch(`${API}/send-reminder`,{
+        const res=await apiFetch(`${API}/send-reminder`,{
             method:"POST",headers:{"Content-Type":"application/json"},
             body:JSON.stringify({emp_id:empId})
         });
@@ -923,7 +932,7 @@ async function sendReminderWithConfirm(empId){
     addMessage("ai","⏳ Sending reminder to employee <b>"+empId+"</b>…");
 
     try{
-        const res=await fetch(`${API}/send-reminder`,{
+        const res=await apiFetch(`${API}/send-reminder`,{
             method:"POST",headers:{"Content-Type":"application/json"},
             body:JSON.stringify({emp_id:empId})
         });
@@ -967,7 +976,7 @@ async function sendChat(){
 
     showTyping();
     try{
-        const res=await fetch(`${API}/chat`,{
+        const res=await apiFetch(`${API}/chat`,{
             method:"POST",headers:{"Content-Type":"application/json"},
             body:JSON.stringify({message:msg,intent:intent.type,rm,email:rmEmail})
         });
@@ -990,7 +999,7 @@ async function sendChat(){
 /* ── logout ───────────────────────────────────────── */
 async function logout(){
     try{
-        const res=await fetch("https://intellionboard.onrender.com/api/auth/logout",{method:"POST",credentials:"include"});
+        const res=await apiFetch("https://intellionboard.onrender.com/api/auth/logout",{method:"POST",credentials:"include"});
         if(!res.ok) console.warn("Logout API not OK");
     }catch(err){console.error("Logout API Error:",err);}
     finally{
