@@ -882,7 +882,7 @@ function getLocalResponse(intentType,rawMsg){
             if(!pending.length) return "✅ No pending employees — everyone is onboarded!";
             let sent=0;
             Promise.all(pending.map(emp=>
-                fetch(`${API}/send-reminder`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({emp_id:emp.emp_id})})
+                apiFetch(`${API}/send-reminder`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({emp_id:emp.emp_id})})
                 .then(r=>{if(r.ok)sent++;}).catch(()=>{})
             )).then(()=>showToast(`📧 Bulk reminder: ${sent}/${pending.length} sent`,"#16c79a"));
             return `📨 <b>Bulk Reminder Triggered</b><br><br>
@@ -912,6 +912,26 @@ function getLocalResponse(intentType,rawMsg){
         case "remind_choice":
             return showReminderChoice();
 
+        case "escalation":{
+            // Escalate all high-risk employees from chatbot
+            const targets = fullData.filter(x =>
+                (x.risk_level||"").toUpperCase()==="HIGH" || getDelayDays(x.created_at)>2
+            );
+            if(!targets.length) return "✅ No high-risk or delayed employees to escalate.";
+            addMessage("ai",`⚠️ <b>Escalating ${targets.length} employees...</b><br><small>Routing emails to ITSG/Admin DL based on each employee's current step and location.</small>`);
+            Promise.all(targets.map(emp=>
+                apiFetch(`${API}/escalate/${emp.emp_id}`,{
+                    method:"POST",
+                    headers:{"Content-Type":"application/json"},
+                    body:JSON.stringify({rm_name:rm, rm_email:rmEmail})
+                }).then(r=>r.json()).catch(()=>({}))
+            )).then(results=>{
+                const sent = results.filter(r=>r.success).length;
+                showToast(`⚠️ Escalated ${sent}/${targets.length} employees`,"#f39c12");
+                loadDashboard();
+            });
+            return null; // message already added above
+        }
         default: return null;
     }
 }
@@ -1011,7 +1031,7 @@ async function sendChat(){
 
     // fast local path for data commands
     if(["pending_onboarding","delayed","high_risk","completed","summary",
-        "bulk_reminder","bulk_escalation","remind_single","remind_choice","greeting"].includes(intent.type)){
+        "bulk_reminder","bulk_escalation","remind_single","remind_choice","greeting","escalation"].includes(intent.type)){
         const local=getLocalResponse(intent.type,msg);
         if(local){addMessage("ai",local);return;}
     }
