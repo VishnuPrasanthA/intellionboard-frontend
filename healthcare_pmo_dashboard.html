@@ -1198,6 +1198,17 @@ tbody tr:hover{ background:linear-gradient(90deg,rgba(25,211,162,.04),rgba(89,18
 
 const API_BASE = "https://manatee-dislike-lifting.ngrok-free.dev";
 
+
+
+// ── ngrok bypass ─────────────────────────────────────────
+function apiFetch(url, opts = {}) {
+    opts.headers = Object.assign({
+        "ngrok-skip-browser-warning": "true"
+    }, opts.headers || {});
+    opts.credentials = opts.credentials || "include";
+    return fetch(url, opts);
+}
+
 const REFRESH_INTERVAL = 60000;
 
 let allEmployees = [];
@@ -1292,12 +1303,9 @@ async function initializeDashboard() {
 
         try {
 
-            const res = await fetch(
+            const res = await apiFetch(
     API_BASE + "/api/auth/validate-session",
-    {
-        method: "GET",
-        credentials: "include"
-    }
+    { method: "GET", credentials: "include" }
 );
 
             if (!res.ok) {
@@ -1308,7 +1316,7 @@ async function initializeDashboard() {
 
             if (!data.success) {
                 console.warn("❌ Invalid session → redirecting");
-                window.location.href = "/index.html?manual=true";
+                window.location.href = "index.html?manual=true";
                 return;
             }
 
@@ -1316,7 +1324,7 @@ async function initializeDashboard() {
 
             console.error("❌ SESSION VALIDATION FAILED:", err);
 
-            window.location.href = "/index.html?manual=true";
+            window.location.href = "index.html?manual=true";
             return;
         }
 
@@ -1561,7 +1569,8 @@ async function callAPI(
             credentials: "include",
             headers: {
                 "Content-Type": "application/json",
-                "Accept": "application/json"
+                "Accept": "application/json",
+                "ngrok-skip-browser-warning": "true"
             }
         };
 
@@ -2914,7 +2923,7 @@ async function uploadAllocationReport() {
         // ⚠️ confirm backend expects "file"
         formData.append("file", input.files[0]);
 
-        const response = await fetch(`${API_BASE}/api/upload-allocation`, {
+        const response = await apiFetch(`${API_BASE}/api/upload-allocation`, {
             method: "POST",
             body: formData,
             credentials: "include"
@@ -4172,7 +4181,7 @@ function handleDrop(event) {
 ========================================================= */
 async function logout() {
     try {
-        await fetch(API_BASE + "/api/auth/logout", {
+        await apiFetch(API_BASE + "/api/auth/logout", {
             method: "POST",
             credentials: "include"
         });
