@@ -314,15 +314,6 @@ tbody tr:hover td{box-shadow:0 10px 24px rgba(22,199,154,.05);}
 
 <script>
 const API      = "https://manatee-dislike-lifting.ngrok-free.dev/api/rm";
-
-// ── ngrok bypass ─────────────────────────────────────────
-function apiFetch(url, opts = {}) {
-    opts.headers = Object.assign({
-        "ngrok-skip-browser-warning": "true"
-    }, opts.headers || {});
-    opts.credentials = opts.credentials || "include";
-    return fetch(url, opts);
-}
 let   fullData = [];
 const rm       = localStorage.getItem("user_name")  || "RM";
 const rmEmail  = localStorage.getItem("user_email") || "";
@@ -377,12 +368,12 @@ function renderStats(data){
     document.getElementById("slaRisk").innerText           =
         data.filter(x=>(x.risk_level||"").toUpperCase()==="HIGH").length;
     document.getElementById("delayedEmployees").innerText  =
-        data.filter(x=>getDelayDays(x.created_at)>2).length;
+        data.filter(x=>!(x.onboarding_status||"").toLowerCase().includes("completed")&&getDelayDays(x.updated_at||x.created_at)>2).length;
 }
 
 /* ── AI insights ─────────────────────────────────────── */
 function loadAIInsights(data){
-    const delayed      =data.filter(x=>getDelayDays(x.updated_at)>2).length;
+    const delayed      =data.filter(x=>!(x.onboarding_status||"").toLowerCase().includes("completed")&&getDelayDays(x.updated_at||x.created_at)>2).length;
     const highRisk     =data.filter(x=>(x.risk_level||"").toUpperCase()==="HIGH").length;
     const trainPending =data.filter(x=>(x.training_percentage||0)<100).length;
     const completed    =data.filter(x=>(x.onboarding_status||"").toLowerCase().includes("completed")).length;
@@ -411,7 +402,7 @@ function renderTable(data){
         <th>Delay</th><th>Overall Progress</th><th>Risk</th><th>Readiness</th><th>Actions</th>
     </tr></thead><tbody>`;
     data.forEach(emp=>{
-        const delay      =getDelayDays(emp.updated_at);
+        const delay = (emp.onboarding_status||"").toLowerCase().includes("completed") ? 0 : getDelayDays(emp.updated_at||emp.created_at);
         const statusClass=
             (emp.onboarding_status||"").toLowerCase().includes("completed")?"completed":
             delay>2?"delayed":"pending";
@@ -523,10 +514,22 @@ function showToast(msg,color){
 /* ── escalate ────────────────────────────────────────── */
 async function escalate(empId){
     try{
-        await apiFetch(`${API}/escalate/${empId}`,{method:"POST"});
-        showToast("⚠️ Escalation triggered for employee "+empId,"#f39c12");
+        const res=await apiFetch(`${API}/escalate/${empId}`,{
+            method:"POST",
+            headers:{"Content-Type":"application/json"},
+            body:JSON.stringify({rm_name:rm, rm_email:rmEmail})
+        });
+        const data=await res.json();
+        if(res.ok&&data.success){
+            showToast("⚠️ Escalation triggered — emails sent to PMO","#f39c12");
+        } else {
+            showToast("⚠️ "+(data.message||"Escalation may have issues"),"#f39c12");
+        }
         loadDashboard();
-    }catch(e){showToast("❌ Escalation failed","#ff5f5f");}
+    }catch(e){
+        console.error("Escalation error:",e);
+        showToast("❌ Escalation failed — check backend","#ff5f5f");
+    }
 }
 
 /* ── DEF-047: send reminder with toast feedback ──────── */
@@ -555,7 +558,17 @@ function openEmployeeDetails(empId){
     document.getElementById("employeeFullDetails").innerHTML=
         '<p style="color:#7f8ea3;padding:20px;text-align:center;">Fetching employee data…</p>';
 
-    fetch(`${API}/employee/${empId}`)
+    // ✅ Use fullData first (already loaded, richer fields)
+    // fallback to API call if not found locally
+    const localEmp = fullData.find(e=>String(e.emp_id)===String(empId));
+    if(localEmp){
+        analyticsEmpData = localEmp;
+        renderAnalyticsPage(localEmp, 0);
+        return;
+    }
+
+    // Fallback: fetch from API (uses apiFetch for ngrok bypass)
+    apiFetch(`${API}/employee/${empId}`)
         .then(r=>r.json())
         .then(data=>{
             const emp=data.data||{};
@@ -582,7 +595,12 @@ function renderAnalyticsPage(emp, page){
     const trainPct =Number(emp.training_percentage||emp.training_progress||0);
     const readiness=Number(emp.readiness_score||0);
     const risk     =safe(emp.risk_level,"LOW");
-    const delay    =emp.delay_days||0;
+    const delay = emp.delay_days !== undefined
+        ? emp.delay_days
+        : Math.max(0, Math.floor(
+            (Date.now()-new Date(emp.updated_at||emp.created_at||Date.now()))
+            /(1000*60*60*24)
+          ));
     const riskColor=risk.toUpperCase()==="HIGH"?"#ff5f5f":risk.toUpperCase()==="MEDIUM"?"#f39c12":"#16c79a";
 
     document.getElementById("empModalTitle").innerText=`${name} (${id})`;
@@ -851,7 +869,7 @@ function getLocalResponse(intentType,rawMsg){
             const targets=fullData.filter(x=>
                 (x.risk_level||"").toUpperCase()==="HIGH"||getDelayDays(x.updated_at||x.created_at)>2);
             if(!targets.length) return "✅ No high-risk or delayed employees to escalate.";
-            Promise.all(targets.map(emp=>fetch(`${API}/escalate/${emp.emp_id}`,{method:"POST"}).catch(()=>{})))
+            Promise.all(targets.map(emp=>apiFetch(`${API}/escalate/${emp.emp_id}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({rm_name:rm,rm_email:rmEmail})}).catch(()=>{})))
                 .then(()=>{showToast(`⚠️ Escalated ${targets.length} employees`,"#f39c12");loadDashboard();});
             return `⚠️ <b>Bulk Escalation Triggered</b><br><br>
                 Escalating <b>${targets.length}</b> high-risk / delayed employees…<br>
@@ -999,15 +1017,14 @@ async function sendChat(){
 /* ── logout ───────────────────────────────────────── */
 async function logout(){
     try{
-        const res=await apiFetch("https://intellionboard.onrender.com/api/auth/logout",{method:"POST",credentials:"include"});
-        if(!res.ok) console.warn("Logout API not OK");
-    }catch(err){console.error("Logout API Error:",err);}
+        await apiFetch("https://manatee-dislike-lifting.ngrok-free.dev/api/auth/logout",{method:"POST",credentials:"include"});
+    }catch(err){console.error("Logout error:",err);}
     finally{
         localStorage.clear();sessionStorage.clear();
         document.cookie.split(";").forEach(function(c){
             document.cookie=c.replace(/^ +/,"").replace(/=.*/,"=;expires="+new Date().toUTCString()+";path=/");
         });
-        window.location.replace("https://intellionboard.vercel.app/");
+        window.location.replace("https://intellionboard.vercel.app/?manual=true");
     }
 }
 
