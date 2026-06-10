@@ -464,6 +464,15 @@ body{
 <script>
 
 const BASE_URL = "https://manatee-dislike-lifting.ngrok-free.dev";
+
+// ── ngrok bypass ─────────────────────────────────────────
+function apiFetch(url, opts = {}) {
+    opts.headers = Object.assign({
+        "ngrok-skip-browser-warning": "true"
+    }, opts.headers || {});
+    opts.credentials = opts.credentials || "include";
+    return fetch(url, opts);
+}
 let emp_id = "";
 let phase = "ask_emp";
 let step = 0;
