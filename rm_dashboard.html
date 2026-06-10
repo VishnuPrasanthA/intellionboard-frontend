@@ -302,7 +302,7 @@ tbody tr:hover td{box-shadow:0 10px 24px rgba(22,199,154,.05);}
 
 <!-- DEF-057/058/059: employee analytics modal -->
 <div class="modal" id="employeeModal">
-    <div class="modal-content" style="width:640px;max-width:96vw;max-height:90vh;overflow-y:auto;overflow-x:hidden;">
+    <div class="modal-content" style="width:600px;max-width:95vw;max-height:90vh;overflow-y:auto;overflow-x:auto;">
         <h2 id="empModalTitle">Employee Analytics</h2><br>
         <div id="employeeFullDetails"></div><br>
         <button class="btn" onclick="closeModal('employeeModal')">Close</button>
@@ -671,22 +671,13 @@ function renderAnalyticsPage(emp, page){
                     👤
                 </div>
                 <div style="font-size:16px;font-weight:800;color:#172b42;word-break:break-word;">${name}</div>
-                <div style="font-size:12px;color:#7f8ea3;margin-top:3px;">${safe(emp.emp_id)} · ${safe(emp.designation)}</div>
+                <div style="font-size:12px;color:#7f8ea3;margin-top:3px;word-break:break-word;">${safe(emp.emp_id)} · ${safe(emp.designation)}</div>
             </div>
-            <div style="background:#f8fafc;border-radius:14px;padding:18px;">
+            <div style="background:#f8fafc;border-radius:14px;padding:16px 18px;">
                 <h3 style="color:#16c79a;font-size:14px;margin:0 0 14px;">📋 Employee Information</h3>
-                <table style="width:100%;font-size:13px;border-collapse:collapse;table-layout:fixed;">
-                    <col style="width:42%"><col style="width:58%">
-                    <tr><td style="padding:7px 0;color:#64748b;">Email</td><td style="word-break:break-all;overflow-wrap:anywhere;"><b>${safe(emp.email)}</b></td></tr>
-                    <tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:8px 0;color:#64748b;white-space:nowrap;font-size:12px;">Designation</td><td style="word-break:break-word;overflow-wrap:anywhere;padding:7px 0;"><b>${safe(emp.designation)}</b></td></tr>
-                    <tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:8px 0;color:#64748b;white-space:nowrap;font-size:12px;">Department</td><td style="word-break:break-word;overflow-wrap:anywhere;padding:7px 0;"><b>${safe(emp.department)}</b></td></tr>
-                    <tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:8px 0;color:#64748b;white-space:nowrap;font-size:12px;">Location</td><td style="word-break:break-word;overflow-wrap:anywhere;padding:7px 0;"><b>${safe(emp.location)}</b></td></tr>
-                    <tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:8px 0;color:#64748b;white-space:nowrap;font-size:12px;">Project</td><td style="word-break:break-word;overflow-wrap:anywhere;padding:7px 0;"><b>${safe(emp.project_name||emp.account_name)}</b></td></tr>
-                    <tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:8px 0;color:#64748b;white-space:nowrap;font-size:12px;">COE</td><td style="word-break:break-word;overflow-wrap:anywhere;padding:7px 0;"><b>${safe(emp.selected_coe)}</b></td></tr>
-                    <tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:8px 0;color:#64748b;white-space:nowrap;font-size:12px;">Business Unit</td><td style="word-break:break-word;overflow-wrap:anywhere;padding:7px 0;"><b>${safe(emp.business_unit)}</b></td></tr>
-                    <tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:8px 0;color:#64748b;white-space:nowrap;font-size:12px;">Joining Date</td><td style="word-break:break-word;overflow-wrap:anywhere;padding:7px 0;"><b>${safe(emp.joining_date)}</b></td></tr>
-                    <tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:8px 0;color:#64748b;white-space:nowrap;font-size:12px;">Grade</td><td style="word-break:break-word;overflow-wrap:anywhere;padding:7px 0;"><b>${safe(emp.grade)}</b></td></tr>
-                </table>
+                <div style="display:grid;grid-template-columns:140px 1fr;font-size:13px;">
+                    ${[["Email",safe(emp.email)],["Designation",safe(emp.designation)],["Department",safe(emp.department)],["Location",safe(emp.location)],["Project",safe(emp.project_name||emp.account_name)],["COE",safe(emp.selected_coe)],["Business Unit",safe(emp.business_unit)],["Joining Date",safe(emp.joining_date)],["Grade",safe(emp.grade)]].map(([l,v])=>`<div style="padding:9px 8px 9px 0;color:#64748b;border-bottom:1px solid #e9eef5;font-size:12px;">${l}</div><div style="padding:9px 0;font-weight:700;border-bottom:1px solid #e9eef5;word-break:break-all;overflow-wrap:anywhere;">${v}</div>`).join("")}
+                </div>
             </div>
             ${navBtns}`;
     }
@@ -707,12 +698,12 @@ function renderAnalyticsPage(emp, page){
                 <h3 style="color:#16c79a;font-size:14px;margin:0 0 14px;">🏷️ Onboarding Status</h3>
                 <table style="width:100%;font-size:13px;border-collapse:collapse;">
                     <tr><td style="padding:7px 0;color:#64748b;width:45%;">Overall Status</td><td>${statusPill(emp.onboarding_status)}</td></tr>
-                    <tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:8px 0;color:#64748b;white-space:nowrap;font-size:12px;">Current Step</td><td style="word-break:break-word;overflow-wrap:anywhere;padding:7px 0;"><b>${safe(emp.current_step).replace(/_/g," ")}</b></td></tr>
+                    <tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:8px 0;color:#64748b;white-space:nowrap;font-size:12px;">Current Step</td><td style="word-break:break-word;overflow-wrap:anywhere;padding:8px 12px 8px 0;"><b>${safe(emp.current_step).replace(/_/g," ")}</b></td></tr>
                     <tr><td style="padding:7px 0;color:#64748b;">Delay</td><td><b>${delay} days</b></td></tr>
                     <tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:8px 0;color:#64748b;font-size:12px;">Risk Level</td><td><b style="color:${riskColor};">${risk}</b></td></tr>
                 </table>
             </div>
-            <div style="background:#f8fafc;border-radius:14px;padding:18px;">
+            <div style="background:#f8fafc;border-radius:14px;padding:16px 18px;">
                 <h3 style="color:#16c79a;font-size:14px;margin:0 0 14px;">📋 Onboarding Tracking</h3>
                 <table style="width:100%;font-size:13px;border-collapse:collapse;table-layout:fixed;">
                         <col style="width:45%"><col style="width:55%">
