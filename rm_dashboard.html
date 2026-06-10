@@ -412,8 +412,11 @@ function renderTable(data){
     </tr></thead><tbody>`;
     data.forEach(emp=>{
         const delay = (emp.onboarding_status||"").toLowerCase().includes("completed") ? 0 : getDelayDays(emp.created_at);
+        const isEscalated = emp.escalated || (emp.risk_level||"").toUpperCase()==="HIGH";
         const statusClass=
             (emp.onboarding_status||"").toLowerCase().includes("completed")?"completed":
+            isEscalated?"delayed":
+            (emp.onboarding_status||"").toLowerCase().includes("progress")?"inprogress":
             delay>2?"delayed":"pending";
         const riskClass  =
             (emp.risk_level||"").toUpperCase()==="HIGH"?"risk-high":
@@ -421,7 +424,7 @@ function renderTable(data){
         html+=`<tr>
             <td>${emp.emp_id||"-"}</td>
             <td><div class="employee-name"><b>${emp.emp_name||"Unknown"}</b><small>${emp.email||""}</small></div></td>
-            <td><span class="badge ${statusClass}">${emp.onboarding_status||"Pending"}</span></td>
+            <td><span class="badge ${statusClass}">${emp.onboarding_status||"Pending"}</span>${emp.escalated||emp.risk_level==="HIGH"?'<span class="badge" style="background:linear-gradient(135deg,#ff6b6b,#ff9a80);margin-left:4px;font-size:9px;">🚨 Escalated</span>':""}</td>
             <td><span class="badge inprogress">${getStageBadge(emp.current_step)}</span></td>
             <td>
                 <div class="progress"><div class="progress-fill" style="width:${emp.training_percentage||0}%"></div></div>
@@ -534,7 +537,9 @@ async function escalate(empId){
         });
         const data=await res.json();
         if(res.ok&&data.success){
-            showToast("⚠️ Escalation triggered — emails sent to PMO","#f39c12");
+            const step = data.step || "";
+            const routed = data.routed_to || "HC PMO";
+            showToast(`⚠️ Escalated — Email sent to ${routed}`,"#f39c12");
         } else {
             showToast("⚠️ "+(data.message||"Escalation may have issues"),"#f39c12");
         }
