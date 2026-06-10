@@ -970,6 +970,14 @@ tbody td { padding: 13px 16px; color: rgba(255,255,255,0.80); vertical-align: mi
 
 const API = "https://manatee-dislike-lifting.ngrok-free.dev";
 
+function apiFetch(url, opts = {}) {
+    opts.headers = Object.assign({
+        "ngrok-skip-browser-warning": "true"
+    }, opts.headers || {});
+    opts.credentials = opts.credentials || "include";
+    return fetch(url, opts);
+}
+
 // In-memory backup store (persists during session)
 let backupStore = JSON.parse(sessionStorage.getItem("io_backups") || "[]");
 let allUsersCache = [];
@@ -987,7 +995,7 @@ updateClock();
 // ── SESSION CHECK ────────────────────────────────────────
 window.addEventListener("load", async () => {
     try {
-        const res = await fetch(`${API}/api/auth/validate-session`, {
+        const res = await apiFetch(`${API}/api/auth/validate-session`, {
             method: "GET", credentials: "include"
         });
         const data = await res.json();
@@ -1007,7 +1015,7 @@ window.addEventListener("load", async () => {
 
 // ── LOGOUT ───────────────────────────────────────────────
 async function logout() {
-    await fetch(`${API}/api/auth/logout`, { method: "POST", credentials: "include" });
+    await apiFetch(`${API}/api/auth/logout`, { method: "POST", credentials: "include" });
     window.location.href = "https://intellionboard.vercel.app/?manual=true";
 }
 
@@ -1060,7 +1068,7 @@ function fmtDate(d) {
 // ────────────────────────────────────────────────────────
 async function loadDashboard() {
     try {
-        const res  = await fetch(`${API}/api/auth/users`, { credentials: "include" });
+        const res  = await apiFetch(`${API}/api/auth/users`, { credentials: "include" });
         const data = await res.json();
         if (!data.success) return;
         const users = data.users || [];
@@ -1119,7 +1127,7 @@ async function createAccount() {
         return showAlert("ca_err", "err", "Password must be at least 8 characters.");
 
     try {
-        const res  = await fetch(`${API}/api/auth/admin-create-user`, {
+        const res  = await apiFetch(`${API}/api/auth/admin-create-user`, {
             method: "POST", credentials: "include",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload)
@@ -1145,7 +1153,7 @@ async function createAccount() {
 // ────────────────────────────────────────────────────────
 async function loadUsers() {
     try {
-        const res  = await fetch(`${API}/api/auth/users`, { credentials: "include" });
+        const res  = await apiFetch(`${API}/api/auth/users`, { credentials: "include" });
         const data = await res.json();
         if (!data.success) return showAlert("users_err", "err", data.message);
         allUsersCache = data.users || [];
@@ -1191,7 +1199,7 @@ function filterUsers() {
 
 async function toggleUserStatus(userId, newStatus) {
     try {
-        const res  = await fetch(`${API}/api/auth/user/${userId}/status`, {
+        const res  = await apiFetch(`${API}/api/auth/user/${userId}/status`, {
             method: "POST", credentials: "include",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ is_active: newStatus })
@@ -1217,23 +1225,23 @@ async function loadDbTable(tableName) {
         // Use existing users endpoint for users table
         let rows = [];
         if (tableName === "users") {
-            const res = await fetch(`${API}/api/auth/users`, { credentials: "include" });
+            const res = await apiFetch(`${API}/api/auth/users`, { credentials: "include" });
             const d   = await res.json();
             rows = d.users || [];
         } else if (tableName === "employees") {
-            const res = await fetch(`${API}/api/employees`, { credentials: "include" });
+            const res = await apiFetch(`${API}/api/employees`, { credentials: "include" });
             const d   = await res.json();
             rows = d.employees || d.data || [];
         } else if (tableName === "tickets") {
-            const res = await fetch(`${API}/api/tickets`, { credentials: "include" });
+            const res = await apiFetch(`${API}/api/tickets`, { credentials: "include" });
             const d   = await res.json();
             rows = d.tickets || d.data || [];
         } else if (tableName === "audit_logs") {
-            const res = await fetch(`${API}/api/admin/audit-logs`, { credentials: "include" });
+            const res = await apiFetch(`${API}/api/admin/audit-logs`, { credentials: "include" });
             const d   = await res.json();
             rows = d.logs || d.data || [];
         } else if (tableName === "workflow_states") {
-            const res = await fetch(`${API}/api/admin/workflow-states`, { credentials: "include" });
+            const res = await apiFetch(`${API}/api/admin/workflow-states`, { credentials: "include" });
             const d   = await res.json();
             rows = d.states || d.data || [];
         }
@@ -1280,19 +1288,19 @@ async function takeBackup(type = "MANUAL", triggeredBy = "IO Admin") {
     let snapshot = { type, triggeredBy, timestamp: new Date().toISOString(), tables: {} };
 
     try {
-        const res  = await fetch(`${API}/api/auth/users`, { credentials: "include" });
+        const res  = await apiFetch(`${API}/api/auth/users`, { credentials: "include" });
         const data = await res.json();
         snapshot.tables.users = data.users || [];
     } catch { snapshot.tables.users = []; }
 
     try {
-        const res  = await fetch(`${API}/api/employees`, { credentials: "include" });
+        const res  = await apiFetch(`${API}/api/employees`, { credentials: "include" });
         const data = await res.json();
         snapshot.tables.employees = data.employees || data.data || [];
     } catch { snapshot.tables.employees = []; }
 
     try {
-        const res  = await fetch(`${API}/api/tickets`, { credentials: "include" });
+        const res  = await apiFetch(`${API}/api/tickets`, { credentials: "include" });
         const data = await res.json();
         snapshot.tables.tickets = data.tickets || data.data || [];
     } catch { snapshot.tables.tickets = []; }
@@ -1314,7 +1322,7 @@ async function takeBackup(type = "MANUAL", triggeredBy = "IO Admin") {
 
     // Attempt to email (calls backend endpoint if it exists)
     try {
-        await fetch(`${API}/api/admin/send-backup-email`, {
+        await apiFetch(`${API}/api/admin/send-backup-email`, {
             method: "POST", credentials: "include",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -1375,7 +1383,7 @@ async function emailBackup(id) {
     const snap = backupStore.find(b => b.id === id);
     if (!snap) return alert("Backup not found.");
     try {
-        await fetch(`${API}/api/admin/send-backup-email`, {
+        await apiFetch(`${API}/api/admin/send-backup-email`, {
             method: "POST", credentials: "include",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -1415,7 +1423,7 @@ async function executeWipeAll() {
     showDangerWarn("🗑️ Step 2/3: Wiping all data…");
     setProgress(60);
     try {
-        const res  = await fetch(`${API}/api/admin/wipe-all`, {
+        const res  = await apiFetch(`${API}/api/admin/wipe-all`, {
             method: "POST", credentials: "include",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ confirm: "WIPE_ALL_CONFIRMED" })
@@ -1453,7 +1461,7 @@ async function executeWipeEmployees() {
     showDangerWarn("🗑️ Wiping employee data…");
     setProgress(70);
     try {
-        const res  = await fetch(`${API}/api/admin/wipe-employees`, {
+        const res  = await apiFetch(`${API}/api/admin/wipe-employees`, {
             method: "POST", credentials: "include",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ confirm: "WIPE_EMPLOYEES_CONFIRMED" })
@@ -1483,7 +1491,7 @@ async function executeWipeTickets() {
     showDangerWarn("🗑️ Wiping ticket data…");
     setProgress(70);
     try {
-        const res  = await fetch(`${API}/api/admin/wipe-tickets`, {
+        const res  = await apiFetch(`${API}/api/admin/wipe-tickets`, {
             method: "POST", credentials: "include",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ confirm: "WIPE_TICKETS_CONFIRMED" })
