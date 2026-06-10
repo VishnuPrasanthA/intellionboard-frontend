@@ -150,16 +150,18 @@ tbody tr:hover td{box-shadow:0 10px 24px rgba(22,199,154,.05);}
     background:linear-gradient(135deg,#16c79a,#59b8ff);color:white;
     padding:14px 18px;font-weight:800;font-size:14px;display:flex;align-items:center;gap:10px;
 }
-.chat-body{flex:1;display:flex;flex-direction:column;gap:12px;padding:16px;overflow-y:auto;background:#f8fbff;scroll-behavior:smooth;}
+.chat-body{flex:1;display:flex;flex-direction:column;gap:8px;padding:14px;overflow-y:auto;overflow-x:hidden;background:#f8fbff;scroll-behavior:smooth;min-height:0;}
 .chat-user-msg{
     align-self:flex-end;background:linear-gradient(135deg,#16c79a,#5effcf);color:white;
-    padding:12px 16px;border-radius:18px 18px 4px 18px;max-width:80%;font-size:13px;line-height:1.5;
-    box-shadow:0 8px 20px rgba(22,199,154,0.25);animation:fadeUp .2s ease;
+    padding:10px 14px;border-radius:18px 18px 4px 18px;max-width:85%;font-size:12px;line-height:1.4;
+    box-shadow:0 6px 16px rgba(22,199,154,0.20);animation:fadeUp .2s ease;
+    word-break:break-word;overflow-wrap:anywhere;
 }
 .chat-ai-msg{
-    align-self:flex-start;background:white;color:#172b42;padding:12px 16px;
-    border-radius:18px 18px 18px 4px;max-width:85%;font-size:13px;line-height:1.6;
-    border:1px solid #edf2f7;box-shadow:0 6px 18px rgba(0,0,0,0.08);animation:fadeUp .2s ease;
+    align-self:flex-start;background:white;color:#172b42;padding:10px 14px;
+    border-radius:18px 18px 18px 4px;max-width:90%;font-size:12px;line-height:1.5;
+    border:1px solid #edf2f7;box-shadow:0 4px 12px rgba(0,0,0,0.06);animation:fadeUp .2s ease;
+    word-break:break-word;overflow-wrap:anywhere;
 }
 .chat-input{display:flex;align-items:center;gap:10px;padding:12px;border-top:1px solid #e9eef5;background:white;}
 .chat-input input{flex:1;padding:12px 14px;border-radius:14px;border:1px solid #e5eaf0;outline:none;font-size:13px;}
@@ -941,22 +943,16 @@ function getLocalResponse(intentType,rawMsg){
                 body:JSON.stringify({rm_name:rm, rm_email:rmEmail})
             }).then(r=>r.json()).then(data=>{
                 if(data.success){
-                    addMessage("ai",`
-                        <div style="background:#fff8f0;border-radius:12px;padding:14px;border-left:4px solid #f39c12;">
-                            ✅ <b>Escalation Sent!</b><br><br>
-                            <table style="font-size:12px;width:100%;border-collapse:collapse;">
-                                <tr><td style="padding:4px 0;color:#64748b;width:45%;">Employee</td><td><b>${emp.emp_name} (${empId})</b></td></tr>
-                                <tr><td style="padding:4px 0;color:#64748b;">Routed To</td><td><b>${data.routed_to||"HC PMO"}</b></td></tr>
-                                <tr><td style="padding:4px 0;color:#64748b;">Step</td><td><b>${data.step||emp.current_step||"-"}</b></td></tr>
-                                <tr><td style="padding:4px 0;color:#64748b;">CC</td><td><b>${(data.cc||[]).join(", ")||"-"}</b></td></tr>
-                            </table>
-                        </div>`);
-                    showToast(`⚠️ Escalated ${emp.emp_name} → ${data.routed_to||"HC PMO"}`,"#f39c12");
+                    addMessage("ai",
+                        `✅ <b>Escalated!</b> → <b>${data.routed_to||"HC PMO"}</b><br>`+
+                        `<small style="color:#64748b;">Step: ${data.step||"-"}</small>`
+                    );
+                    showToast(`⚠️ Escalated → ${data.routed_to||"HC PMO"}`,"#f39c12");
                     loadDashboard();
                 } else {
-                    addMessage("ai","⚠️ "+(data.message||"Escalation failed. Check backend."));
+                    addMessage("ai","⚠️ "+(data.message||"Escalation failed."));
                 }
-            }).catch(()=>addMessage("ai","❌ Network error. Could not escalate."));
+            }).catch(()=>addMessage("ai","❌ Network error."));
             return null;
         }
         case "escalation":{
@@ -1080,16 +1076,10 @@ async function sendReminderWithConfirm(empId){
         });
         const data=await res.json();
         if(res.ok&&data.success){
-            addMessage("ai",`
-                <div style="background:#f0fdf4;border-radius:12px;padding:14px;border-left:4px solid #16c79a;">
-                    ✅ <b>Reminder Sent!</b><br><br>
-                    <table style="font-size:12px;width:100%;border-collapse:collapse;">
-                        <tr><td style="padding:4px 0;color:#64748b;width:40%;">Employee ID</td><td><b>${data.emp_id||empId}</b></td></tr>
-                        <tr><td style="padding:4px 0;color:#64748b;">Name</td><td><b>${data.emp_name||"-"}</b></td></tr>
-                        <tr><td style="padding:4px 0;color:#64748b;">Email Sent To</td><td><b>${data.email||"-"}</b></td></tr>
-                        <tr><td style="padding:4px 0;color:#64748b;">Type</td><td><b>Training Onboarding Reminder</b></td></tr>
-                    </table>
-                </div>`);
+            addMessage("ai",
+                `✅ <b>Reminder sent!</b> → <b>${data.emp_name||empId}</b>`+
+                `<br><small style="color:#64748b;">Sent to: ${data.email||"-"}</small>`
+            );
             showToast("📧 Reminder sent to "+empId,"#16c79a");
         } else {
             addMessage("ai","⚠️ "+(data.message||"Reminder failed. Check SMTP config."));
