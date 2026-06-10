@@ -330,6 +330,15 @@ tbody tr:hover{background:linear-gradient(90deg,rgba(25,211,162,.04),rgba(89,184
 
 <script>
 const API_BASE     = "https://manatee-dislike-lifting.ngrok-free.dev";
+
+// ── ngrok bypass ─────────────────────────────────────────
+function apiFetch(url, opts = {}) {
+    opts.headers = Object.assign({
+        "ngrok-skip-browser-warning": "true"
+    }, opts.headers || {});
+    opts.credentials = opts.credentials || "include";
+    return fetch(url, opts);
+}
 const DASH_API     = `${API_BASE}/api/leadership/dashboard`;
 let   allEmployees = [];
 let   dashData     = {};
@@ -368,7 +377,7 @@ try{
 /* ── LOAD DASHBOARD ─────────────────────────── */
 async function loadDashboard(){
     try{
-        const res=await fetch(DASH_API,{credentials:"include"});
+        const res=await apiFetch(DASH_API,{credentials:"include"});
         const json=await res.json();
         if(!json.success) return;
         dashData     = json;
@@ -769,7 +778,7 @@ function sendMessage(){
 
 /* ── LOGOUT ─────────────────────────────────── */
 async function logout(){
-    try{await fetch(`${API_BASE}/api/auth/logout`,{method:"POST",credentials:"include"});}catch(_){}
+    try{await apiFetch(`${API_BASE}/api/auth/logout`,{method:"POST",credentials:"include"});}catch(_){}
     localStorage.clear();sessionStorage.clear();
     window.location.replace("https://intellionboard.vercel.app/");
 }
