@@ -439,9 +439,16 @@ function renderTable(data){
             <td>${emp.readiness_score||0}%</td>
             <td><div class="action-buttons">
                 <button class="btn btn-mail"     title="Send Reminder" onclick="sendReminder('${emp.emp_id}')">📧</button>
-                <button class="btn btn-escalate" title="${(emp.onboarding_status||'').toLowerCase().includes('complet')?'Already Completed':'Escalate'}"
+                <button class="btn btn-escalate"
+    title="${
+        (emp.onboarding_status||'').toLowerCase().includes('complet') ? 'Already Completed' :
+        ((emp.laptop_status||'').toUpperCase()==='CLOSED'&&(emp.id_card_status||'').toUpperCase()==='CLOSED') ? 'Tickets Already Closed' :
+        'Escalate'
+    }"
     onclick="escalate('${emp.emp_id}')"
-    ${(emp.onboarding_status||'').toLowerCase().includes('complet')?'style="opacity:.4;cursor:not-allowed;" disabled':''}>⚠️</button>
+    ${ (emp.onboarding_status||'').toLowerCase().includes('complet')
+       ? 'style="opacity:.4;cursor:not-allowed;" disabled'
+       : '' }>⚠️</button>
                 <button class="btn btn-complete" title="View Analytics" onclick="openEmployeeDetails('${emp.emp_id}')">📊</button>
             </div></td>
         </tr>`;
@@ -528,11 +535,23 @@ function showToast(msg,color){
 
 /* ── escalate ────────────────────────────────────────── */
 async function escalate(empId){
-    // DEF FIX: block escalation for completed employees
+    // DEF FIX: block escalation for completed employees OR when both tickets already closed
     const emp = fullData.find(e=>String(e.emp_id)===String(empId));
-    if(emp && (emp.onboarding_status||"").toLowerCase().includes("complet")){
-        showToast(`✅ ${emp.emp_name||empId} — already completed onboarding`,"#16c79a");
-        return;
+    if(emp){
+        const status = (emp.onboarding_status||"").toLowerCase();
+        const laptopClosed  = (emp.laptop_status||"").toUpperCase()  === "CLOSED";
+        const idCardClosed  = (emp.id_card_status||"").toUpperCase() === "CLOSED";
+        const bothClosed    = laptopClosed && idCardClosed;
+
+        if(status.includes("complet")){
+            showToast(`✅ ${emp.emp_name||empId} — onboarding already completed`,"#16c79a");
+            return;
+        }
+        if(bothClosed && !status.includes("progress") && !status.includes("training")){
+            // Tickets closed but onboarding not yet in training — don't escalate ITSG
+            showToast(`ℹ️ Both tickets closed for ${emp.emp_name||empId} — no ITSG escalation needed`,"#16c79a");
+            return;
+        }
     }
     try{
         const res=await apiFetch(`${API}/escalate/${empId}`,{
@@ -909,11 +928,17 @@ function getLocalResponse(intentType,rawMsg,intentObj){
             if(!empId){ addMessage("ai","⚠️ Please provide an Employee ID. Example: <b>escalate employee 1042836</b>"); return null; }
             const emp = fullData.find(e=>String(e.emp_id)===String(empId));
             if(!emp){ addMessage("ai",`⚠️ Employee <b>${empId}</b> not found in your team.`); return null; }
-            // DEF FIX: block escalation for completed employees
-            if((emp.onboarding_status||"").toLowerCase().includes("complet")){
-                addMessage("ai",`✅ <b>${emp.emp_name}</b> (${empId}) has already <b>completed onboarding</b>.<br>
-                    Current step: <b>${(emp.current_step||"COMPLETED").replace(/_/g," ")}</b><br>
-                    Escalation is not applicable for completed employees.`);
+            // DEF FIX: block escalation for completed OR both-tickets-closed employees
+            const _status     = (emp.onboarding_status||"").toLowerCase();
+            const _lapClosed  = (emp.laptop_status||"").toUpperCase()  === "CLOSED";
+            const _idClosed   = (emp.id_card_status||"").toUpperCase() === "CLOSED";
+            if(_status.includes("complet")){
+                addMessage("ai",`✅ <b>${emp.emp_name}</b> (${empId}) has already <b>completed onboarding</b>. Escalation not needed.`);
+                return null;
+            }
+            if(_lapClosed && _idClosed){
+                addMessage("ai",`ℹ️ <b>${emp.emp_name}</b> (${empId}) — both Laptop and ID Card are <b>CLOSED</b>.<br>
+                    No ITSG escalation needed. If training is pending, the system will route to PMO automatically.`);
                 return null;
             }
             addMessage("ai",`⚠️ Escalating <b>${emp.emp_name}</b> (${empId})…`);
@@ -970,10 +995,12 @@ function getLocalResponse(intentType,rawMsg,intentObj){
                     <span style="color:#64748b;">Training</span><b>${emp.training_percentage||0}%</b>
                 </div>
                 <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
-                    ${!isCompleted ? `
-                        <span class="cmd-tag" onclick="sendReminder('${empId}')" style="cursor:pointer;padding:4px 10px;">📧 Remind</span>
-                        <span class="cmd-tag" onclick="escalate('${empId}')" style="cursor:pointer;padding:4px 10px;background:rgba(255,179,71,.2);color:#a0620a;">⚠️ Escalate</span>`
-                    : `<span style="background:rgba(22,199,154,.15);color:#065f46;font-size:11px;font-weight:700;padding:4px 12px;border-radius:6px;">✅ Onboarding Complete</span>`}
+                    ${(()=>{
+                        const _bc = (emp.laptop_status||"").toUpperCase()==="CLOSED" && (emp.id_card_status||"").toUpperCase()==="CLOSED";
+                        if(isCompleted) return `<span style="background:rgba(22,199,154,.15);color:#065f46;font-size:11px;font-weight:700;padding:4px 12px;border-radius:6px;">✅ Onboarding Complete</span>`;
+                        return `<span class="cmd-tag" onclick="sendReminder('${empId}')" style="cursor:pointer;padding:4px 10px;">📧 Remind</span>`
+                             + (!_bc ? `<span class="cmd-tag" onclick="escalate('${empId}')" style="cursor:pointer;padding:4px 10px;background:rgba(255,179,71,.2);color:#a0620a;">⚠️ Escalate</span>` : `<span style="background:rgba(22,199,154,.15);color:#065f46;font-size:11px;font-weight:700;padding:4px 8px;border-radius:6px;font-size:10px;">🎫 Tickets Closed</span>`);
+                    })()}
                 </div>
             </div>`;
         }
