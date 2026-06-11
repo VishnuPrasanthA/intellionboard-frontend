@@ -1542,7 +1542,7 @@ async function callAPI(
 ) {
 
     const {
-        timeout = 60000, // increased: SMTP can take 30-60s
+        timeout = 15000,
         retry = 0
     } = options;
 
@@ -3025,6 +3025,21 @@ async function startOnboarding(empId) {
             return { success: false };
         }
 
+        // DEF FIX: check local state — prevent re-onboarding
+        const empCheck = allEmployees.find(e => String(e.emp_id) === String(empId));
+        if (empCheck) {
+            const st = String(empCheck.onboarding_status || "").toUpperCase();
+            if (st.includes("COMPLETE")) {
+                showToast(`${empCheck.emp_name || empId} already completed onboarding`, "warning");
+                return { success: false };
+            }
+            if (st.includes("PROGRESS") || st.includes("STARTED")) {
+                showToast(`${empCheck.emp_name || empId} onboarding already in progress`, "warning");
+                if (btn) { btn.disabled = true; btn.innerText = "⏳ In Progress"; }
+                return { success: false };
+            }
+        }
+
         /* =========================================================
            UI LOCK (MATCHES RENDER TABLE BUTTON)
         ========================================================= */
@@ -3098,8 +3113,7 @@ async function startOnboarding(empId) {
 
         else {
 
-            const errMsg = (response && response.message) ? response.message : "Onboarding failed — check server logs";
-            showToast("❌ " + errMsg, "error");
+            showToast("Failed To Start", "error");
 
             if (btn) {
                 btn.disabled = false;
@@ -3113,15 +3127,21 @@ async function startOnboarding(empId) {
 
         console.error("START ERROR", err);
 
-        const catchMsg = err.message || "Network error — check backend";
-        showToast("❌ " + catchMsg, "error");
+        showToast("Onboarding Error", "error");
+
+        /* =========================================================
+           RESET BUTTON ON ERROR
+        ========================================================= */
 
         if (btn) {
             btn.disabled = false;
             btn.innerText = "🚀 Onboard";
         }
 
-        return { success: false, error: err.message };
+        return {
+            success: false,
+            error: err.message
+        };
     }
 }
 /* =========================================================
@@ -3354,7 +3374,23 @@ async function confirmOnboard() {
     const group = document.getElementById("onboardInputGroup");
     if (group) group.remove();
 
-    // Trigger onboarding via existing function
+    // DEF FIX: check status before triggering
+    const existingEmp = allEmployees.find(e => String(e.emp_id) === String(empId));
+    if (existingEmp) {
+        const st = String(existingEmp.onboarding_status || "").toUpperCase();
+        if (st.includes("COMPLETE")) {
+            addChat("AI", `✅ <b>${existingEmp.emp_name || empId}</b> has already <b>completed</b> onboarding.`);
+            return;
+        }
+        if (st.includes("PROGRESS") || st.includes("STARTED")) {
+            addChat("AI", `⏳ <b>${existingEmp.emp_name || empId}</b> is already <b>in progress</b>. Cannot re-trigger.`);
+            return;
+        }
+    } else {
+        addChat("AI", `⚠ Employee <b>${empId}</b> not found.`);
+        return;
+    }
+
     addChat("YOU", `onboard ${empId}`);
     await startOnboarding(empId);
 }
@@ -3404,12 +3440,30 @@ async function askAgent() {
     };
 
     const calculateRisk = (emp) => {
-        const dbRisk = String(emp?.risk_level || "").toUpperCase();
-        if (dbRisk === "HIGH" || dbRisk === "MEDIUM" || dbRisk === "LOW") return dbRisk;
-        const status = String(emp?.onboarding_status || "").toUpperCase();
-        const step   = String(emp?.current_step || "").toUpperCase();
-        if (status.includes("ESCALATED") || status.includes("DELAY")) return "HIGH";
-        if (step.includes("ID_CARD") || step.includes("ACCESS") || step.includes("LAPTOP")) return "MEDIUM";
+
+        const step =
+            String(emp?.current_step || "")
+                .toUpperCase();
+
+        const status =
+            String(emp?.onboarding_status || "")
+                .toUpperCase();
+
+        if (
+            status.includes("ESCALATED") ||
+            status.includes("DELAY")
+        ) {
+            return "HIGH";
+        }
+
+        if (
+            step.includes("ID_CARD") ||
+            step.includes("ACCESS") ||
+            step.includes("LAPTOP")
+        ) {
+            return "MEDIUM";
+        }
+
         return "LOW";
     };
 
@@ -3533,34 +3587,47 @@ ${lines.join("\n")}
             question.match(/\b\d{4,10}\b/);
 
         if (!empMatch) {
-
-            addChat(
-                "AI",
-                "⚠ Please provide Employee ID (example: onboard 10101029)"
-            );
-
+            addChat("AI", "⚠ Please provide Employee ID (example: onboard 10101029)");
             return;
         }
 
         const empId = empMatch[0];
 
-        addChat("AI", `🚀 Starting onboarding for Employee ${empId}...`);
+        // ── DEF FIX: Check if already onboarded before calling API ──
+        const existingEmp = allEmployees.find(e => String(e.emp_id) === String(empId));
+
+        if (existingEmp) {
+            const st = String(existingEmp.onboarding_status || "").toUpperCase();
+
+            if (st.includes("COMPLETE")) {
+                addChat("AI", `✅ <b>${existingEmp.emp_name || empId}</b> has already <b>completed</b> onboarding. No action needed.`);
+                return;
+            }
+
+            if (st.includes("PROGRESS") || st.includes("IN PROGRESS") || st.includes("STARTED")) {
+                addChat("AI", `⏳ <b>${existingEmp.emp_name || empId}</b> is already <b>in progress</b> (Step: ${(existingEmp.current_step || "").replace(/_/g," ")}). Onboarding cannot be re-triggered.`);
+                return;
+            }
+        } else {
+            addChat("AI", `⚠ Employee <b>${empId}</b> not found in the system. Please check the ID.`);
+            return;
+        }
+
+        // Only PENDING employees reach here
+        addChat("AI", `🚀 Starting onboarding for <b>${existingEmp.emp_name || empId}</b>...`);
 
         try {
+            const res = await callAPI("/api/start-onboarding", "POST", { emp_id: empId });
 
-            const res = await callAPI(
-                "/api/start-onboarding",
-                "POST",
-                { emp_id: empId }
-            );
-
-            addChat(
-                "AI",
-                `✅ Onboarding started for ${res?.employee?.emp_name || empId}`
-            );
+            if (res && res.success) {
+                // Update local state so re-trigger is blocked instantly
+                existingEmp.onboarding_status = "Onboarding In Progress";
+                addChat("AI", `✅ Onboarding started for <b>${res?.employee?.emp_name || existingEmp.emp_name || empId}</b>`);
+            } else {
+                addChat("AI", `❌ Failed: ${res?.message || "Backend rejected request"}`);
+            }
 
         } catch (err) {
-
             console.error(err);
             addChat("AI", "❌ Failed to start onboarding");
         }
