@@ -704,6 +704,31 @@ tbody tr:hover{ background:linear-gradient(90deg,rgba(25,211,162,.04),rgba(89,18
 .chat-input button:hover{ background:var(--primary-dark); transform:none; }
 
 /* =========================================================
+   HELP COMMAND ITEMS — clickable
+========================================================= */
+.help-grid{display:flex;flex-direction:column;gap:7px;margin-top:8px;}
+.help-item{
+    background:#f8fbff;padding:10px 12px;border-radius:12px;
+    border:1px solid #edf2f7;font-size:12px;line-height:1.4;
+    cursor:pointer;transition:all .18s ease;user-select:none;
+}
+.help-item:hover{
+    background:rgba(25,211,162,.12);border-color:rgba(25,211,162,.4);
+    transform:translateX(3px);
+}
+.cmd-tag{
+    display:inline-block;margin-top:4px;
+    background:rgba(25,211,162,.15);color:#0a6e50;
+    font-size:10px;font-weight:800;padding:2px 7px;
+    border-radius:6px;font-family:monospace;
+}
+.help-section-label{
+    font-size:10px;font-weight:900;color:#7f8ea3;
+    text-transform:uppercase;letter-spacing:.7px;
+    padding:5px 0 2px 2px;margin-top:6px;
+}
+
+/* =========================================================
    RESPONSIVE
 ========================================================= */
 
@@ -3186,8 +3211,11 @@ function addChat(role, message) {
 
     if (!body) return;
 
-    const safeMessage =
-        String(message || "")
+    // User messages escape HTML; AI messages render HTML
+    const isAI = role.toLowerCase() === "ai" || role.toLowerCase() === "system";
+    const safeMessage = isAI
+        ? String(message || "")
+        : String(message || "")
             .replace(/</g, "&lt;")
             .replace(/>/g, "&gt;");
 
@@ -3533,47 +3561,39 @@ ${lines.join("\n")}
     const GREETINGS = ["hi","hello","hey","good morning","good afternoon",
                        "good evening","howdy","hola","namaste","greetings","sup","yo"];
     if (GREETINGS.some(g => lower === g || lower === g + "!" || lower.startsWith(g + " "))) {
-        addCleanResponse("👋 Hello! I'm your PMO AI Assistant.", [
-            "Here's what I can help you with:",
-            "",
-            "📊 status report  — full dashboard summary",
-            "⏳ pending        — all pending employees",
-            "🔄 inprogress     — employees in onboarding",
-            "✅ completed      — completed onboardings",
-            "⚠ high risk      — at-risk employees",
-            "🚀 onboard <id>  — start onboarding",
-            "📦 bulkonboard   — onboard all pending",
-            "",
-            "Or use the quick buttons above! 👆"
-        ]);
+        addChat("AI", `👋 Hello! I'm your <b>PMO AI Assistant</b>.<br><br>
+I have full visibility into <b>${allEmployees.length.toLocaleString()}</b> employees.<br><br>
+Type <b>help</b> for all commands — each is clickable.<br>
+Or use the quick buttons above 👆`);
         return;
     }
 
-    if (lower === "help") {
+    if (lower === "help" || lower.includes("what can you do") || lower.includes("commands")) {
 
-        addCleanResponse(
-            "🤖 PMO AI COMMAND CENTER",
-            [
-                "━━━━━━━━━━━━━━━━━━",
-                "📌 AVAILABLE COMMANDS",
-                "",
-                "• help",
-                "• pending",
-                "• inprogress",
-                "• completed",
-                "• status report",
-                "• high risk",
-                "• bulkOnboard",
-                "• onboard <emp_id>",
-                "",
-                "📌 EXAMPLES",
-                "",
-                "• onboard 10101029",
-                "• bulkonboard",
-                "• status report"
-            ]
-        );
+        const helpItems = [
+            {icon:"📊", label:"Status Report",        desc:"Full dashboard summary",          cmd:"status report"},
+            {icon:"⏳", label:"Pending",               desc:"All pending employees",            cmd:"pending"},
+            {icon:"🔄", label:"In Progress",           desc:"Employees in onboarding",          cmd:"inprogress"},
+            {icon:"✅", label:"Completed",             desc:"Completed onboardings",            cmd:"completed"},
+            {icon:"⚠️", label:"High Risk",            desc:"At-risk employees",                cmd:"high risk"},
+            {icon:"🚀", label:"Onboard Employee",      desc:"Start onboarding by ID",           cmd:"onboard 1042825"},
+            {icon:"📦", label:"Bulk Onboard",          desc:"Onboard all pending employees",    cmd:"bulkonboard"},
+        ];
 
+        const html = `
+<b style="color:#19d3a2;font-size:13px;">🤖 PMO AI — Click any command</b>
+<div class="help-grid">
+${helpItems.map(it => `
+    <div class="help-item" onclick="
+        document.getElementById('chatInput').value='${it.cmd}';
+        askAgent();
+    ">
+        ${it.icon} <b>${it.label}</b> — <span style="color:#7d8da5;">${it.desc}</span><br>
+        <span class="cmd-tag">▶ ${it.cmd}</span>
+    </div>`).join("")}
+</div>`;
+
+        addChat("AI", html);
         return;
     }
 
