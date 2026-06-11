@@ -584,7 +584,7 @@ function handleInput(){
 
 // ================= LOG =================
 function logChat(q,a){
-    fetch(BASE_URL+"/chat-log",{
+    apiFetch(BASE_URL+"/chat-log",{
         method:"POST",
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify({emp_id,question:q,answer:a})
@@ -596,7 +596,7 @@ function fetchEmployee(){
 
     botReply("🔍 Fetching employee...");
 
-    fetch(BASE_URL+"/employee/"+emp_id)
+    apiFetch(BASE_URL+"/employee/"+emp_id)
     .then(res=>{
         if(!res.ok) throw Error();
         return res.json();
@@ -626,8 +626,9 @@ function fetchEmployee(){
 
         phase="verify";
     })
-    .catch(()=>{
-        botReply("❌ Employee not found");
+    .catch((err)=>{
+        console.error("Fetch error:", err);
+        botReply("❌ Employee not found. Please check your Employee ID and try again.");
     });
 }
 
@@ -645,7 +646,7 @@ function assignCoe(name){
 
     botReply("Assigning CoE and trainings... ⏳");
 
-    fetch(BASE_URL + "/assign-coe", {
+    apiFetch(BASE_URL + "/assign-coe", {
         method: "POST",
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify({
@@ -779,7 +780,7 @@ function handleResponse(val){
         logChat("Experience", rawVal);
 
         // ✅ Save to DB
-        fetch(BASE_URL + "/save-skills",{
+        apiFetch(BASE_URL + "/save-skills",{
             method:"POST",
             headers:{"Content-Type":"application/json"},
             body:JSON.stringify({
@@ -798,7 +799,7 @@ function handleResponse(val){
         }
 
         // ✅ SMART COE CALL
-        fetch(BASE_URL + "/get-coe-options/" + emp_id)
+        apiFetch(BASE_URL + "/get-coe-options/" + emp_id)
         .then(r=>r.json())
         .then(data=>{
 
@@ -844,7 +845,7 @@ Do you want to proceed?
 
         } else {
 
-            fetch(BASE_URL + "/get-all-coe")
+            apiFetch(BASE_URL + "/get-all-coe")
             .then(r=>r.json())
             .then(d=>{
                 botReply("Select your CoE:", d.coes);
