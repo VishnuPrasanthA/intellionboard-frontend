@@ -337,16 +337,9 @@ function apiFetch(url, opts = {}) {
     opts.credentials = opts.credentials || "include";
     return fetch(url, opts);
 }
-let allEmployees  = [];
-let currentTicketId  = null;
-let currentEmpId     = null;
-let currentTab       = "all";
-let statusChartInst  = null;
-let ticketChartInst  = null;
-let socket           = null;
-let chatOpen         = false;
+/* ── INIT ────────────────────────────────────────── */
+// Single window.onload — session guard runs first
 window.onload = async () => {
-    // Validate session FIRST before loading dashboard data
     try {
         const sessionRes = await apiFetch(
             "https://manatee-dislike-lifting.ngrok-free.dev/api/auth/validate-session",
@@ -358,14 +351,56 @@ window.onload = async () => {
             setTimeout(() => window.location.replace("https://intellionboard.vercel.app/"), 2000);
             return;
         }
+        // Confirm role is ADMIN before proceeding
+        const role = (sessionData.session?.role || sessionData.user?.role || "").toUpperCase();
+        if (role !== "ADMIN") {
+            showToast("⛔ Access denied — ADMIN role required", "#ff6f6f");
+            setTimeout(() => window.location.replace("https://intellionboard.vercel.app/"), 2000);
+            return;
+        }
+        initSocket();
+        loadDashboard();
+        // Start poll ONLY after session confirmed
+        startPolling();
     } catch(e) {
-        showToast("❌ Cannot reach server", "#ff6f6f");
-        return;
+        showToast("❌ Cannot reach server — check backend", "#ff6f6f");
     }
-    // Only init after session confirmed
-    initSocket();
-    loadDashboard();
 };
+
+// ── POLLING with session guard ───────────────────────
+function startPolling() {
+    setInterval(async () => {
+        try {
+            const res = await apiFetch(`${API}/tickets`, {});
+            if (res.status === 401 || res.status === 403) {
+                // Don't redirect — just skip this poll silently
+                console.warn("Poll: session check failed, skipping update");
+                return;
+            }
+            const json = await res.json();
+            if (json.success) {
+                allEmployees = (json.data || []).map(e => ({
+                    ...e,
+                    ticket_status: String(e.ticket_status || "OPEN").toUpperCase()
+                }));
+                updateKPIs();
+                renderCharts();
+                applyTabFilter();
+            }
+        } catch(e) {
+            // Network error during poll — ignore silently
+        }
+    }, 15000);
+}
+let allEmployees  = [];
+let currentTicketId  = null;
+let currentEmpId     = null;
+let currentTab       = "all";
+let statusChartInst  = null;
+let ticketChartInst  = null;
+let socket           = null;
+let chatOpen         = false;
+    
 /* ── toast ─────────────────────────────────────── */
 function showToast(msg,color){
     const t=document.getElementById("aToast");
@@ -847,15 +882,6 @@ async function logout(){
     localStorage.clear();sessionStorage.clear();
     window.location.replace("https://intellionboard.vercel.app/");
 }
-
-/* ── INIT ────────────────────────────────────────── */
-// NOTE: main window.onload with session guard is defined above — DO NOT add another one here
-setInterval(()=>{
-    apiFetch(`${API}/tickets`,{})
-        .then(r=>r.json()).then(json=>{
-            if(json.success){ allEmployees=(json.data||[]).map(e=>({...e,ticket_status:String(e.ticket_status||"OPEN").toUpperCase()}));updateKPIs();renderCharts();applyTabFilter();}
-        }).catch(()=>{});
-},15000);
 </script>
 </body>
 </html>
