@@ -419,12 +419,12 @@ function renderTable(data){
                 <small>${emp.training_percentage||0}%</small>
             </td>
             <td>${emp.assessment_status||"Pending"}</td>
-            <td>${emp.laptop_status||"Pending"}</td>
-            <td>${emp.id_card_status||"Pending"}</td>
-            <td>${delay} days</td>
+            <td><span style="color:${(emp.laptop_status||'').toUpperCase()==='CLOSED'?'#16c79a':'inherit'};font-weight:${(emp.laptop_status||'').toUpperCase()==='CLOSED'?700:400}">${emp.laptop_status||"Pending"}</span></td>
+            <td><span style="color:${(emp.id_card_status||'').toUpperCase()==='CLOSED'?'#16c79a':'inherit'};font-weight:${(emp.id_card_status||'').toUpperCase()==='CLOSED'?700:400}">${emp.id_card_status||"Pending"}</span></td>
+            <td>${delay>0 ? delay+" days" : "—"}</td>
             <td>
-                <div class="progress"><div class="progress-fill" style="width:${emp.progress_percentage||0}%"></div></div>
-                <small>${emp.progress_percentage||0}%</small>
+                <div class="progress"><div class="progress-fill" style="width:${emp.progress||emp.progress_percentage||0}%"></div></div>
+                <small>${emp.progress||emp.progress_percentage||0}%</small>
             </td>
             <td><span class="${riskClass}">${emp.risk_level||"LOW"}</span></td>
             <td>${emp.readiness_score||0}%</td>
@@ -485,8 +485,12 @@ function applyFilter(){
 
 /* ── delay helper ────────────────────────────────────── */
 function getDelayDays(date){
-    if(!date) return 0;
-    return Math.max(0,Math.floor((Date.now()-new Date(date))/(1000*60*60*24)));
+    if(!date || date==="null" || date==="None") return 0;
+    // Normalize MSSQL datetime: '2026-06-10T13:40:49' or '2026-06-10 13:40:49.230000'
+    const normalized = String(date).replace(" ","T").split(".")[0];
+    const d = new Date(normalized);
+    if(isNaN(d.getTime())) return 0;
+    return Math.max(0, Math.floor((Date.now() - d.getTime()) / (1000*60*60*24)));
 }
 
 /* ── timeline ────────────────────────────────────────── */
