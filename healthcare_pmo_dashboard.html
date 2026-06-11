@@ -3563,34 +3563,39 @@ ${lines.join("\n")}
     if (GREETINGS.some(g => lower === g || lower === g + "!" || lower.startsWith(g + " "))) {
         addChat("AI", `👋 Hello! I'm your <b>PMO AI Assistant</b>.<br><br>
 I have full visibility into <b>${allEmployees.length.toLocaleString()}</b> employees.<br><br>
-Type <b>help</b> for all commands — each is clickable.<br>
-Or use the quick buttons above 👆`);
+Type <b>help</b> to see all clickable commands 👇<br>
+Or use the quick action buttons above 👆`);
         return;
     }
 
     if (lower === "help" || lower.includes("what can you do") || lower.includes("commands")) {
 
-        const helpItems = [
-            {icon:"📊", label:"Status Report",        desc:"Full dashboard summary",          cmd:"status report"},
-            {icon:"⏳", label:"Pending",               desc:"All pending employees",            cmd:"pending"},
-            {icon:"🔄", label:"In Progress",           desc:"Employees in onboarding",          cmd:"inprogress"},
-            {icon:"✅", label:"Completed",             desc:"Completed onboardings",            cmd:"completed"},
-            {icon:"⚠️", label:"High Risk",            desc:"At-risk employees",                cmd:"high risk"},
-            {icon:"🚀", label:"Onboard Employee",      desc:"Start onboarding by ID",           cmd:"onboard 1042825"},
-            {icon:"📦", label:"Bulk Onboard",          desc:"Onboard all pending employees",    cmd:"bulkonboard"},
-        ];
+        // Build clickable help grid like RM dashboard
+        const makeHelpItem = (icon, label, desc, cmd, specialFn) => {
+            const clickFn = specialFn
+                ? specialFn
+                : `document.getElementById('chatInput').value='${cmd}'; askAgent();`;
+            const tagLabel = specialFn ? "▶ click to enter Employee ID" : `▶ ${cmd}`;
+            return `<div class="help-item" onclick="${clickFn}">
+                ${icon} <b>${label}</b> — <span style="color:#7d8da5;">${desc}</span><br>
+                <span class="cmd-tag">${tagLabel}</span>
+            </div>`;
+        };
 
         const html = `
 <b style="color:#19d3a2;font-size:13px;">🤖 PMO AI — Click any command</b>
+<div class="help-section-label">Dashboard Commands</div>
 <div class="help-grid">
-${helpItems.map(it => `
-    <div class="help-item" onclick="
-        document.getElementById('chatInput').value='${it.cmd}';
-        askAgent();
-    ">
-        ${it.icon} <b>${it.label}</b> — <span style="color:#7d8da5;">${it.desc}</span><br>
-        <span class="cmd-tag">▶ ${it.cmd}</span>
-    </div>`).join("")}
+    ${makeHelpItem("📊", "Status Report",   "Full dashboard summary",               "status report")}
+    ${makeHelpItem("⏳", "Pending",          "All pending employees",                 "pending")}
+    ${makeHelpItem("🔄", "In Progress",      "Employees in onboarding",               "inprogress")}
+    ${makeHelpItem("✅", "Completed",        "Completed onboardings",                 "completed")}
+    ${makeHelpItem("⚠️", "High Risk",       "At-risk employees",                     "high risk")}
+</div>
+<div class="help-section-label" style="margin-top:8px;">Onboarding Actions</div>
+<div class="help-grid">
+    ${makeHelpItem("🚀", "Onboard Employee", "Start onboarding — prompts for ID",     "", "showOnboardInput()")}
+    ${makeHelpItem("📦", "Bulk Onboard",     "Onboard all pending employees",         "", "showBulkConfirm()")}
 </div>`;
 
         addChat("AI", html);
