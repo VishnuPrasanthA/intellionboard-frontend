@@ -849,7 +849,7 @@ async function logout(){
 }
 
 /* ── INIT ────────────────────────────────────────── */
-window.onload=()=>{initSocket();loadDashboard();};
+// NOTE: main window.onload with session guard is defined above — DO NOT add another one here
 setInterval(()=>{
     apiFetch(`${API}/tickets`,{})
         .then(r=>r.json()).then(json=>{
