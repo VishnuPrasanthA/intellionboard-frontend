@@ -801,16 +801,21 @@ function showHelp(){
         {icon:"🚨",title:"High Risk Employees",    desc:"Employees flagged as HIGH risk",          cmd:"show high risk employees"},
         {icon:"✅",title:"Completed Employees",    desc:"Fully onboarded employees",               cmd:"show completed employees"},
         {icon:"📧",title:"Remind by ID",           desc:"Enter Employee ID to send a targeted reminder", cmd:"__prompt_remind__"},
-        {icon:"🔺",title:"Escalate by ID",         desc:"Escalate one employee — edit the ID",    cmd:"escalate employee 1042836"},
+        {icon:"🔺",title:"Escalate by ID",         desc:"Enter Employee ID to escalate one employee", cmd:"__prompt_escalate__"},
     ];
     const bulk=[
         {icon:"📨",title:"Bulk Reminder",    desc:"Send reminder to ALL pending employees",     cmd:"help-bulk reminder"},
         {icon:"⚠️",title:"Bulk Escalation", desc:"Escalate ALL delayed + HIGH risk employees", cmd:"help-bulk escalation"},
     ];
     const makeItem=it=>{
-        const isPrompt = it.cmd === "__prompt_remind__";
-        const clickFn  = isPrompt ? "promptSingleReminder()" : `runHelpCmd('${it.cmd}')`;
-        const tagLabel = isPrompt ? "▶ click to enter Employee ID" : `▶ ${it.cmd}`;
+        const isPromptRemind   = it.cmd === "__prompt_remind__";
+        const isPromptEscalate = it.cmd === "__prompt_escalate__";
+        const clickFn  = isPromptRemind   ? "promptSingleReminder()"
+                       : isPromptEscalate ? "promptSingleEscalate()"
+                       : `runHelpCmd('${it.cmd}')`;
+        const tagLabel = (isPromptRemind||isPromptEscalate)
+                       ? "▶ click to enter Employee ID"
+                       : `▶ ${it.cmd}`;
         return `<div class="help-item" onclick="${clickFn}">
             ${it.icon} <b>${it.title}</b><br>${it.desc}
             <br><span class="cmd-tag">${tagLabel}</span>
@@ -1027,6 +1032,40 @@ function confirmSingleReminder(){
     if(grp) grp.remove();
     if(!empId){ addMessage("ai","⚠️ No Employee ID entered."); return; }
     sendReminderWithConfirm(empId);
+}
+
+/* ── promptSingleEscalate: show inline ID input ─── */
+function promptSingleEscalate(){
+    const div=document.createElement("div");
+    div.className="chat-ai-msg";
+    div.id="singleEscalateInput";
+    div.innerHTML=`
+        <b style="color:#f39c12;">🔺 Single Employee Escalation</b><br>
+        Please enter the Employee ID to escalate:
+        <div style="display:flex;gap:8px;margin-top:10px;">
+            <input id="escalateEmpInput" placeholder="e.g. 1042836" type="text"
+                style="flex:1;padding:9px 12px;border-radius:10px;border:1px solid #e2e8f0;font-size:13px;outline:none;"
+                onkeydown="if(event.key==='Enter') confirmSingleEscalate()">
+            <button onclick="confirmSingleEscalate()"
+                style="background:linear-gradient(135deg,#ffb347,#ffd36d);color:white;border:none;
+                border-radius:10px;padding:9px 14px;font-size:12px;font-weight:700;cursor:pointer;">
+                Escalate ➜
+            </button>
+        </div>`;
+    document.getElementById("chatBody").appendChild(div);
+    document.getElementById("chatBody").scrollTop=9999;
+    setTimeout(()=>{const i=document.getElementById("escalateEmpInput");if(i)i.focus();},100);
+}
+
+function confirmSingleEscalate(){
+    const inp=document.getElementById("escalateEmpInput");
+    if(!inp) return;
+    const empId=inp.value.trim();
+    const grp=document.getElementById("singleEscalateInput");
+    if(grp) grp.remove();
+    if(!empId){ addMessage("ai","⚠️ No Employee ID entered."); return; }
+    chatInput.value = "escalate employee "+empId;
+    sendChat();
 }
 
 /* ── sendReminderWithConfirm: sends + shows receipt card ─ */
