@@ -826,7 +826,7 @@ function showHelp(){
 }
 
 /* ── getLocalResponse: answers from fullData ─────── */
-function getLocalResponse(intentType,rawMsg){
+function getLocalResponse(intentType,rawMsg,intentObj){
     const safe=(v,fb="-")=>(!v||String(v).toLowerCase()==="undefined"||v==="")?fb:String(v);
     switch(intentType){
         case "greeting":
@@ -900,7 +900,7 @@ function getLocalResponse(intentType,rawMsg){
             return showReminderChoice();
 
         case "escalate_single":{
-            const empId = intentObj?.empId || rawMsg.match(/(\d{4,10})/)?.[1];
+            const empId = (intentObj && intentObj.empId) || (rawMsg.match(/([0-9]{4,10})/) || [])[1];
             if(!empId){ addMessage("ai","⚠️ Please provide an Employee ID. Example: <b>escalate employee 1042836</b>"); return null; }
             const emp = fullData.find(e=>String(e.emp_id)===String(empId));
             if(!emp){ addMessage("ai",`⚠️ Employee <b>${empId}</b> not found in your team.`); return null; }
@@ -946,7 +946,7 @@ function getLocalResponse(intentType,rawMsg){
         }
 
         case "emp_lookup":{
-            const empId = intentObj?.empId || rawMsg.match(/(\d{4,10})/)?.[1] || rawMsg.trim();
+            const empId = (intentObj && intentObj.empId) || (rawMsg.match(/([0-9]{4,10})/) || [])[1] || rawMsg.trim();
             const emp = fullData.find(e=>String(e.emp_id)===String(empId));
             if(!emp) return `⚠️ Employee <b>${empId}</b> is not under your team, or does not exist.`;
             const delay = getDelayDays(emp.created_at);
@@ -1093,12 +1093,12 @@ async function sendChat(){
         if(res.ok&&data.success){
             addMessage("ai","🤖 "+data.reply);
         } else {
-            const local=getLocalResponse(intent.type,msg);
+            const local=getLocalResponse(intent.type,msg,intent);
             addMessage("ai",local||("⚠️ "+(data.reply||"Request failed")+"<br>Type <b>help</b> for commands."));
         }
     }catch(err){
         removeTyping();
-        const local=getLocalResponse(intent.type,msg);
+        const local=getLocalResponse(intent.type,msg,intent);
         addMessage("ai",local||"⚠️ Cannot reach AI server. Type <b>help</b> for local commands.");
         console.error("Chat Error:",err);
     }
