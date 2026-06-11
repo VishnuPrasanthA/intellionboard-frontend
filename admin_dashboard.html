@@ -251,7 +251,7 @@ tbody tr:hover{background:linear-gradient(90deg,rgba(25,211,162,.04),rgba(89,184
         <button class="tab-btn active" id="tab-all"        onclick="switchTab('all')">📋 All<span class="tab-count" id="cnt-all">0</span></button>
         <button class="tab-btn"        id="tab-open"       onclick="switchTab('open')">🎫 Open<span class="tab-count" id="cnt-open">0</span></button>
         <button class="tab-btn"        id="tab-progress"   onclick="switchTab('progress')">🔄 In Progress<span class="tab-count" id="cnt-progress">0</span></button>
-        <button class="tab-btn"        id="tab-completed"  onclick="switchTab('completed')">✅ Completed<span class="tab-count" id="cnt-completed">0</span></button>
+        <button class="tab-btn"        id="tab-completed"  onclick="switchTab('completed')">🪪 ID Card Issued<span class="tab-count" id="cnt-completed">0</span></button>
     </div>
 
     <div class="table-wrapper">
@@ -337,7 +337,6 @@ function apiFetch(url, opts = {}) {
     opts.credentials = opts.credentials || "include";
     return fetch(url, opts);
 }
-
 let allEmployees  = [];
 let currentTicketId  = null;
 let currentEmpId     = null;
@@ -373,7 +372,7 @@ async function handleRefresh(){
 
 /* ── LOAD DASHBOARD ────────────────────────────── */
 async function loadDashboard(){
-    const res=await apiFetch(`${API}/tickets`,{method:"GET",credentials:"include",headers:{"Content-Type":"application/json"}});
+    const res=await apiFetch(`${API}/tickets`,{method:"GET"});
     if(res.status===401||res.status===403){
         showToast("⚠️ Session expired","#ff6f6f");
         setTimeout(()=>window.location.replace("https://intellionboard.vercel.app/"),2000);
@@ -436,52 +435,18 @@ function renderCharts(){
     const prog   = allEmployees.filter(e=>e.onboarding_status!=="COMPLETED").length;
     const comp   = allEmployees.filter(e=>e.onboarding_status==="COMPLETED").length;
 
-    const chartOpts = (legendPos="bottom") => ({
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                position: legendPos,
-                labels: {
-                    font: { size: 12, weight: "700" },
-                    generateLabels: (chart) => {
-                        const data = chart.data;
-                        return data.labels.map((label, i) => ({
-                            text: `${label}: ${data.datasets[0].data[i]}`,
-                            fillStyle: data.datasets[0].backgroundColor[i],
-                            strokeStyle: data.datasets[0].backgroundColor[i],
-                            hidden: false,
-                            index: i
-                        }));
-                    }
-                }
-            },
-            tooltip: {
-                callbacks: {
-                    label: (ctx) => ` ${ctx.label}: ${ctx.raw} (${ctx.chart.data.datasets[0].data.reduce((a,b)=>a+b,0)?Math.round(ctx.raw/ctx.chart.data.datasets[0].data.reduce((a,b)=>a+b,0)*100):0}%)`
-                }
-            }
-        }
-    });
-
     if(statusChartInst){ statusChartInst.destroy(); }
-    statusChartInst = new Chart(document.getElementById("statusChart"),{
-        type: "doughnut",
-        data: {
-            labels: ["In Progress","Completed"],
-            datasets:[{data:[prog,comp],backgroundColor:["#59b8ff","#34d47f"],borderWidth:2,borderColor:"#fff"}]
-        },
-        options: chartOpts("bottom")
+    statusChartInst=new Chart(document.getElementById("statusChart"),{
+        type:"doughnut",
+        data:{labels:["In Progress","Completed"],datasets:[{data:[prog,comp],backgroundColor:["#59b8ff","#34d47f"]}]},
+        options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom"}}}
     });
 
     if(ticketChartInst){ ticketChartInst.destroy(); }
-    ticketChartInst = new Chart(document.getElementById("ticketChart"),{
-        type: "pie",
-        data: {
-            labels: ["Open","Closed"],
-            datasets:[{data:[open,closed],backgroundColor:["#ff6f6f","#19d3a2"],borderWidth:2,borderColor:"#fff"}]
-        },
-        options: chartOpts("bottom")
+    ticketChartInst=new Chart(document.getElementById("ticketChart"),{
+        type:"pie",
+        data:{labels:["Open","Closed"],datasets:[{data:[open,closed],backgroundColor:["#ff6f6f","#19d3a2"]}]},
+        options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom"}}}
     });
 }
 
@@ -520,7 +485,7 @@ function renderTable(data){
         const sBadge   = emp.onboarding_status==="COMPLETED"?"badge-closed":
                          emp.ticket_status==="OPEN"?"badge-open":"badge-progress";
         // DEF-060/061 FIX: show correct label
-        const statusLabel = isClosed?"Completed":
+        const statusLabel = isClosed?"🪪 ID Card Issued":
             emp.onboarding_status||"In Progress";
         const prog = emp.progress||0;
 
@@ -588,9 +553,15 @@ async function submitClosure(){
             showToast(`✅ Ticket closed for ${json.emp_name||currentEmpId}`,"#19d3a2");
             // DEF-060/061 FIX: update local state immediately
             const emp=allEmployees.find(e=>e.ticket_id===currentTicketId);
-            if(emp){emp.ticket_status="CLOSED";emp.is_open=false;emp.onboarding_status="COMPLETED";emp.progress=100;}
+            // Use progress from API response (50% for ID done, more if already advanced)
+            if(emp){
+                emp.ticket_status="CLOSED";
+                emp.is_open=false;
+                emp.current_step="LAPTOP_ALLOCATION";
+                // Use server-returned progress, fallback to 50
+                emp.progress = (json.progress !== undefined) ? json.progress : 50;
+            }
             updateKPIs(); renderCharts(); applyTabFilter();
-            // Background re-fetch to get server-confirmed state
             setTimeout(loadDashboard, 800);
         } else {
             showToast("⚠️ "+(json.message||"Close failed"),"#f39c12");
@@ -613,7 +584,12 @@ async function submitIdProvided(){
         if(res.ok&&json.success){
             showToast(`🪪 ID card confirmed for ${json.emp_name||currentEmpId}`,"#19d3a2");
             const emp=allEmployees.find(e=>e.ticket_id===currentTicketId);
-            if(emp){emp.ticket_status="CLOSED";emp.is_open=false;emp.onboarding_status="COMPLETED";emp.progress=100;}
+            if(emp){
+                emp.ticket_status="CLOSED";
+                emp.is_open=false;
+                emp.current_step="LAPTOP_ALLOCATION";
+                emp.progress = (json.progress !== undefined) ? json.progress : 50;
+            }
             updateKPIs(); renderCharts(); applyTabFilter();
             setTimeout(loadDashboard, 800);
         } else {
@@ -626,7 +602,7 @@ async function submitIdProvided(){
 function initSocket(){
     try{
         if(typeof io==="undefined") return;
-        socket=io("https://manatee-dislike-lifting.ngrok-free.dev",{
+        socket=io("https://intellionboard.onrender.com",{
             transports:["polling"],reconnection:true,reconnectionAttempts:5
         });
         socket.on("connect",()=>showToast("🟢 Live sync connected","#19d3a2"));
@@ -847,16 +823,15 @@ document.getElementById("chatInput").addEventListener("keydown",e=>{if(e.key==="
 
 /* ── LOGOUT ──────────────────────────────────────── */
 async function logout(){
-    try{await apiFetch("https://manatee-dislike-lifting.ngrok-free.dev/api/auth/logout",{method:"POST",credentials:"include"});}catch(_){}
+    try{await apiFetch("https://manatee-dislike-lifting.ngrok-free.dev/api/auth/logout",{method:"POST"});}catch(_){}
     localStorage.clear();sessionStorage.clear();
-    document.cookie.split(";").forEach(c=>{document.cookie=c.replace(/^ +/,"").replace(/=.*/,"=;expires="+new Date().toUTCString()+";path=/");});
-    window.location.replace("https://intellionboard.vercel.app/?manual=true");
+    window.location.replace("https://intellionboard.vercel.app/");
 }
 
 /* ── INIT ────────────────────────────────────────── */
 window.onload=()=>{initSocket();loadDashboard();};
 setInterval(()=>{
-    apiFetch(`${API}/tickets`,{method:"GET",credentials:"include"})
+    apiFetch(`${API}/tickets`,{})
         .then(r=>r.json()).then(json=>{
             if(json.success){ allEmployees=(json.data||[]).map(e=>({...e,ticket_status:String(e.ticket_status||"OPEN").toUpperCase()}));updateKPIs();renderCharts();applyTabFilter();}
         }).catch(()=>{});
