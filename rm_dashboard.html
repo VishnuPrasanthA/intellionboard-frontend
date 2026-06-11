@@ -340,7 +340,7 @@ function toggleChatbot(){
 /* ── load dashboard ──────────────────────────────────── */
 async function loadDashboard(){
     try{
-        const res=await fetch(`${API}/rm-dashboard`,{
+        const res=await apiFetch(`${API}/rm-dashboard`,{
             method:"POST",headers:{"Content-Type":"application/json"},
             body:JSON.stringify({email:rmEmail})
         });
@@ -496,7 +496,7 @@ function getDelayDays(date){
 /* ── timeline ────────────────────────────────────────── */
 async function openTimeline(empId){
     document.getElementById("timelineModal").style.display="flex";
-    const res=await fetch(`${API}/timeline/${empId}`);
+    const res=await apiFetch(`${API}/timeline/${empId}`);
     const data=await res.json();
     let html="";
     (data.data||[]).forEach(t=>{
@@ -546,7 +546,7 @@ async function escalate(empId){
 /* ── DEF-047: send reminder with toast feedback ──────── */
 async function sendReminder(empId){
     try{
-        const res=await fetch(`${API}/send-reminder`,{
+        const res=await apiFetch(`${API}/send-reminder`,{
             method:"POST",headers:{"Content-Type":"application/json"},
             body:JSON.stringify({emp_id:empId})
         });
@@ -756,39 +756,30 @@ function runHelpCmd(cmd){
 
 /* ── detectIntent ─────────────────────────────────── */
 function detectIntent(msg){
-    msg=msg.toLowerCase().trim();
-    const greetings=["hi","hello","hey","good morning","good afternoon","good evening","howdy","hola","namaste"];
-    if(greetings.some(g=>msg===g||msg.startsWith(g+" "))) return {type:"greeting"};
-    if(msg==="help"||msg.includes("what can you do")||msg.includes("commands")) return {type:"help"};
-    // bulk first (before single escalate/remind)
+    msg = msg.toLowerCase().trim();
+    const greetings = ["hi","hello","hey","good morning","good afternoon","good evening","howdy","hola","namaste"];
+    if(greetings.some(g => msg===g || msg.startsWith(g+" "))) return {type:"greeting"};
+    if(msg==="help" || msg.includes("what can you do") || msg.includes("commands")) return {type:"help"};
     if(msg==="help-bulk reminder"||msg.includes("bulk reminder")||msg.includes("remind all")||msg.includes("reminder to all")) return {type:"bulk_reminder"};
     if(msg==="help-bulk escalation"||msg.includes("bulk escalat")||msg.includes("escalate all")||msg.includes("escalate delayed")||msg.includes("escalate high risk")) return {type:"bulk_escalation"};
-    // single
-    // remind with explicit ID → send directly
     if((msg.includes("remind employee")||msg.includes("send reminder to employee"))&&/[0-9]{4,10}/.test(msg)) return {type:"remind_single"};
-    // remind without ID, or plain "reminder" → show choice UI
     if(msg.includes("remind")||msg.includes("reminder")) return {type:"remind_choice"};
-    if(msg.includes("pending onboarding")||msg.includes("show pending")||msg.includes("pending employees")||msg.includes("show me pending")||msg.includes("employees pending")) return {type:"pending_onboarding"};
-    if(msg.includes("delayed")||msg.includes("late onboarding")||msg.includes("delay employees")) return {type:"delayed"};
-    if(msg.includes("high risk")||msg.includes("risk employees")||msg.includes("critical employees")) return {type:"high_risk"};
-    if(msg.includes("show completed")||msg.includes("fully onboarded")||msg.includes("completed employees")) return {type:"completed"};
-    if(msg.includes("summary")||msg.includes("dashboard status")||msg.includes("rm report")||msg.includes("onboarding summary")) return {type:"summary"};
-    if(msg.includes("escalation")||msg.includes("escalate")||msg.includes("send mail to admin")||msg.includes("id card issue")||msg.includes("laptop issue")) return {type:"escalation"};
-    // Single escalation with ID
-    if((msg.includes("escalate")||msg.includes("escalation"))&&/\b\d{4,10}\b/.test(msg)){
-        const m=msg.match(/\b(\d{4,10})\b/);
+    if((msg.includes("escalate")||msg.includes("escalation"))&&/[0-9]{4,10}/.test(msg)){
+        const m=msg.match(/([0-9]{4,10})/);
         return {type:"escalate_single", empId: m?m[1]:null};
     }
-    if(msg.includes("escalation")||msg.includes("escalate")) return {type:"escalation"};
-    // Bare employee ID → look up
-    if(/^\d{4,10}$/.test(msg.trim())) return {type:"emp_lookup", empId: msg.trim()};
-    if(/\b\d{5,10}\b/.test(msg)&&!msg.includes(" ")) return {type:"emp_lookup", empId: msg.match(/\b(\d{5,10})\b/)[1]};
-    // Single escalation with ID
-    if((msg.includes("escalate")||msg.includes("escalation"))&&/\d{4,10}/.test(msg)){
-        const m=msg.match(/(\d{4,10})/);
-        return {type:"escalate_single", empId: m?m[1]:null};
+    if(msg.includes("pending onboarding")||msg.includes("show pending")||msg.includes("pending employees")||msg.includes("show me pending")||msg.includes("employees pending")||msg==="pending"||msg==="list pending") return {type:"pending_onboarding"};
+    if(msg.includes("delayed")||msg.includes("late onboarding")||msg.includes("delay employees")||msg==="delay"||msg==="delayed employees") return {type:"delayed"};
+    if(msg.includes("high risk")||msg.includes("risk employees")||msg.includes("critical employees")||msg==="risk"||msg==="at risk") return {type:"high_risk"};
+    if(msg.includes("show completed")||msg.includes("fully onboarded")||msg.includes("completed employees")||msg==="completed"||msg==="done") return {type:"completed"};
+    if(msg.includes("summary")||msg.includes("dashboard status")||msg.includes("rm report")||msg.includes("onboarding summary")||msg==="status"||msg==="report"||msg==="overview") return {type:"summary"};
+    if((msg.startsWith("who is ")||msg.startsWith("find ")||msg.startsWith("search ")||msg.startsWith("check ")||msg.startsWith("status of "))){
+        const m=msg.match(/([0-9]{4,10})/);
+        if(m) return {type:"emp_lookup", empId: m[1]};
     }
-    if(msg.includes("escalation")||msg.includes("escalate")) return {type:"escalation"};
+    if(msg.includes("escalation")||msg.includes("escalate")||msg.includes("id card issue")||msg.includes("laptop issue")) return {type:"escalation"};
+    if(/^[0-9]{4,10}$/.test(msg.trim())) return {type:"emp_lookup", empId: msg.trim()};
+    if(/[0-9]{5,10}/.test(msg)&&msg.split(" ").length===1) return {type:"emp_lookup", empId: msg.match(/([0-9]{5,10})/)[1]};
     return {type:"general"};
 }
 
@@ -1035,7 +1026,7 @@ async function sendReminderWithConfirm(empId){
     addMessage("ai","⏳ Sending reminder to employee <b>"+empId+"</b>…");
 
     try{
-        const res=await fetch(`${API}/send-reminder`,{
+        const res=await apiFetch(`${API}/send-reminder`,{
             method:"POST",headers:{"Content-Type":"application/json"},
             body:JSON.stringify({emp_id:empId})
         });
@@ -1043,13 +1034,13 @@ async function sendReminderWithConfirm(empId){
         if(res.ok&&data.success){
             addMessage("ai",`
                 <div style="background:#f0fdf4;border-radius:12px;padding:14px;border-left:4px solid #16c79a;">
-                    ✅ <b>Reminder Sent!</b><br><br>
-                    <table style="font-size:12px;width:100%;border-collapse:collapse;">
-                        <tr><td style="padding:4px 0;color:#64748b;width:40%;">Employee ID</td><td><b>${data.emp_id||empId}</b></td></tr>
-                        <tr><td style="padding:4px 0;color:#64748b;">Name</td><td><b>${data.emp_name||"-"}</b></td></tr>
-                        <tr><td style="padding:4px 0;color:#64748b;">Email Sent To</td><td><b>${data.email||"-"}</b></td></tr>
-                        <tr><td style="padding:4px 0;color:#64748b;">Type</td><td><b>Training Onboarding Reminder</b></td></tr>
-                    </table>
+                    ✅ <b>Reminder Sent!</b>
+                    <div style="margin-top:8px;display:grid;grid-template-columns:90px 1fr;gap:3px;font-size:12px;">
+                        <span style="color:#64748b;">ID</span><b>${data.emp_id||empId}</b>
+                        <span style="color:#64748b;">Name</span><b>${data.emp_name||"-"}</b>
+                        <span style="color:#64748b;">Email</span><b style="word-break:break-all;overflow-wrap:anywhere;">${data.email||"-"}</b>
+                        <span style="color:#64748b;">Type</span><b>Reminder</b>
+                    </div>
                 </div>`);
             showToast("📧 Reminder sent to "+empId,"#16c79a");
         } else {
@@ -1070,16 +1061,21 @@ async function sendChat(){
 
     if(intent.type==="help"){showHelp();return;}
 
-    // fast local path for data commands
-    if(["pending_onboarding","delayed","high_risk","completed","summary",
-        "bulk_reminder","bulk_escalation","remind_single","remind_choice","greeting"].includes(intent.type)){
-        const local=getLocalResponse(intent.type,msg);
-        if(local){addMessage("ai",local);return;}
+    // All locally-handled intents — never go to server for these
+    const LOCAL_INTENTS = [
+        "pending_onboarding","delayed","high_risk","completed","summary",
+        "bulk_reminder","bulk_escalation","remind_single","remind_choice",
+        "greeting","escalation","escalate_single","emp_lookup"
+    ];
+    if(LOCAL_INTENTS.includes(intent.type)){
+        const local = getLocalResponse(intent.type, msg, intent);
+        if(local) addMessage("ai", local);
+        return; // always return — null means handled via addMessage internally
     }
 
     showTyping();
     try{
-        const res=await fetch(`${API}/chat`,{
+        const res=await apiFetch(`${API}/chat`,{
             method:"POST",headers:{"Content-Type":"application/json"},
             body:JSON.stringify({message:msg,intent:intent.type,rm,email:rmEmail})
         });
@@ -1102,7 +1098,7 @@ async function sendChat(){
 /* ── logout ───────────────────────────────────────── */
 async function logout(){
     try{
-        const res=await fetch("https://intellionboard.onrender.com/api/auth/logout",{method:"POST",credentials:"include"});
+        const res=await apiFetch("https://manatee-dislike-lifting.ngrok-free.dev/api/auth/logout",{method:"POST"});
         if(!res.ok) console.warn("Logout API not OK");
     }catch(err){console.error("Logout API Error:",err);}
     finally{
