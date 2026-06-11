@@ -944,64 +944,99 @@ async function renderHoursChart(trainings){
         if(!bctx) return;
         if(bctx._ci) bctx._ci.destroy();
 
-        // Merge API data with current session time (in case not saved yet)
         let chartData = Array.isArray(data) ? [...data] : [];
 
-        // If current training has session time but not yet in API data, add it
+        // Merge current session time into chart (real-time before next save)
         if(currentTraining && timerSeconds > 10){
             const existing = chartData.find(d=>d.training===currentTraining);
-            const sessionHours = timerSeconds/3600;
             if(existing){
-                existing.hours = Math.max(parseFloat(existing.hours||0), sessionHours);
+                const sessionSecs = timerSeconds;
+                if(sessionSecs > (existing.total_seconds||0)){
+                    existing.total_seconds = sessionSecs;
+                    existing.hours = sessionSecs/3600;
+                }
             } else {
-                chartData.push({training:currentTraining, hours:sessionHours});
+                chartData.push({training:currentTraining, total_seconds:timerSeconds, hours:timerSeconds/3600});
             }
         }
 
-        if(chartData.length>0 && chartData.some(d=>parseFloat(d.hours||0)>0)){
-            const labels=chartData.map(d=>d.training.length>22?d.training.substring(0,20)+"…":d.training);
-            const hours =chartData.map(d=>{
-                const h=parseFloat(d.hours||0);
-                return h>0 ? parseFloat(h.toFixed(2)) : 0;
-            });
+        // Helper: format seconds → "2h 15m" or "45m" or "30s"
+        function fmtSecs(secs){
+            secs = Math.round(secs||0);
+            if(secs<=0) return "0m";
+            const h=Math.floor(secs/3600);
+            const m=Math.floor((secs%3600)/60);
+            const s=secs%60;
+            if(h>0) return m>0 ? `${h}h ${m}m` : `${h}h`;
+            if(m>0) return `${m}m`;
+            return `${s}s`;
+        }
+
+        const hasData = chartData.some(d=>(d.total_seconds||0)>0||(d.hours||0)>0);
+        const labels  = chartData.map(d=>d.training.length>22?d.training.substring(0,20)+"…":d.training);
+
+        // Use total_seconds for accuracy; fallback to hours float
+        const seconds = chartData.map(d=>d.total_seconds||Math.round((d.hours||0)*3600));
+
+        if(hasData){
             bctx._ci=new Chart(bctx,{type:"bar",
                 data:{labels,datasets:[{
-                    label:"Hours Spent",data:hours,
-                    backgroundColor:hours.map(h=>h>0?"rgba(25,211,162,0.8)":"rgba(226,232,240,0.6)"),
+                    label:"Watch Time",
+                    data:seconds,
+                    backgroundColor:seconds.map(s=>s>0?"rgba(25,211,162,0.85)":"rgba(226,232,240,0.6)"),
                     borderRadius:10,borderColor:"#19d3a2",borderWidth:1.5
                 }]},
                 options:{responsive:true,
-                    plugins:{legend:{display:false},
-                        tooltip:{callbacks:{label:ctx=>{
-                            const h=Math.floor(ctx.raw);
-                            const m=Math.round((ctx.raw-h)*60);
-                            return m>0?`${h}h ${m}m`:`${h}h`;
-                        }}}},
+                    plugins:{
+                        legend:{display:false},
+                        tooltip:{callbacks:{
+                            label:ctx=>`⏱ ${fmtSecs(ctx.raw)}`
+                        }}
+                    },
                     scales:{
                         x:{ticks:{font:{size:10},maxRotation:35}},
-                        y:{beginAtZero:true,ticks:{callback:v=>{
-                            const h=Math.floor(v);
-                            const m=Math.round((v-h)*60);
-                            return m>0?`${h}h${m}m`:`${h}h`;
-                        }}}
-                    }}});
+                        y:{
+                            beginAtZero:true,
+                            ticks:{
+                                // Show clean time labels on Y axis
+                                callback:v=>{
+                                    v=Math.round(v);
+                                    if(v<=0) return "0";
+                                    const h=Math.floor(v/3600);
+                                    const m=Math.floor((v%3600)/60);
+                                    if(h>0) return m>0?`${h}h ${m}m`:`${h}h`;
+                                    return `${m}m`;
+                                },
+                                // Sensible tick steps: every 5m up to 1h, then every 30m
+                                stepSize: (()=>{
+                                    const maxSec=Math.max(...seconds,1);
+                                    if(maxSec<300)  return 60;   // < 5min → tick every 1min
+                                    if(maxSec<1800) return 300;  // < 30min → tick every 5min
+                                    if(maxSec<3600) return 600;  // < 1h → tick every 10min
+                                    return 1800;                  // > 1h → tick every 30min
+                                })()
+                            }
+                        }
+                    }
+                }
+            });
         } else {
-            // Show training names with 0 bars — at least labels are real
-            const labels=(Array.isArray(trainings)&&trainings.length>0)
+            const fallbackLabels=(Array.isArray(trainings)&&trainings.length>0)
                 ? trainings.map(t=>t.name.length>20?t.name.substring(0,18)+"…":t.name)
                 : ["No trainings"];
             bctx._ci=new Chart(bctx,{type:"bar",
-                data:{labels,datasets:[{
-                    label:"Hours Spent",
-                    data:new Array(labels.length).fill(0),
+                data:{labels:fallbackLabels,datasets:[{
+                    label:"Watch Time",
+                    data:new Array(fallbackLabels.length).fill(0),
                     backgroundColor:"rgba(226,232,240,0.8)",borderRadius:8
                 }]},
                 options:{responsive:true,
                     plugins:{legend:{display:false},
-                        title:{display:true,text:"Start watching to track hours",
-                            color:"#94a3b8",font:{size:12}}},
-                    scales:{y:{beginAtZero:true,max:1,
-                        ticks:{callback:v=>v+"h"}}}}});
+                        title:{display:true,text:"Watch a training video to see your hours here",
+                            color:"#94a3b8",font:{size:13,weight:"600"}}},
+                    scales:{y:{beginAtZero:true,
+                        ticks:{callback:v=>v===0?"0":""},
+                        grid:{display:false}}}}});
         }
     }catch(e){
         console.warn("Hours chart:",e);
