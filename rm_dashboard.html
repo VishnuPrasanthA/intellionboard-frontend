@@ -150,18 +150,16 @@ tbody tr:hover td{box-shadow:0 10px 24px rgba(22,199,154,.05);}
     background:linear-gradient(135deg,#16c79a,#59b8ff);color:white;
     padding:14px 18px;font-weight:800;font-size:14px;display:flex;align-items:center;gap:10px;
 }
-.chat-body{flex:1;display:flex;flex-direction:column;gap:8px;padding:14px;overflow-y:auto;overflow-x:hidden;background:#f8fbff;scroll-behavior:smooth;min-height:0;}
+.chat-body{flex:1;display:flex;flex-direction:column;gap:12px;padding:16px;overflow-y:auto;background:#f8fbff;scroll-behavior:smooth;}
 .chat-user-msg{
     align-self:flex-end;background:linear-gradient(135deg,#16c79a,#5effcf);color:white;
-    padding:10px 14px;border-radius:18px 18px 4px 18px;max-width:85%;font-size:12px;line-height:1.4;
-    box-shadow:0 6px 16px rgba(22,199,154,0.20);animation:fadeUp .2s ease;
-    word-break:break-word;overflow-wrap:anywhere;
+    padding:12px 16px;border-radius:18px 18px 4px 18px;max-width:80%;font-size:13px;line-height:1.5;
+    box-shadow:0 8px 20px rgba(22,199,154,0.25);animation:fadeUp .2s ease;
 }
 .chat-ai-msg{
-    align-self:flex-start;background:white;color:#172b42;padding:10px 14px;
-    border-radius:18px 18px 18px 4px;max-width:90%;font-size:12px;line-height:1.5;
-    border:1px solid #edf2f7;box-shadow:0 4px 12px rgba(0,0,0,0.06);animation:fadeUp .2s ease;
-    word-break:break-word;overflow-wrap:anywhere;
+    align-self:flex-start;background:white;color:#172b42;padding:12px 16px;
+    border-radius:18px 18px 18px 4px;max-width:85%;font-size:13px;line-height:1.6;
+    border:1px solid #edf2f7;box-shadow:0 6px 18px rgba(0,0,0,0.08);animation:fadeUp .2s ease;
 }
 .chat-input{display:flex;align-items:center;gap:10px;padding:12px;border-top:1px solid #e9eef5;background:white;}
 .chat-input input{flex:1;padding:12px 14px;border-radius:14px;border:1px solid #e5eaf0;outline:none;font-size:13px;}
@@ -191,7 +189,7 @@ tbody tr:hover td{box-shadow:0 10px 24px rgba(22,199,154,.05);}
 @keyframes bounce{0%,80%,100%{transform:scale(0);}40%{transform:scale(1);}}
 @keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
 .modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.45);display:none;justify-content:center;align-items:center;z-index:999999;}
-.modal-content{width:540px;max-width:96vw;background:white;border-radius:30px;padding:28px;box-shadow:var(--shadow-lg);}
+.modal-content{width:520px;background:white;border-radius:30px;padding:28px;box-shadow:var(--shadow-lg);}
 .risk-low{color:#16c79a;font-weight:900;}
 .risk-medium{color:#f39c12;font-weight:900;}
 .risk-high{color:#ff5f5f;font-weight:900;}
@@ -304,10 +302,10 @@ tbody tr:hover td{box-shadow:0 10px 24px rgba(22,199,154,.05);}
 
 <!-- DEF-057/058/059: employee analytics modal -->
 <div class="modal" id="employeeModal">
-    <div class="modal-content" style="width:580px;max-width:95vw;max-height:88vh;overflow-y:auto;overflow-x:hidden;">
+    <div class="modal-content" style="width:800px;max-width:96vw;max-height:90vh;overflow:auto;">
         <h2 id="empModalTitle">Employee Analytics</h2><br>
         <div id="employeeFullDetails"></div><br>
-        <button onclick="closeModal('employeeModal')" style="margin-top:4px;padding:11px 28px;border:none;border-radius:14px;background:linear-gradient(135deg,#ff6b6b,#ff9a80);color:white;font-weight:700;font-size:14px;cursor:pointer;transition:.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">✕ Close</button>
+        <button class="btn" onclick="closeModal('employeeModal')">Close</button>
     </div>
 </div>
 
@@ -316,15 +314,6 @@ tbody tr:hover td{box-shadow:0 10px 24px rgba(22,199,154,.05);}
 
 <script>
 const API      = "https://manatee-dislike-lifting.ngrok-free.dev/api/rm";
-// ── ngrok bypass ─────────────────────────────────────────
-function apiFetch(url, opts = {}) {
-    opts.headers = Object.assign({
-        "ngrok-skip-browser-warning": "true"
-    }, opts.headers || {});
-    opts.credentials = opts.credentials || "include";
-    return fetch(url, opts);
-}
-
 let   fullData = [];
 const rm       = localStorage.getItem("user_name")  || "RM";
 const rmEmail  = localStorage.getItem("user_email") || "";
@@ -351,7 +340,7 @@ function toggleChatbot(){
 /* ── load dashboard ──────────────────────────────────── */
 async function loadDashboard(){
     try{
-        const res=await apiFetch(`${API}/rm-dashboard`,{
+        const res=await fetch(`${API}/rm-dashboard`,{
             method:"POST",headers:{"Content-Type":"application/json"},
             body:JSON.stringify({email:rmEmail})
         });
@@ -379,12 +368,12 @@ function renderStats(data){
     document.getElementById("slaRisk").innerText           =
         data.filter(x=>(x.risk_level||"").toUpperCase()==="HIGH").length;
     document.getElementById("delayedEmployees").innerText  =
-        data.filter(x=>!(x.onboarding_status||"").toLowerCase().includes("completed")&&getDelayDays(x.created_at)>2).length;
+        data.filter(x=>getDelayDays(x.created_at)>2).length;
 }
 
 /* ── AI insights ─────────────────────────────────────── */
 function loadAIInsights(data){
-    const delayed      =data.filter(x=>!(x.onboarding_status||"").toLowerCase().includes("completed")&&getDelayDays(x.created_at)>2).length;
+    const delayed      =data.filter(x=>getDelayDays(x.updated_at)>2).length;
     const highRisk     =data.filter(x=>(x.risk_level||"").toUpperCase()==="HIGH").length;
     const trainPending =data.filter(x=>(x.training_percentage||0)<100).length;
     const completed    =data.filter(x=>(x.onboarding_status||"").toLowerCase().includes("completed")).length;
@@ -413,15 +402,9 @@ function renderTable(data){
         <th>Delay</th><th>Overall Progress</th><th>Risk</th><th>Readiness</th><th>Actions</th>
     </tr></thead><tbody>`;
     data.forEach(emp=>{
-        const delay = (emp.onboarding_status||"").toLowerCase().includes("completed") ? 0 : getDelayDays(emp.created_at);
-        const isEscalated = emp.escalated || (emp.risk_level||"").toUpperCase()==="HIGH";
-        // Treat 'Escalated' status same as 'In Progress' — don't use red badge for it
-        const displayStatus = (emp.onboarding_status||"").toLowerCase() === "escalated"
-            ? "Onboarding In Progress"
-            : (emp.onboarding_status||"Pending");
+        const delay      =getDelayDays(emp.updated_at);
         const statusClass=
-            displayStatus.toLowerCase().includes("completed")?"completed":
-            displayStatus.toLowerCase().includes("progress")?"inprogress":
+            (emp.onboarding_status||"").toLowerCase().includes("completed")?"completed":
             delay>2?"delayed":"pending";
         const riskClass  =
             (emp.risk_level||"").toUpperCase()==="HIGH"?"risk-high":
@@ -429,7 +412,7 @@ function renderTable(data){
         html+=`<tr>
             <td>${emp.emp_id||"-"}</td>
             <td><div class="employee-name"><b>${emp.emp_name||"Unknown"}</b><small>${emp.email||""}</small></div></td>
-            <td><span class="badge ${statusClass}">${displayStatus}</span>${emp.escalated||emp.risk_level==="HIGH"?'<span class="badge" style="background:linear-gradient(135deg,#ff6b6b,#ff9a80);margin-left:4px;font-size:9px;">🚨 Escalated</span>':""}</td>
+            <td><span class="badge ${statusClass}">${emp.onboarding_status||"Pending"}</span></td>
             <td><span class="badge inprogress">${getStageBadge(emp.current_step)}</span></td>
             <td>
                 <div class="progress"><div class="progress-fill" style="width:${emp.training_percentage||0}%"></div></div>
@@ -447,7 +430,9 @@ function renderTable(data){
             <td>${emp.readiness_score||0}%</td>
             <td><div class="action-buttons">
                 <button class="btn btn-mail"     title="Send Reminder" onclick="sendReminder('${emp.emp_id}')">📧</button>
-                <button class="btn btn-escalate" title="Escalate"      onclick="escalate('${emp.emp_id}')">⚠️</button>
+                <button class="btn btn-escalate" title="${(emp.onboarding_status||'').toLowerCase().includes('complet')?'Already Completed':'Escalate'}"
+    onclick="escalate('${emp.emp_id}')"
+    ${(emp.onboarding_status||'').toLowerCase().includes('complet')?'style="opacity:.4;cursor:not-allowed;" disabled':''}>⚠️</button>
                 <button class="btn btn-complete" title="View Analytics" onclick="openEmployeeDetails('${emp.emp_id}')">📊</button>
             </div></td>
         </tr>`;
@@ -483,7 +468,7 @@ function applyFilter(){
         let statusMatch=true;
         const status=(emp.onboarding_status||"").toLowerCase();
         const risk  =(emp.risk_level||"").toUpperCase();
-        const delay =getDelayDays(emp.created_at);
+        const delay =getDelayDays(emp.updated_at||emp.created_at);
         const tPct  =emp.training_percentage||0;
 
         if(filter==="pending")    statusMatch=!status.includes("completed");
@@ -501,17 +486,13 @@ function applyFilter(){
 /* ── delay helper ────────────────────────────────────── */
 function getDelayDays(date){
     if(!date) return 0;
-    // Normalize MSSQL datetime string: '2026-06-10 13:40:49.230000' → ISO format
-    const normalized = String(date).replace(' ', 'T').replace(/\.\d+$/, '');
-    const d = new Date(normalized);
-    if(isNaN(d.getTime())) return 0;  // invalid date → 0, never NaN
-    return Math.max(0, Math.floor((Date.now() - d.getTime()) / (1000*60*60*24)));
+    return Math.max(0,Math.floor((Date.now()-new Date(date))/(1000*60*60*24)));
 }
 
 /* ── timeline ────────────────────────────────────────── */
 async function openTimeline(empId){
     document.getElementById("timelineModal").style.display="flex";
-    const res=await apiFetch(`${API}/timeline/${empId}`);
+    const res=await fetch(`${API}/timeline/${empId}`);
     const data=await res.json();
     let html="";
     (data.data||[]).forEach(t=>{
@@ -534,31 +515,34 @@ function showToast(msg,color){
 
 /* ── escalate ────────────────────────────────────────── */
 async function escalate(empId){
+    // DEF FIX: block escalation for completed employees
+    const emp = fullData.find(e=>String(e.emp_id)===String(empId));
+    if(emp && (emp.onboarding_status||"").toLowerCase().includes("complet")){
+        showToast(`✅ ${emp.emp_name||empId} — already completed onboarding`,"#16c79a");
+        return;
+    }
     try{
         const res=await apiFetch(`${API}/escalate/${empId}`,{
-            method:"POST",
-            headers:{"Content-Type":"application/json"},
+            method:"POST",headers:{"Content-Type":"application/json"},
             body:JSON.stringify({rm_name:rm, rm_email:rmEmail})
         });
         const data=await res.json();
         if(res.ok&&data.success){
-            const step = data.step || "";
-            const routed = data.routed_to || "HC PMO";
-            showToast(`⚠️ Escalated — Email sent to ${routed}`,"#f39c12");
+            showToast(`⚠️ Escalated → ${data.routed_to||"HC PMO"}`,"#f39c12");
+        } else if(data.already_completed){
+            showToast(`✅ ${data.emp_name||empId} already completed onboarding`,"#16c79a");
+            return;
         } else {
             showToast("⚠️ "+(data.message||"Escalation may have issues"),"#f39c12");
         }
         loadDashboard();
-    }catch(e){
-        console.error("Escalation error:",e);
-        showToast("❌ Escalation failed — check backend","#ff5f5f");
-    }
+    }catch(e){showToast("❌ Escalation failed","#ff5f5f");}
 }
 
 /* ── DEF-047: send reminder with toast feedback ──────── */
 async function sendReminder(empId){
     try{
-        const res=await apiFetch(`${API}/send-reminder`,{
+        const res=await fetch(`${API}/send-reminder`,{
             method:"POST",headers:{"Content-Type":"application/json"},
             body:JSON.stringify({emp_id:empId})
         });
@@ -581,17 +565,7 @@ function openEmployeeDetails(empId){
     document.getElementById("employeeFullDetails").innerHTML=
         '<p style="color:#7f8ea3;padding:20px;text-align:center;">Fetching employee data…</p>';
 
-    // ✅ Use fullData first (already loaded, richer fields)
-    // fallback to API call if not found locally
-    const localEmp = fullData.find(e=>String(e.emp_id)===String(empId));
-    if(localEmp){
-        analyticsEmpData = localEmp;
-        renderAnalyticsPage(localEmp, 0);
-        return;
-    }
-
-    // Fallback: fetch from API (uses apiFetch for ngrok bypass)
-    apiFetch(`${API}/employee/${empId}`)
+    fetch(`${API}/employee/${empId}`)
         .then(r=>r.json())
         .then(data=>{
             const emp=data.data||{};
@@ -608,151 +582,143 @@ function openEmployeeDetails(empId){
 
 /* Render one of 3 pages */
 function renderAnalyticsPage(emp, page){
-    analyticsPageIndex = page;
-    const safe = (v, fb="-") => (!v || String(v).toLowerCase() === "undefined" || v === "") ? fb : String(v);
-    const name     = safe(emp.emp_name, "Unknown Employee");
-    const id       = safe(emp.emp_id, "—");
-    const progPct  = Number(emp.progress_percentage || emp.progress || 0);
-    const trainPct = Number(emp.training_percentage || 0);
-    const readiness= Number(emp.readiness_score || 0);
-    const risk     = safe(emp.risk_level, "LOW");
-    const delay    = emp.delay_days !== undefined && !isNaN(emp.delay_days)
-        ? emp.delay_days
-        : Math.max(0, Math.floor((Date.now() - new Date(String(emp.created_at||"").replace(" ","T").replace(/\.\d+$/,"")||Date.now())) / (1000*60*60*24)));
-    const riskColor = risk.toUpperCase()==="HIGH" ? "#ff5f5f" : risk.toUpperCase()==="MEDIUM" ? "#f39c12" : "#16c79a";
+    analyticsPageIndex=page;
+    // DEF-059: safe helper
+    const safe=(v,fb="-")=>(!v||String(v).toLowerCase()==="undefined"||v==="")?fb:String(v);
+    const name    =safe(emp.emp_name,"Unknown Employee");
+    const id      =safe(emp.emp_id,  "—");
+    // DEF-058: multiple field fallbacks for progress
+    const progPct  =Number(emp.progress_percentage||emp.progress||emp.onboarding_progress||0);
+    const trainPct =Number(emp.training_percentage||emp.training_progress||0);
+    const readiness=Number(emp.readiness_score||0);
+    const risk     =safe(emp.risk_level,"LOW");
+    const delay    =emp.delay_days||0;
+    const riskColor=risk.toUpperCase()==="HIGH"?"#ff5f5f":risk.toUpperCase()==="MEDIUM"?"#f39c12":"#16c79a";
 
-    document.getElementById("empModalTitle").innerText = `${name} (${id})`;
+    document.getElementById("empModalTitle").innerText=`${name} (${id})`;
 
-    // ── Shared helpers ────────────────────────────────────
-    const row = (label, value, valueStyle="") =>
-        `<div style="padding:9px 10px 9px 0;color:#64748b;font-size:12px;border-bottom:1px solid #edf2f7;white-space:nowrap;">${label}</div>
-         <div style="padding:9px 0;font-weight:700;font-size:13px;border-bottom:1px solid #edf2f7;word-break:break-all;overflow-wrap:anywhere;${valueStyle}">${value}</div>`;
-
-    const pill = (s) => {
-        s = s || "Pending";
-        const sl = s.toLowerCase();
-        const c = sl.includes("complet")||sl.includes("closed") ? "#16c79a"
-                : sl.includes("progress")||sl.includes("active") ? "#59b8ff"
-                : sl.includes("pend") ? "#f39c12" : "#94a3b8";
-        return `<span style="background:${c}22;color:${c};font-size:11px;font-weight:700;padding:3px 10px;border-radius:8px;">${s}</span>`;
-    };
-
-    const bar = (pct, label, color="#16c79a") =>
-        `<div style="margin-top:14px;">
+    const bar=(pct,label,color="#16c79a")=>`
+        <div style="margin-top:12px;">
             <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
                 <span style="font-size:12px;color:#64748b;">${label}</span>
                 <span style="font-size:13px;font-weight:800;color:${color};">${pct}%</span>
             </div>
             <div style="height:10px;background:#e9eef5;border-radius:30px;overflow:hidden;">
-                <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,${color},#58ffd8);border-radius:30px;transition:width .6s;"></div>
+                <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,${color},#58ffd8);border-radius:30px;transition:width .6s ease;"></div>
             </div>
         </div>`;
 
-    const grid = (rows) =>
-        `<div style="display:grid;grid-template-columns:140px 1fr;font-size:13px;">${rows}</div>`;
-
-    // ── Pagination ────────────────────────────────────────
-    const dots = [0,1,2].map(i =>
+    // Pagination dots
+    const dots=[0,1,2].map(i=>
         `<span onclick="renderAnalyticsPage(analyticsEmpData,${i})"
             style="display:inline-block;width:${i===page?24:8}px;height:8px;border-radius:8px;
             background:${i===page?"#16c79a":"#e2e8f0"};cursor:pointer;margin:0 3px;transition:all .2s;"></span>`
     ).join("");
 
-    const navBtns = `
+    const navBtns=`
         <div style="display:flex;align-items:center;justify-content:space-between;margin-top:20px;">
             <button onclick="renderAnalyticsPage(analyticsEmpData,${Math.max(0,page-1)})"
-                style="padding:8px 18px;border:none;border-radius:12px;
-                background:${page===0?"#e2e8f0":"linear-gradient(135deg,#16c79a,#58ffd8)"};
-                color:${page===0?"#94a3b8":"white"};font-weight:700;cursor:${page===0?"default":"pointer"};
-                font-size:12px;transition:.2s;">← Prev</button>
+                style="padding:8px 16px;border:none;border-radius:10px;background:${page===0?"#e2e8f0":"linear-gradient(135deg,#16c79a,#58ffd8)"};
+                color:${page===0?"#94a3b8":"white"};font-weight:700;cursor:${page===0?"default":"pointer"};font-size:12px;transition:.2s;">
+                ← Prev
+            </button>
             <div>${dots}</div>
-            <button onclick="renderAnalyticsPage(analyticsEmpData,${Math.min(2,page+1)})"
-                style="padding:8px 18px;border:none;border-radius:12px;
-                background:${page===2?"#e2e8f0":"linear-gradient(135deg,#16c79a,#58ffd8)"};
-                color:${page===2?"#94a3b8":"white"};font-weight:700;cursor:${page===2?"default":"pointer"};
-                font-size:12px;transition:.2s;">Next →</button>
+            <button onclick="renderAnalyticsPage(analyticsEmpData,${Math.min(ANALYTICS_PAGES-1,page+1)})"
+                style="padding:8px 16px;border:none;border-radius:10px;background:${page===ANALYTICS_PAGES-1?"#e2e8f0":"linear-gradient(135deg,#16c79a,#58ffd8)"};
+                color:${page===ANALYTICS_PAGES-1?"#94a3b8":"white"};font-weight:700;cursor:${page===ANALYTICS_PAGES-1?"default":"pointer"};font-size:12px;transition:.2s;">
+                Next →
+            </button>
         </div>`;
 
-    // ── Page 1: Employee Info ─────────────────────────────
-    let content = "";
-    if(page === 0){
-        content = `
-            <div style="text-align:center;margin-bottom:18px;">
+    let content="";
+
+    /* ─── PAGE 1: Employee Info ─────────────────── */
+    if(page===0){
+        content=`
+            <div style="text-align:center;margin-bottom:16px;">
                 <div style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#16c79a,#59b8ff);
-                    margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font-size:26px;color:white;">👤</div>
-                <div style="font-size:17px;font-weight:800;color:#172b42;">${name}</div>
+                    margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font-size:26px;color:white;">
+                    👤
+                </div>
+                <div style="font-size:18px;font-weight:800;color:#172b42;">${name}</div>
                 <div style="font-size:12px;color:#7f8ea3;margin-top:3px;">${safe(emp.emp_id)} · ${safe(emp.designation)}</div>
             </div>
-            <div style="background:#f8fafc;border-radius:14px;padding:16px 18px;">
-                <h3 style="color:#16c79a;font-size:14px;margin:0 0 12px;">📋 Employee Information</h3>
-                ${grid([
-                    row("Email",         safe(emp.email)),
-                    row("Designation",   safe(emp.designation)),
-                    row("Department",    safe(emp.department)),
-                    row("Location",      safe(emp.location)),
-                    row("Project",       safe(emp.project_name||emp.account_name)),
-                    row("COE",           safe(emp.selected_coe)),
-                    row("Business Unit", safe(emp.business_unit)),
-                    row("Joining Date",  safe(emp.joining_date)),
-                    row("Grade",         safe(emp.grade)),
-                ].join(""))}
+            <div style="background:#f8fafc;border-radius:14px;padding:18px;">
+                <h3 style="color:#16c79a;font-size:14px;margin:0 0 14px;">📋 Employee Information</h3>
+                <table style="width:100%;font-size:13px;border-collapse:collapse;">
+                    <tr><td style="padding:7px 0;color:#64748b;width:40%;">Email</td><td><b>${safe(emp.email)}</b></td></tr>
+                    <tr><td style="padding:7px 0;color:#64748b;">Designation</td><td><b>${safe(emp.designation)}</b></td></tr>
+                    <tr><td style="padding:7px 0;color:#64748b;">Department</td><td><b>${safe(emp.department)}</b></td></tr>
+                    <tr><td style="padding:7px 0;color:#64748b;">Location</td><td><b>${safe(emp.location)}</b></td></tr>
+                    <tr><td style="padding:7px 0;color:#64748b;">Project</td><td><b>${safe(emp.project_name||emp.account_name)}</b></td></tr>
+                    <tr><td style="padding:7px 0;color:#64748b;">COE</td><td><b>${safe(emp.selected_coe)}</b></td></tr>
+                    <tr><td style="padding:7px 0;color:#64748b;">Business Unit</td><td><b>${safe(emp.business_unit)}</b></td></tr>
+                    <tr><td style="padding:7px 0;color:#64748b;">Joining Date</td><td><b>${safe(emp.joining_date)}</b></td></tr>
+                    <tr><td style="padding:7px 0;color:#64748b;">Grade</td><td><b>${safe(emp.grade)}</b></td></tr>
+                </table>
             </div>
             ${navBtns}`;
     }
 
-    // ── Page 2: Onboarding Tracking ──────────────────────
-    else if(page === 1){
-        content = `
-            <div style="background:#f8fafc;border-radius:14px;padding:16px 18px;margin-bottom:12px;">
-                <h3 style="color:#16c79a;font-size:14px;margin:0 0 12px;">🏷️ Onboarding Status</h3>
-                ${grid([
-                    row("Overall Status", pill(emp.onboarding_status)),
-                    row("Current Step",   `<b>${safe(emp.current_step).replace(/_/g," ")}</b>`),
-                    row("Delay",          `<b>${delay} days</b>`),
-                    row("Risk Level",     `<b style="color:${riskColor};">${risk}</b>`),
-                    row("Progress",       `<b style="color:#16c79a;">${progPct}%</b>`),
-                ].join(""))}
+    /* ─── PAGE 2: Onboarding Tracking ──────────── */
+    else if(page===1){
+        const statusColor=(s)=>{
+            s=(s||"").toLowerCase();
+            if(s.includes("complet")) return "#16c79a";
+            if(s.includes("progress")||s.includes("active")) return "#59b8ff";
+            if(s.includes("pend")) return "#f39c12";
+            return "#94a3b8";
+        };
+        const statusPill=(s)=>`<span style="background:${statusColor(s)}22;color:${statusColor(s)};font-size:11px;font-weight:700;padding:3px 10px;border-radius:8px;">${s||"Pending"}</span>`;
+
+        content=`
+            <div style="background:#f8fafc;border-radius:14px;padding:18px;margin-bottom:14px;">
+                <h3 style="color:#16c79a;font-size:14px;margin:0 0 14px;">🏷️ Onboarding Status</h3>
+                <table style="width:100%;font-size:13px;border-collapse:collapse;">
+                    <tr><td style="padding:7px 0;color:#64748b;width:45%;">Overall Status</td><td>${statusPill(emp.onboarding_status)}</td></tr>
+                    <tr><td style="padding:7px 0;color:#64748b;">Current Step</td><td><b>${safe(emp.current_step).replace(/_/g," ")}</b></td></tr>
+                    <tr><td style="padding:7px 0;color:#64748b;">Delay</td><td><b>${delay} days</b></td></tr>
+                    <tr><td style="padding:7px 0;color:#64748b;">Risk Level</td><td><b style="color:${riskColor};">${risk}</b></td></tr>
+                </table>
             </div>
-            <div style="background:#f8fafc;border-radius:14px;padding:16px 18px;">
-                <h3 style="color:#16c79a;font-size:14px;margin:0 0 12px;">📋 Onboarding Tracking</h3>
-                ${grid([
-                    row("ID Card",      pill(emp.id_card_status)),
-                    row("Laptop",       pill(emp.laptop_status)),
-                    row("Email Setup",  pill(emp.email_setup_status)),
-                    row("VPN",          pill(emp.vpn_status)),
-                    row("Access Card",  pill(emp.access_card_status)),
-                    row("Assessment",   pill(emp.assessment_status)),
-                    row("COE Status",   pill(emp.coe_status)),
-                    row("Training",     `<b>${trainPct}%</b>`),
-                ].join(""))}
+            <div style="background:#f8fafc;border-radius:14px;padding:18px;">
+                <h3 style="color:#16c79a;font-size:14px;margin:0 0 14px;">📋 Onboarding Tracking</h3>
+                <table style="width:100%;font-size:13px;border-collapse:collapse;">
+                    <tr><td style="padding:7px 0;color:#64748b;width:45%;">ID Card</td><td>${statusPill(emp.id_card_status)}</td></tr>
+                    <tr><td style="padding:7px 0;color:#64748b;">Laptop</td><td>${statusPill(emp.laptop_status)}</td></tr>
+                    <tr><td style="padding:7px 0;color:#64748b;">Email Setup</td><td>${statusPill(emp.email_setup_status)}</td></tr>
+                    <tr><td style="padding:7px 0;color:#64748b;">VPN</td><td>${statusPill(emp.vpn_status)}</td></tr>
+                    <tr><td style="padding:7px 0;color:#64748b;">Access Card</td><td>${statusPill(emp.access_card_status)}</td></tr>
+                    <tr><td style="padding:7px 0;color:#64748b;">Assessment</td><td>${statusPill(emp.assessment_status)}</td></tr>
+                    <tr><td style="padding:7px 0;color:#64748b;">COE Status</td><td>${statusPill(emp.coe_status)}</td></tr>
+                    <tr><td style="padding:7px 0;color:#64748b;">Training</td><td><b>${trainPct}%</b></td></tr>
+                </table>
             </div>
             ${navBtns}`;
     }
 
-    // ── Page 3: Progress + Risk + Actions ────────────────
-    else if(page === 2){
-        content = `
-            <div style="background:#f8fafc;border-radius:14px;padding:16px 18px;margin-bottom:12px;">
+    /* ─── PAGE 3: Progress + Risk + Actions ─────── */
+    else if(page===2){
+        content=`
+            <div style="background:#f8fafc;border-radius:14px;padding:18px;margin-bottom:14px;">
                 <h3 style="color:#16c79a;font-size:14px;margin:0 0 4px;">📊 Progress Analytics</h3>
-                ${bar(progPct,   "Overall Onboarding", "#16c79a")}
-                ${bar(trainPct,  "Training Completion", "#59b8ff")}
-                ${bar(readiness, "Readiness Score",     "#9b6dff")}
+                ${bar(progPct,  "Overall Onboarding","#16c79a")}
+                ${bar(trainPct, "Training Completion","#59b8ff")}
+                ${bar(readiness,"Readiness Score",    "#9b6dff")}
             </div>
-            <div style="background:#fff8f8;border-radius:14px;padding:16px 18px;border-left:4px solid ${riskColor};margin-bottom:12px;">
+            <div style="background:#fff8f8;border-radius:14px;padding:18px;border-left:4px solid ${riskColor};margin-bottom:14px;">
                 <h3 style="margin:0 0 10px;font-size:14px;">⚠️ Risk Analysis</h3>
                 <p style="font-size:13px;">Risk Level: <b style="color:${riskColor};font-size:16px;">${risk}</b></p>
-                ${delay>2 ? `<p style="font-size:12px;color:#7f8ea3;margin-top:6px;">⏳ Delayed ${delay} days — escalation recommended.</p>` : ""}
+                ${delay>2?`<p style="font-size:12px;color:#7f8ea3;margin-top:6px;">⏳ Delayed ${delay} days — escalation recommended.</p>`:""}
             </div>
             <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:4px;">
-                <button class="btn btn-mail" onclick="sendReminder('${safe(emp.emp_id)}');closeModal('employeeModal')"
-                    style="padding:10px 18px;font-size:13px;">📧 Send Reminder</button>
-                <button class="btn btn-escalate" onclick="escalate('${safe(emp.emp_id)}');closeModal('employeeModal')"
-                    style="padding:10px 18px;font-size:13px;">⚠️ Escalate</button>
+                <button class="btn btn-mail" onclick="sendReminder('${safe(emp.emp_id)}');closeModal('employeeModal')">📧 Send Reminder</button>
+                <button class="btn btn-escalate" onclick="escalate('${safe(emp.emp_id)}');closeModal('employeeModal')">⚠️ Escalate</button>
             </div>
             ${navBtns}`;
     }
 
-    document.getElementById("employeeFullDetails").innerHTML = content;
+    document.getElementById("employeeFullDetails").innerHTML=content;
 }
 
 function closeEmployeeModal(){ closeModal("employeeModal"); }
@@ -798,32 +764,27 @@ function detectIntent(msg){
     if((msg.includes("remind employee")||msg.includes("send reminder to employee"))&&/[0-9]{4,10}/.test(msg)) return {type:"remind_single"};
     // remind without ID, or plain "reminder" → show choice UI
     if(msg.includes("remind")||msg.includes("reminder")) return {type:"remind_choice"};
-    if(msg.includes("pending onboarding")||msg.includes("show pending")||msg.includes("pending employees")||msg.includes("show me pending")||msg.includes("employees pending")||msg==="pending"||msg==="list pending") return {type:"pending_onboarding"};
-    if(msg.includes("delayed")||msg.includes("late onboarding")||msg.includes("delay employees")||msg==="delay"||msg==="delayed employees") return {type:"delayed"};
-    if(msg.includes("high risk")||msg.includes("risk employees")||msg.includes("critical employees")||msg==="risk"||msg==="at risk") return {type:"high_risk"};
-    if(msg.includes("show completed")||msg.includes("fully onboarded")||msg.includes("completed employees")||msg==="completed"||msg==="done") return {type:"completed"};
-    if(msg.includes("summary")||msg.includes("dashboard status")||msg.includes("rm report")||msg.includes("onboarding summary")||msg==="status"||msg==="report"||msg==="overview") return {type:"summary"};
-    // Who commands
-    if(msg.startsWith("who is ")||msg.startsWith("find ")||msg.startsWith("search ")) {
-        const m = msg.match(/\b(\d{4,10})\b/);
-        if(m) return {type:"emp_lookup", empId: m[1]};
-    }
-    // Check on specific employee
-    if(msg.startsWith("check ")||msg.startsWith("status of ")||msg.startsWith("details of ")||msg.startsWith("show ")) {
-        const m = msg.match(/\b(\d{4,10})\b/);
-        if(m) return {type:"emp_lookup", empId: m[1]};
-    }
-    // Single escalation: "escalate employee 1042836" or "escalate 1042836"
+    if(msg.includes("pending onboarding")||msg.includes("show pending")||msg.includes("pending employees")||msg.includes("show me pending")||msg.includes("employees pending")) return {type:"pending_onboarding"};
+    if(msg.includes("delayed")||msg.includes("late onboarding")||msg.includes("delay employees")) return {type:"delayed"};
+    if(msg.includes("high risk")||msg.includes("risk employees")||msg.includes("critical employees")) return {type:"high_risk"};
+    if(msg.includes("show completed")||msg.includes("fully onboarded")||msg.includes("completed employees")) return {type:"completed"};
+    if(msg.includes("summary")||msg.includes("dashboard status")||msg.includes("rm report")||msg.includes("onboarding summary")) return {type:"summary"};
+    if(msg.includes("escalation")||msg.includes("escalate")||msg.includes("send mail to admin")||msg.includes("id card issue")||msg.includes("laptop issue")) return {type:"escalation"};
+    // Single escalation with ID
     if((msg.includes("escalate")||msg.includes("escalation"))&&/\b\d{4,10}\b/.test(msg)){
         const m=msg.match(/\b(\d{4,10})\b/);
         return {type:"escalate_single", empId: m?m[1]:null};
     }
-    // General escalation (no specific ID) → prompt user to choose
-    if(msg.includes("escalation")||msg.includes("escalate")||msg.includes("send mail to admin")||msg.includes("id card issue")||msg.includes("laptop issue")) return {type:"escalation"};
-    // Bare employee ID (e.g. "1042825") → look up employee
+    if(msg.includes("escalation")||msg.includes("escalate")) return {type:"escalation"};
+    // Bare employee ID → look up
     if(/^\d{4,10}$/.test(msg.trim())) return {type:"emp_lookup", empId: msg.trim()};
-    // Message contains an ID but no command → also lookup
     if(/\b\d{5,10}\b/.test(msg)&&!msg.includes(" ")) return {type:"emp_lookup", empId: msg.match(/\b(\d{5,10})\b/)[1]};
+    // Single escalation with ID
+    if((msg.includes("escalate")||msg.includes("escalation"))&&/\d{4,10}/.test(msg)){
+        const m=msg.match(/(\d{4,10})/);
+        return {type:"escalate_single", empId: m?m[1]:null};
+    }
+    if(msg.includes("escalation")||msg.includes("escalate")) return {type:"escalation"};
     return {type:"general"};
 }
 
@@ -836,19 +797,15 @@ function showHelp(){
         {icon:"🚨",title:"High Risk Employees",    desc:"Employees flagged as HIGH risk",          cmd:"show high risk employees"},
         {icon:"✅",title:"Completed Employees",    desc:"Fully onboarded employees",               cmd:"show completed employees"},
         {icon:"📧",title:"Remind by ID",           desc:"Enter Employee ID to send a targeted reminder", cmd:"__prompt_remind__"},
-        {icon:"🔺",title:"Escalate by ID",         desc:"Enter Employee ID to escalate one employee", cmd:"__prompt_escalate__"},
+        {icon:"🔺",title:"Escalate by ID",         desc:"Escalate one employee — edit the ID",    cmd:"escalate employee 1042836"},
     ];
     const bulk=[
         {icon:"📨",title:"Bulk Reminder",    desc:"Send reminder to ALL pending employees",     cmd:"help-bulk reminder"},
         {icon:"⚠️",title:"Bulk Escalation", desc:"Escalate ALL delayed + HIGH risk employees", cmd:"help-bulk escalation"},
     ];
     const makeItem=it=>{
-        const isPromptRemind   = it.cmd === "__prompt_remind__";
-        const isPromptEscalate = it.cmd === "__prompt_escalate__";
-        const isPrompt = isPromptRemind || isPromptEscalate;
-        const clickFn  = isPromptRemind   ? "promptSingleReminder()"
-                       : isPromptEscalate ? "promptSingleEscalate()"
-                       : `runHelpCmd('${it.cmd}')`;
+        const isPrompt = it.cmd === "__prompt_remind__";
+        const clickFn  = isPrompt ? "promptSingleReminder()" : `runHelpCmd('${it.cmd}')`;
         const tagLabel = isPrompt ? "▶ click to enter Employee ID" : `▶ ${it.cmd}`;
         return `<div class="help-item" onclick="${clickFn}">
             ${it.icon} <b>${it.title}</b><br>${it.desc}
@@ -865,7 +822,7 @@ function showHelp(){
 }
 
 /* ── getLocalResponse: answers from fullData ─────── */
-function getLocalResponse(intentType,rawMsg,intentObj){
+function getLocalResponse(intentType,rawMsg){
     const safe=(v,fb="-")=>(!v||String(v).toLowerCase()==="undefined"||v==="")?fb:String(v);
     switch(intentType){
         case "greeting":
@@ -879,9 +836,9 @@ function getLocalResponse(intentType,rawMsg,intentObj){
                 (list.length>6?`<br>…and ${list.length-6} more`:"");
         }
         case "delayed":{
-            const list=fullData.filter(x=>getDelayDays(x.created_at)>2&&!(x.onboarding_status||"").toLowerCase().includes("completed"));
+            const list=fullData.filter(x=>getDelayDays(x.updated_at||x.created_at)>2);
             return `⚠️ <b>${list.length} Delayed Employees</b><br><br>`+
-                list.slice(0,6).map(e=>`• ${safe(e.emp_name,"??")} (${safe(e.emp_id)}) — ${getDelayDays(e.created_at)} days`).join("<br>")+
+                list.slice(0,6).map(e=>`• ${safe(e.emp_name,"??")} (${safe(e.emp_id)}) — ${getDelayDays(e.updated_at||e.created_at)} days`).join("<br>")+
                 (list.length>6?`<br>…and ${list.length-6} more`:"");
         }
         case "high_risk":{
@@ -898,7 +855,7 @@ function getLocalResponse(intentType,rawMsg,intentObj){
             const total=fullData.length;
             const comp=fullData.filter(x=>(x.onboarding_status||"").toLowerCase().includes("completed")).length;
             const high=fullData.filter(x=>(x.risk_level||"").toUpperCase()==="HIGH").length;
-            const del=fullData.filter(x=>getDelayDays(x.created_at)>2).length;
+            const del=fullData.filter(x=>getDelayDays(x.updated_at||x.created_at)>2).length;
             return `📈 <b>RM Onboarding Summary</b><br><br>
                 👥 Total: <b>${total}</b><br>✅ Completed: <b>${comp}</b><br>
                 ⏳ Pending: <b>${total-comp}</b><br>🚨 High Risk: <b>${high}</b><br>⚠️ Delayed: <b>${del}</b>`;
@@ -908,7 +865,7 @@ function getLocalResponse(intentType,rawMsg,intentObj){
             if(!pending.length) return "✅ No pending employees — everyone is onboarded!";
             let sent=0;
             Promise.all(pending.map(emp=>
-                apiFetch(`${API}/send-reminder`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({emp_id:emp.emp_id})})
+                fetch(`${API}/send-reminder`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({emp_id:emp.emp_id})})
                 .then(r=>{if(r.ok)sent++;}).catch(()=>{})
             )).then(()=>showToast(`📧 Bulk reminder: ${sent}/${pending.length} sent`,"#16c79a"));
             return `📨 <b>Bulk Reminder Triggered</b><br><br>
@@ -917,9 +874,9 @@ function getLocalResponse(intentType,rawMsg,intentObj){
         }
         case "bulk_escalation":{
             const targets=fullData.filter(x=>
-                (x.risk_level||"").toUpperCase()==="HIGH"||getDelayDays(x.created_at)>2);
+                (x.risk_level||"").toUpperCase()==="HIGH"||getDelayDays(x.updated_at||x.created_at)>2);
             if(!targets.length) return "✅ No high-risk or delayed employees to escalate.";
-            Promise.all(targets.map(emp=>apiFetch(`${API}/escalate/${emp.emp_id}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({rm_name:rm,rm_email:rmEmail})}).catch(()=>{})))
+            Promise.all(targets.map(emp=>fetch(`${API}/escalate/${emp.emp_id}`,{method:"POST"}).catch(()=>{})))
                 .then(()=>{showToast(`⚠️ Escalated ${targets.length} employees`,"#f39c12");loadDashboard();});
             return `⚠️ <b>Bulk Escalation Triggered</b><br><br>
                 Escalating <b>${targets.length}</b> high-risk / delayed employees…<br>
@@ -939,89 +896,79 @@ function getLocalResponse(intentType,rawMsg,intentObj){
             return showReminderChoice();
 
         case "escalate_single":{
-            // Escalate ONE specific employee by ID from chatbot
-            const empId = (detectIntent(rawMsg).empId) || rawMsg.match(/\b(\d{4,10})\b/)?.[1];
-            if(!empId){
-                addMessage("ai","⚠️ Please provide an Employee ID. Example: <b>escalate employee 1042836</b>");
-                return null;
-            }
+            const empId = intentObj?.empId || rawMsg.match(/(\d{4,10})/)?.[1];
+            if(!empId){ addMessage("ai","⚠️ Please provide an Employee ID. Example: <b>escalate employee 1042836</b>"); return null; }
             const emp = fullData.find(e=>String(e.emp_id)===String(empId));
-            if(!emp){
-                addMessage("ai",`⚠️ Employee <b>${empId}</b> not found in your team.`);
+            if(!emp){ addMessage("ai",`⚠️ Employee <b>${empId}</b> not found in your team.`); return null; }
+            // DEF FIX: block escalation for completed employees
+            if((emp.onboarding_status||"").toLowerCase().includes("complet")){
+                addMessage("ai",`✅ <b>${emp.emp_name}</b> (${empId}) has already <b>completed onboarding</b>.<br>
+                    Current step: <b>${(emp.current_step||"COMPLETED").replace(/_/g," ")}</b><br>
+                    Escalation is not applicable for completed employees.`);
                 return null;
             }
             addMessage("ai",`⚠️ Escalating <b>${emp.emp_name}</b> (${empId})…`);
             apiFetch(`${API}/escalate/${empId}`,{
-                method:"POST",
-                headers:{"Content-Type":"application/json"},
+                method:"POST",headers:{"Content-Type":"application/json"},
                 body:JSON.stringify({rm_name:rm, rm_email:rmEmail})
             }).then(r=>r.json()).then(data=>{
                 if(data.success){
-                    addMessage("ai",
-                        `✅ <b>Escalated!</b> → <b>${data.routed_to||"HC PMO"}</b><br>`+
-                        `<small style="color:#64748b;">Step: ${data.step||"-"}</small>`
-                    );
+                    addMessage("ai",`✅ <b>Escalated!</b> → <b>${data.routed_to||"HC PMO"}</b><br><small style="color:#64748b;">Step: ${data.step||"-"}</small>`);
                     showToast(`⚠️ Escalated → ${data.routed_to||"HC PMO"}`,"#f39c12");
                     loadDashboard();
+                } else if(data.already_completed){
+                    addMessage("ai",`✅ <b>${data.emp_name||empId}</b> has already <b>completed onboarding</b>. No escalation needed.`);
                 } else {
                     addMessage("ai","⚠️ "+(data.message||"Escalation failed."));
                 }
             }).catch(()=>addMessage("ai","❌ Network error."));
             return null;
         }
+
         case "escalation":{
-            // Show choice: single vs bulk
             addMessage("ai",`
                 <div style="font-weight:800;color:#f39c12;margin-bottom:12px;">⚠️ Escalation — Choose type:</div>
                 <div style="display:flex;flex-direction:column;gap:8px;">
                     <div class="help-item" onclick="promptSingleEscalate()" style="border-left:3px solid #f39c12;">
-                        🔺 <b>Single Employee Escalation</b><br>
-                        Escalate one specific employee<br>
+                        🔺 <b>Single Employee Escalation</b><br>Escalate one specific employee<br>
                         <span class="cmd-tag">▶ click to enter Employee ID</span>
                     </div>
                     <div class="help-item" onclick="runHelpCmd('help-bulk escalation')" style="border-left:3px solid #ff6b6b;">
-                        ⚠️ <b>Bulk Escalation</b><br>
-                        Escalate ALL high-risk + delayed employees<br>
+                        ⚠️ <b>Bulk Escalation</b><br>Escalate ALL high-risk + delayed employees<br>
                         <span class="cmd-tag">▶ help-bulk escalation</span>
                     </div>
-                </div>
-            `);
+                </div>`);
             return null;
         }
+
         case "emp_lookup":{
-            // Bare ID typed → show employee details or "not in your team"
-            const empId = (intent && intent.empId) || rawMsg.match(/\b(\d{4,10})\b/)?.[1] || rawMsg.trim();
+            const empId = intentObj?.empId || rawMsg.match(/(\d{4,10})/)?.[1] || rawMsg.trim();
             const emp = fullData.find(e=>String(e.emp_id)===String(empId));
-            if(!emp){
-                return `⚠️ Employee <b>${empId}</b> is not under your team, or does not exist in the system.`;
-            }
+            if(!emp) return `⚠️ Employee <b>${empId}</b> is not under your team, or does not exist.`;
             const delay = getDelayDays(emp.created_at);
-            const riskColor = (emp.risk_level||"").toUpperCase()==="HIGH" ? "#ff5f5f"
-                            : (emp.risk_level||"").toUpperCase()==="MEDIUM" ? "#f39c12" : "#16c79a";
-            const statusDisplay = (emp.onboarding_status||"").toLowerCase()==="escalated"
-                ? "Onboarding In Progress 🚨"
-                : (emp.onboarding_status||"Pending");
+            const riskColor=(emp.risk_level||"").toUpperCase()==="HIGH"?"#ff5f5f":(emp.risk_level||"").toUpperCase()==="MEDIUM"?"#f39c12":"#16c79a";
+            const isCompleted = (emp.onboarding_status||"").toLowerCase().includes("complet");
             return `<div style="background:#f8fafc;border-radius:12px;padding:14px;border-left:4px solid #16c79a;">
                 <div style="font-size:14px;font-weight:800;color:#172b42;margin-bottom:10px;">
                     👤 ${emp.emp_name||"Unknown"} <span style="font-size:11px;color:#7f8ea3;">(${empId})</span>
                 </div>
                 <div style="display:grid;grid-template-columns:110px 1fr;font-size:12px;gap:2px;">
-                    <span style="color:#64748b;">Status</span><b>${statusDisplay}</b>
+                    <span style="color:#64748b;">Status</span><b>${emp.onboarding_status||"Pending"}</b>
                     <span style="color:#64748b;">Step</span><b>${(emp.current_step||"-").replace(/_/g," ")}</b>
                     <span style="color:#64748b;">Progress</span><b>${emp.progress_percentage||0}%</b>
                     <span style="color:#64748b;">Risk</span><b style="color:${riskColor}">${emp.risk_level||"LOW"}</b>
                     <span style="color:#64748b;">Delay</span><b>${delay} days</b>
-                    <span style="color:#64748b;">Laptop</span><b>${emp.laptop_status||"Pending"}</b>
-                    <span style="color:#64748b;">ID Card</span><b>${emp.id_card_status||"Pending"}</b>
                     <span style="color:#64748b;">Training</span><b>${emp.training_percentage||0}%</b>
                 </div>
                 <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
-                    <span class="cmd-tag" onclick="sendReminder('${empId}')" style="cursor:pointer;padding:4px 10px;">📧 Remind</span>
-                    <span class="cmd-tag" onclick="escalate('${empId}')" style="cursor:pointer;padding:4px 10px;background:rgba(255,179,71,.2);color:#a0620a;">⚠️ Escalate</span>
-                    <span class="cmd-tag" onclick="openEmployeeDetails('${empId}');toggleChatbot()" style="cursor:pointer;padding:4px 10px;background:rgba(89,184,255,.15);color:#0a5a9e;">📊 Analytics</span>
+                    ${!isCompleted ? `
+                        <span class="cmd-tag" onclick="sendReminder('${empId}')" style="cursor:pointer;padding:4px 10px;">📧 Remind</span>
+                        <span class="cmd-tag" onclick="escalate('${empId}')" style="cursor:pointer;padding:4px 10px;background:rgba(255,179,71,.2);color:#a0620a;">⚠️ Escalate</span>`
+                    : `<span style="background:rgba(22,199,154,.15);color:#065f46;font-size:11px;font-weight:700;padding:4px 12px;border-radius:6px;">✅ Onboarding Complete</span>`}
                 </div>
             </div>`;
         }
+
         default: return null;
     }
 }
@@ -1078,56 +1025,28 @@ function confirmSingleReminder(){
     sendReminderWithConfirm(empId);
 }
 
-/* ── Single escalate: ask for ID ─── */
-function promptSingleEscalate(){
-    const div=document.createElement("div");
-    div.className="chat-ai-msg";
-    div.id="singleEscalateInput";
-    div.innerHTML=`
-        <b style="color:#f39c12;">🔺 Single Employee Escalation</b><br>
-        Please enter the Employee ID:
-        <div style="display:flex;gap:8px;margin-top:10px;">
-            <input id="escalateEmpInput" placeholder="e.g. 1042836" type="text"
-                style="flex:1;padding:9px 12px;border-radius:10px;border:1px solid #e2e8f0;font-size:13px;outline:none;"
-                onkeydown="if(event.key==='Enter') confirmSingleEscalate()">
-            <button onclick="confirmSingleEscalate()"
-                style="background:linear-gradient(135deg,#ffb347,#ffd36d);color:white;border:none;border-radius:10px;padding:9px 14px;font-size:12px;font-weight:700;cursor:pointer;">
-                Escalate ➜
-            </button>
-        </div>`;
-    document.getElementById("chatBody").appendChild(div);
-    document.getElementById("chatBody").scrollTop=9999;
-    setTimeout(()=>{const i=document.getElementById("escalateEmpInput");if(i)i.focus();},100);
-}
-
-function confirmSingleEscalate(){
-    const inp=document.getElementById("escalateEmpInput");
-    if(!inp) return;
-    const empId=inp.value.trim();
-    const grp=document.getElementById("singleEscalateInput");
-    if(grp) grp.remove();
-    if(!empId){ addMessage("ai","⚠️ No Employee ID entered."); return; }
-    // Send as "escalate employee {id}" → triggers escalate_single
-    chatInput.value = "escalate employee "+empId;
-    sendChat();
-}
-
 /* ── sendReminderWithConfirm: sends + shows receipt card ─ */
 async function sendReminderWithConfirm(empId){
     addMessage("user","📧 remind employee "+empId);
     addMessage("ai","⏳ Sending reminder to employee <b>"+empId+"</b>…");
 
     try{
-        const res=await apiFetch(`${API}/send-reminder`,{
+        const res=await fetch(`${API}/send-reminder`,{
             method:"POST",headers:{"Content-Type":"application/json"},
             body:JSON.stringify({emp_id:empId})
         });
         const data=await res.json();
         if(res.ok&&data.success){
-            addMessage("ai",
-                `✅ <b>Reminder sent!</b> → <b>${data.emp_name||empId}</b>`+
-                `<br><small style="color:#64748b;">Sent to: ${data.email||"-"}</small>`
-            );
+            addMessage("ai",`
+                <div style="background:#f0fdf4;border-radius:12px;padding:14px;border-left:4px solid #16c79a;">
+                    ✅ <b>Reminder Sent!</b><br><br>
+                    <table style="font-size:12px;width:100%;border-collapse:collapse;">
+                        <tr><td style="padding:4px 0;color:#64748b;width:40%;">Employee ID</td><td><b>${data.emp_id||empId}</b></td></tr>
+                        <tr><td style="padding:4px 0;color:#64748b;">Name</td><td><b>${data.emp_name||"-"}</b></td></tr>
+                        <tr><td style="padding:4px 0;color:#64748b;">Email Sent To</td><td><b>${data.email||"-"}</b></td></tr>
+                        <tr><td style="padding:4px 0;color:#64748b;">Type</td><td><b>Training Onboarding Reminder</b></td></tr>
+                    </table>
+                </div>`);
             showToast("📧 Reminder sent to "+empId,"#16c79a");
         } else {
             addMessage("ai","⚠️ "+(data.message||"Reminder failed. Check SMTP config."));
@@ -1147,19 +1066,16 @@ async function sendChat(){
 
     if(intent.type==="help"){showHelp();return;}
 
-    // fast local path — always return, even if null (null = handled via addMessage internally)
-    const LOCAL_INTENTS = ["pending_onboarding","delayed","high_risk","completed","summary",
-        "bulk_reminder","bulk_escalation","remind_single","remind_choice","greeting",
-        "escalation","escalate_single","emp_lookup"];
-    if(LOCAL_INTENTS.includes(intent.type)){
-        const local=getLocalResponse(intent.type,msg,intent);
-        if(local) addMessage("ai",local);
-        return; // ← always return; null means already handled via addMessage()
+    // fast local path for data commands
+    if(["pending_onboarding","delayed","high_risk","completed","summary",
+        "bulk_reminder","bulk_escalation","remind_single","remind_choice","greeting"].includes(intent.type)){
+        const local=getLocalResponse(intent.type,msg);
+        if(local){addMessage("ai",local);return;}
     }
 
     showTyping();
     try{
-        const res=await apiFetch(`${API}/chat`,{
+        const res=await fetch(`${API}/chat`,{
             method:"POST",headers:{"Content-Type":"application/json"},
             body:JSON.stringify({message:msg,intent:intent.type,rm,email:rmEmail})
         });
@@ -1168,12 +1084,12 @@ async function sendChat(){
         if(res.ok&&data.success){
             addMessage("ai","🤖 "+data.reply);
         } else {
-            const local=getLocalResponse(intent.type,msg,intent);
+            const local=getLocalResponse(intent.type,msg);
             addMessage("ai",local||("⚠️ "+(data.reply||"Request failed")+"<br>Type <b>help</b> for commands."));
         }
     }catch(err){
         removeTyping();
-        const local=getLocalResponse(intent.type,msg,intent);
+        const local=getLocalResponse(intent.type,msg);
         addMessage("ai",local||"⚠️ Cannot reach AI server. Type <b>help</b> for local commands.");
         console.error("Chat Error:",err);
     }
@@ -1182,14 +1098,15 @@ async function sendChat(){
 /* ── logout ───────────────────────────────────────── */
 async function logout(){
     try{
-        await apiFetch("https://manatee-dislike-lifting.ngrok-free.dev/api/auth/logout",{method:"POST",credentials:"include"});
-    }catch(err){console.error("Logout error:",err);}
+        const res=await fetch("https://intellionboard.onrender.com/api/auth/logout",{method:"POST",credentials:"include"});
+        if(!res.ok) console.warn("Logout API not OK");
+    }catch(err){console.error("Logout API Error:",err);}
     finally{
         localStorage.clear();sessionStorage.clear();
         document.cookie.split(";").forEach(function(c){
             document.cookie=c.replace(/^ +/,"").replace(/=.*/,"=;expires="+new Date().toUTCString()+";path=/");
         });
-        window.location.replace("https://intellionboard.vercel.app/?manual=true");
+        window.location.replace("https://intellionboard.vercel.app/");
     }
 }
 
