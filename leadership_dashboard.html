@@ -330,6 +330,7 @@ tbody tr:hover{background:linear-gradient(90deg,rgba(25,211,162,.04),rgba(89,184
 
 <script>
 const API_BASE     = "https://manatee-dislike-lifting.ngrok-free.dev";
+const DASH_API     = `${API_BASE}/api/leadership/dashboard`;
 
 // ── ngrok bypass ─────────────────────────────────────────
 function apiFetch(url, opts = {}) {
@@ -339,7 +340,6 @@ function apiFetch(url, opts = {}) {
     opts.credentials = opts.credentials || "include";
     return fetch(url, opts);
 }
-const DASH_API     = `${API_BASE}/api/leadership/dashboard`;
 let   allEmployees = [];
 let   dashData     = {};
 let   charts       = {};
@@ -377,13 +377,13 @@ try{
 /* ── LOAD DASHBOARD ─────────────────────────── */
 async function loadDashboard(){
     try{
-        const res=await apiFetch(DASH_API,{credentials:"include"});
+        const res=await apiFetch(DASH_API,{});
         const json=await res.json();
         if(!json.success) return;
         dashData     = json;
         allEmployees = json.all_employees||[];
         const s=json.summary;
-        document.getElementById("totalEmployees").innerText = s.total_employees||0;
+        document.getElementById("totalEmployees").innerText = s.total_employees || allEmployees.length || 0;
         document.getElementById("completed").innerText       = s.completed||0;
         document.getElementById("progress").innerText        = s.in_progress||0;
         document.getElementById("escalations").innerText     = s.escalations||0;
@@ -461,9 +461,18 @@ function renderCOEChart(data){
             `<div style="text-align:center;padding:30px;color:#94a3b8;font-size:13px;">📭 No COE data available</div>`;
         return;
     }
-    // Top COE KPI
-    const top=data.sort((a,b)=>b.total-a.total)[0];
-    if(top) document.getElementById("topCOE").innerText=`${top.coe_name} (${top.total})`;
+    // DEF_90 FIX: Top COE from backend summary (Unassigned already excluded)
+    // Only recalculate if backend didn't provide it
+    const topFromSummary = dashData.summary?.top_coe;
+    if(topFromSummary && topFromSummary !== "-"){
+        const topCount = dashData.summary?.top_coe_count || "";
+        document.getElementById("topCOE").innerText = topCount ? `${topFromSummary} (${topCount})` : topFromSummary;
+    } else {
+        // Fallback: find first non-Unassigned
+        const sorted = [...data].sort((a,b)=>b.total-a.total);
+        const top = sorted.find(x=>x.coe_name && x.coe_name.toLowerCase()!=="unassigned") || sorted[0];
+        if(top) document.getElementById("topCOE").innerText=`${top.coe_name} (${top.total})`;
+    }
 
     charts["coe"]=new Chart(document.getElementById("coeChart"),{
         type:"doughnut",
@@ -638,21 +647,26 @@ function sendMessage(){
     /* ── Data commands ── */
     if(msg.includes("executive summary")||msg.includes("dashboard summary")||msg.includes("summary")){
         const s=dashData.summary||{};
+        const totalForCalc = s.total_employees || allEmployees.length || 0;
+        const completionRate = totalForCalc > 0 ? Math.round((s.completed||0)/totalForCalc*100) : 0;
         addMsg("bot",`<b>📊 EXECUTIVE SUMMARY</b><br>━━━━━━━━━━━━━━━━<br>
-            👨‍💼 Total Workforce: <b>${s.total_employees||0}</b><br>
-            ✅ Completed: <b>${s.completed||0}</b><br>
+            👨‍💼 Total Workforce: <b>${(totalForCalc).toLocaleString()}</b><br>
+            ✅ Completed: <b>${s.completed||0}</b> (${completionRate}%)<br>
             🚀 In Progress: <b>${s.in_progress||0}</b><br>
-            ⏳ Onboarding: <b>${s.onboarding||0}</b><br>
+            ⏳ Pending: <b>${s.onboarding||0}</b><br>
             ⚠️ High Risk: <b>${s.escalations||0}</b><br>
             🏢 Accounts: <b>${s.accounts||0}</b><br>
             👔 Managers: <b>${s.managers||0}</b><br>
             💻 Pending Laptop: <b>${s.pending_laptop||0}</b><br>
-            🪪 Pending ID: <b>${s.pending_id||0}</b><br>
+            🪪 Pending ID Card: <b>${s.pending_id||0}</b><br>
+            🧠 Top COE: <b>${s.top_coe||"-"}</b><br>
             📈 Avg Progress: <b>${s.avg_progress||0}%</b>`);
         return;
     }
     if(msg.includes("high risk")){
         const list=allEmployees.filter(e=>(e.risk_level||"").toUpperCase()==="HIGH");
+        // Also include dashData.high_risk_employees for accuracy
+        const hrData = dashData.high_risk_employees || [];
         addMsg("bot",`<b>⚠️ HIGH RISK EMPLOYEES</b><br>━━━━━━━━━━━━━━━━<br>
             Count: <b>${list.length}</b><br><br>
             ${list.slice(0,8).map(e=>`• <b>${e.emp_name}</b> (${e.emp_id}) — ${e.account_name||"-"} — ${e.location||"-"}`).join("<br>")}
@@ -706,9 +720,12 @@ function sendMessage(){
     if(msg.includes("coe distribution")||msg.includes("coe")){
         const data=dashData.coe_data||[];
         const total=data.reduce((s,r)=>s+(r.total||0),0);
+        const realData=data.filter(r=>r.coe_name&&r.coe_name.toLowerCase()!=="unassigned"&&r.coe_name!=="-");
+        const s2=dashData.summary||{};
         addMsg("bot",`<b>🧠 COE DISTRIBUTION</b><br>━━━━━━━━━━━━━━━━<br>
-            Total: <b>${total}</b> across <b>${data.length}</b> COEs<br><br>
-            ${data.map(r=>`🔹 <b>${r.coe_name}</b>: ${r.total} (${total?Math.round(r.total/total*100):0}%) | ✅ ${r.completed||0} done | ⚠ ${r.high_risk||0} risk`).join("<br>")}`);
+            Total: <b>${total}</b> across <b>${realData.length}</b> active COEs<br>
+            🏆 Top COE: <b>${s2.top_coe||realData[0]?.coe_name||"-"}</b> (${s2.top_coe_count||realData[0]?.total||0})<br><br>
+            ${realData.slice(0,8).map(r=>`🔹 <b>${r.coe_name}</b>: ${r.total} (${total?Math.round(r.total/total*100):0}%) | ✅ ${r.completed||0} done | ⚠ ${r.high_risk||0} risk`).join("<br>")}`);
         return;
     }
     if(msg.includes("skill breakdown")||msg.includes("skill")){
@@ -750,7 +767,7 @@ function sendMessage(){
     }
     if(msg.includes("completion rate")){
         const s=dashData.summary||{};
-        const total=s.total_employees||1;
+        const total=(s.total_employees || allEmployees.length) || 1;
         const rate=Math.round(((s.completed||0)/total)*100);
         addMsg("bot",`<b>📈 COMPLETION RATE</b><br>━━━━━━━━━━━━━━━━<br>
             Total Employees: <b>${total.toLocaleString()}</b><br>
@@ -778,7 +795,7 @@ function sendMessage(){
 
 /* ── LOGOUT ─────────────────────────────────── */
 async function logout(){
-    try{await apiFetch(`${API_BASE}/api/auth/logout`,{method:"POST",credentials:"include"});}catch(_){}
+    try{await apiFetch(`${API_BASE}/api/auth/logout`,{method:"POST"});}catch(_){}
     localStorage.clear();sessionStorage.clear();
     window.location.replace("https://intellionboard.vercel.app/");
 }
