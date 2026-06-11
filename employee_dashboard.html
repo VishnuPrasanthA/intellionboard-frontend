@@ -268,7 +268,7 @@ video#videoPlayer{width:100%;height:220px;display:block;object-fit:contain;backg
 <script>
 const BASE_URL = "https://manatee-dislike-lifting.ngrok-free.dev";
 
-// ── ngrok bypass ─────────────────────────────────────────
+// ── ngrok bypass (DEF fix: all API calls need this header) ──
 function apiFetch(url, opts = {}) {
     opts.headers = Object.assign({
         "ngrok-skip-browser-warning": "true"
@@ -642,8 +642,7 @@ async function openTraining(trainingName, isReview=false){
             });
         }
         const r=await apiFetch(
-            `${BASE_URL}/training-details/${emp_id}/${encodeURIComponent(trainingName)}`,
-            {credentials:"include"}
+            `${BASE_URL}/training-details/${emp_id}/${encodeURIComponent(trainingName)}`
         );
         currentTopics=await r.json();
 
