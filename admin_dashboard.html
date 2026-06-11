@@ -341,32 +341,43 @@ function apiFetch(url, opts = {}) {
 // Single window.onload — session guard runs first
 window.onload = async () => {
     try {
-        const sessionRes = await apiFetch(
+        const res = await apiFetch(
             "https://manatee-dislike-lifting.ngrok-free.dev/api/auth/validate-session",
             { method: "GET" }
         );
-        const sessionData = await sessionRes.json();
+
+        const text = await res.text(); // ✅ SAFE
+
+        let sessionData;
+        try {
+            sessionData = JSON.parse(text);
+        } catch (e) {
+            console.error("❌ Invalid JSON (HTML returned):", text);
+            showToast("⚠️ Server response error", "#ff6f6f");
+            return; // 🚫 DO NOT LOGOUT
+        }
+
         if (!sessionData.success) {
-            showToast("⚠️ Session expired — please login again", "#ff6f6f");
-            setTimeout(() => window.location.replace("https://intellionboard.vercel.app/"), 2000);
+            showToast("⚠️ Session expired", "#ff6f6f");
             return;
         }
-        // Confirm role is ADMIN before proceeding
+
         const role = (sessionData.session?.role || sessionData.user?.role || "").toUpperCase();
+
         if (role !== "ADMIN") {
-            showToast("⛔ Access denied — ADMIN role required", "#ff6f6f");
-            setTimeout(() => window.location.replace("https://intellionboard.vercel.app/"), 2000);
+            showToast("⛔ ADMIN only", "#ff6f6f");
             return;
         }
+
         initSocket();
         loadDashboard();
-        // Start poll ONLY after session confirmed
         startPolling();
+
     } catch(e) {
-        showToast("❌ Cannot reach server — check backend", "#ff6f6f");
+        console.error(e);
+        showToast("❌ Backend unreachable", "#ff6f6f");
     }
 };
-
 // ── POLLING with session guard ───────────────────────
 function startPolling() {
     setInterval(async () => {
