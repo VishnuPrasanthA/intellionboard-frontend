@@ -345,7 +345,27 @@ let statusChartInst  = null;
 let ticketChartInst  = null;
 let socket           = null;
 let chatOpen         = false;
-
+window.onload = async () => {
+    // Validate session FIRST before loading dashboard data
+    try {
+        const sessionRes = await apiFetch(
+            "https://manatee-dislike-lifting.ngrok-free.dev/api/auth/validate-session",
+            { method: "GET" }
+        );
+        const sessionData = await sessionRes.json();
+        if (!sessionData.success) {
+            showToast("⚠️ Session expired — please login again", "#ff6f6f");
+            setTimeout(() => window.location.replace("https://intellionboard.vercel.app/"), 2000);
+            return;
+        }
+    } catch(e) {
+        showToast("❌ Cannot reach server", "#ff6f6f");
+        return;
+    }
+    // Only init after session confirmed
+    initSocket();
+    loadDashboard();
+};
 /* ── toast ─────────────────────────────────────── */
 function showToast(msg,color){
     const t=document.getElementById("aToast");
