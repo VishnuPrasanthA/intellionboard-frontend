@@ -314,6 +314,15 @@ tbody tr:hover td{box-shadow:0 10px 24px rgba(22,199,154,.05);}
 
 <script>
 const API      = "https://manatee-dislike-lifting.ngrok-free.dev/api/rm";
+
+// ── ngrok bypass ─────────────────────────────────────────
+function apiFetch(url, opts = {}) {
+    opts.headers = Object.assign({
+        "ngrok-skip-browser-warning": "true"
+    }, opts.headers || {});
+    opts.credentials = opts.credentials || "include";
+    return fetch(url, opts);
+}
 let   fullData = [];
 const rm       = localStorage.getItem("user_name")  || "RM";
 const rmEmail  = localStorage.getItem("user_email") || "";
