@@ -1567,7 +1567,7 @@ async function callAPI(
 ) {
 
     const {
-        timeout = 15000,
+        timeout = 60000,
         retry = 0
     } = options;
 
@@ -1723,7 +1723,7 @@ async function loadDashboard() {
         /* =========================================================
            ✅ FETCH DATA
         ========================================================= */
-        const response = await callAPI("/api/employees");
+        const response = await callAPI("/api/employees?limit=500&page=1");
 
         console.log("📡 API RESPONSE:", response);
 
@@ -1977,10 +1977,31 @@ const pmoName = safe(
                         id="onboard-${empId}"
                         class="onboard-btn"
                         onclick="startOnboarding('${empId}')"
-                        ${isStarted || isCompleted ? "disabled" : ""}
+                        ${(()=>{
+                            const blockedSteps = new Set([
+                                "ID_CARD_AND_ACCESS","LAPTOP_ALLOCATION","EMAIL_SETUP",
+                                "COE_ALLOCATION","COE_INITIATION","TRAINING","ASSESSMENT","COMPLETED"
+                            ]);
+                            const step = String(emp.current_step||"").toUpperCase();
+                            const prog = parseInt(emp.progress||0);
+                            return isCompleted || isStarted || blockedSteps.has(step) || prog>=40 ? "disabled" : "";
+                        })()}
+                        title="${(()=>{
+                            const step = String(emp.current_step||"").replace(/_/g," ");
+                            const prog = parseInt(emp.progress||0);
+                            return isCompleted ? "Onboarding complete"
+                              : isStarted || prog>=40 ? "Active — re-initiation blocked to protect progress ("+prog+"%)"
+                              : "Start onboarding";
+                        })()}"
+                        style="${(()=>{
+                            const prog = parseInt(emp.progress||0);
+                            return isCompleted ? "background:linear-gradient(135deg,#10b981,#34d399)"
+                              : isStarted || prog>=40 ? "background:linear-gradient(135deg,#64748b,#94a3b8);cursor:not-allowed"
+                              : "";
+                        })()}"
                     >
-                        ${isCompleted ? "✅ Completed"
-                          : isStarted ? "⏳ In Progress"
+                        ${isCompleted ? "✅ Done"
+                          : (parseInt(emp.progress||0)>=40 || isStarted) ? "🔒 Active"
                           : "🚀 Onboard"}
                     </button>
 
@@ -3041,298 +3062,78 @@ async function startOnboarding(empId) {
 
     try {
 
-        /* =========================================================
-           VALIDATION
-        ========================================================= */
-
         if (!empId) {
             showToast("Invalid Employee ID", "error");
             return { success: false };
         }
 
-        // DEF FIX: check local state — prevent re-onboarding
+        // ── FRONTEND GUARD: check local state for obvious blocks ──
         const empCheck = allEmployees.find(e => String(e.emp_id) === String(empId));
         if (empCheck) {
-            const st = String(empCheck.onboarding_status || "").toUpperCase();
-            if (st.includes("COMPLETE")) {
-                showToast(`${empCheck.emp_name || empId} already completed onboarding`, "warning");
+            const st   = String(empCheck.onboarding_status || "").toLowerCase();
+            const step = String(empCheck.current_step || "").toUpperCase();
+            const prog = parseInt(empCheck.progress || 0);
+
+            const blockedSteps = new Set([
+                "ID_CARD_AND_ACCESS","LAPTOP_ALLOCATION","EMAIL_SETUP",
+                "COE_ALLOCATION","COE_INITIATION","TRAINING","ASSESSMENT","COMPLETED"
+            ]);
+
+            if (st.includes("complet")) {
+                showToast(`${empCheck.emp_name || empId} has already completed onboarding ✅`, "warning");
                 return { success: false };
             }
-            if (st.includes("PROGRESS") || st.includes("STARTED")) {
-                showToast(`${empCheck.emp_name || empId} onboarding already in progress`, "warning");
-                if (btn) { btn.disabled = true; btn.innerText = "⏳ In Progress"; }
+
+            if (blockedSteps.has(step) || prog >= 40) {
+                showToast(
+                    `Cannot re-initiate — ${empCheck.emp_name || empId} is already at ` +
+                    `'${step.replace(/_/g," ")}' (${prog}% complete). ` +
+                    `Re-initiating would erase their progress.`,
+                    "error"
+                );
+                if (btn) { btn.disabled = true; btn.innerText = "🔒 Active"; }
                 return { success: false };
             }
         }
 
-        /* =========================================================
-           UI LOCK (MATCHES RENDER TABLE BUTTON)
-        ========================================================= */
-
-        if (btn) {
-            btn.disabled = true;
-            btn.innerText = "⏳ Starting...";
-        }
-
+        if (btn) { btn.disabled = true; btn.innerText = "⏳ Starting..."; }
         showToast("Starting Onboarding...", "info");
 
-        /* =========================================================
-           API CALL
-        ========================================================= */
+        const response = await callAPI("/api/start-onboarding", "POST", { emp_id: empId });
 
-        const response = await callAPI(
-            "/api/start-onboarding",
-            "POST",
-            { emp_id: empId }
-        );
-
-        /* =========================================================
-           SUCCESS FLOW (NO FULL RELOAD - OPTIMIZED)
-        ========================================================= */
-
-        if (response && response.success) {
-
-            showToast("Onboarding Started", "success");
-
-            /* =========================================================
-               LOCAL STATE UPDATE (INSTANT UI REFRESH)
-            ========================================================= */
-
-            const empIndex = allEmployees.findIndex(
-                e => String(e.emp_id) === String(empId)
-            );
-
-            if (empIndex !== -1) {
-
-                allEmployees[empIndex].onboarding_status = "IN PROGRESS";
-                allEmployees[empIndex].current_step = "Initiated";
-                allEmployees[empIndex].progress_percentage = 5;
-            }
-
-            filteredEmployees = [...allEmployees];
-
-            renderEmployees(filteredEmployees);
-            updateKPIs(filteredEmployees);
-
-            /* =========================================================
-               SOCKET SYNC (REALTIME SYSTEM READY)
-            ========================================================= */
-
-            if (socket) {
-                socket.emit("onboarding_started", {
-                    emp_id: empId,
-                    status: "IN PROGRESS"
-                });
-            }
-
-            return {
-                success: true,
-                emp_id: empId,
-                data: response
-            };
-        }
-
-        /* =========================================================
-           FAILURE FLOW (RESET UI)
-        ========================================================= */
-
-        else {
-
-            showToast("Failed To Start", "error");
-
+        // ── HANDLE BACKEND 409 BLOCK ──────────────────────────────
+        if (response && response.blocked) {
+            showToast(response.message || "Onboarding blocked — employee already active", "error");
             if (btn) {
-                btn.disabled = false;
-                btn.innerText = "🚀 Onboard";
+                btn.disabled = true;
+                btn.innerText = "🔒 Active";
+                btn.style.background = "linear-gradient(135deg,#64748b,#94a3b8)";
+                btn.title = response.message;
             }
-
             return { success: false };
         }
 
-    } catch (err) {
-
-        console.error("START ERROR", err);
-
-        showToast("Onboarding Error", "error");
-
-        /* =========================================================
-           RESET BUTTON ON ERROR
-        ========================================================= */
-
-        if (btn) {
-            btn.disabled = false;
-            btn.innerText = "🚀 Onboard";
+        if (!response || !response.success) {
+            const msg = response?.message || "Onboarding initiation failed";
+            showToast(msg, "error");
+            if (btn) { btn.disabled = false; btn.innerText = "⚡ Onboard"; }
+            return { success: false };
         }
 
-        return {
-            success: false,
-            error: err.message
-        };
-    }
-}
-/* =========================================================
-   VIEW EMPLOYEE
-========================================================= */
+        // ── SUCCESS ──────────────────────────────────────────────
+        showToast(`✅ Onboarding started for ${empCheck?.emp_name || empId}`, "success");
+        if (btn) { btn.disabled = true; btn.innerText = "✅ Started"; }
+        setTimeout(() => loadEmployees(), 1200);
+        return { success: true };
 
-
-
-/* =========================================================
-   CHAT
-========================================================= */
-
-function toggleChat() {
-
-    chatOpen = !chatOpen;
-
-    const panel =
-        document.getElementById("chatPanel");
-
-    if (!panel) return;
-
-    panel.style.display =
-        chatOpen ? "flex" : "none";
-
-    if (chatOpen) {
-
-        addChat(
-            "SYSTEM",
-            "🤖 PMO AI Assistant Ready. Type 'help' for commands."
-        );
+    } catch (err) {
+        console.error("startOnboarding error:", err);
+        showToast("Failed to start onboarding — check backend connection", "error");
+        if (btn) { btn.disabled = false; btn.innerText = "⚡ Onboard"; }
+        return { success: false };
     }
 }
 
-/* =========================================================
-   SAFE CHAT RENDER
-========================================================= */
-
-function addChat(role, message) {
-
-    const body =
-        document.getElementById("chatBody");
-
-    if (!body) return;
-
-    // User messages escape HTML; AI messages render HTML
-    const isAI = role.toLowerCase() === "ai" || role.toLowerCase() === "system";
-    const safeMessage = isAI
-        ? String(message || "")
-        : String(message || "")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;");
-
-    body.innerHTML += `
-
-        <div class="chat-message ${role.toLowerCase()}">
-
-            <b>${role}:</b>
-
-            <div>${safeMessage}</div>
-
-        </div>
-    `;
-
-    body.scrollTop = body.scrollHeight;
-}
-
-/* =========================================================
-   CHAT COMMAND ENGINE
-========================================================= */
-
-
-function quickAction(cmd) {
-    const input = document.getElementById("chatInput");
-    if (input) input.value = cmd;
-    askAgent();
-}
-
-function showOnboardInput() {
-    const body = document.getElementById("chatBody");
-    if (!body) return;
-
-    // Remove existing onboard input if any
-    const existing = document.getElementById("onboardInputGroup");
-    if (existing) existing.remove();
-
-    const div = document.createElement("div");
-    div.id = "onboardInputGroup";
-    div.className = "chat-message ai";
-    div.innerHTML = `
-        <b>AI</b>
-        <div>
-            🚀 Enter the Employee ID to start onboarding:
-            <div class="onboard-input-group">
-                <input
-                    id="onboardEmpInput"
-                    placeholder="e.g. 1042836"
-                    type="text"
-                    onkeydown="if(event.key==='Enter') confirmOnboard()"
-                />
-                <button onclick="confirmOnboard()">Start Onboarding ➜</button>
-            </div>
-        </div>
-    `;
-    body.appendChild(div);
-    body.scrollTop = body.scrollHeight;
-
-    setTimeout(() => {
-        const inp = document.getElementById("onboardEmpInput");
-        if (inp) inp.focus();
-    }, 100);
-}
-// ── Bulk Onboard with Confirmation ────────────────────────
-function showBulkConfirm() {
-    const body = document.getElementById("chatBody");
-    if (!body) return;
-
-    // Remove existing if any
-    const existing = document.getElementById("bulkConfirmGroup");
-    if (existing) existing.remove();
-
-    const pending = allEmployees.filter(emp =>
-        String(emp.onboarding_status || "").toUpperCase().includes("PENDING")
-    );
-
-    const div = document.createElement("div");
-    div.id = "bulkConfirmGroup";
-    div.className = "chat-message ai";
-    div.innerHTML = `
-        <b>AI</b>
-        <div>
-            🚀 <b>Bulk Onboarding Confirmation</b><br><br>
-            Found <b>${pending.length}</b> pending employees ready to onboard.<br><br>
-            <div style="background:#fff8e1;border-radius:10px;padding:10px 12px;
-                        margin:8px 0;border-left:3px solid #f39c12;font-size:11px;
-                        color:#7d5a00;line-height:1.7;">
-                ⚠ This will trigger onboarding emails and
-                workflow for <b>all ${pending.length} pending employees</b>.
-                This action cannot be undone.
-            </div>
-            <div style="display:flex;gap:8px;margin-top:10px;">
-                <button onclick="confirmBulkOnboard()"
-                    style="flex:1;background:linear-gradient(135deg,#19d3a2,#0f9e75);
-                           color:white;border:none;border-radius:10px;
-                           padding:9px 14px;font-size:12px;font-weight:700;
-                           cursor:pointer;height:auto;">
-                    ✅ Yes, Onboard All
-                </button>
-                <button onclick="cancelBulkOnboard()"
-                    style="flex:1;background:#f0f4f8;color:#7d8da5;
-                           border:none;border-radius:10px;
-                           padding:9px 14px;font-size:12px;font-weight:700;
-                           cursor:pointer;height:auto;">
-                    ❌ Cancel
-                </button>
-            </div>
-        </div>
-    `;
-    body.appendChild(div);
-    body.scrollTop = body.scrollHeight;
-}
-
-function cancelBulkOnboard() {
-    const group = document.getElementById("bulkConfirmGroup");
-    if (group) group.remove();
-    addChat("AI", "❌ Bulk onboarding cancelled.");
-}
 
 async function confirmBulkOnboard() {
     // Remove confirm UI
