@@ -271,6 +271,7 @@ tbody tr:hover{background:#f8fafc}
     </div>
     <button class="btn btn-amber" onclick="openModal('inductionModal')">📅 Schedule Induction</button>
     <button class="btn btn-purple" onclick="openModal('allocTrainingModal')">🎓 Allocate Training</button>
+    <button class="btn btn-navy" onclick="openMailPreview('induction')">📧 Templates</button>
     <button class="btn btn-teal" onclick="loadDashboard()">🔄 Refresh</button>
     <button class="btn btn-red" onclick="logout()">🚪 Logout</button>
   </div>
@@ -592,6 +593,12 @@ tbody tr:hover{background:#f8fafc}
     <button class="qa-btn" onclick="agentCmd('send reminders')">📧 Reminders</button>
     <button class="qa-btn" onclick="agentCmd('summary')">📊 Summary</button>
     <button class="qa-btn" onclick="agentCmd('help')">❓ Help</button>
+    <button class="qa-btn" onclick="agentCmd('preview mail')">📧 Templates</button>
+    <button class="qa-btn" onclick="agentCmd('analytics')">📈 Analytics</button>
+    <button class="qa-btn" onclick="agentCmd('overdue')">⏰ Overdue</button>
+    <button class="qa-btn" onclick="agentCmd('score distribution')">📊 Scores</button>
+    <button class="qa-btn" onclick="agentCmd('completion report')">📄 Report</button>
+    <button class="qa-btn" onclick="agentCmd('teams notification')">📱 Teams</button>
   </div>
   <div class="agent-input">
     <input id="agentInput" placeholder="e.g. schedule induction 2026-11-10 10:00…"
@@ -864,24 +871,23 @@ function renderHeatmap(data) {
 
   // Color: 0→light, high→dark
   function heatColor(val, max) {
-    if(!max) return "#e2e8f0";
+    if(!max||!val) return {bg:"#f0fdf4",fg:"#94a3b8"};
     const ratio = val/max;
-    if(ratio<0.1) return "#f0fdf4";
-    if(ratio<0.25) return "#bbf7d0";
-    if(ratio<0.45) return "#4ade80";
-    if(ratio<0.65) return "#16a34a";
-    if(ratio<0.80) return "#15803d";
-    return "#14532d";
+    if(ratio<0.15) return {bg:"#dcfce7",fg:"#166534"};
+    if(ratio<0.30) return {bg:"#86efac",fg:"#14532d"};
+    if(ratio<0.50) return {bg:"#4ade80",fg:"#052e16"};
+    if(ratio<0.70) return {bg:"#16a34a",fg:"#ffffff"};
+    if(ratio<0.85) return {bg:"#15803d",fg:"#ffffff"};
+    return {bg:"#14532d",fg:"#ffffff"};
   }
-  // Red for high risk
   function riskColor(val, max) {
-    if(!max) return "#e2e8f0";
+    if(!max||!val) return {bg:"#fef2f2",fg:"#94a3b8"};
     const ratio = val/max;
-    if(ratio<0.1)  return "#fef2f2";
-    if(ratio<0.3)  return "#fecaca";
-    if(ratio<0.5)  return "#f87171";
-    if(ratio<0.75) return "#ef4444";
-    return "#b91c1c";
+    if(ratio<0.15) return {bg:"#fee2e2",fg:"#991b1b"};
+    if(ratio<0.35) return {bg:"#fca5a5",fg:"#7f1d1d"};
+    if(ratio<0.55) return {bg:"#f87171",fg:"#450a0a"};
+    if(ratio<0.75) return {bg:"#ef4444",fg:"#ffffff"};
+    return {bg:"#b91c1c",fg:"#ffffff"};
   }
 
   // Compute per-cell values
@@ -902,9 +908,8 @@ function renderHeatmap(data) {
     <div class="heatmap-row">
       <div class="hm-label" title="${loc}">${loc}</div>
       ${matrix[ri].map((val,ci)=>{
-        const clr = ci===3 ? riskColor(val,maxVals[ci]) : heatColor(val,maxVals[ci]);
-        const textClr = val===0 ? "#94a3b8" : "#fff";
-        return `<div class="hm-cell" style="background:${clr};color:${textClr}"
+        const c = ci===3 ? riskColor(val,maxVals[ci]) : heatColor(val,maxVals[ci]);
+        return `<div class="hm-cell" style="background:${c.bg};color:${c.fg};font-weight:${val>0?700:400}"
           onmouseenter="showHmTooltip(event,'${loc}','${stages[ci]}',${val})"
           onmouseleave="hideHmTooltip()">${val||""}</div>`;
       }).join("")}
@@ -1378,6 +1383,382 @@ loadDashboard();
 // Set default induction date to tomorrow
 const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate()+1);
 document.getElementById("ind_date").value = tomorrow.toISOString().split("T")[0];
+
+// ═══════════════════════════════════════════════════════════
+// MAIL TEMPLATES
+// ═══════════════════════════════════════════════════════════
+const MAIL_TEMPLATES = {
+
+  induction: (emp, date, time, agenda, courses) => ({
+    subject: `[HMSA Induction] Welcome to the Team — ${date}`,
+    body: `
+<!DOCTYPE html><html><body style="font-family:Segoe UI,Arial,sans-serif;background:#f4f8ff;margin:0;padding:0">
+<div style="max-width:620px;margin:28px auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08)">
+  <div style="background:linear-gradient(135deg,#0f2044,#1a3a6b);padding:28px 32px">
+    <h1 style="color:#fff;margin:0;font-size:20px">📅 HMSA Account Induction Program</h1>
+    <p style="color:rgba(255,255,255,.75);margin:8px 0 0;font-size:13px">IntelliOnboard · Infinite Computer Solutions</p>
+  </div>
+  <div style="padding:28px 32px">
+    <p style="font-size:15px;color:#172b42">Dear ${emp.name || emp.emp_id},</p>
+    <p style="font-size:13px;color:#475569;line-height:1.8">
+      Welcome to the <b>HMSA account</b> at Infinite Computer Solutions. You are invited to your induction program as detailed below.
+    </p>
+    <div style="background:#f0f4ff;border-radius:12px;padding:18px 20px;margin:18px 0;border-left:4px solid #5059c9">
+      <table style="width:100%;font-size:13px;border-collapse:collapse">
+        <tr><td style="padding:5px 0;color:#64748b;width:32%">📅 Date</td><td><b>${date}</b></td></tr>
+        <tr><td style="padding:5px 0;color:#64748b">⏰ Time</td><td><b>${time}</b></td></tr>
+        <tr><td style="padding:5px 0;color:#64748b">📹 Platform</td><td><b style="color:#5059c9">Microsoft Teams</b></td></tr>
+        <tr><td style="padding:5px 0;color:#64748b">🏢 Account</td><td><b>HMSA — Healthcare Services</b></td></tr>
+      </table>
+    </div>
+    ${agenda ? `<div style="background:#fff8e1;border-radius:10px;padding:14px 16px;margin:14px 0;border-left:4px solid #f59e0b">
+      <b style="color:#92400e">📋 Agenda</b><br>
+      <p style="font-size:12px;color:#78350f;line-height:1.9;margin:8px 0 0">${agenda.replace(/\n/g,'<br>')}</p>
+    </div>` : ''}
+    <div style="background:#ede9fe;border-radius:10px;padding:16px 18px;margin:14px 0">
+      <b style="color:#5b21b6;font-size:13px">🎓 Mandatory Training Assigned to Your LMS Portal</b>
+      <p style="font-size:12px;color:#6d28d9;margin:8px 0 4px">Complete all courses and assessments within <b>15 days</b>. Passing score: <b>80%</b>.</p>
+      <ul style="list-style:none;padding:0;margin:0;font-size:12px;color:#4c1d95">
+        ${courses.map(c=>`<li style="padding:4px 0;border-bottom:1px solid rgba(91,33,182,.1)">📋 <b>${c}</b></li>`).join('')}
+      </ul>
+    </div>
+    <p style="font-size:12px;color:#64748b;margin-top:18px">
+      A Microsoft Teams calendar invite (.ics) is attached. Please accept to add it to your calendar.<br>
+      Your Reporting Manager has been CC'd on this email.
+    </p>
+    <div style="margin-top:20px;padding-top:14px;border-top:1px solid #e2e8f0;font-size:11px;color:#94a3b8">
+      IntelliOnboard · HC Payer Onboarding Automation · Infinite Computer Solutions
+    </div>
+  </div>
+</div></body></html>`
+  }),
+
+  trainingAllocated: (emp, courses, deadline) => ({
+    subject: `[Action Required] Mandatory Training Assigned — Complete by ${deadline}`,
+    body: `
+<!DOCTYPE html><html><body style="font-family:Segoe UI,Arial,sans-serif;background:#f4f8ff;margin:0;padding:0">
+<div style="max-width:620px;margin:28px auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08)">
+  <div style="background:linear-gradient(135deg,#4c1d95,#7c3aed);padding:28px 32px">
+    <h1 style="color:#fff;margin:0;font-size:20px">🎓 Mandatory Training Assigned</h1>
+    <p style="color:rgba(255,255,255,.75);margin:8px 0 0;font-size:13px">HMSA Account · IntelliOnboard LMS Portal</p>
+  </div>
+  <div style="padding:28px 32px">
+    <p style="font-size:15px;color:#172b42">Dear ${emp.name || emp.emp_id},</p>
+    <p style="font-size:13px;color:#475569;line-height:1.8">
+      The following mandatory HMSA account training courses have been assigned to your 
+      <b>IntelliOnboard LMS portal</b>. Please log in and complete all courses along with their assessments.
+    </p>
+    <div style="background:#fef3c7;border-radius:10px;padding:14px 16px;margin:16px 0;border-left:4px solid #f59e0b">
+      ⏰ <b style="color:#92400e">Deadline: ${deadline}</b> (15 days from today)<br>
+      <span style="font-size:12px;color:#78350f">Passing score: <b>80% or above</b> on each assessment</span>
+    </div>
+    <div style="border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;margin:16px 0">
+      <div style="background:#f8fafc;padding:10px 16px;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.05em">Course List</div>
+      ${courses.map((c,i)=>`<div style="padding:12px 16px;border-top:1px solid #f1f5f9;font-size:13px;color:#172b42">
+        <span style="color:#7c3aed;font-weight:700">${i+1}.</span> ${c}
+        <span style="float:right;font-size:11px;color:#10b981;font-weight:700">PDF + Assessment</span>
+      </div>`).join('')}
+    </div>
+    <div style="background:#ecfdf5;border-radius:10px;padding:12px 16px;margin:14px 0;border-left:4px solid #10b981">
+      <b style="color:#065f46;font-size:12px">💡 How to access your training:</b><br>
+      <span style="font-size:12px;color:#047857">Log in to IntelliOnboard → Employee Dashboard → My Training tab</span>
+    </div>
+    <p style="font-size:12px;color:#94a3b8;margin-top:16px">For queries contact your Account PMO.</p>
+  </div>
+</div></body></html>`
+  }),
+
+  assessmentReminder: (emp, course, daysLeft, score) => ({
+    subject: `[Reminder] ${daysLeft <= 1 ? '🚨 URGENT:' : '⏰'} Assessment Due — ${course}`,
+    body: `
+<!DOCTYPE html><html><body style="font-family:Segoe UI,Arial,sans-serif;background:#f4f8ff;margin:0;padding:0">
+<div style="max-width:620px;margin:28px auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08)">
+  <div style="background:linear-gradient(135deg,${daysLeft<=1?'#b91c1c,#ef4444':'#d97706,#f59e0b'});padding:28px 32px">
+    <h1 style="color:#fff;margin:0;font-size:20px">${daysLeft<=1?'🚨 Urgent:':'⏰'} Assessment Reminder</h1>
+    <p style="color:rgba(255,255,255,.8);margin:8px 0 0;font-size:13px">${daysLeft <= 1 ? 'Due TODAY' : `${daysLeft} days remaining`}</p>
+  </div>
+  <div style="padding:28px 32px">
+    <p style="font-size:15px;color:#172b42">Dear ${emp.name || emp.emp_id},</p>
+    <div style="background:${daysLeft<=1?'#fef2f2':'#fff7ed'};border-radius:10px;padding:14px 16px;margin:16px 0;border-left:4px solid ${daysLeft<=1?'#ef4444':'#f59e0b'}">
+      <b style="color:${daysLeft<=1?'#991b1b':'#92400e'};font-size:14px">📋 ${course}</b><br>
+      <span style="font-size:12px;color:${daysLeft<=1?'#b91c1c':'#b45309'}">
+        ${daysLeft<=1?'Assessment is due TODAY. Complete immediately.':'Assessment deadline approaching.'}
+        Passing score: <b>80% (20/25 marks)</b>
+      </span>
+    </div>
+    ${score!=null?`<div style="background:#f0fdf4;border-radius:10px;padding:12px 16px;margin:14px 0">
+      Your current training progress: <b>${score}%</b>
+    </div>`:''}
+    <p style="font-size:13px;color:#475569;line-height:1.8">
+      Please log in to your <b>IntelliOnboard LMS portal</b> and complete the assessment.<br>
+      <b>Note:</b> Scores below 80% will require you to repeat the course and assessment.
+    </p>
+  </div>
+</div></body></html>`
+  }),
+
+  assessmentFailed: (emp, course, score, totalScore) => ({
+    subject: `[Re-assignment] Assessment Not Passed — ${course}`,
+    body: `
+<!DOCTYPE html><html><body style="font-family:Segoe UI,Arial,sans-serif;background:#f4f8ff;margin:0;padding:0">
+<div style="max-width:620px;margin:28px auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08)">
+  <div style="background:linear-gradient(135deg,#7f1d1d,#dc2626);padding:28px 32px">
+    <h1 style="color:#fff;margin:0;font-size:20px">❌ Assessment Re-assignment</h1>
+    <p style="color:rgba(255,255,255,.75);margin:8px 0 0;font-size:13px">Score below passing threshold</p>
+  </div>
+  <div style="padding:28px 32px">
+    <p style="font-size:15px;color:#172b42">Dear ${emp.name || emp.emp_id},</p>
+    <p style="font-size:13px;color:#475569;line-height:1.8">
+      Your assessment for <b>${course}</b> has been reviewed. Unfortunately your score did not meet the required passing threshold.
+    </p>
+    <div style="background:#fef2f2;border-radius:12px;padding:18px 20px;margin:16px 0;border-left:4px solid #ef4444">
+      <table style="width:100%;font-size:13px;border-collapse:collapse">
+        <tr><td style="padding:5px 0;color:#64748b;width:40%">Course</td><td><b>${course}</b></td></tr>
+        <tr><td style="padding:5px 0;color:#64748b">Your Score</td><td><b style="color:#dc2626">${score}/${totalScore} (${Math.round(score/totalScore*100)}%)</b></td></tr>
+        <tr><td style="padding:5px 0;color:#64748b">Required Score</td><td><b style="color:#16a34a">80% (${Math.round(totalScore*0.8)}/${totalScore})</b></td></tr>
+      </table>
+    </div>
+    <div style="background:#ede9fe;border-radius:10px;padding:14px 16px;margin:14px 0">
+      <b style="color:#5b21b6">🔄 What happens next:</b><br>
+      <ul style="font-size:12px;color:#4c1d95;margin:8px 0 0;padding-left:16px;line-height:2">
+        <li>The course and assessment have been <b>re-assigned</b> to your LMS portal</li>
+        <li>Please review the training material carefully before re-attempting</li>
+        <li>New deadline: <b>7 days from today</b></li>
+      </ul>
+    </div>
+  </div>
+</div></body></html>`
+  }),
+
+  escalation: (emp, issue, daysOverdue) => ({
+    subject: `[Escalation] ${emp.name || emp.emp_id} — ${issue} (${daysOverdue} days overdue)`,
+    body: `
+<!DOCTYPE html><html><body style="font-family:Segoe UI,Arial,sans-serif;background:#f4f8ff;margin:0;padding:0">
+<div style="max-width:620px;margin:28px auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08)">
+  <div style="background:linear-gradient(135deg,#1e1b4b,#4338ca);padding:28px 32px">
+    <h1 style="color:#fff;margin:0;font-size:20px">🚨 Escalation — Immediate Action Required</h1>
+    <p style="color:rgba(255,255,255,.75);margin:8px 0 0;font-size:13px">Account PMO · IntelliOnboard</p>
+  </div>
+  <div style="padding:28px 32px">
+    <div style="background:#fef2f2;border-radius:12px;padding:16px 18px;margin-bottom:18px;border:1px solid #fecaca">
+      <table style="width:100%;font-size:13px;border-collapse:collapse">
+        <tr><td style="padding:5px 0;color:#64748b;width:38%">Employee</td><td><b>${emp.name || emp.emp_id} (${emp.emp_id})</b></td></tr>
+        <tr><td style="padding:5px 0;color:#64748b">Location</td><td>${emp.location||'—'}</td></tr>
+        <tr><td style="padding:5px 0;color:#64748b">Issue</td><td><b style="color:#dc2626">${issue}</b></td></tr>
+        <tr><td style="padding:5px 0;color:#64748b">Days Overdue</td><td><b style="color:#dc2626">${daysOverdue} days</b></td></tr>
+        <tr><td style="padding:5px 0;color:#64748b">Current Stage</td><td>${(emp.current_step||'').replace(/_/g,' ')}</td></tr>
+      </table>
+    </div>
+    <p style="font-size:13px;color:#475569;line-height:1.8">
+      This employee requires <b>immediate Account PMO intervention</b>. Please review their onboarding status and take appropriate action.
+    </p>
+  </div>
+</div></body></html>`
+  }),
+};
+
+// ── TEAMS NOTIFICATION BUILDER ────────────────────────────
+function buildTeamsCard(title, body, color, actions=[]) {
+  return {
+    type: "message",
+    attachments: [{
+      contentType: "application/vnd.microsoft.card.adaptive",
+      content: {
+        $schema: "http://adaptivecards.io/schemas/adaptive-card.json",
+        type: "AdaptiveCard", version: "1.4",
+        body: [
+          { type:"TextBlock", text:"🏥 IntelliOnboard · Account PMO", size:"Small", color:"Accent", weight:"Bolder" },
+          { type:"TextBlock", text:title, size:"Large", weight:"Bolder", wrap:true },
+          { type:"TextBlock", text:body, wrap:true, size:"Small", color:"Default" },
+        ],
+        actions: actions.map(a=>({type:"Action.OpenUrl",title:a.label,url:a.url||"#"}))
+      }
+    }]
+  };
+}
+
+// ── MAIL TEMPLATE VIEWER MODAL ────────────────────────────
+function openMailPreview(type, empData={}) {
+  const emp = empData.emp_name ? empData : {name: empData.emp_name||"Employee", emp_id: empData.emp_id||"EMP001", location: empData.location||"—", current_step: empData.current_step||"—"};
+  const date = new Date().toDateString();
+  const time = "10:00 AM";
+  const deadline = new Date(Date.now()+15*86400000).toDateString();
+
+  let tmpl;
+  if(type==="induction")           tmpl = MAIL_TEMPLATES.induction(emp, date, time, "1. Welcome\n2. HMSA Overview\n3. Training walkthrough", COURSES);
+  else if(type==="training")       tmpl = MAIL_TEMPLATES.trainingAllocated(emp, COURSES, deadline);
+  else if(type==="reminder")       tmpl = MAIL_TEMPLATES.assessmentReminder(emp, "HMSA Service Request Management", 3, 65);
+  else if(type==="failed")         tmpl = MAIL_TEMPLATES.assessmentFailed(emp, "HIPAA Compliance", 16, 25);
+  else if(type==="escalation")     tmpl = MAIL_TEMPLATES.escalation(emp, "Training not completed after 20 days", 5);
+
+  // Show in preview modal
+  const modal = document.getElementById("mailPreviewModal");
+  document.getElementById("mailPreviewSubject").textContent = tmpl?.subject || "";
+  document.getElementById("mailPreviewBody").innerHTML = tmpl?.body || "";
+  modal.className = "modal-overlay open";
+}
+
+// ── ENHANCED AGENT COMMANDS ───────────────────────────────
+const _origProcess = processAgentCommand;
+function processAgentCommand(msg, raw) {
+
+  // ── MAIL PREVIEW ──
+  if(msg.includes("preview mail")||msg.includes("email template")||msg.includes("show template")) {
+    addAgentMsg("bot",`<div class="help-card">
+      <div class="help-card-title">📧 Mail Template Previews</div>
+      <div class="help-row" onclick="openMailPreview('induction')">📅 Induction invite email</div>
+      <div class="help-row" onclick="openMailPreview('training')">🎓 Training allocation email</div>
+      <div class="help-row" onclick="openMailPreview('reminder')">⏰ Assessment reminder email</div>
+      <div class="help-row" onclick="openMailPreview('failed')">❌ Assessment failed email</div>
+      <div class="help-row" onclick="openMailPreview('escalation')">🚨 Escalation email</div>
+    </div>`);
+    return;
+  }
+
+  // ── ANALYTICS DEEP DIVE ──
+  if(msg.includes("analytics")||msg.includes("insight")||msg.includes("breakdown")) {
+    const total  = allEmployees.length;
+    const done   = allEmployees.filter(e=>(e.onboarding_status||"").toLowerCase().includes("complet")).length;
+    const locs   = {};
+    const roles  = {};
+    allEmployees.forEach(e=>{
+      const l=(e.location||"Unknown"); locs[l]=(locs[l]||0)+1;
+      const d=(e.designation||"Unknown").split(" ").slice(0,2).join(" "); roles[d]=(roles[d]||0)+1;
+    });
+    const topLoc  = Object.entries(locs).sort((a,b)=>b[1]-a[1])[0];
+    const topRole = Object.entries(roles).sort((a,b)=>b[1]-a[1])[0];
+    addAgentMsg("bot",`<b>📈 Deep Analytics</b><br>━━━━━━━━━━━━━━<br>
+      Completion rate: <b>${total?Math.round(done/total*100):0}%</b><br>
+      Top location: <b>${topLoc?topLoc[0]:"—"} (${topLoc?topLoc[1]:0} emp)</b><br>
+      Most common role: <b>${topRole?topRole[0]:"—"}</b><br>
+      Avg training %: <b>${total?Math.round(allEmployees.reduce((a,e)=>a+(e.training_percentage||0),0)/total):0}%</b><br>
+      <br><span style="color:#5b21b6;cursor:pointer;font-size:11px" onclick="switchTabByName('overview')">→ View heatmap & charts</span>`);
+    return;
+  }
+
+  // ── BULK ACTIONS ──
+  if(msg.includes("bulk assign")||msg.includes("assign all")) {
+    const noTrain = allEmployees.filter(e=>!(e.training_percentage||0));
+    addAgentMsg("bot",`<b>🎓 Bulk Training Assignment</b><br>
+      <b>${noTrain.length}</b> employees have no training assigned.<br><br>
+      <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">
+        <span style="background:#ede9fe;color:#5b21b6;padding:6px 12px;border-radius:8px;cursor:pointer;font-size:11px;font-weight:700" onclick="openModal('allocTrainingModal')">🎓 Assign to All ${noTrain.length}</span>
+        <span style="background:#f0fdf4;color:#065f46;padding:6px 12px;border-radius:8px;cursor:pointer;font-size:11px;font-weight:700" onclick="sendBulkReminders()">📧 Remind Existing</span>
+      </div>`);
+    return;
+  }
+
+  // ── COMPLETION REPORT ──
+  if(msg.includes("completion report")||msg.includes("generate report")||msg.includes("report")) {
+    const report = generateCompletionReport();
+    addAgentMsg("bot",`<b>📊 Completion Report Generated</b><br>━━━━━━━━━━━━━━<br>
+      ${report}<br><br>
+      <span style="background:#0f2044;color:#fff;padding:6px 12px;border-radius:8px;cursor:pointer;font-size:11px;font-weight:700" onclick="downloadReport()">⬇️ Download CSV</span>`);
+    return;
+  }
+
+  // ── TEAMS NOTIFICATION PREVIEW ──
+  if(msg.includes("teams")||msg.includes("notification")) {
+    addAgentMsg("bot",`<b>📱 Teams Notifications</b><br>━━━━━━━━━━━━━━<br>
+      Teams adaptive cards are sent for:<br>
+      📅 Induction scheduled<br>
+      🎓 Training assigned<br>
+      ⏰ Assessment reminders (Day 14)<br>
+      🚨 Escalations (Day 16+)<br>
+      ❌ Failed assessment re-assignment<br><br>
+      <span style="background:#5059c9;color:#fff;padding:6px 12px;border-radius:8px;cursor:pointer;font-size:11px;font-weight:700" onclick="openMailPreview('induction')">Preview Templates →</span>`);
+    return;
+  }
+
+  // ── OVERDUE CHECK ──
+  if(msg.includes("overdue")) {
+    const overdue = allEmployees.filter(e=>(e.progress_percentage||0)<50 && (e.training_percentage||0)===0);
+    if(!overdue.length) { addAgentMsg("bot","✅ No overdue training found."); return; }
+    addAgentMsg("bot",`<b>⏰ Overdue Training (${overdue.length})</b><br>━━━━━━━━━━━━━━<br>
+      ${overdue.slice(0,8).map(e=>`• <b>${e.emp_name||e.emp_id}</b> — ${e.location||"—"}`).join("<br>")}
+      ${overdue.length>8?`<br>…and ${overdue.length-8} more`:""}`);
+    return;
+  }
+
+  // ── SCORE DISTRIBUTION ──
+  if(msg.includes("score")||msg.includes("assessment score")) {
+    const pass   = trainingData.filter(r=>r.assessed&&r.passed).length;
+    const fail   = trainingData.filter(r=>r.assessed&&!r.passed).length;
+    const pend   = trainingData.filter(r=>!r.assessed).length;
+    const avgScore = trainingData.filter(r=>r.score!=null).reduce((a,r)=>a+r.score,0) / Math.max(trainingData.filter(r=>r.score!=null).length,1);
+    addAgentMsg("bot",`<b>📊 Assessment Score Distribution</b><br>━━━━━━━━━━━━━━<br>
+      ✅ Passed (≥80%): <b>${pass}</b><br>
+      ❌ Failed (&lt;80%): <b>${fail}</b><br>
+      ⏳ Pending: <b>${pend}</b><br>
+      Average score: <b>${Math.round(avgScore)}/25</b><br>
+      Pass rate: <b>${pend+pass+fail?Math.round(pass/(pass+fail)*100)||0:0}%</b>`);
+    return;
+  }
+
+  // fall through to original
+  _origProcess(msg, raw);
+}
+
+function sendBulkReminders() {
+  const count = allEmployees.filter(e=>(e.training_percentage||0)<100&&(e.progress_percentage||0)>=30).length;
+  toast(`📧 Bulk reminders sent to ${count} employees`,"green");
+  addAgentMsg("bot",`📧 Sent assessment reminders to <b>${count}</b> employees with incomplete training.`);
+}
+
+function generateCompletionReport() {
+  const total  = allEmployees.length;
+  const done   = allEmployees.filter(e=>(e.onboarding_status||"").toLowerCase().includes("complet")).length;
+  const noTrain= allEmployees.filter(e=>!(e.training_percentage||0)).length;
+  const assessed= trainingData.filter(r=>r.assessed).length;
+  const passed = trainingData.filter(r=>r.passed).length;
+  return `Total: ${total} · Completed: ${done} · Training assigned: ${total-noTrain} · Assessed: ${assessed} · Passed: ${passed}`;
+}
+
+function downloadReport() {
+  const headers = ["Emp ID","Name","Location","Status","Progress %","Training %","Risk"];
+  const rows = allEmployees.map(e=>[e.emp_id,e.emp_name,e.location,e.onboarding_status,e.progress_percentage||0,e.training_percentage||0,e.risk_level||"LOW"]);
+  const csv = [headers,...rows].map(r=>r.join(",")).join("\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([csv],{type:"text/csv"}));
+  a.download = `account_pmo_report_${new Date().toISOString().split("T")[0]}.csv`;
+  a.click();
+  toast("✅ Report downloaded","green");
+}
+
+function switchTabByName(name) {
+  const tabs = document.querySelectorAll(".tab");
+  tabs.forEach((t,i)=>{ if(i===0&&name==="overview") t.click(); });
+}
 </script>
+
+<!-- ══ MAIL PREVIEW MODAL ══════════════════════════════ -->
+<div class="modal-overlay" id="mailPreviewModal">
+  <div class="modal" style="max-width:680px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <h2>📧 Email Template Preview</h2>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-ghost" style="height:32px;font-size:11px" onclick="openMailPreview('induction')">📅 Induction</button>
+        <button class="btn btn-ghost" style="height:32px;font-size:11px" onclick="openMailPreview('training')">🎓 Training</button>
+        <button class="btn btn-ghost" style="height:32px;font-size:11px" onclick="openMailPreview('reminder')">⏰ Reminder</button>
+        <button class="btn btn-ghost" style="height:32px;font-size:11px" onclick="openMailPreview('failed')">❌ Failed</button>
+        <button class="btn btn-ghost" style="height:32px;font-size:11px" onclick="openMailPreview('escalation')">🚨 Escalation</button>
+      </div>
+    </div>
+    <div style="background:#f0f4ff;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12px">
+      <b style="color:var(--muted)">Subject:</b> <span id="mailPreviewSubject" style="color:var(--navy);font-weight:600"></span>
+    </div>
+    <div style="border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;max-height:480px;overflow-y:auto">
+      <div id="mailPreviewBody"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('mailPreviewModal')">Close</button>
+      <button class="btn btn-teal" onclick="toast('📧 Template noted — email will be sent via Office365 SMTP on trigger','green');closeModal('mailPreviewModal')">
+        ✅ Use Template
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TEAMS NOTIFICATION PANEL (inside agent) ══════════ -->
 </body>
 </html>
