@@ -350,10 +350,10 @@ tbody tr:hover{background:#f8fafc}
       <div class="kpi-val" id="kpiDev">—</div>
       <div class="kpi-sub">Click to view developers</div>
     </div>
-    <div class="kpi amber" onclick="openKpiPopup('auto')">
-      <div class="kpi-label">Automation / Testing</div>
+    <div class="kpi amber" onclick="openKpiPopup('infra')">
+      <div class="kpi-label">DB / Infra / Admin</div>
       <div class="kpi-val" id="kpiAuto">—</div>
-      <div class="kpi-sub">Click to view automation</div>
+      <div class="kpi-sub">Click to view DB & Admin</div>
     </div>
     <div class="kpi teal" onclick="openKpiPopup('rm')">
       <div class="kpi-label">Reporting Managers</div>
@@ -834,14 +834,19 @@ function renderKPIs(data) {
   data.forEach(e=>{
     const d = (e.designation||"").toLowerCase();
     if(/\bqa\b|quality.assur|quality.eng|test.eng|software.test|manual.test|quality.analyst|test.arch|sdet/.test(d)) qa++;
-    else if(/automat|selenium|cypress|performance.test|load.test/.test(d)) auto++;
-    else if(/develop|engineer|programmer|\bsde\b|software.dev|full.stack|backend|frontend|tech.lead/.test(d)) dev++;
-    if(e.reporting_manager_email) rms.add(e.reporting_manager_email);
+    else if(/\bdba\b|database.admin|database.eng|sql.server|oracle dba|system.admin|sys.admin|network.eng|infrastructure|devops|cloud.eng|windows.admin|linux.admin|storage.eng|active.directory|\bit.admin\b/.test(d)) auto++;
+    else if((/develop|programmer|\bsde\b|software.dev|full.stack|backend|frontend|tech.lead/.test(d)) && !(/\bqa\b|quality|test|sdet/.test(d))) dev++;
+    // Track unique RM emp IDs (people who ARE an RM for someone else)
   });
   document.getElementById("kpiQA").textContent   = qa;
   document.getElementById("kpiDev").textContent  = dev;
   document.getElementById("kpiAuto").textContent = auto;
-  document.getElementById("kpiRM").textContent   = rms.size;
+  // Count employees who ARE reporting managers (appear as rm_name/rm_id for others)
+  const rmSet = new Set();
+  data.forEach(e=>{ if(e.rm_name) rmSet.add((e.rm_name||"").toLowerCase()); });
+  // Count data employees whose name matches an RM name
+  const rmCount = data.filter(e=> rmSet.has((e.emp_name||"").toLowerCase())).length;
+  document.getElementById("kpiRM").textContent   = rmCount;
 
   const high    = data.filter(e=>(e.risk_level||"").toUpperCase()==="HIGH").length;
   const delayed = data.filter(e=>(e.onboarding_status||"").toLowerCase().includes("delay")).length;
@@ -861,9 +866,26 @@ function openKpiPopup(type) {
     inprogress: { title:"🔄 In Progress",             filter: e=>(e.onboarding_status||"").toLowerCase().includes("progress") },
     completed:  { title:"✅ Completed",               filter: e=>(e.onboarding_status||"").toLowerCase().includes("complet") },
     qa:         { title:"🔬 QA / Quality Engineers",  filter: e=>/\bqa\b|quality.assur|quality.eng|test.eng|software.test|manual.test|quality.analyst|test.arch|sdet/.test((e.designation||"").toLowerCase()) },
-    dev:        { title:"💻 Developers / Engineers",  filter: e=>/develop|engineer|programmer|\bsde\b|software.dev|full.stack|backend|frontend|tech.lead/.test((e.designation||"").toLowerCase()) },
-    auto:       { title:"🤖 Automation / Testing",    filter: e=>/automat|selenium|cypress|performance.test|load.test/.test((e.designation||"").toLowerCase()) },
-    rm:         { title:"👔 Reporting Managers",       filter: e=>!!e.reporting_manager_email },
+    dev:        { title:"💻 Developers / Engineers",  filter: e=>{
+      const d=(e.designation||"").toLowerCase();
+      return /develop|programmer|\bsde\b|software.dev|full.stack|backend|frontend|tech.lead/.test(d)
+        && !/\bqa\b|quality|test|sdet/.test(d);
+    }},
+    infra:      { title:"🗄️ DB / Infrastructure / Admin", filter: e=>{
+      const d=(e.designation||"").toLowerCase();
+      return /\bdba\b|database.admin|database.eng|sql.server|oracle dba|system.admin|sys.admin|network.eng|infrastructure|devops|cloud.eng|windows.admin|linux.admin|storage.eng|active.directory|\bit.admin\b/.test(d)
+        && !/develop|programmer|\bsde\b/.test(d);
+    }},
+    rm:         { title:"👔 Reporting Managers",       filter: e=>{
+      const id = String(e.emp_id||"");
+      const nm = (e.emp_name||"").toLowerCase();
+      return allEmployees.some(other=>
+        (other.emp_id!==e.emp_id) && (
+          String(other.reporting_manager_id||"")===id ||
+          (other.rm_name||"").toLowerCase()===nm
+        )
+      );
+    }},
     highrisk:   { title:"🚨 High Risk Employees",      filter: e=>(e.risk_level||"").toUpperCase()==="HIGH" },
   };
   const cfg = configs[type] || configs.total;
@@ -963,7 +985,7 @@ function mkChart(id, type, labels, data, colors, opts={}) {
   if(!ctx) return;
   _charts[id] = new Chart(ctx, {
     type,
-    data:{labels, datasets:[{data, backgroundColor:colors, borderRadius:6, borderWidth:0}]},
+    data:{labels, datasets:[{label:"Employees", data, backgroundColor:colors, borderRadius:6, borderWidth:0}]},
     options:{responsive:true, maintainAspectRatio:false,
       plugins:{legend:{position:"bottom",labels:{font:{size:11},boxWidth:12,padding:10}}}, ...opts}
   });
@@ -1604,7 +1626,7 @@ function processCmd(msg, raw) {
     return;
   }
   // CHECK EMPLOYEE — prompt for ID if not provided
-  if(msg==="check employee"||msg.includes("find employee")||msg.includes("check employee")||msg.includes("find emp")) {
+  if(msg==="check employee"||msg.includes("find employee")||msg.includes("check employee")||msg.includes("find emp")||/^check\s+\d{4,}/i.test(raw)||/^find\s+\d{4,}/i.test(raw)) {
     const idM = raw.match(/\b(\d{5,10})\b/);
     if(idM) {
       // ID provided inline — look up directly
@@ -1624,9 +1646,11 @@ function processCmd(msg, raw) {
     return;
   }
   // Catch bare numeric IDs typed directly
-  if(/^\d{5,10}$/.test(raw.trim())) {
-    const emp = allEmployees.find(e=>String(e.emp_id)===raw.trim());
-    if(!emp){addBotMsg(`⚠️ Employee <b>${raw.trim()}</b> not found in this account.`);return;}
+  if(/^\d{5,10}$/.test(raw.trim()) || /^(?:check|find|lookup|employee)\s+(\d{5,10})$/i.test(raw.trim())) {
+    const bareIdMatch = raw.trim().match(/\d{5,10}/);
+    const bareId = bareIdMatch ? bareIdMatch[0] : raw.trim();
+    const emp = allEmployees.find(e=>String(e.emp_id)===bareId);
+    if(!emp){addBotMsg(`⚠️ Employee <b>${bareId}</b> not found in this account.`);return;}
     addBotMsg(`<b>👤 ${emp.emp_name||"—"}</b><br>━━━━━━━━━━━━━━<br>
       ID: <b>${emp.emp_id}</b><br>Role: ${emp.designation||"—"}<br>
       Location: ${emp.location||"—"}<br>Status: <b>${emp.onboarding_status||"—"}</b><br>
