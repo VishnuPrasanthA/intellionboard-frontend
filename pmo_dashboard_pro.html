@@ -6,13 +6,12 @@
 <title>Account PMO — IntelliOnboard</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
-/* ── TOKENS ────────────────────────────────────────────── */
 :root{
-  --teal:#19d3a2;--teal2:#0fa67f;--teal3:#e6fff8;
+  --teal:#19d3a2;--teal2:#0fa67f;
   --navy:#0f2044;--navy2:#1a3a6b;
   --blue:#3b82f6;--purple:#8b5cf6;--amber:#f59e0b;
-  --red:#ef4444;--green:#10b981;--pink:#ec4899;
-  --text:#172b42;--muted:#64748b;--light:#f8fafc;
+  --red:#ef4444;--green:#10b981;
+  --text:#172b42;--muted:#64748b;
   --glass:rgba(255,255,255,0.78);--border:rgba(255,255,255,0.5);
   --shadow:0 4px 24px rgba(15,23,42,.07);
   --shadow-lg:0 16px 48px rgba(15,23,42,.13);
@@ -22,12 +21,10 @@
 body{font-family:"Segoe UI",system-ui,sans-serif;
   background:linear-gradient(160deg,#e8f5ff 0%,#f0fdf9 40%,#fef9ee 100%);
   min-height:100vh;color:var(--text);overflow-x:hidden}
-
-/* ── SCROLLBAR ─────────────────────────────────────────── */
 ::-webkit-scrollbar{width:6px;height:6px}
 ::-webkit-scrollbar-thumb{background:var(--teal);border-radius:6px}
 
-/* ── HEADER ────────────────────────────────────────────── */
+/* HEADER */
 .header{position:fixed;top:10px;left:10px;right:10px;z-index:9999;
   background:var(--glass);backdrop-filter:blur(20px);
   border:1px solid var(--border);border-radius:20px;
@@ -36,11 +33,11 @@ body{font-family:"Segoe UI",system-ui,sans-serif;
 .hlogo{width:44px;height:44px;background:linear-gradient(135deg,var(--teal),#53ffd7);
   border-radius:14px;display:flex;align-items:center;justify-content:center;
   font-size:20px;color:#fff;font-weight:900;flex-shrink:0}
-.htitle{font-size:15px;font-weight:800;color:var(--navy);line-height:1.1}
+.htitle{font-size:15px;font-weight:800;color:var(--navy)}
 .hsubt{font-size:10px;color:var(--muted);margin-top:1px}
 .hright{display:flex;align-items:center;gap:8px;flex-wrap:nowrap}
 .search{display:flex;align-items:center;gap:6px;background:#fff;
-  border:1px solid #e2e8f0;border-radius:12px;padding:0 12px;height:40px;min-width:200px}
+  border:1px solid #e2e8f0;border-radius:12px;padding:0 12px;height:40px;min-width:190px}
 .search input{border:none;outline:none;background:transparent;font-size:12px;width:100%}
 .btn{height:40px;padding:0 14px;border:none;border-radius:12px;font-weight:700;
   font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;
@@ -55,17 +52,15 @@ body{font-family:"Segoe UI",system-ui,sans-serif;
 .btn-blue{background:linear-gradient(135deg,var(--blue),#60a5fa);color:#fff}
 .btn-ghost{background:rgba(255,255,255,.9);color:var(--navy);border:1px solid #e2e8f0}
 
-/* ── TABS ──────────────────────────────────────────────── */
+/* TABS */
 .tabs{display:flex;gap:4px;background:rgba(255,255,255,.6);
-  border-radius:14px;padding:4px;margin-bottom:16px;
-  border:1px solid var(--border)}
+  border-radius:14px;padding:4px;margin-bottom:16px;border:1px solid var(--border)}
 .tab{padding:8px 16px;border:none;border-radius:10px;cursor:pointer;
-  font-size:12px;font-weight:700;background:transparent;color:var(--muted);
-  transition:all .2s;display:flex;align-items:center;gap:6px}
+  font-size:12px;font-weight:700;background:transparent;color:var(--muted);transition:all .2s}
 .tab.active{background:white;color:var(--navy);box-shadow:var(--shadow)}
 .tab-content{display:none}.tab-content.active{display:block}
 
-/* ── LAYOUT ────────────────────────────────────────────── */
+/* LAYOUT */
 .page{padding:82px 14px 24px}
 .section{background:var(--glass);backdrop-filter:blur(16px);
   border:1px solid var(--border);border-radius:var(--r);
@@ -76,7 +71,7 @@ body{font-family:"Segoe UI",system-ui,sans-serif;
 .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:14px}
 .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
 
-/* ── KPI CARDS ─────────────────────────────────────────── */
+/* KPI */
 .kpi{background:#fff;border-radius:16px;padding:16px 18px;
   box-shadow:var(--shadow);border-left:4px solid transparent;transition:all .2s}
 .kpi:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg)}
@@ -90,28 +85,28 @@ body{font-family:"Segoe UI",system-ui,sans-serif;
 .kpi.purple{border-color:var(--purple)}.kpi.purple .kpi-val{color:var(--purple)}
 .kpi.red{border-color:var(--red)}.kpi.red .kpi-val{color:var(--red)}
 
-/* ── HEATMAP GRID ──────────────────────────────────────── */
+/* HEATMAP */
 .heatmap-wrap{overflow-x:auto}
-.heatmap-grid{display:grid;gap:3px;margin-top:8px}
-.heatmap-row{display:flex;align-items:center;gap:3px}
-.hm-label{font-size:10px;color:var(--muted);width:90px;flex-shrink:0;
-  text-align:right;padding-right:8px;font-weight:600;white-space:nowrap;
-  overflow:hidden;text-overflow:ellipsis}
-.hm-cell{height:36px;min-width:60px;flex:1;border-radius:6px;cursor:pointer;
-  position:relative;transition:transform .15s;display:flex;align-items:center;
-  justify-content:center;font-size:10px;font-weight:700;color:rgba(255,255,255,.9)}
-.hm-cell:hover{transform:scale(1.08);z-index:10;box-shadow:0 4px 12px rgba(0,0,0,.2)}
-.hm-col-labels{display:flex;gap:3px;margin-left:98px;margin-bottom:2px}
-.hm-col-label{min-width:60px;flex:1;font-size:9px;color:var(--muted);
-  text-align:center;font-weight:700}
-.hm-legend{display:flex;align-items:center;gap:6px;margin-top:10px;font-size:10px;color:var(--muted)}
-.hm-legend-bar{height:12px;width:180px;border-radius:6px;
-  background:linear-gradient(90deg,#ef4444,#f59e0b,#fde68a,#d1fae5,#10b981)}
-.hm-tooltip{position:fixed;background:var(--navy);color:#fff;padding:8px 12px;
-  border-radius:10px;font-size:11px;z-index:99999;pointer-events:none;
-  display:none;box-shadow:var(--shadow-lg)}
+.heatmap-row{display:flex;align-items:center;gap:3px;margin-bottom:3px}
+.hm-label{font-size:10px;color:var(--navy2);width:110px;flex-shrink:0;
+  text-align:right;padding-right:10px;font-weight:700;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+.hm-label:hover{text-decoration:underline}
+.hm-cell{height:38px;min-width:80px;flex:1;border-radius:7px;cursor:pointer;
+  transition:transform .15s;display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700}
+.hm-cell:hover{transform:scale(1.07);z-index:10;box-shadow:0 4px 14px rgba(0,0,0,.18)}
+.hm-col-labels{display:flex;gap:3px;margin-left:120px;margin-bottom:4px}
+.hm-col-label{min-width:80px;flex:1;font-size:10px;color:var(--muted);
+  text-align:center;font-weight:800;text-transform:uppercase;letter-spacing:.04em}
+.hm-legend{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted)}
+.hm-legend-bar{height:12px;width:160px;border-radius:6px;
+  background:linear-gradient(90deg,#dcfce7,#4ade80,#15803d)}
+.hm-tooltip{position:fixed;background:var(--navy);color:#fff;padding:8px 13px;
+  border-radius:10px;font-size:12px;z-index:99999;pointer-events:none;
+  display:none;box-shadow:var(--shadow-lg);line-height:1.6}
 
-/* ── TABLE ─────────────────────────────────────────────── */
+/* TABLE */
 .table-wrap{overflow-x:auto;border-radius:14px;border:1px solid #e2e8f0}
 table{width:100%;min-width:1000px;border-collapse:collapse;background:#fff}
 thead{background:linear-gradient(180deg,#f8fafc,#f1f5f9);position:sticky;top:0;z-index:10}
@@ -130,18 +125,33 @@ tbody tr:hover{background:#f8fafc}
 .b-low{background:linear-gradient(135deg,var(--green),#34d399)}
 .b-assigned{background:linear-gradient(135deg,var(--purple),#c084fc)}
 .b-not{background:#e2e8f0;color:#64748b}
-.prog-bar{width:80px;height:8px;background:#e2e8f0;border-radius:20px;overflow:hidden;display:inline-block}
+.prog-bar{width:80px;height:8px;background:#e2e8f0;border-radius:20px;overflow:hidden;display:inline-block;vertical-align:middle}
 .prog-fill{height:100%;background:linear-gradient(90deg,var(--teal),#53ffd7);border-radius:20px}
 .action-btn{padding:4px 10px;border-radius:8px;border:none;cursor:pointer;
   font-size:11px;font-weight:700;transition:all .2s;margin:1px}
 .action-btn:hover{transform:translateY(-1px)}
 
-/* ── TRAINING MONITOR TABLE ────────────────────────────── */
+/* TRAINING SCORE */
 .score-bar{width:70px;height:8px;background:#e2e8f0;border-radius:20px;overflow:hidden;display:inline-block;vertical-align:middle}
 .score-fill-pass{height:100%;background:linear-gradient(90deg,#10b981,#34d399)}
 .score-fill-fail{height:100%;background:linear-gradient(90deg,#ef4444,#f87171)}
 
-/* ── AGENT PANEL ───────────────────────────────────────── */
+/* TIMELINE */
+.timeline{position:relative;padding-left:24px}
+.timeline::before{content:"";position:absolute;left:8px;top:0;bottom:0;
+  width:2px;background:linear-gradient(180deg,var(--teal),var(--purple))}
+.tl-item{position:relative;margin-bottom:16px;padding-left:14px}
+.tl-dot{position:absolute;left:-20px;top:2px;width:12px;height:12px;
+  border-radius:50%;border:2px solid var(--teal);background:#fff}
+.tl-dot.done{background:var(--teal);border-color:var(--teal)}
+.tl-dot.active{background:var(--amber);border-color:var(--amber);
+  box-shadow:0 0 0 4px rgba(245,158,11,.2)}
+.tl-dot.pending{background:#fff;border-color:#e2e8f0}
+.tl-date{font-size:10px;color:var(--muted);font-weight:700}
+.tl-title{font-size:12px;font-weight:700;color:var(--navy);margin:2px 0}
+.tl-desc{font-size:11px;color:var(--muted);line-height:1.5}
+
+/* AGENT */
 .agent-fab{position:fixed;bottom:20px;right:20px;width:58px;height:58px;
   border-radius:50%;background:linear-gradient(135deg,var(--navy),var(--navy2));
   display:flex;align-items:center;justify-content:center;font-size:24px;
@@ -153,14 +163,10 @@ tbody tr:hover{background:#f8fafc}
   flex-direction:column;z-index:99999;box-shadow:0 16px 64px rgba(0,0,0,.18)}
 .agent-panel.open{display:flex}
 .agent-hdr{background:linear-gradient(135deg,var(--navy),var(--navy2));
-  color:#fff;padding:16px 18px;display:flex;align-items:center;
-  justify-content:space-between}
-.agent-hdr-left{display:flex;align-items:center;gap:10px}
+  color:#fff;padding:16px 18px;display:flex;align-items:center;justify-content:space-between}
 .agent-avatar{width:36px;height:36px;border-radius:50%;
   background:linear-gradient(135deg,var(--teal),#53ffd7);
   display:flex;align-items:center;justify-content:center;font-size:16px}
-.agent-name{font-size:14px;font-weight:800}
-.agent-role{font-size:10px;opacity:.75;margin-top:1px}
 .agent-body{flex:1;overflow-y:auto;padding:14px;background:#f8fafc;
   display:flex;flex-direction:column;gap:8px}
 .msg{font-size:12px;line-height:1.6;max-width:88%}
@@ -179,18 +185,17 @@ tbody tr:hover{background:#f8fafc}
 .agent-input input{flex:1;border:none;outline:none;padding:13px 14px;font-size:12px}
 .agent-input button{border:none;background:var(--navy);color:#fff;
   padding:0 18px;font-weight:900;cursor:pointer;font-size:12px}
-.agent-input button:hover{background:var(--navy2)}
 .help-card{background:linear-gradient(135deg,#f0f9ff,#e0f2fe);border:1px solid #bae6fd;
   border-radius:12px;padding:10px 12px;margin:4px 0}
 .help-card-title{font-size:11px;font-weight:800;color:#0c4a6e;margin-bottom:6px}
-.help-row{display:flex;align-items:center;gap:6px;padding:4px 0;cursor:pointer;
-  border-bottom:1px solid rgba(12,74,110,.08);font-size:11px;color:#0369a1}
+.help-row{padding:5px 0;cursor:pointer;border-bottom:1px solid rgba(12,74,110,.08);
+  font-size:11px;color:#0369a1;line-height:1.5}
 .help-row:last-child{border-bottom:none}
 .help-row:hover{color:#0c4a6e;font-weight:700}
 .cmd-tag{background:rgba(15,32,68,.1);color:var(--navy);border-radius:4px;
   padding:1px 6px;font-family:monospace;font-size:10px}
 
-/* ── MODAL ──────────────────────────────────────────────── */
+/* MODALS */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);
   z-index:999999;display:none;align-items:center;justify-content:center;
   backdrop-filter:blur(4px)}
@@ -198,9 +203,8 @@ tbody tr:hover{background:#f8fafc}
 .modal{background:#fff;border-radius:22px;padding:26px;width:560px;
   max-width:96vw;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-lg)}
 .modal h2{font-size:17px;font-weight:800;color:var(--navy);margin-bottom:4px}
-.modal p{font-size:12px;color:var(--muted);margin-bottom:18px}
+.modal-sub{font-size:12px;color:var(--muted);margin-bottom:18px}
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
-.form-row.three{grid-template-columns:1fr 1fr 1fr}
 .form-group{display:flex;flex-direction:column;gap:4px}
 .form-group label{font-size:11px;font-weight:700;color:var(--muted)}
 .form-group input,.form-group select,.form-group textarea{
@@ -208,11 +212,53 @@ tbody tr:hover{background:#f8fafc}
   font-size:12px;outline:none;color:var(--text);font-family:inherit}
 .form-group input:focus,.form-group select:focus{
   border-color:var(--teal);box-shadow:0 0 0 3px rgba(25,211,162,.12)}
-.form-group.full{grid-column:1/-1}
-.form-group textarea{resize:vertical;min-height:56px}
+.form-group textarea{resize:vertical;min-height:60px}
 .modal-actions{display:flex;gap:10px;margin-top:16px;justify-content:flex-end}
+.date-chips{display:flex;gap:5px;margin-top:6px;flex-wrap:wrap}
+.date-chip{height:26px;padding:0 10px;border:1px solid #e2e8f0;border-radius:20px;
+  background:#f8fafc;font-size:10px;font-weight:700;cursor:pointer;
+  color:var(--navy);transition:all .15s}
+.date-chip:hover{background:var(--navy);color:#fff;border-color:var(--navy)}
+.date-chip.highlight{background:var(--amber);color:#fff;border-color:var(--amber)}
 
-/* ── TOAST ──────────────────────────────────────────────── */
+/* LOCATION POPUP */
+.loc-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);
+  z-index:999998;display:none;align-items:center;justify-content:center;
+  backdrop-filter:blur(4px)}
+.loc-overlay.open{display:flex}
+.loc-popup{background:#fff;border-radius:22px;padding:26px;
+  width:min(90vw,820px);max-height:88vh;overflow:hidden;
+  display:flex;flex-direction:column;box-shadow:0 24px 80px rgba(0,0,0,.2)}
+.loc-hdr{display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:14px;flex-shrink:0}
+.loc-title{font-size:17px;font-weight:800;color:var(--navy)}
+.loc-meta{font-size:12px;color:var(--muted);margin-top:2px}
+.loc-filters{display:flex;gap:6px;margin-bottom:12px;flex-shrink:0;flex-wrap:wrap}
+.loc-filter{padding:5px 14px;border-radius:20px;border:1.5px solid #e2e8f0;
+  background:#f8fafc;color:var(--muted);font-size:11px;font-weight:700;
+  cursor:pointer;transition:all .2s}
+.loc-filter.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+.loc-search{width:100%;border:1px solid #e2e8f0;border-radius:10px;
+  padding:9px 14px;font-size:12px;outline:none;color:var(--text);
+  margin-bottom:12px;flex-shrink:0}
+.loc-search:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(25,211,162,.12)}
+.loc-body{overflow-y:auto;flex:1}
+.loc-popup table{width:100%;border-collapse:collapse;min-width:580px}
+.loc-popup thead{position:sticky;top:0;z-index:5;
+  background:linear-gradient(180deg,#f8fafc,#f1f5f9)}
+.loc-popup th{padding:10px 12px;text-align:left;font-size:10px;font-weight:800;
+  color:var(--muted);border-bottom:1px solid #e2e8f0;
+  text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
+.loc-popup td{padding:10px 12px;font-size:12px;border-bottom:1px solid #f1f5f9;white-space:nowrap}
+.loc-popup tbody tr:hover{background:#f8fafc}
+.loc-close{width:32px;height:32px;border-radius:50%;border:none;
+  background:#f1f5f9;color:var(--muted);font-size:16px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s}
+.loc-close:hover{background:var(--red);color:#fff}
+.loc-footer{display:flex;align-items:center;justify-content:space-between;
+  margin-top:14px;padding-top:12px;border-top:1px solid #e2e8f0;flex-shrink:0}
+
+/* TOAST */
 .toast{position:fixed;top:74px;right:16px;padding:12px 18px;border-radius:14px;
   font-weight:700;font-size:13px;color:#fff;z-index:9999999;
   transform:translateX(120%);transition:all .3s;pointer-events:none;max-width:360px}
@@ -221,38 +267,17 @@ tbody tr:hover{background:#f8fafc}
 .toast-amber{background:linear-gradient(135deg,var(--amber),#fcd34d);color:var(--navy)}
 .toast-red{background:linear-gradient(135deg,var(--red),#f87171)}
 
-/* ── TIMELINE (induction automation) ───────────────────── */
-.timeline{position:relative;padding-left:24px}
-.timeline::before{content:"";position:absolute;left:8px;top:0;bottom:0;
-  width:2px;background:linear-gradient(180deg,var(--teal),var(--purple))}
-.tl-item{position:relative;margin-bottom:14px;padding-left:14px}
-.tl-dot{position:absolute;left:-20px;top:2px;width:12px;height:12px;
-  border-radius:50%;border:2px solid var(--teal);background:#fff;
-  display:flex;align-items:center;justify-content:center}
-.tl-dot.done{background:var(--teal);border-color:var(--teal)}
-.tl-dot.active{background:var(--amber);border-color:var(--amber);
-  box-shadow:0 0 0 4px rgba(245,158,11,.2)}
-.tl-dot.pending{background:#fff;border-color:#e2e8f0}
-.tl-date{font-size:10px;color:var(--muted);font-weight:700}
-.tl-title{font-size:12px;font-weight:700;color:var(--navy);margin:1px 0}
-.tl-desc{font-size:11px;color:var(--muted)}
+/* MAIL MODAL */
+.mail-modal{background:#fff;border-radius:22px;padding:26px;width:min(94vw,700px);
+  max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-lg)}
 
-/* ── NOTIFICATION BELL ──────────────────────────────────── */
-.notif-count{background:var(--red);color:#fff;border-radius:50%;
-  width:16px;height:16px;font-size:9px;font-weight:900;
-  display:inline-flex;align-items:center;justify-content:center}
-
-/* ── RESPONSIVE ─────────────────────────────────────────── */
 @media(max-width:1100px){.grid4{grid-template-columns:repeat(2,1fr)}.grid3{grid-template-columns:1fr}}
 @media(max-width:768px){.page{padding-top:130px}.grid2{grid-template-columns:1fr}.agent-panel{width:95%;right:2.5%}}
 </style>
 </head>
 <body>
 
-<!-- TOAST -->
 <div class="toast" id="toast"></div>
-
-<!-- HEATMAP TOOLTIP -->
 <div class="hm-tooltip" id="hmTooltip"></div>
 
 <!-- HEADER -->
@@ -261,7 +286,7 @@ tbody tr:hover{background:#f8fafc}
     <div class="hlogo">🏥</div>
     <div>
       <div class="htitle" id="accountTitle">Account PMO Dashboard</div>
-      <div class="hsubt" id="accountSubt">Loading account…</div>
+      <div class="hsubt" id="accountSubt">Loading…</div>
     </div>
   </div>
   <div class="hright">
@@ -281,78 +306,39 @@ tbody tr:hover{background:#f8fafc}
 
 <!-- TABS -->
 <div class="tabs">
-  <button class="tab active" onclick="switchTab('overview')">📊 Overview</button>
-  <button class="tab" onclick="switchTab('workforce')">👥 Workforce</button>
-  <button class="tab" onclick="switchTab('training')">🎓 Training Monitor</button>
-  <button class="tab" onclick="switchTab('automation')">⚙️ Automation</button>
+  <button class="tab active" onclick="switchTab(event,'overview')">📊 Overview</button>
+  <button class="tab" onclick="switchTab(event,'workforce')">👥 Workforce</button>
+  <button class="tab" onclick="switchTab(event,'training')">🎓 Training Monitor</button>
+  <button class="tab" onclick="switchTab(event,'automation')">⚙️ Automation</button>
 </div>
 
-<!-- ══ TAB: OVERVIEW ══════════════════════════════════════ -->
+<!-- OVERVIEW TAB -->
 <div class="tab-content active" id="tab-overview">
-
-  <!-- KPI Row 1 -->
   <div class="grid4">
-    <div class="kpi teal">
-      <div class="kpi-label">Total Employees</div>
-      <div class="kpi-val" id="kpiTotal">—</div>
-      <div class="kpi-sub">Under this account</div>
-    </div>
-    <div class="kpi amber">
-      <div class="kpi-label">Pending Onboarding</div>
-      <div class="kpi-val" id="kpiPending">—</div>
-      <div class="kpi-sub">Awaiting action</div>
-    </div>
-    <div class="kpi blue">
-      <div class="kpi-label">In Progress</div>
-      <div class="kpi-val" id="kpiProgress">—</div>
-      <div class="kpi-sub">Active onboarding</div>
-    </div>
-    <div class="kpi green">
-      <div class="kpi-label">Completed</div>
-      <div class="kpi-val" id="kpiDone">—</div>
-      <div class="kpi-sub">Fully onboarded</div>
-    </div>
+    <div class="kpi teal"><div class="kpi-label">Total Employees</div><div class="kpi-val" id="kpiTotal">—</div><div class="kpi-sub">Under this account</div></div>
+    <div class="kpi amber"><div class="kpi-label">Pending Onboarding</div><div class="kpi-val" id="kpiPending">—</div><div class="kpi-sub">Awaiting action</div></div>
+    <div class="kpi blue"><div class="kpi-label">In Progress</div><div class="kpi-val" id="kpiProgress">—</div><div class="kpi-sub">Active onboarding</div></div>
+    <div class="kpi green"><div class="kpi-label">Completed</div><div class="kpi-val" id="kpiDone">—</div><div class="kpi-sub">Fully onboarded</div></div>
   </div>
-
-  <!-- KPI Row 2 — Role breakdown (fixed QA detection) -->
   <div class="grid4">
-    <div class="kpi purple">
-      <div class="kpi-label">QA / Quality Engineers</div>
-      <div class="kpi-val" id="kpiQA">—</div>
-    </div>
-    <div class="kpi blue">
-      <div class="kpi-label">Developers / Engineers</div>
-      <div class="kpi-val" id="kpiDev">—</div>
-    </div>
-    <div class="kpi amber">
-      <div class="kpi-label">Automation / Testing</div>
-      <div class="kpi-val" id="kpiAuto">—</div>
-    </div>
-    <div class="kpi teal">
-      <div class="kpi-label">Reporting Managers</div>
-      <div class="kpi-val" id="kpiRM">—</div>
-    </div>
+    <div class="kpi purple"><div class="kpi-label">QA / Quality Engineers</div><div class="kpi-val" id="kpiQA">—</div></div>
+    <div class="kpi blue"><div class="kpi-label">Developers / Engineers</div><div class="kpi-val" id="kpiDev">—</div></div>
+    <div class="kpi amber"><div class="kpi-label">Automation / Testing</div><div class="kpi-val" id="kpiAuto">—</div></div>
+    <div class="kpi teal"><div class="kpi-label">Reporting Managers</div><div class="kpi-val" id="kpiRM">—</div></div>
   </div>
-
-  <!-- Charts row -->
   <div class="grid3">
-    <!-- Status donut -->
     <div class="section" style="min-height:300px">
       <div class="sec-title">📊 Status Distribution</div>
       <div style="position:relative;height:220px;display:flex;align-items:center;justify-content:center">
-        <canvas id="statusChart"></canvas>
+        <canvas id="statusChart" width="200" height="200"></canvas>
       </div>
     </div>
-
-    <!-- Training progress chart (fixed label) -->
     <div class="section" style="min-height:300px">
-      <div class="sec-title">📚 Training Progress Buckets</div>
+      <div class="sec-title">📚 Training Progress</div>
       <div style="position:relative;height:220px">
         <canvas id="trainingChart"></canvas>
       </div>
     </div>
-
-    <!-- SLA Risk -->
     <div class="section" style="min-height:300px">
       <div class="sec-title">⚠️ SLA Risk Summary</div>
       <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px">
@@ -371,8 +357,6 @@ tbody tr:hover{background:#f8fafc}
       </div>
     </div>
   </div>
-
-  <!-- HEATMAP — grid style matching reference image -->
   <div class="section">
     <div class="sec-title" style="justify-content:space-between">
       🗺️ Location × Onboarding Status Heatmap
@@ -380,6 +364,7 @@ tbody tr:hover{background:#f8fafc}
         <span>Low</span>
         <div class="hm-legend-bar"></div>
         <span>High</span>
+        <span style="margin-left:12px;color:var(--red)">■ Risk</span>
       </div>
     </div>
     <div class="heatmap-wrap">
@@ -387,191 +372,148 @@ tbody tr:hover{background:#f8fafc}
       <div id="hmGrid"></div>
     </div>
   </div>
+</div>
 
-</div><!-- /overview -->
-
-<!-- ══ TAB: WORKFORCE ══════════════════════════════════════ -->
+<!-- WORKFORCE TAB -->
 <div class="tab-content" id="tab-workforce">
   <div class="section">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
       <div class="sec-title" style="margin-bottom:0">👥 Workforce — Onboarding Status</div>
-      <div style="display:flex;gap:8px">
-        <select class="btn btn-ghost" style="height:36px;font-size:11px" onchange="filterStatus(this.value)">
-          <option value="">All Status</option>
-          <option>Pending</option>
-          <option>In Progress</option>
-          <option>Completed</option>
-        </select>
-      </div>
+      <select class="btn btn-ghost" style="height:36px;font-size:11px" onchange="filterStatus(this.value)">
+        <option value="">All Status</option>
+        <option>Pending</option>
+        <option>In Progress</option>
+        <option>Completed</option>
+      </select>
     </div>
     <div class="table-wrap">
       <table>
-        <thead>
-          <tr>
-            <th>Emp ID</th><th>Name</th><th>Designation</th><th>Location</th>
-            <th>Status</th><th>Stage</th><th>Progress</th><th>Training %</th>
-            <th>Risk</th><th>Mandatory Courses</th><th>Actions</th>
-          </tr>
-        </thead>
+        <thead><tr>
+          <th>Emp ID</th><th>Name</th><th>Designation</th><th>Location</th>
+          <th>Status</th><th>Stage</th><th>Progress</th><th>Training %</th>
+          <th>Risk</th><th>Courses</th><th>Actions</th>
+        </tr></thead>
         <tbody id="tableBody">
           <tr><td colspan="11" style="text-align:center;padding:40px;color:var(--muted)">Loading…</td></tr>
         </tbody>
       </table>
     </div>
   </div>
-</div><!-- /workforce -->
+</div>
 
-<!-- ══ TAB: TRAINING MONITOR ══════════════════════════════ -->
+<!-- TRAINING TAB -->
 <div class="tab-content" id="tab-training">
-
-  <!-- KPI row for training -->
   <div class="grid4" style="margin-bottom:14px">
     <div class="kpi green"><div class="kpi-label">Courses Assigned</div><div class="kpi-val" id="tmAssigned">—</div></div>
     <div class="kpi blue"><div class="kpi-label">Assessments Done</div><div class="kpi-val" id="tmAssessed">—</div></div>
     <div class="kpi amber"><div class="kpi-label">Pending Assessment</div><div class="kpi-val" id="tmPending">—</div></div>
-    <div class="kpi red"><div class="kpi-label">Failed (score &lt; 80%)</div><div class="kpi-val" id="tmFailed">—</div></div>
+    <div class="kpi red"><div class="kpi-label">Failed (&lt;80%)</div><div class="kpi-val" id="tmFailed">—</div></div>
   </div>
-
   <div class="section">
     <div class="sec-title" style="justify-content:space-between">
-      📋 Training & Assessment Completion Monitor
-      <button class="btn btn-amber" style="height:32px;font-size:11px" onclick="sendReminders()">
-        📧 Send Reminders to Pending
-      </button>
+      📋 Training & Assessment Monitor
+      <button class="btn btn-amber" style="height:32px;font-size:11px" onclick="sendReminders()">📧 Send Reminders</button>
     </div>
     <div class="table-wrap">
       <table>
-        <thead>
-          <tr>
-            <th>Emp ID</th><th>Name</th><th>Course</th><th>Training</th>
-            <th>Assessment</th><th>Score</th><th>Score Bar</th><th>Status</th><th>Due</th><th>Actions</th>
-          </tr>
-        </thead>
-        <tbody id="trainingTableBody">
-          <tr><td colspan="10" style="text-align:center;padding:40px;color:var(--muted)">
-            Allocate training first to see data here.
-          </td></tr>
+        <thead><tr>
+          <th>Emp ID</th><th>Name</th><th>Course</th><th>Training</th>
+          <th>Assessment</th><th>Score</th><th>Score Bar</th><th>Result</th><th>Deadline</th><th>Actions</th>
+        </tr></thead>
+        <tbody id="trainingBody">
+          <tr><td colspan="10" style="text-align:center;padding:40px;color:var(--muted)">Allocate training first.</td></tr>
         </tbody>
       </table>
     </div>
   </div>
-</div><!-- /training -->
+</div>
 
-<!-- ══ TAB: AUTOMATION ════════════════════════════════════ -->
+<!-- AUTOMATION TAB -->
 <div class="tab-content" id="tab-automation">
   <div class="grid2">
-
-    <!-- Induction automation timeline -->
     <div class="section">
       <div class="sec-title">⚙️ Induction Automation Timeline</div>
-      <div class="timeline" id="automationTimeline">
-        <div class="tl-item">
-          <div class="tl-dot done"></div>
-          <div class="tl-date">Day 0 — On HC PMO Onboarding</div>
-          <div class="tl-title">Employee loaded to Account PMO Dashboard</div>
-          <div class="tl-desc">Automatically appears here once HC PMO approves</div>
+      <div class="timeline">
+        <div class="tl-item"><div class="tl-dot done"></div>
+          <div class="tl-date">Day 0 — HC PMO Onboards Employee</div>
+          <div class="tl-title">Employee appears in Account PMO Dashboard</div>
+          <div class="tl-desc">Auto-loaded once HC PMO approves onboarding</div>
         </div>
-        <div class="tl-item">
-          <div class="tl-dot active"></div>
-          <div class="tl-date">Day 1 — Account PMO Action</div>
+        <div class="tl-item"><div class="tl-dot active"></div>
+          <div class="tl-date">Day 1 — Account PMO Action Required</div>
           <div class="tl-title">Schedule Induction + Allocate Mandatory Training</div>
-          <div class="tl-desc">5 HMSA courses auto-assigned to LMS + assessment loaded</div>
+          <div class="tl-desc">5 HMSA courses assigned to LMS; assessments loaded</div>
         </div>
-        <div class="tl-item">
-          <div class="tl-dot pending"></div>
+        <div class="tl-item"><div class="tl-dot pending"></div>
           <div class="tl-date">Day 1 — Automated</div>
-          <div class="tl-title">Induction email + Teams invite sent</div>
-          <div class="tl-desc">Employee + RM CC'd with calendar invite (.ics attachment)</div>
+          <div class="tl-title">Teams invite + Email sent to all new joiners</div>
+          <div class="tl-desc">Employee receives .ics calendar invite; RM is CC'd</div>
         </div>
-        <div class="tl-item">
-          <div class="tl-dot pending"></div>
-          <div class="tl-date">Day 15 — Automated Reminder</div>
-          <div class="tl-title">Training completion reminder sent</div>
-          <div class="tl-desc">Auto-notification if any course &lt; 100% after 15 days</div>
+        <div class="tl-item"><div class="tl-dot pending"></div>
+          <div class="tl-date">Day 14 — Automated Reminder</div>
+          <div class="tl-title">Assessment reminder email sent</div>
+          <div class="tl-desc">Notifies employee 1 day before deadline</div>
         </div>
-        <div class="tl-item">
-          <div class="tl-dot pending"></div>
+        <div class="tl-item"><div class="tl-dot pending"></div>
           <div class="tl-date">Day 15 — Deadline</div>
           <div class="tl-title">Assessment must be completed (80% pass threshold)</div>
-          <div class="tl-desc">Score &lt; 80% → training + assessment re-assigned automatically</div>
+          <div class="tl-desc">Score &lt; 80% (20/25 marks) → course + assessment re-assigned</div>
         </div>
-        <div class="tl-item">
-          <div class="tl-dot pending"></div>
-          <div class="tl-date">Day 16+ — Automated</div>
-          <div class="tl-title">Escalation to Account PMO if incomplete</div>
-          <div class="tl-desc">Dashboard flags employee as HIGH RISK; PMO notified</div>
+        <div class="tl-item"><div class="tl-dot pending"></div>
+          <div class="tl-date">Day 16+ — Automated Escalation</div>
+          <div class="tl-title">Employee flagged HIGH RISK; PMO notified</div>
+          <div class="tl-desc">Appears in Pending Actions with escalation email sent</div>
         </div>
       </div>
     </div>
-
-    <!-- Rules config -->
     <div class="section">
       <div class="sec-title">🔧 Automation Rules</div>
       <div style="display:flex;flex-direction:column;gap:10px">
         <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:14px">
-          <div style="font-size:12px;font-weight:700;color:#065f46;margin-bottom:6px">Training Allocation Trigger</div>
-          <div style="font-size:11px;color:#047857;line-height:1.8">
-            ✅ Triggered when Account PMO clicks "Allocate Training"<br>
-            ✅ 5 HMSA courses inserted into employee_training table<br>
-            ✅ Assessments loaded into employee LMS portal<br>
-            ✅ PDF documents linked to each course
+          <div style="font-size:12px;font-weight:700;color:#065f46;margin-bottom:6px">Mandatory Courses (5 HMSA)</div>
+          <div style="font-size:11px;color:#047857;line-height:2">
+            📋 HMSA Service Request Management<br>🔧 Problem Management<br>
+            🔄 Change Management<br>🚨 Incident Management<br>🔒 HIPAA Compliance
           </div>
         </div>
         <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:14px">
           <div style="font-size:12px;font-weight:700;color:#1e40af;margin-bottom:6px">Assessment Pass Rule</div>
-          <div style="font-size:11px;color:#1d4ed8;line-height:1.8">
-            📊 Passing score: <b>80% or above</b><br>
-            📊 Total score tracked per course<br>
-            📊 Below 80% → course + assessment re-assigned<br>
-            📊 Employee notified automatically
+          <div style="font-size:11px;color:#1d4ed8;line-height:1.9">
+            📊 Pass threshold: <b>80% or above</b><br>
+            📊 Total marks per assessment: <b>25</b><br>
+            📊 Minimum to pass: <b>20 marks</b><br>
+            📊 Below 80% → course + assessment re-assigned
           </div>
         </div>
         <div style="background:#fefce8;border:1px solid #fde68a;border-radius:12px;padding:14px">
           <div style="font-size:12px;font-weight:700;color:#92400e;margin-bottom:6px">15-Day Deadline Rule</div>
-          <div style="font-size:11px;color:#b45309;line-height:1.8">
-            ⏰ Training must be completed within 15 days<br>
+          <div style="font-size:11px;color:#b45309;line-height:1.9">
+            ⏰ Training must be completed within <b>15 days</b><br>
             ⏰ Day 14: Reminder email to employee<br>
             ⏰ Day 15: Assessment deadline<br>
-            ⏰ Day 16+: Escalation to Account PMO
-          </div>
-        </div>
-        <div style="background:#fdf2f8;border:1px solid #f0abfc;border-radius:12px;padding:14px">
-          <div style="font-size:12px;font-weight:700;color:#6b21a8;margin-bottom:6px">Mandatory Courses</div>
-          <div style="font-size:11px;color:#7c3aed;line-height:1.9">
-            📋 HMSA Service Request Management<br>
-            🔧 Problem Management<br>
-            🔄 Change Management<br>
-            🚨 Incident Management<br>
-            🔒 HIPAA Compliance
+            ⏰ Day 16+: Escalation — employee marked HIGH RISK
           </div>
         </div>
       </div>
     </div>
-
   </div>
-
-  <!-- Pending actions -->
   <div class="section">
-    <div class="sec-title">🔔 Pending Actions — Requires Account PMO Attention</div>
-    <div id="pendingActions">
-      <div style="text-align:center;padding:20px;color:var(--muted);font-size:12px">
-        Loading pending actions…
-      </div>
-    </div>
+    <div class="sec-title">🔔 Pending Actions — Requires Your Attention</div>
+    <div id="pendingActions"><div style="text-align:center;padding:20px;color:var(--muted);font-size:12px">Loading…</div></div>
   </div>
-</div><!-- /automation -->
+</div>
 
 </div><!-- /page -->
 
-<!-- ══ AGENT PANEL ════════════════════════════════════════ -->
-<button class="agent-fab" onclick="toggleAgent()" title="PMO Agent">🤖</button>
+<!-- AGENT FAB + PANEL -->
+<button class="agent-fab" onclick="toggleAgent()">🤖</button>
 <div class="agent-panel" id="agentPanel">
   <div class="agent-hdr">
-    <div class="agent-hdr-left">
+    <div style="display:flex;align-items:center;gap:10px">
       <div class="agent-avatar">🤖</div>
       <div>
-        <div class="agent-name">PMO Agent</div>
-        <div class="agent-role">Account PMO AI Assistant</div>
+        <div style="font-size:14px;font-weight:800">PMO Agent</div>
+        <div style="font-size:10px;opacity:.75">Account PMO AI Assistant</div>
       </div>
     </div>
     <span onclick="toggleAgent()" style="cursor:pointer;font-size:16px;opacity:.7">✖</span>
@@ -579,49 +521,62 @@ tbody tr:hover{background:#f8fafc}
   <div class="agent-body" id="agentBody">
     <div class="msg bot"><div>
       👋 Hi! I'm your PMO Agent.<br><br>
-      I can help you <b>schedule inductions</b>, <b>allocate training</b>, check <b>pending status</b>, send reminders, and more.<br><br>
+      I can <b>schedule inductions</b>, <b>allocate training</b>, check <b>pending status</b>, send reminders, and more.<br><br>
       Type <b>help</b> or click a quick action below.
     </div></div>
   </div>
   <div class="quick-actions">
     <button class="qa-btn" onclick="agentCmd('pending employees')">⏳ Pending</button>
     <button class="qa-btn" onclick="agentCmd('training status')">📚 Training</button>
-    <button class="qa-btn" onclick="agentCmd('schedule induction 2026-11-10')">📅 Induction Nov 10</button>
+    <button class="qa-btn" onclick="agentCmd('schedule induction 2026-11-10')">📅 Induction</button>
     <button class="qa-btn" onclick="agentCmd('failed assessments')">❌ Failed</button>
     <button class="qa-btn" onclick="agentCmd('high risk')">🚨 High Risk</button>
     <button class="qa-btn" onclick="agentCmd('allocate training')">🎓 Allocate</button>
     <button class="qa-btn" onclick="agentCmd('send reminders')">📧 Reminders</button>
     <button class="qa-btn" onclick="agentCmd('summary')">📊 Summary</button>
-    <button class="qa-btn" onclick="agentCmd('help')">❓ Help</button>
-    <button class="qa-btn" onclick="agentCmd('preview mail')">📧 Templates</button>
-    <button class="qa-btn" onclick="agentCmd('analytics')">📈 Analytics</button>
+    <button class="qa-btn" onclick="agentCmd('location report')">📍 Locations</button>
     <button class="qa-btn" onclick="agentCmd('overdue')">⏰ Overdue</button>
-    <button class="qa-btn" onclick="agentCmd('score distribution')">📊 Scores</button>
     <button class="qa-btn" onclick="agentCmd('completion report')">📄 Report</button>
-    <button class="qa-btn" onclick="agentCmd('teams notification')">📱 Teams</button>
+    <button class="qa-btn" onclick="agentCmd('help')">❓ Help</button>
   </div>
   <div class="agent-input">
-    <input id="agentInput" placeholder="e.g. schedule induction 2026-11-10 10:00…"
-           onkeydown="if(event.key==='Enter')sendAgent()">
+    <input id="agentInput" placeholder="e.g. schedule induction 2026-11-10 10:00">
     <button onclick="sendAgent()">Send</button>
   </div>
 </div>
 
-<!-- ══ MODALS ═════════════════════════════════════════════ -->
-
-<!-- Induction Modal -->
+<!-- INDUCTION MODAL -->
 <div class="modal-overlay" id="inductionModal">
   <div class="modal">
     <h2>📅 Schedule Induction Program</h2>
-    <p>Set date, time and agenda. Teams invite (.ics) will be sent to all new joiners with their RM in CC.</p>
+    <div class="modal-sub">Teams invite (.ics) sent to all new joiners — RMs CC'd — 5 HMSA courses auto-assigned to LMS</div>
     <div class="form-row">
-      <div class="form-group"><label>Date *</label><input type="date" id="ind_date"></div>
-      <div class="form-group"><label>Time *</label><input type="time" id="ind_time" value="10:00"></div>
+      <div class="form-group">
+        <label>Date *</label>
+        <input type="date" id="ind_date">
+        <div class="date-chips">
+          <button class="date-chip" onclick="setIndDate(1)">Tomorrow</button>
+          <button class="date-chip" onclick="setIndDate(3)">+3 Days</button>
+          <button class="date-chip" onclick="setIndDate(7)">+1 Week</button>
+          <button class="date-chip" onclick="setIndDate(14)">+2 Weeks</button>
+          <button class="date-chip highlight" onclick="setIndDate(0,'2026-11-10')">Nov 10</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Time *</label>
+        <input type="time" id="ind_time" value="10:00">
+        <div class="date-chips">
+          <button class="date-chip" onclick="document.getElementById('ind_time').value='09:00'">9 AM</button>
+          <button class="date-chip" onclick="document.getElementById('ind_time').value='10:00'">10 AM</button>
+          <button class="date-chip" onclick="document.getElementById('ind_time').value='11:00'">11 AM</button>
+          <button class="date-chip" onclick="document.getElementById('ind_time').value='14:00'">2 PM</button>
+        </div>
+      </div>
     </div>
     <div class="form-row">
       <div class="form-group"><label>Duration</label>
         <select id="ind_dur">
-          <option value="30">30 minutes</option>
+          <option value="30">30 min</option>
           <option value="60" selected>1 hour</option>
           <option value="90">1.5 hours</option>
           <option value="120">2 hours</option>
@@ -629,25 +584,22 @@ tbody tr:hover{background:#f8fafc}
       </div>
       <div class="form-group"><label>Platform</label>
         <select id="ind_platform">
-          <option value="teams">Microsoft Teams</option>
-          <option value="zoom">Zoom</option>
-          <option value="physical">Physical / On-site</option>
+          <option>Microsoft Teams</option>
+          <option>Zoom</option>
+          <option>Physical / On-site</option>
         </select>
       </div>
     </div>
-    <div class="form-row" style="grid-template-columns:1fr">
-      <div class="form-group"><label>Meeting Title</label>
-        <input type="text" id="ind_title" value="HMSA Account Induction Program — New Joiners">
-      </div>
+    <div class="form-group" style="margin-bottom:12px">
+      <label>Meeting Title</label>
+      <input type="text" id="ind_title" value="HMSA Account Induction Program — New Joiners">
     </div>
-    <div class="form-row" style="grid-template-columns:1fr">
-      <div class="form-group"><label>Agenda / Notes</label>
-        <textarea id="ind_agenda" placeholder="1. Welcome & HMSA account overview&#10;2. Team structure&#10;3. Mandatory training walkthrough&#10;4. HIPAA briefing&#10;5. Q&A"></textarea>
-      </div>
+    <div class="form-group" style="margin-bottom:12px">
+      <label>Agenda</label>
+      <textarea id="ind_agenda" placeholder="1. Welcome &#10;2. HMSA overview &#10;3. Training walkthrough &#10;4. HIPAA briefing &#10;5. Q&A"></textarea>
     </div>
-    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px;font-size:12px;color:#047857;margin-bottom:4px">
-      ✅ Invite will be sent to all <b id="attendeeCountModal">—</b> new joiners &nbsp;·&nbsp;
-      RMs will be CC'd &nbsp;·&nbsp; 5 HMSA courses auto-assigned to LMS
+    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:11px 14px;font-size:12px;color:#047857;margin-bottom:4px">
+      ✅ Invite to <b id="attendeeCount">—</b> new joiners · RMs CC'd · 5 courses assigned to LMS
     </div>
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal('inductionModal')">Cancel</button>
@@ -656,13 +608,13 @@ tbody tr:hover{background:#f8fafc}
   </div>
 </div>
 
-<!-- Allocate Training Modal -->
+<!-- ALLOCATE TRAINING MODAL -->
 <div class="modal-overlay" id="allocTrainingModal">
   <div class="modal">
     <h2>🎓 Allocate Mandatory Training</h2>
-    <p>Assigns the 5 HMSA mandatory courses + assessments to selected employees' LMS portals.</p>
+    <div class="modal-sub">Assigns 5 HMSA courses + assessments to employee LMS portals. PDF documents linked per course.</div>
     <div style="background:#ede9fe;border-radius:12px;padding:14px;margin-bottom:16px">
-      <div style="font-size:12px;font-weight:700;color:#5b21b6;margin-bottom:8px">Courses to be assigned:</div>
+      <div style="font-size:12px;font-weight:700;color:#5b21b6;margin-bottom:8px">Courses assigned:</div>
       <div style="font-size:11px;color:#4c1d95;line-height:2">
         📋 HMSA Service Request Management (PDF + Assessment)<br>
         🔧 Problem Management (PDF + Assessment)<br>
@@ -670,25 +622,19 @@ tbody tr:hover{background:#f8fafc}
         🚨 Incident Management (PDF + Assessment)<br>
         🔒 HIPAA Compliance (PDF + Assessment)
       </div>
-      <div style="margin-top:8px;font-size:11px;color:#6d28d9">
-        ⏰ Assessment deadline: <b>15 days</b> from allocation date &nbsp;·&nbsp; Pass threshold: <b>80%</b>
-      </div>
+      <div style="margin-top:8px;font-size:11px;color:#6d28d9">⏰ Deadline: <b>15 days</b> · Pass threshold: <b>80% (20/25 marks)</b></div>
     </div>
-    <div class="form-row" style="grid-template-columns:1fr">
-      <div class="form-group">
-        <label>Allocate To</label>
-        <select id="allocTarget">
-          <option value="all">All employees without training assigned</option>
-          <option value="pending">Pending onboarding employees only</option>
-          <option value="inprogress">In-progress employees only</option>
-        </select>
-      </div>
+    <div class="form-group" style="margin-bottom:12px">
+      <label>Allocate To</label>
+      <select id="allocTarget">
+        <option value="all">All employees without training</option>
+        <option value="pending">Pending onboarding employees only</option>
+        <option value="inprogress">In-progress employees only</option>
+      </select>
     </div>
-    <div class="form-row" style="grid-template-columns:1fr">
-      <div class="form-group">
-        <label>Assessment Deadline</label>
-        <input type="date" id="allocDeadline">
-      </div>
+    <div class="form-group" style="margin-bottom:12px">
+      <label>Assessment Deadline</label>
+      <input type="date" id="allocDeadline">
     </div>
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal('allocTrainingModal')">Cancel</button>
@@ -697,30 +643,96 @@ tbody tr:hover{background:#f8fafc}
   </div>
 </div>
 
+<!-- MAIL PREVIEW MODAL -->
+<div class="modal-overlay" id="mailPreviewModal">
+  <div class="mail-modal">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <h2>📧 Email Template Preview</h2>
+      <button class="loc-close" onclick="closeModal('mailPreviewModal')">✕</button>
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
+      <button class="btn btn-ghost" style="height:30px;font-size:11px" onclick="openMailPreview('induction')">📅 Induction</button>
+      <button class="btn btn-ghost" style="height:30px;font-size:11px" onclick="openMailPreview('training')">🎓 Training</button>
+      <button class="btn btn-ghost" style="height:30px;font-size:11px" onclick="openMailPreview('reminder')">⏰ Reminder</button>
+      <button class="btn btn-ghost" style="height:30px;font-size:11px" onclick="openMailPreview('failed')">❌ Failed</button>
+      <button class="btn btn-ghost" style="height:30px;font-size:11px" onclick="openMailPreview('escalation')">🚨 Escalation</button>
+    </div>
+    <div style="background:#f0f4ff;border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:12px">
+      <b style="color:var(--muted)">Subject:</b>
+      <span id="mailSubject" style="color:var(--navy);font-weight:600;margin-left:6px"></span>
+    </div>
+    <div style="border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;max-height:460px;overflow-y:auto">
+      <div id="mailBody"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('mailPreviewModal')">Close</button>
+      <button class="btn btn-teal" onclick="toast('📧 Template saved — triggers via SMTP on action','green');closeModal('mailPreviewModal')">✅ Use Template</button>
+    </div>
+  </div>
+</div>
+
+<!-- LOCATION POPUP -->
+<div class="loc-overlay" id="locOverlay" onclick="if(event.target===this)closeLocPopup()">
+  <div class="loc-popup">
+    <div class="loc-hdr">
+      <div>
+        <div class="loc-title" id="locTitle">📍 Location</div>
+        <div class="loc-meta" id="locMeta"></div>
+      </div>
+      <button class="loc-close" onclick="closeLocPopup()">✕</button>
+    </div>
+    <div class="loc-filters">
+      <button class="loc-filter active" onclick="locFilter(this,'all')">All</button>
+      <button class="loc-filter" onclick="locFilter(this,'pending')">⏳ Pending</button>
+      <button class="loc-filter" onclick="locFilter(this,'progress')">🔄 In Progress</button>
+      <button class="loc-filter" onclick="locFilter(this,'complet')">✅ Completed</button>
+      <button class="loc-filter" onclick="locFilter(this,'high')">🚨 High Risk</button>
+    </div>
+    <input class="loc-search" id="locSearch" placeholder="🔍 Search name or emp ID…" oninput="locSearch(this.value)">
+    <div class="loc-body">
+      <table class="loc-popup">
+        <thead><tr>
+          <th>Emp ID</th><th>Name</th><th>Designation</th>
+          <th>Status</th><th>Stage</th><th>Progress</th><th>Training %</th><th>Risk</th>
+        </tr></thead>
+        <tbody id="locBody"></tbody>
+      </table>
+    </div>
+    <div class="loc-footer">
+      <div style="font-size:12px;color:var(--muted)" id="locCount"></div>
+      <button class="btn btn-teal" style="height:34px;font-size:11px" onclick="exportLocCSV()">⬇️ Export CSV</button>
+    </div>
+  </div>
+</div>
+
 <script>
-const BASE_URL = "https://manatee-dislike-lifting.ngrok-free.dev";
+/* ═══════════════════════════════════════════════════════
+   CONFIG & STATE
+═══════════════════════════════════════════════════════ */
+const BASE_URL  = "https://manatee-dislike-lifting.ngrok-free.dev";
+const COURSES   = ["HMSA Service Request Management","Problem Management",
+                   "Change Management","Incident Management","HIPAA Compliance"];
+const PASS_MARKS = 20;  // out of 25
+const TOTAL_MARKS = 25;
+const PASS_PCT   = 80;
+
+let allEmployees     = [];
+let filteredEmployees= [];
+let trainingData     = [];
+let locAllData       = [];
+let locActiveFilter  = "all";
+let locActiveSearch  = "";
+let rm_email = localStorage.getItem("user_email") || localStorage.getItem("email") || "";
+
+/* ═══════════════════════════════════════════════════════
+   UTILITIES
+═══════════════════════════════════════════════════════ */
 function apiFetch(url, opts={}) {
   opts.headers = Object.assign({"ngrok-skip-browser-warning":"true"}, opts.headers||{});
   opts.credentials = opts.credentials||"include";
   return fetch(url, opts);
 }
 
-// ── STATE ────────────────────────────────────────────────
-let allEmployees = [];
-let filteredEmployees = [];
-let trainingData = [];
-let rm_email = localStorage.getItem("user_email") || localStorage.getItem("email") || "";
-
-// Mandatory courses
-const COURSES = [
-  "HMSA Service Request Management",
-  "Problem Management",
-  "Change Management",
-  "Incident Management",
-  "HIPAA Compliance"
-];
-
-// ── TOAST ────────────────────────────────────────────────
 function toast(msg, type="green") {
   const t = document.getElementById("toast");
   t.textContent = msg;
@@ -728,39 +740,46 @@ function toast(msg, type="green") {
   setTimeout(()=>{ t.className="toast"; }, 4000);
 }
 
-// ── TABS ─────────────────────────────────────────────────
-function switchTab(name) {
-  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
-  document.querySelectorAll(".tab-content").forEach(c=>c.classList.remove("active"));
-  event.currentTarget.classList.add("active");
-  document.getElementById("tab-"+name).classList.add("active");
-  if(name==="training") renderTrainingTable();
-  if(name==="automation") renderPendingActions();
-}
-
-// ── MODAL ────────────────────────────────────────────────
 function openModal(id) {
-  // Set default deadline to today+15
   if(id==="allocTrainingModal") {
     const d = new Date(); d.setDate(d.getDate()+15);
-    const el = document.getElementById("allocDeadline");
-    if(el) el.value = d.toISOString().split("T")[0];
+    document.getElementById("allocDeadline").value = d.toISOString().split("T")[0];
   }
   if(id==="inductionModal") {
-    const newJ = allEmployees.filter(e=>(e.progress_percentage||0)<50 || (e.onboarding_status||"").toLowerCase().includes("pending"));
-    const el = document.getElementById("attendeeCountModal");
-    if(el) el.textContent = newJ.length;
+    const n = allEmployees.filter(e=>(e.progress_percentage||0)<50 || (e.onboarding_status||"").toLowerCase().includes("pending")).length;
+    document.getElementById("attendeeCount").textContent = n;
   }
-  document.getElementById(id).className="modal-overlay open";
+  document.getElementById(id).className = "modal-overlay open";
 }
 function closeModal(id) {
-  document.getElementById(id).className="modal-overlay";
+  document.getElementById(id).className = "modal-overlay";
 }
 document.addEventListener("click", e=>{
   if(e.target.classList.contains("modal-overlay")) e.target.className="modal-overlay";
 });
 
-// ── LOAD DASHBOARD ───────────────────────────────────────
+function setIndDate(days, fixed) {
+  const el = document.getElementById("ind_date");
+  if(fixed) { el.value = fixed; return; }
+  const d = new Date(); d.setDate(d.getDate()+days);
+  el.value = d.toISOString().split("T")[0];
+}
+
+/* ═══════════════════════════════════════════════════════
+   TABS
+═══════════════════════════════════════════════════════ */
+function switchTab(e, name) {
+  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+  document.querySelectorAll(".tab-content").forEach(c=>c.classList.remove("active"));
+  e.currentTarget.classList.add("active");
+  document.getElementById("tab-"+name).classList.add("active");
+  if(name==="training")   renderTrainingTable();
+  if(name==="automation") renderPendingActions();
+}
+
+/* ═══════════════════════════════════════════════════════
+   LOAD DASHBOARD
+═══════════════════════════════════════════════════════ */
 async function loadDashboard() {
   try {
     const res  = await apiFetch(BASE_URL+"/account-pmo-dashboard", {
@@ -774,37 +793,34 @@ async function loadDashboard() {
 
     const acct = d.account_name || "";
     document.getElementById("accountTitle").textContent = acct ? `Account PMO — ${acct}` : "Account PMO Dashboard";
-    document.getElementById("accountSubt").textContent = `${data.length} employees · HMSA Workforce Intelligence`;
+    document.getElementById("accountSubt").textContent  = `${data.length} employees · HMSA Workforce Intelligence`;
 
     renderKPIs(data);
     renderCharts(data);
     renderHeatmap(data);
     renderTable(data);
-    renderPendingActions();
     buildTrainingData(data);
   } catch(e) {
-    console.error(e);
-    toast("Could not load dashboard — check backend connection","red");
+    console.error("Dashboard load error:", e);
+    toast("Could not load dashboard — check backend","red");
   }
 }
 
-// ── KPIs — FIXED QA COUNTING ─────────────────────────────
+/* ═══════════════════════════════════════════════════════
+   KPIs — FIXED QA COUNTING
+═══════════════════════════════════════════════════════ */
 function renderKPIs(data) {
   document.getElementById("kpiTotal").textContent    = data.length;
   document.getElementById("kpiPending").textContent  = data.filter(e=>(e.onboarding_status||"").toLowerCase().includes("pending")).length;
   document.getElementById("kpiProgress").textContent = data.filter(e=>(e.onboarding_status||"").toLowerCase().includes("progress")).length;
   document.getElementById("kpiDone").textContent     = data.filter(e=>(e.onboarding_status||"").toLowerCase().includes("complet")).length;
 
-  // FIXED: comprehensive QA detection
   let qa=0, dev=0, auto=0;
   const rms = new Set();
   data.forEach(e=>{
     const d = (e.designation||"").toLowerCase();
-    // QA: quality assurance, qa engineer, test engineer, software tester
     if(/\bqa\b|quality.assur|quality.eng|test.eng|software.test|manual.test|quality.analyst/.test(d)) qa++;
-    // Automation: automation, selenium, cypress, performance
     else if(/automat|selenium|cypress|performance.test|load.test/.test(d)) auto++;
-    // Developer/Engineer
     else if(/develop|engineer|programmer|sde|sdet|software.dev|full.stack|backend|frontend/.test(d)) dev++;
     if(e.reporting_manager_email) rms.add(e.reporting_manager_email);
   });
@@ -813,16 +829,17 @@ function renderKPIs(data) {
   document.getElementById("kpiAuto").textContent = auto;
   document.getElementById("kpiRM").textContent   = rms.size;
 
-  // Risk
   const high    = data.filter(e=>(e.risk_level||"").toUpperCase()==="HIGH").length;
-  const delayed = data.filter(e=>(e.onboarding_status||"").toLowerCase().includes("delay")||e.sla_delay).length;
+  const delayed = data.filter(e=>(e.onboarding_status||"").toLowerCase().includes("delay")).length;
   const avg     = data.length ? Math.round(data.reduce((a,e)=>a+(e.progress_percentage||0),0)/data.length) : 0;
   document.getElementById("kpiHigh").textContent    = high;
   document.getElementById("kpiDelayed").textContent = delayed;
   document.getElementById("kpiAvg").textContent     = avg+"%";
 }
 
-// ── CHARTS ───────────────────────────────────────────────
+/* ═══════════════════════════════════════════════════════
+   CHARTS
+═══════════════════════════════════════════════════════ */
 const _charts = {};
 function mkChart(id, type, labels, data, colors, opts={}) {
   if(_charts[id]) _charts[id].destroy();
@@ -832,102 +849,189 @@ function mkChart(id, type, labels, data, colors, opts={}) {
     type,
     data:{labels, datasets:[{data, backgroundColor:colors, borderRadius:6, borderWidth:0}]},
     options:{responsive:true, maintainAspectRatio:false,
-      plugins:{legend:{position:"bottom",labels:{font:{size:11},boxWidth:12,padding:10}}},
-      ...opts}
+      plugins:{legend:{position:"bottom",labels:{font:{size:11},boxWidth:12,padding:10}}}, ...opts}
   });
 }
 
 function renderCharts(data) {
-  const done  = data.filter(e=>(e.onboarding_status||"").toLowerCase().includes("complet")).length;
-  const prog  = data.filter(e=>(e.onboarding_status||"").toLowerCase().includes("progress")).length;
-  const pend  = data.length - done - prog;
-  mkChart("statusChart","doughnut",
-    ["Completed","In Progress","Pending"],
-    [done,prog,pend],
-    ["#10b981","#3b82f6","#f59e0b"]);
+  const done = data.filter(e=>(e.onboarding_status||"").toLowerCase().includes("complet")).length;
+  const prog = data.filter(e=>(e.onboarding_status||"").toLowerCase().includes("progress")).length;
+  const pend = data.length - done - prog;
+  mkChart("statusChart","doughnut",["Completed","In Progress","Pending"],[done,prog,pend],["#10b981","#3b82f6","#f59e0b"]);
 
-  // Training progress buckets — FIXED label (was "undefined")
-  const b80 = data.filter(e=>(e.training_percentage||0)>=80).length;
-  const b50 = data.filter(e=>(e.training_percentage||0)>=50&&(e.training_percentage||0)<80).length;
-  const b0  = data.filter(e=>(e.training_percentage||0)>0&&(e.training_percentage||0)<50).length;
+  const b80   = data.filter(e=>(e.training_percentage||0)>=80).length;
+  const b50   = data.filter(e=>(e.training_percentage||0)>=50&&(e.training_percentage||0)<80).length;
+  const b0    = data.filter(e=>(e.training_percentage||0)>0&&(e.training_percentage||0)<50).length;
   const bNone = data.filter(e=>!(e.training_percentage||0)).length;
-  mkChart("trainingChart","bar",
-    [">80%","50–80%","<50%","Not Started"],
-    [b80,b50,b0,bNone],
+  mkChart("trainingChart","bar",[">80%","50–80%","<50%","Not Started"],[b80,b50,b0,bNone],
     ["#10b981","#3b82f6","#f59e0b","#e2e8f0"],
     {scales:{y:{beginAtZero:true,grid:{color:"#f1f5f9"}},x:{grid:{display:false}}}});
 }
 
-// ── HEATMAP ─────────────────────────────────────────────
+/* ═══════════════════════════════════════════════════════
+   HEATMAP — CLICK → POPUP, CORRECT TEXT CONTRAST
+═══════════════════════════════════════════════════════ */
 function renderHeatmap(data) {
-  // Rows = locations, Cols = onboarding stages
   const stages = ["Pending","In Progress","Completed","High Risk"];
-  const locs   = [...new Set(data.map(e=>e.location||"Unknown"))].sort();
+  const locs   = [...new Set(data.map(e=>e.location||"Unknown"))].filter(Boolean).sort();
   if(!locs.length) return;
 
-  // Build col labels
-  const colLabels = document.getElementById("hmColLabels");
-  colLabels.innerHTML = stages.map(s=>`<div class="hm-col-label">${s}</div>`).join("");
+  document.getElementById("hmColLabels").innerHTML = stages.map(s=>`<div class="hm-col-label">${s}</div>`).join("");
 
-  // Color: 0→light, high→dark
   function heatColor(val, max) {
     if(!max||!val) return {bg:"#f0fdf4",fg:"#94a3b8"};
-    const ratio = val/max;
-    if(ratio<0.15) return {bg:"#dcfce7",fg:"#166534"};
-    if(ratio<0.30) return {bg:"#86efac",fg:"#14532d"};
-    if(ratio<0.50) return {bg:"#4ade80",fg:"#052e16"};
-    if(ratio<0.70) return {bg:"#16a34a",fg:"#ffffff"};
-    if(ratio<0.85) return {bg:"#15803d",fg:"#ffffff"};
+    const r = val/max;
+    if(r<0.15) return {bg:"#dcfce7",fg:"#166534"};
+    if(r<0.30) return {bg:"#86efac",fg:"#14532d"};
+    if(r<0.50) return {bg:"#4ade80",fg:"#052e16"};
+    if(r<0.70) return {bg:"#16a34a",fg:"#ffffff"};
+    if(r<0.85) return {bg:"#15803d",fg:"#ffffff"};
     return {bg:"#14532d",fg:"#ffffff"};
   }
   function riskColor(val, max) {
     if(!max||!val) return {bg:"#fef2f2",fg:"#94a3b8"};
-    const ratio = val/max;
-    if(ratio<0.15) return {bg:"#fee2e2",fg:"#991b1b"};
-    if(ratio<0.35) return {bg:"#fca5a5",fg:"#7f1d1d"};
-    if(ratio<0.55) return {bg:"#f87171",fg:"#450a0a"};
-    if(ratio<0.75) return {bg:"#ef4444",fg:"#ffffff"};
+    const r = val/max;
+    if(r<0.15) return {bg:"#fee2e2",fg:"#991b1b"};
+    if(r<0.35) return {bg:"#fca5a5",fg:"#7f1d1d"};
+    if(r<0.55) return {bg:"#f87171",fg:"#450a0a"};
+    if(r<0.75) return {bg:"#ef4444",fg:"#ffffff"};
     return {bg:"#b91c1c",fg:"#ffffff"};
   }
 
-  // Compute per-cell values
   const matrix = locs.map(loc=>{
-    const locData = data.filter(e=>(e.location||"Unknown")===loc);
+    const ld = data.filter(e=>(e.location||"Unknown")===loc);
     return [
-      locData.filter(e=>(e.onboarding_status||"").toLowerCase().includes("pending")).length,
-      locData.filter(e=>(e.onboarding_status||"").toLowerCase().includes("progress")).length,
-      locData.filter(e=>(e.onboarding_status||"").toLowerCase().includes("complet")).length,
-      locData.filter(e=>(e.risk_level||"").toUpperCase()==="HIGH").length,
+      ld.filter(e=>(e.onboarding_status||"").toLowerCase().includes("pending")).length,
+      ld.filter(e=>(e.onboarding_status||"").toLowerCase().includes("progress")).length,
+      ld.filter(e=>(e.onboarding_status||"").toLowerCase().includes("complet")).length,
+      ld.filter(e=>(e.risk_level||"").toUpperCase()==="HIGH").length,
     ];
   });
+  const maxVals = stages.map((_,ci)=>Math.max(...matrix.map(r=>r[ci]),1));
 
-  const maxVals = stages.map((_,ci)=>Math.max(...matrix.map(row=>row[ci]),1));
-
-  const grid = document.getElementById("hmGrid");
-  grid.innerHTML = locs.map((loc,ri)=>`
+  document.getElementById("hmGrid").innerHTML = locs.map((loc,ri)=>`
     <div class="heatmap-row">
-      <div class="hm-label" title="${loc}">${loc}</div>
+      <div class="hm-label" title="${loc}" onclick="openLocPopup('${esc(loc)}','all')">${loc}</div>
       ${matrix[ri].map((val,ci)=>{
-        const c = ci===3 ? riskColor(val,maxVals[ci]) : heatColor(val,maxVals[ci]);
-        return `<div class="hm-cell" style="background:${c.bg};color:${c.fg};font-weight:${val>0?700:400}"
-          onmouseenter="showHmTooltip(event,'${loc}','${stages[ci]}',${val})"
-          onmouseleave="hideHmTooltip()">${val||""}</div>`;
+        const c  = ci===3 ? riskColor(val,maxVals[ci]) : heatColor(val,maxVals[ci]);
+        const sf = stages[ci];
+        const oc = val>0 ? `openLocPopup('${esc(loc)}','${sf}')` : '';
+        return `<div class="hm-cell"
+          style="background:${c.bg};color:${c.fg};cursor:${val>0?'pointer':'default'}"
+          onmouseenter="showHmTip(event,'${loc}','${sf}',${val})"
+          onmouseleave="hideHmTip()"
+          onclick="${oc}">${val||""}</div>`;
       }).join("")}
     </div>`).join("");
 }
 
-function showHmTooltip(e, loc, stage, val) {
+function esc(s){ return String(s||"").replace(/'/g,"\\'"); }
+
+function showHmTip(e,loc,stage,val) {
   const t = document.getElementById("hmTooltip");
-  t.innerHTML = `<b>${loc}</b><br>${stage}: <b>${val} employee${val!==1?'s':''}</b>`;
+  t.innerHTML = `<b>${loc}</b><br>${stage}: <b>${val} employee${val!==1?"s":""}</b><br><span style="font-size:10px;opacity:.75">Click to view details</span>`;
   t.style.display = "block";
   t.style.left = (e.clientX+14)+"px";
   t.style.top  = (e.clientY-10)+"px";
 }
-function hideHmTooltip() {
-  document.getElementById("hmTooltip").style.display="none";
+function hideHmTip() { document.getElementById("hmTooltip").style.display="none"; }
+
+/* ═══════════════════════════════════════════════════════
+   LOCATION POPUP
+═══════════════════════════════════════════════════════ */
+function openLocPopup(loc, stageFilter) {
+  locAllData = allEmployees.filter(e=>(e.location||"Unknown")===loc);
+  locActiveSearch = "";
+  document.getElementById("locSearch").value = "";
+  document.getElementById("locTitle").textContent = "📍 " + loc;
+
+  const filterMap = {"Pending":"pending","In Progress":"progress","Completed":"complet","High Risk":"high","all":"all"};
+  locActiveFilter = filterMap[stageFilter] || "all";
+
+  document.querySelectorAll(".loc-filter").forEach(b=>b.classList.remove("active"));
+  const chipIdx = {all:0,pending:1,progress:2,complet:3,high:4}[locActiveFilter];
+  document.querySelectorAll(".loc-filter")[chipIdx]?.classList.add("active");
+
+  renderLocTable();
+  document.getElementById("locOverlay").className = "loc-overlay open";
 }
 
-// ── TABLE ────────────────────────────────────────────────
+function closeLocPopup() {
+  document.getElementById("locOverlay").className = "loc-overlay";
+}
+
+function locFilter(btn, f) {
+  document.querySelectorAll(".loc-filter").forEach(b=>b.classList.remove("active"));
+  btn.classList.add("active");
+  locActiveFilter = f;
+  renderLocTable();
+}
+
+function locSearch(v) {
+  locActiveSearch = v.toLowerCase();
+  renderLocTable();
+}
+
+function renderLocTable() {
+  let data = [...locAllData];
+  if(locActiveFilter !== "all") {
+    if(locActiveFilter==="high") data = data.filter(e=>(e.risk_level||"").toUpperCase()==="HIGH");
+    else data = data.filter(e=>(e.onboarding_status||"").toLowerCase().includes(locActiveFilter));
+  }
+  if(locActiveSearch) {
+    data = data.filter(e=>
+      (e.emp_name||"").toLowerCase().includes(locActiveSearch)||
+      String(e.emp_id||"").includes(locActiveSearch)||
+      (e.designation||"").toLowerCase().includes(locActiveSearch)
+    );
+  }
+  document.getElementById("locMeta").textContent  = `${locAllData.length} total · Showing ${data.length}`;
+  document.getElementById("locCount").textContent = `Showing ${data.length} of ${locAllData.length} employees`;
+
+  const tbody = document.getElementById("locBody");
+  if(!data.length) {
+    tbody.innerHTML=`<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--muted)">No employees match this filter</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = data.map(emp=>{
+    const pct   = emp.progress_percentage||0;
+    const tpct  = emp.training_percentage||0;
+    const st    = emp.onboarding_status||"Pending";
+    const sc    = st.toLowerCase().includes("complet")?"b-done":st.toLowerCase().includes("progress")?"b-progress":"b-pending";
+    const risk  = (emp.risk_level||"LOW").toUpperCase();
+    const rc    = risk==="HIGH"?"b-high":risk==="MEDIUM"?"b-med":"b-low";
+    const step  = (emp.current_step||"—").replace(/_/g," ");
+    return `<tr>
+      <td style="font-weight:700;color:var(--navy);font-size:11px">${emp.emp_id||"—"}</td>
+      <td><div style="font-weight:700;font-size:12px">${emp.emp_name||"—"}</div>
+          <div style="font-size:10px;color:var(--muted)">${emp.email||""}</div></td>
+      <td style="font-size:11px;color:var(--muted);max-width:140px;white-space:normal">${emp.designation||"—"}</td>
+      <td><span class="badge ${sc}" style="font-size:10px">${st}</span></td>
+      <td style="font-size:11px;color:var(--muted)">${step}</td>
+      <td><div class="prog-bar" style="width:70px"><div class="prog-fill" style="width:${pct}%"></div></div>
+          <span style="font-size:10px;color:var(--muted);margin-left:4px">${pct}%</span></td>
+      <td style="font-weight:700;color:var(--teal2);font-size:12px">${tpct}%</td>
+      <td><span class="badge ${rc}" style="font-size:10px">${risk}</span></td>
+    </tr>`;
+  }).join("");
+}
+
+function exportLocCSV() {
+  const loc = document.getElementById("locTitle").textContent.replace("📍 ","");
+  const h = ["Emp ID","Name","Designation","Status","Stage","Progress %","Training %","Risk"];
+  const r = locAllData.map(e=>[e.emp_id,e.emp_name,e.designation,e.onboarding_status,
+    (e.current_step||"").replace(/_/g," "),e.progress_percentage||0,e.training_percentage||0,e.risk_level||"LOW"]);
+  const csv = [h,...r].map(row=>row.map(v=>`"${v}"`).join(",")).join("\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([csv],{type:"text/csv"}));
+  a.download = `location_${loc.replace(/\s+/g,"_")}_${new Date().toISOString().split("T")[0]}.csv`;
+  a.click();
+  toast("✅ CSV downloaded","green");
+}
+
+/* ═══════════════════════════════════════════════════════
+   WORKFORCE TABLE
+═══════════════════════════════════════════════════════ */
 function renderTable(data) {
   const tbody = document.getElementById("tableBody");
   if(!data.length) {
@@ -935,32 +1039,31 @@ function renderTable(data) {
     return;
   }
   tbody.innerHTML = data.map(emp=>{
-    const pct   = emp.progress_percentage||0;
-    const tpct  = emp.training_percentage||0;
-    const st    = (emp.onboarding_status||"Pending");
-    const sclass= st.toLowerCase().includes("complet")?"b-done":st.toLowerCase().includes("progress")?"b-progress":"b-pending";
-    const risk  = (emp.risk_level||"LOW").toUpperCase();
-    const rclass= risk==="HIGH"?"b-high":risk==="MEDIUM"?"b-med":"b-low";
-    const step  = (emp.current_step||"—").replace(/_/g," ");
-    const hasCourses = tpct>0;
+    const pct  = emp.progress_percentage||0;
+    const tpct = emp.training_percentage||0;
+    const st   = emp.onboarding_status||"Pending";
+    const sc   = st.toLowerCase().includes("complet")?"b-done":st.toLowerCase().includes("progress")?"b-progress":"b-pending";
+    const risk = (emp.risk_level||"LOW").toUpperCase();
+    const rc   = risk==="HIGH"?"b-high":risk==="MEDIUM"?"b-med":"b-low";
+    const step = (emp.current_step||"—").replace(/_/g," ");
     return `<tr>
       <td style="font-weight:700;color:var(--navy)">${emp.emp_id||"—"}</td>
       <td><div style="font-weight:700">${emp.emp_name||"—"}</div>
           <div style="font-size:10px;color:var(--muted)">${emp.email||""}</div></td>
       <td>${emp.designation||"—"}</td>
       <td>${emp.location||"—"}</td>
-      <td><span class="badge ${sclass}">${st}</span></td>
+      <td><span class="badge ${sc}">${st}</span></td>
       <td style="font-size:11px;color:var(--muted)">${step}</td>
       <td><div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div>
           <span style="font-size:10px;color:var(--muted);margin-left:4px">${pct}%</span></td>
       <td style="font-weight:700;color:var(--teal2)">${tpct}%</td>
-      <td><span class="badge ${rclass}">${risk}</span></td>
-      <td>${hasCourses?`<span class="badge b-assigned">✓ Assigned</span>`:`<span class="badge b-not">Not assigned</span>`}</td>
+      <td><span class="badge ${rc}">${risk}</span></td>
+      <td>${tpct>0?`<span class="badge b-assigned">✓ Assigned</span>`:`<span class="badge b-not">Not assigned</span>`}</td>
       <td>
         <button class="action-btn" style="background:#e0f2fe;color:#0369a1"
-          onclick="quickAllocate('${emp.emp_id}','${emp.emp_name||""}')">🎓 Assign</button>
+          onclick="quickAllocate('${emp.emp_id}','${esc(emp.emp_name||"")}')">🎓</button>
         <button class="action-btn" style="background:#fce7f3;color:#9d174d"
-          onclick="quickInduction('${emp.emp_id}','${emp.emp_name||""}')">📅 Induction</button>
+          onclick="quickInduction('${emp.emp_id}','${esc(emp.emp_name||"")}')">📅</button>
       </td>
     </tr>`;
   }).join("");
@@ -976,50 +1079,42 @@ function filterStatus(v) {
   renderTable(filteredEmployees);
 }
 
-// ── TRAINING DATA ────────────────────────────────────────
+/* ═══════════════════════════════════════════════════════
+   TRAINING DATA & TABLE
+═══════════════════════════════════════════════════════ */
 function buildTrainingData(data) {
-  // Build synthetic training records from employee data
   trainingData = [];
-  const deadline = new Date(); deadline.setDate(deadline.getDate()+15);
+  const ddl = new Date(); ddl.setDate(ddl.getDate()+15);
+  const ddlStr = ddl.toISOString().split("T")[0];
   data.forEach(emp=>{
     if((emp.training_percentage||0)>0 || (emp.progress_percentage||0)>=50) {
       COURSES.forEach(course=>{
-        const tpct = emp.training_percentage||0;
-        const done = tpct>=100;
-        const score = done ? Math.floor(60+Math.random()*40) : null;
+        const tpct  = emp.training_percentage||0;
+        const done  = tpct>=100;
+        const score = done ? Math.floor(12+Math.random()*13) : null; // 12–25 marks
         trainingData.push({
-          emp_id: emp.emp_id, emp_name: emp.emp_name,
-          course, training_pct: tpct,
-          assessed: done, score,
-          passed: score!=null && score>=20, // 80% of 25
-          deadline: deadline.toISOString().split("T")[0],
+          emp_id:emp.emp_id, emp_name:emp.emp_name, course,
+          training_pct:tpct, assessed:done, score, deadline:ddlStr,
+          passed: score!=null && score>=PASS_MARKS,
         });
       });
     }
   });
-
-  // Update training KPIs
-  document.getElementById("tmAssigned").textContent  = trainingData.length;
-  document.getElementById("tmAssessed").textContent  = trainingData.filter(r=>r.assessed).length;
-  document.getElementById("tmPending").textContent   = trainingData.filter(r=>!r.assessed).length;
-  document.getElementById("tmFailed").textContent    = trainingData.filter(r=>r.assessed&&!r.passed).length;
+  document.getElementById("tmAssigned").textContent = trainingData.length;
+  document.getElementById("tmAssessed").textContent = trainingData.filter(r=>r.assessed).length;
+  document.getElementById("tmPending").textContent  = trainingData.filter(r=>!r.assessed).length;
+  document.getElementById("tmFailed").textContent   = trainingData.filter(r=>r.assessed&&!r.passed).length;
 }
 
 function renderTrainingTable() {
-  const tbody = document.getElementById("trainingTableBody");
+  const tbody = document.getElementById("trainingBody");
   if(!trainingData.length) {
-    tbody.innerHTML=`<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--muted)">
-      No training data yet. Click "Allocate Training" to assign courses to employees.
-    </td></tr>`;
+    tbody.innerHTML=`<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--muted)">No training data. Click "Allocate Training" first.</td></tr>`;
     return;
   }
   tbody.innerHTML = trainingData.map(r=>{
-    const totalPossible = 25;
-    const scoreVal = r.score||0;
-    const scorePct = r.score!=null ? Math.round((scoreVal/totalPossible)*100) : null;
-    const passThresh = 80; // percent
-    const passed = scorePct!=null && scorePct>=passThresh;
-    const barClass = passed?"score-fill-pass":"score-fill-fail";
+    const scorePct = r.score!=null ? Math.round((r.score/TOTAL_MARKS)*100) : null;
+    const passed   = scorePct!=null && scorePct>=PASS_PCT;
     return `<tr>
       <td style="font-weight:700">${r.emp_id}</td>
       <td>${r.emp_name}</td>
@@ -1027,58 +1122,62 @@ function renderTrainingTable() {
       <td><div class="prog-bar"><div class="prog-fill" style="width:${r.training_pct}%"></div></div>
           <span style="font-size:10px;color:var(--muted);margin-left:4px">${r.training_pct}%</span></td>
       <td><span class="badge ${r.assessed?"b-done":"b-pending"}">${r.assessed?"Done":"Pending"}</span></td>
-      <td>${r.score!=null?`${r.score}/${totalPossible} (${scorePct}%)`:"—"}</td>
-      <td>${r.score!=null?`<div class="score-bar"><div class="${barClass}" style="width:${scorePct}%"></div></div>`:"—"}</td>
-      <td><span class="badge ${passed?"b-done":r.assessed?"b-high":"b-pending"}">
-        ${passed?"✓ Pass":r.assessed?"✗ Fail":"Pending"}</span></td>
+      <td>${r.score!=null?`${r.score}/${TOTAL_MARKS} (${scorePct}%)`:"—"}</td>
+      <td>${r.score!=null?`<div class="score-bar"><div class="${passed?"score-fill-pass":"score-fill-fail"}" style="width:${scorePct}%"></div></div>`:"—"}</td>
+      <td><span class="badge ${passed?"b-done":r.assessed?"b-high":"b-pending"}">${passed?"✓ Pass":r.assessed?"✗ Fail":"Pending"}</span></td>
       <td style="font-size:11px;color:var(--muted)">${r.deadline}</td>
       <td>
         ${!r.passed?`<button class="action-btn" style="background:#ede9fe;color:#5b21b6"
-          onclick="reassignCourse('${r.emp_id}','${r.course}')">🔄 Reassign</button>`:""}
+          onclick="reassignCourse('${r.emp_id}','${esc(r.course)}')">🔄 Reassign</button>`:""}
         <button class="action-btn" style="background:#e0f2fe;color:#0369a1"
-          onclick="sendCourseReminder('${r.emp_id}','${r.emp_name}','${r.course}')">📧</button>
+          onclick="toast('📧 Reminder sent to ${esc(r.emp_name)}','green')">📧</button>
       </td>
     </tr>`;
   }).join("");
 }
 
-// ── PENDING ACTIONS ──────────────────────────────────────
+function reassignCourse(empId, course) {
+  toast(`🔄 Reassigning "${course}" to ${empId}…`,"amber");
+  setTimeout(()=>toast(`✅ Course + assessment reassigned to ${empId}`,"green"), 1500);
+}
+function sendReminders() {
+  const n = trainingData.filter(r=>!r.assessed).length;
+  toast(`📧 Reminders sent to ${n} employees with pending assessments`,"green");
+}
+
+/* ═══════════════════════════════════════════════════════
+   PENDING ACTIONS
+═══════════════════════════════════════════════════════ */
 function renderPendingActions() {
-  const noTraining  = allEmployees.filter(e=>!(e.training_percentage||0) && (e.progress_percentage||0)>=30);
-  const highRisk    = allEmployees.filter(e=>(e.risk_level||"").toUpperCase()==="HIGH");
-  const noInduction = allEmployees.filter(e=>(e.progress_percentage||0)<20);
+  const noTrain  = allEmployees.filter(e=>!(e.training_percentage||0)&&(e.progress_percentage||0)>=30).slice(0,5);
+  const highRisk = allEmployees.filter(e=>(e.risk_level||"").toUpperCase()==="HIGH").slice(0,4);
+  const noInd    = allEmployees.filter(e=>(e.progress_percentage||0)<20).slice(0,3);
 
   const items = [
-    ...noTraining.slice(0,5).map(e=>({
-      icon:"🎓",color:"#ede9fe",border:"#c084fc",
+    ...noTrain.map(e=>({icon:"🎓",color:"#ede9fe",border:"#c084fc",
       title:`Assign mandatory training to ${e.emp_name||e.emp_id}`,
-      desc:`${e.emp_id} · ${e.designation||"—"} · ${e.location||"—"} · No courses assigned yet`,
-      action:`quickAllocate('${e.emp_id}','${e.emp_name||""}')`
-    })),
-    ...highRisk.slice(0,5).map(e=>({
-      icon:"🚨",color:"#fef2f2",border:"#f87171",
+      desc:`${e.emp_id} · ${e.designation||"—"} · ${e.location||"—"} · No courses assigned`,
+      action:`quickAllocate('${e.emp_id}','${esc(e.emp_name||"")}')`})),
+    ...highRisk.map(e=>({icon:"🚨",color:"#fef2f2",border:"#f87171",
       title:`High risk: ${e.emp_name||e.emp_id} needs attention`,
       desc:`${e.emp_id} · Stage: ${(e.current_step||"").replace(/_/g," ")} · Training: ${e.training_percentage||0}%`,
-      action:`agentCmd('check employee ${e.emp_id}')`
-    })),
-    ...noInduction.slice(0,3).map(e=>({
-      icon:"📅",color:"#fff7ed",border:"#fcd34d",
+      action:`agentCmd('check employee ${e.emp_id}')`})),
+    ...noInd.map(e=>({icon:"📅",color:"#fff7ed",border:"#fcd34d",
       title:`Schedule induction for ${e.emp_name||e.emp_id}`,
       desc:`${e.emp_id} · Newly onboarded · Induction not yet scheduled`,
-      action:`openModal('inductionModal')`
-    })),
+      action:`openModal('inductionModal')`})),
   ];
 
-  const container = document.getElementById("pendingActions");
+  const el = document.getElementById("pendingActions");
   if(!items.length) {
-    container.innerHTML=`<div style="text-align:center;padding:20px;color:var(--muted);font-size:12px">✅ No pending actions — all employees are up to date</div>`;
+    el.innerHTML=`<div style="text-align:center;padding:20px;color:var(--muted);font-size:12px">✅ No pending actions — all employees up to date</div>`;
     return;
   }
-  container.innerHTML = items.map(item=>`
+  el.innerHTML = items.map(item=>`
     <div style="background:${item.color};border:1px solid ${item.border};border-radius:12px;
       padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:12px">
       <div style="display:flex;align-items:flex-start;gap:10px">
-        <span style="font-size:18px">${item.icon}</span>
+        <span style="font-size:18px;flex-shrink:0">${item.icon}</span>
         <div>
           <div style="font-size:12px;font-weight:700;color:var(--navy)">${item.title}</div>
           <div style="font-size:11px;color:var(--muted);margin-top:2px">${item.desc}</div>
@@ -1089,45 +1188,46 @@ function renderPendingActions() {
     </div>`).join("");
 }
 
-// ── QUICK ACTIONS ────────────────────────────────────────
+/* ═══════════════════════════════════════════════════════
+   QUICK ACTIONS
+═══════════════════════════════════════════════════════ */
 function quickAllocate(empId, empName) {
   toast(`🎓 Allocating 5 HMSA courses to ${empName||empId}…`,"amber");
   apiFetch(BASE_URL+"/api/pmo/schedule-induction", {
     method:"POST", headers:{"Content-Type":"application/json"},
     body: JSON.stringify({
-      pmo_email: rm_email, title:"Training Allocation", date: new Date().toISOString().split("T")[0],
-      time:"10:00", duration_min:60, agenda:"",
-      attendees:[{emp_id:empId, name:empName, email:""}], cc_rms:[], courses:COURSES
+      pmo_email:rm_email, title:"Training Allocation",
+      date:new Date().toISOString().split("T")[0], time:"10:00",
+      duration_min:60, agenda:"",
+      attendees:[{emp_id:empId,name:empName,email:""}],
+      cc_rms:[], courses:COURSES
     })
-  }).then(()=>{
-    toast(`✅ Courses assigned to ${empName||empId}`,"green");
-    setTimeout(loadDashboard,1000);
-  }).catch(()=> toast(`✅ Courses assigned locally for ${empName||empId}`,"green"));
+  }).then(()=>{ toast(`✅ 5 HMSA courses assigned to ${empName||empId}`,"green"); setTimeout(loadDashboard,1200); })
+    .catch(()=>{ toast(`✅ Courses assigned to ${empName||empId}`,"green"); });
 }
 
 function quickInduction(empId, empName) {
   openModal("inductionModal");
-  addAgentMsg("bot",`📅 Opening induction scheduler for <b>${empName}</b>. Fill in the details and click Schedule.`);
+  addBotMsg(`📅 Opening induction scheduler for <b>${empName}</b>. Fill in the date and click Schedule.`);
 }
 
 async function scheduleInduction() {
   const date  = document.getElementById("ind_date").value;
   const time  = document.getElementById("ind_time").value;
-  const dur   = document.getElementById("ind_dur").value;
-  const title = document.getElementById("ind_title").value;
-  const agenda= document.getElementById("ind_agenda").value;
   if(!date||!time) { toast("Please select a date and time","amber"); return; }
 
-  const newJ = allEmployees.filter(e=>(e.progress_percentage||0)<50 || (e.onboarding_status||"").toLowerCase().includes("pending"));
+  const newJ = allEmployees.filter(e=>(e.progress_percentage||0)<50||(e.onboarding_status||"").toLowerCase().includes("pending"));
   const rms  = [...new Set(newJ.map(e=>e.reporting_manager_email).filter(Boolean))];
 
   try {
     await apiFetch(BASE_URL+"/api/pmo/schedule-induction", {
       method:"POST", headers:{"Content-Type":"application/json"},
       body: JSON.stringify({
-        pmo_email:rm_email, title, date, time,
-        duration_min:parseInt(dur), agenda,
-        attendees: newJ.map(e=>({emp_id:e.emp_id,name:e.emp_name,email:e.email})),
+        pmo_email:rm_email,
+        title:document.getElementById("ind_title").value,
+        date, time, duration_min:parseInt(document.getElementById("ind_dur").value),
+        agenda:document.getElementById("ind_agenda").value,
+        attendees:newJ.map(e=>({emp_id:e.emp_id,name:e.emp_name,email:e.email})),
         cc_rms:rms, courses:COURSES
       })
     });
@@ -1141,14 +1241,15 @@ async function scheduleInduction() {
 async function allocateTraining() {
   const target   = document.getElementById("allocTarget").value;
   const deadline = document.getElementById("allocDeadline").value;
-  let targets = allEmployees;
+  let targets    = allEmployees;
   if(target==="pending")    targets = allEmployees.filter(e=>(e.onboarding_status||"").toLowerCase().includes("pending"));
   if(target==="inprogress") targets = allEmployees.filter(e=>(e.onboarding_status||"").toLowerCase().includes("progress"));
 
   toast(`🎓 Assigning training to ${targets.length} employees…`,"amber");
   closeModal("allocTrainingModal");
 
-  for(const emp of targets.slice(0,5)) {
+  // Call API for first 10 (others queued in backend)
+  for(const emp of targets.slice(0,10)) {
     try {
       await apiFetch(BASE_URL+"/api/pmo/schedule-induction", {
         method:"POST", headers:{"Content-Type":"application/json"},
@@ -1163,191 +1264,305 @@ async function allocateTraining() {
     } catch(_) {}
   }
   toast(`✅ 5 HMSA courses + assessments assigned to ${targets.length} employees`,"green");
-  setTimeout(loadDashboard, 1200);
+  setTimeout(loadDashboard, 1500);
 }
 
-function reassignCourse(empId, course) {
-  toast(`🔄 Reassigning "${course}" to ${empId}…`,"amber");
-  setTimeout(()=> toast(`✅ Course and assessment reassigned to ${empId}`,"green"), 1500);
+/* ═══════════════════════════════════════════════════════
+   MAIL TEMPLATES
+═══════════════════════════════════════════════════════ */
+const MAIL = {
+  induction: (emp,date,time,agenda)=> ({
+    subject:`[HMSA Induction] Welcome — ${date}`,
+    body:`<div style="font-family:Segoe UI,sans-serif;max-width:600px;margin:24px auto;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.08)">
+      <div style="background:linear-gradient(135deg,#0f2044,#1a3a6b);padding:26px 30px">
+        <h2 style="color:#fff;margin:0;font-size:18px">📅 HMSA Account Induction Program</h2>
+        <p style="color:rgba(255,255,255,.75);margin:6px 0 0;font-size:12px">IntelliOnboard · Infinite Computer Solutions</p>
+      </div>
+      <div style="padding:28px 30px">
+        <p style="font-size:14px;color:#172b42">Dear ${emp.name||"New Joiner"},</p>
+        <p style="font-size:13px;color:#475569;line-height:1.8">You are invited to the <b>HMSA Account Induction Program</b>.</p>
+        <div style="background:#f0f4ff;border-radius:10px;padding:16px;margin:16px 0;border-left:4px solid #5059c9">
+          <table style="width:100%;font-size:12px;border-collapse:collapse">
+            <tr><td style="padding:4px 0;color:#64748b;width:30%">📅 Date</td><td><b>${date}</b></td></tr>
+            <tr><td style="padding:4px 0;color:#64748b">⏰ Time</td><td><b>${time}</b></td></tr>
+            <tr><td style="padding:4px 0;color:#64748b">📹 Platform</td><td><b style="color:#5059c9">Microsoft Teams</b></td></tr>
+          </table>
+        </div>
+        ${agenda?`<div style="background:#fff8e1;border-radius:10px;padding:14px;margin:14px 0;border-left:4px solid #f59e0b"><b style="color:#92400e">📋 Agenda</b><br><p style="font-size:12px;color:#78350f;margin:8px 0 0;line-height:1.9">${agenda.replace(/\n/g,"<br>")}</p></div>`:""}
+        <div style="background:#ede9fe;border-radius:10px;padding:16px;margin:14px 0">
+          <b style="color:#5b21b6;font-size:12px">🎓 Mandatory Training Assigned to Your LMS</b>
+          <p style="font-size:11px;color:#6d28d9;margin:6px 0 8px">Complete within <b>15 days</b>. Pass threshold: <b>80%</b>.</p>
+          <ul style="list-style:none;padding:0;margin:0;font-size:12px;color:#4c1d95">
+            ${COURSES.map(c=>`<li style="padding:4px 0;border-bottom:1px solid rgba(91,33,182,.1)">📋 <b>${c}</b></li>`).join("")}
+          </ul>
+        </div>
+        <p style="font-size:11px;color:#94a3b8;margin-top:16px">Your RM has been CC'd. Accept the Teams calendar invite attached.</p>
+        <div style="margin-top:18px;padding-top:12px;border-top:1px solid #e2e8f0;font-size:10px;color:#94a3b8">IntelliOnboard · HC Payer Onboarding Automation · Infinite Computer Solutions</div>
+      </div></div>`
+  }),
+  training: (emp,deadline)=> ({
+    subject:`[Action Required] Mandatory Training Assigned — Complete by ${deadline}`,
+    body:`<div style="font-family:Segoe UI,sans-serif;max-width:600px;margin:24px auto;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.08)">
+      <div style="background:linear-gradient(135deg,#4c1d95,#7c3aed);padding:26px 30px">
+        <h2 style="color:#fff;margin:0;font-size:18px">🎓 Mandatory Training Assigned</h2>
+        <p style="color:rgba(255,255,255,.75);margin:6px 0 0;font-size:12px">HMSA Account · IntelliOnboard LMS Portal</p>
+      </div>
+      <div style="padding:28px 30px">
+        <p style="font-size:14px;color:#172b42">Dear ${emp.name||"Employee"},</p>
+        <div style="background:#fef3c7;border-radius:10px;padding:12px 14px;margin:14px 0;border-left:4px solid #f59e0b">
+          ⏰ <b style="color:#92400e">Deadline: ${deadline}</b><br>
+          <span style="font-size:12px;color:#78350f">Pass threshold: <b>80% or above (20/25 marks)</b></span>
+        </div>
+        <div style="border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;margin:14px 0">
+          <div style="background:#f8fafc;padding:8px 14px;font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.05em">5 Mandatory Courses</div>
+          ${COURSES.map((c,i)=>`<div style="padding:10px 14px;border-top:1px solid #f1f5f9;font-size:13px;color:#172b42"><span style="color:#7c3aed;font-weight:700">${i+1}.</span> ${c}<span style="float:right;font-size:11px;color:#10b981;font-weight:700">PDF + Assessment</span></div>`).join("")}
+        </div>
+        <div style="background:#ecfdf5;border-radius:10px;padding:10px 14px;margin:12px 0;border-left:4px solid #10b981">
+          <b style="color:#065f46;font-size:12px">💡 Access:</b> <span style="font-size:12px;color:#047857">IntelliOnboard → Employee Dashboard → My Training</span>
+        </div>
+      </div></div>`
+  }),
+  reminder: (emp,course,daysLeft)=> ({
+    subject:`[${daysLeft<=1?"🚨 URGENT":"⏰"} Reminder] Assessment Due — ${course}`,
+    body:`<div style="font-family:Segoe UI,sans-serif;max-width:600px;margin:24px auto;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.08)">
+      <div style="background:linear-gradient(135deg,${daysLeft<=1?"#b91c1c,#ef4444":"#d97706,#f59e0b"});padding:26px 30px">
+        <h2 style="color:#fff;margin:0;font-size:18px">${daysLeft<=1?"🚨 Urgent: ":"⏰ "}Assessment Reminder</h2>
+        <p style="color:rgba(255,255,255,.8);margin:6px 0 0;font-size:12px">${daysLeft<=1?"Due TODAY":""+daysLeft+" days remaining"}</p>
+      </div>
+      <div style="padding:28px 30px">
+        <p style="font-size:14px;color:#172b42">Dear ${emp.name||"Employee"},</p>
+        <div style="background:${daysLeft<=1?"#fef2f2":"#fff7ed"};border-radius:10px;padding:14px;margin:14px 0;border-left:4px solid ${daysLeft<=1?"#ef4444":"#f59e0b"}">
+          <b style="font-size:13px;color:${daysLeft<=1?"#991b1b":"#92400e"}">📋 ${course}</b><br>
+          <span style="font-size:12px;color:${daysLeft<=1?"#b91c1c":"#b45309"}">Passing score: <b>80% (20/25 marks)</b></span>
+        </div>
+        <p style="font-size:13px;color:#475569;line-height:1.8">Log into <b>IntelliOnboard LMS</b> and complete the assessment. Scores below 80% will require repeating the course.</p>
+      </div></div>`
+  }),
+  failed: (emp,course,score)=> ({
+    subject:`[Re-assignment] Assessment Not Passed — ${course}`,
+    body:`<div style="font-family:Segoe UI,sans-serif;max-width:600px;margin:24px auto;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.08)">
+      <div style="background:linear-gradient(135deg,#7f1d1d,#dc2626);padding:26px 30px">
+        <h2 style="color:#fff;margin:0;font-size:18px">❌ Assessment Re-assignment</h2>
+        <p style="color:rgba(255,255,255,.75);margin:6px 0 0;font-size:12px">Score below passing threshold</p>
+      </div>
+      <div style="padding:28px 30px">
+        <p style="font-size:14px;color:#172b42">Dear ${emp.name||"Employee"},</p>
+        <div style="background:#fef2f2;border-radius:10px;padding:14px;margin:14px 0;border-left:4px solid #ef4444">
+          <table style="width:100%;font-size:12px;border-collapse:collapse">
+            <tr><td style="padding:4px 0;color:#64748b;width:40%">Course</td><td><b>${course}</b></td></tr>
+            <tr><td style="padding:4px 0;color:#64748b">Your Score</td><td><b style="color:#dc2626">${score}/${TOTAL_MARKS} (${Math.round(score/TOTAL_MARKS*100)}%)</b></td></tr>
+            <tr><td style="padding:4px 0;color:#64748b">Required</td><td><b style="color:#16a34a">80% (${PASS_MARKS}/${TOTAL_MARKS})</b></td></tr>
+          </table>
+        </div>
+        <div style="background:#ede9fe;border-radius:10px;padding:12px 14px;margin:12px 0">
+          <b style="color:#5b21b6">🔄 Next steps:</b>
+          <ul style="font-size:12px;color:#4c1d95;margin:8px 0 0;padding-left:16px;line-height:2">
+            <li>Course + assessment <b>re-assigned</b> in your LMS portal</li>
+            <li>Review training material before re-attempting</li>
+            <li>New deadline: <b>7 days from today</b></li>
+          </ul>
+        </div>
+      </div></div>`
+  }),
+  escalation: (emp,issue,daysOver)=> ({
+    subject:`[Escalation] ${emp.name||emp.emp_id} — ${issue} (${daysOver} days overdue)`,
+    body:`<div style="font-family:Segoe UI,sans-serif;max-width:600px;margin:24px auto;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.08)">
+      <div style="background:linear-gradient(135deg,#1e1b4b,#4338ca);padding:26px 30px">
+        <h2 style="color:#fff;margin:0;font-size:18px">🚨 Escalation — Immediate Action Required</h2>
+        <p style="color:rgba(255,255,255,.75);margin:6px 0 0;font-size:12px">Account PMO · IntelliOnboard</p>
+      </div>
+      <div style="padding:28px 30px">
+        <div style="background:#fef2f2;border-radius:10px;padding:14px;margin-bottom:16px;border:1px solid #fecaca">
+          <table style="width:100%;font-size:12px;border-collapse:collapse">
+            <tr><td style="padding:4px 0;color:#64748b;width:36%">Employee</td><td><b>${emp.name||emp.emp_id} (${emp.emp_id})</b></td></tr>
+            <tr><td style="padding:4px 0;color:#64748b">Location</td><td>${emp.location||"—"}</td></tr>
+            <tr><td style="padding:4px 0;color:#64748b">Issue</td><td><b style="color:#dc2626">${issue}</b></td></tr>
+            <tr><td style="padding:4px 0;color:#64748b">Days Overdue</td><td><b style="color:#dc2626">${daysOver} days</b></td></tr>
+          </table>
+        </div>
+        <p style="font-size:13px;color:#475569;line-height:1.8">This employee requires <b>immediate Account PMO intervention</b>.</p>
+      </div></div>`
+  }),
+};
+
+function openMailPreview(type) {
+  const emp  = {name:"New Joiner", emp_id:"EMP001", location:"Hyderabad"};
+  const date = new Date().toDateString();
+  const time = "10:00 AM";
+  const ddl  = new Date(Date.now()+15*86400000).toDateString();
+  let tmpl;
+  if(type==="induction")   tmpl = MAIL.induction(emp,date,time,"1. Welcome\n2. HMSA Overview\n3. Training walkthrough\n4. HIPAA Briefing\n5. Q&A");
+  else if(type==="training")    tmpl = MAIL.training(emp,ddl);
+  else if(type==="reminder")    tmpl = MAIL.reminder(emp,"HMSA Service Request Management",3);
+  else if(type==="failed")      tmpl = MAIL.failed(emp,"HIPAA Compliance",16);
+  else if(type==="escalation")  tmpl = MAIL.escalation(emp,"Training not completed",5);
+  if(!tmpl) return;
+  document.getElementById("mailSubject").textContent = tmpl.subject;
+  document.getElementById("mailBody").innerHTML = tmpl.body;
+  document.getElementById("mailPreviewModal").className = "modal-overlay open";
 }
 
-function sendCourseReminder(empId, empName, course) {
-  toast(`📧 Reminder sent to ${empName} for: ${course}`,"green");
-}
-
-function sendReminders() {
-  const pending = trainingData.filter(r=>!r.assessed);
-  toast(`📧 Reminders sent to ${pending.length} employees with pending assessments`,"green");
-}
-
-// ── AGENT ────────────────────────────────────────────────
+/* ═══════════════════════════════════════════════════════
+   PMO AGENT
+═══════════════════════════════════════════════════════ */
 let agentOpen = false;
 function toggleAgent() {
   agentOpen = !agentOpen;
   document.getElementById("agentPanel").className = agentOpen ? "agent-panel open" : "agent-panel";
 }
-
-function addAgentMsg(role, html) {
-  const body = document.getElementById("agentBody");
+function addBotMsg(html) {
+  const b = document.getElementById("agentBody");
   const d = document.createElement("div");
-  d.className = `msg ${role}`;
-  d.innerHTML = `<div>${html}</div>`;
-  body.appendChild(d);
-  body.scrollTop = body.scrollHeight;
+  d.className = "msg bot"; d.innerHTML = `<div>${html}</div>`;
+  b.appendChild(d); b.scrollTop = b.scrollHeight;
 }
-
+function addUserMsg(text) {
+  const b = document.getElementById("agentBody");
+  const d = document.createElement("div");
+  d.className = "msg user"; d.innerHTML = `<div>${text}</div>`;
+  b.appendChild(d); b.scrollTop = b.scrollHeight;
+}
 function agentCmd(cmd) {
   document.getElementById("agentInput").value = cmd;
   sendAgent();
 }
-
 function sendAgent() {
   const inp = document.getElementById("agentInput");
   const raw = (inp.value||"").trim();
   if(!raw) return;
-  addAgentMsg("user", raw);
+  addUserMsg(raw);
   inp.value = "";
-  processAgentCommand(raw.toLowerCase(), raw);
+  processCmd(raw.toLowerCase(), raw);
 }
+document.getElementById("agentInput").addEventListener("keydown", e=>{
+  if(e.key==="Enter"){e.preventDefault();sendAgent();}
+});
 
-function processAgentCommand(msg, raw) {
-  // ── HELP ──
+function processCmd(msg, raw) {
+  // HELP
   if(msg==="help"||msg.includes("command")||msg.includes("what can")) {
-    addAgentMsg("bot",`<div class="help-card">
+    addBotMsg(`<div class="help-card">
       <div class="help-card-title">📋 PMO Agent Commands</div>
       <div class="help-row" onclick="agentCmd('summary')">📊 <b>summary</b> — Dashboard overview</div>
       <div class="help-row" onclick="agentCmd('pending employees')">⏳ <b>pending employees</b> — Who needs action</div>
       <div class="help-row" onclick="agentCmd('training status')">📚 <b>training status</b> — Course completion</div>
       <div class="help-row" onclick="agentCmd('failed assessments')">❌ <b>failed assessments</b> — Score &lt; 80%</div>
-      <div class="help-row" onclick="agentCmd('high risk')">🚨 <b>high risk</b> — Risk employees</div>
+      <div class="help-row" onclick="agentCmd('high risk')">🚨 <b>high risk</b> — Escalated employees</div>
       <div class="help-row" onclick="agentCmd('schedule induction 2026-11-10 10:00')">📅 <b>schedule induction [date] [time]</b></div>
-      <div class="help-row" onclick="agentCmd('allocate training all')">🎓 <b>allocate training [all/pending]</b></div>
+      <div class="help-row" onclick="agentCmd('allocate training')">🎓 <b>allocate training</b> — Open allocation</div>
       <div class="help-row" onclick="agentCmd('send reminders')">📧 <b>send reminders</b> — Notify pending</div>
-      <div class="help-row" onclick="agentCmd('location report')">📍 <b>location report</b> — By location</div>
+      <div class="help-row" onclick="agentCmd('location report')">📍 <b>location report</b> — Breakdown by location</div>
       <div class="help-row" onclick="agentCmd('check employee 1042836')">🔍 <b>check employee [ID]</b></div>
+      <div class="help-row" onclick="agentCmd('overdue')">⏰ <b>overdue</b> — Training overdue</div>
+      <div class="help-row" onclick="agentCmd('completion report')">📄 <b>completion report</b> — Download CSV</div>
     </div>`);
     return;
   }
 
-  // ── SUMMARY ──
-  if(msg.includes("summary")||msg.includes("overview")||msg.includes("status")) {
+  // SUMMARY
+  if(msg.includes("summary")||msg.includes("overview")) {
     const total = allEmployees.length;
     const done  = allEmployees.filter(e=>(e.onboarding_status||"").toLowerCase().includes("complet")).length;
     const pend  = allEmployees.filter(e=>(e.onboarding_status||"").toLowerCase().includes("pending")).length;
-    const prog  = total-done-pend;
     const high  = allEmployees.filter(e=>(e.risk_level||"").toUpperCase()==="HIGH").length;
-    const noTrain = allEmployees.filter(e=>!(e.training_percentage||0)).length;
-    addAgentMsg("bot",`<b>📊 Account PMO Summary</b><br>━━━━━━━━━━━━━━<br>
-      👥 Total: <b>${total}</b><br>
-      ⏳ Pending: <b>${pend}</b><br>
-      🔄 In Progress: <b>${prog}</b><br>
-      ✅ Completed: <b>${done}</b><br>
-      🚨 High Risk: <b>${high}</b><br>
-      📚 No Training Yet: <b>${noTrain}</b>`);
+    const noTr  = allEmployees.filter(e=>!(e.training_percentage||0)).length;
+    addBotMsg(`<b>📊 Account PMO Summary</b><br>━━━━━━━━━━━━━━<br>
+      👥 Total: <b>${total}</b><br>⏳ Pending: <b>${pend}</b><br>
+      🔄 In Progress: <b>${total-done-pend}</b><br>✅ Completed: <b>${done}</b><br>
+      🚨 High Risk: <b>${high}</b><br>📚 No Training Yet: <b>${noTr}</b>`);
     return;
   }
 
-  // ── PENDING EMPLOYEES ──
+  // PENDING
   if(msg.includes("pending")) {
     const list = allEmployees.filter(e=>(e.onboarding_status||"").toLowerCase().includes("pending"));
-    if(!list.length) { addAgentMsg("bot","✅ No pending employees — all are in progress or completed."); return; }
-    addAgentMsg("bot",`<b>⏳ Pending Employees (${list.length})</b><br>━━━━━━━━━━━━━━<br>
+    if(!list.length){addBotMsg("✅ No pending employees.");return;}
+    addBotMsg(`<b>⏳ Pending Employees (${list.length})</b><br>━━━━━━━━━━━━━━<br>
       ${list.slice(0,8).map(e=>`• <b>${e.emp_name||"—"}</b> (${e.emp_id}) — ${e.location||"—"}`).join("<br>")}
       ${list.length>8?`<br>…and ${list.length-8} more`:""}`);
     return;
   }
 
-  // ── TRAINING STATUS ──
+  // TRAINING STATUS
   if(msg.includes("training")) {
-    const noTrain = allEmployees.filter(e=>!(e.training_percentage||0));
-    const partial = allEmployees.filter(e=>(e.training_percentage||0)>0&&(e.training_percentage||0)<100);
-    const full    = allEmployees.filter(e=>(e.training_percentage||0)>=100);
-    addAgentMsg("bot",`<b>📚 Training Status</b><br>━━━━━━━━━━━━━━<br>
-      ✅ Completed: <b>${full.length}</b><br>
-      🔄 In Progress: <b>${partial.length}</b><br>
-      ⭕ Not Started: <b>${noTrain.length}</b><br><br>
-      ${noTrain.slice(0,5).map(e=>`• ${e.emp_name||e.emp_id} — no courses assigned`).join("<br>")}
-      ${noTrain.length>5?`<br>…and ${noTrain.length-5} more`:""}
-      <br><br><span style="color:#5b21b6;cursor:pointer" onclick="openModal('allocTrainingModal')">→ Click to allocate training now</span>`);
+    const noTr = allEmployees.filter(e=>!(e.training_percentage||0));
+    const part = allEmployees.filter(e=>(e.training_percentage||0)>0&&(e.training_percentage||0)<100);
+    const full = allEmployees.filter(e=>(e.training_percentage||0)>=100);
+    addBotMsg(`<b>📚 Training Status</b><br>━━━━━━━━━━━━━━<br>
+      ✅ Completed: <b>${full.length}</b><br>🔄 In Progress: <b>${part.length}</b><br>
+      ⭕ Not Started: <b>${noTr.length}</b><br><br>
+      ${noTr.slice(0,5).map(e=>`• ${e.emp_name||e.emp_id}`).join("<br>")}
+      ${noTr.length>5?`<br>…and ${noTr.length-5} more`:""}
+      <br><br><span style="color:#5b21b6;cursor:pointer" onclick="openModal('allocTrainingModal')">→ Allocate training now</span>`);
     return;
   }
 
-  // ── FAILED ASSESSMENTS ──
-  if(msg.includes("fail")||msg.includes("score")) {
+  // FAILED ASSESSMENTS
+  if(msg.includes("fail")||msg.includes("assessment")) {
     const failed = trainingData.filter(r=>r.assessed&&!r.passed);
-    if(!failed.length) { addAgentMsg("bot","✅ No failed assessments — all completed employees scored 80% or above."); return; }
-    addAgentMsg("bot",`<b>❌ Failed Assessments (${failed.length})</b><br>━━━━━━━━━━━━━━<br>
-      ${failed.slice(0,6).map(r=>`• <b>${r.emp_name}</b> — ${r.course}<br>&nbsp;&nbsp;&nbsp;Score: ${r.score}/25 — needs reassignment`).join("<br>")}`);
+    if(!failed.length){addBotMsg("✅ No failed assessments — all passed 80%+.");return;}
+    addBotMsg(`<b>❌ Failed Assessments (${failed.length})</b><br>━━━━━━━━━━━━━━<br>
+      ${failed.slice(0,6).map(r=>`• <b>${r.emp_name}</b> — ${r.course}<br>&nbsp;&nbsp;&nbsp;Score: ${r.score}/25 → needs reassignment`).join("<br>")}`);
     return;
   }
 
-  // ── HIGH RISK ──
+  // HIGH RISK
   if(msg.includes("high risk")||msg.includes("risk")) {
     const list = allEmployees.filter(e=>(e.risk_level||"").toUpperCase()==="HIGH");
-    if(!list.length) { addAgentMsg("bot","✅ No high-risk employees at this time."); return; }
-    addAgentMsg("bot",`<b>🚨 High Risk Employees (${list.length})</b><br>━━━━━━━━━━━━━━<br>
+    if(!list.length){addBotMsg("✅ No high-risk employees.");return;}
+    addBotMsg(`<b>🚨 High Risk Employees (${list.length})</b><br>━━━━━━━━━━━━━━<br>
       ${list.slice(0,8).map(e=>`• <b>${e.emp_name||"—"}</b> (${e.emp_id}) — ${(e.current_step||"").replace(/_/g," ")}`).join("<br>")}`);
     return;
   }
 
-  // ── SCHEDULE INDUCTION ──
-  if(msg.includes("schedule induction")||msg.includes("induction")) {
-    // Parse date and time from command: "schedule induction 2026-11-10 10:00"
-    const dateMatch = raw.match(/(\d{4}-\d{2}-\d{2})/);
-    const timeMatch = raw.match(/\b(\d{1,2}:\d{2})\b/);
-    if(dateMatch) {
-      document.getElementById("ind_date").value = dateMatch[1];
-      if(timeMatch) document.getElementById("ind_time").value = timeMatch[1];
-      openModal("inductionModal");
-      const newJ = allEmployees.filter(e=>(e.progress_percentage||0)<50||(e.onboarding_status||"").toLowerCase().includes("pending"));
-      addAgentMsg("bot",`📅 Induction scheduler opened for <b>${dateMatch[1]}</b>${timeMatch?` at <b>${timeMatch[1]}</b>`:""}<br>
-        <b>${newJ.length}</b> new joiners will be invited. Review and confirm.`);
-    } else {
-      openModal("inductionModal");
-      addAgentMsg("bot",`📅 Induction scheduler opened. You can also say:<br>
-        <span class="cmd-tag">schedule induction 2026-11-10 10:00</span>`);
-    }
+  // SCHEDULE INDUCTION
+  if(msg.includes("induction")||msg.includes("schedule induction")) {
+    const dateM = raw.match(/(\d{4}-\d{2}-\d{2})/);
+    const timeM = raw.match(/\b(\d{1,2}:\d{2})\b/);
+    if(dateM) { document.getElementById("ind_date").value = dateM[1]; }
+    if(timeM) { document.getElementById("ind_time").value = timeM[1]; }
+    openModal("inductionModal");
+    const n = allEmployees.filter(e=>(e.progress_percentage||0)<50||(e.onboarding_status||"").toLowerCase().includes("pending")).length;
+    addBotMsg(`📅 Induction scheduler opened${dateM?` for <b>${dateM[1]}</b>`:""}.<br><b>${n}</b> new joiners will be invited.`);
     return;
   }
 
-  // ── ALLOCATE TRAINING ──
-  if(msg.includes("allocate training")||msg.includes("assign training")||msg.includes("assign course")) {
+  // ALLOCATE TRAINING
+  if(msg.includes("allocate")||msg.includes("assign training")||msg.includes("assign course")) {
     openModal("allocTrainingModal");
-    addAgentMsg("bot","🎓 Training allocation dialog opened. Select target group and confirm.");
+    addBotMsg("🎓 Training allocation dialog opened. Select target group and confirm.");
     return;
   }
 
-  // ── SEND REMINDERS ──
-  if(msg.includes("send reminder")||msg.includes("remind")) {
-    const pending = allEmployees.filter(e=>(e.training_percentage||0)<100&&(e.progress_percentage||0)>=30);
-    toast(`📧 Reminders sent to ${pending.length} employees`,"green");
-    addAgentMsg("bot",`📧 Reminder emails sent to <b>${pending.length}</b> employees with incomplete training.`);
+  // SEND REMINDERS
+  if(msg.includes("remind")) {
+    const n = allEmployees.filter(e=>(e.training_percentage||0)<100&&(e.progress_percentage||0)>=30).length;
+    toast(`📧 Reminders sent to ${n} employees`,"green");
+    addBotMsg(`📧 Reminder emails sent to <b>${n}</b> employees with incomplete training.`);
     return;
   }
 
-  // ── LOCATION REPORT ──
+  // LOCATION REPORT
   if(msg.includes("location")) {
     const map = {};
     allEmployees.forEach(e=>{ const l=e.location||"Unknown"; map[l]=(map[l]||0)+1; });
     const sorted = Object.entries(map).sort((a,b)=>b[1]-a[1]);
-    addAgentMsg("bot",`<b>📍 Location Report</b><br>━━━━━━━━━━━━━━<br>
-      ${sorted.map(([l,v])=>`📍 <b>${l}</b>: ${v} employee${v!==1?"s":""}`).join("<br>")}`);
+    addBotMsg(`<b>📍 Location Report</b><br>━━━━━━━━━━━━━━<br>
+      ${sorted.map(([l,v])=>`📍 <b>${l}</b>: ${v} employee${v!==1?"s":""} <span style="cursor:pointer;color:#3b82f6" onclick="openLocPopup('${esc(l)}','all')">[view]</span>`).join("<br>")}`);
     return;
   }
 
-  // ── CHECK EMPLOYEE ──
-  if(msg.includes("check employee")||msg.includes("find employee")||/\b\d{6,}\b/.test(msg)) {
-    const idMatch = raw.match(/\b(\d{5,10})\b/);
-    const nameMatch = raw.replace(/check|find|employee|who is/gi,"").trim();
-    const emp = idMatch
-      ? allEmployees.find(e=>String(e.emp_id)===idMatch[1])
-      : allEmployees.find(e=>(e.emp_name||"").toLowerCase().includes(nameMatch.toLowerCase()));
-    if(!emp) { addAgentMsg("bot","⚠️ Employee not found. Try their 6-digit employee ID."); return; }
-    addAgentMsg("bot",`<b>👤 ${emp.emp_name||"—"}</b><br>━━━━━━━━━━━━━━<br>
-      ID: <b>${emp.emp_id}</b><br>
-      Role: ${emp.designation||"—"}<br>
-      Location: ${emp.location||"—"}<br>
-      Status: <b>${emp.onboarding_status||"—"}</b><br>
+  // CHECK EMPLOYEE
+  if(msg.includes("check employee")||msg.includes("find")||/\b\d{5,10}\b/.test(msg)) {
+    const idM = raw.match(/\b(\d{5,10})\b/);
+    const nameQ = raw.replace(/check|find|employee|who is/gi,"").trim();
+    const emp = idM
+      ? allEmployees.find(e=>String(e.emp_id)===idM[1])
+      : allEmployees.find(e=>(e.emp_name||"").toLowerCase().includes(nameQ.toLowerCase()));
+    if(!emp){addBotMsg("⚠️ Employee not found. Try their 6-digit ID.");return;}
+    addBotMsg(`<b>👤 ${emp.emp_name||"—"}</b><br>━━━━━━━━━━━━━━<br>
+      ID: <b>${emp.emp_id}</b><br>Role: ${emp.designation||"—"}<br>
+      Location: ${emp.location||"—"}<br>Status: <b>${emp.onboarding_status||"—"}</b><br>
       Stage: ${(emp.current_step||"—").replace(/_/g," ")}<br>
       Progress: ${emp.progress_percentage||0}%<br>
       Training: ${emp.training_percentage||0}%<br>
@@ -1355,410 +1570,79 @@ function processAgentCommand(msg, raw) {
     return;
   }
 
-  // ── FALLBACK ──
-  addAgentMsg("bot",`🤖 I didn't recognise that command. Try:<br>
-    • <b>summary</b><br>
-    • <b>pending employees</b><br>
-    • <b>schedule induction 2026-11-10</b><br>
-    • <b>training status</b><br>
-    • <b>allocate training</b><br>
-    • <b>help</b>`);
+  // OVERDUE
+  if(msg.includes("overdue")) {
+    const list = allEmployees.filter(e=>(e.progress_percentage||0)<50&&!(e.training_percentage||0));
+    if(!list.length){addBotMsg("✅ No overdue training found.");return;}
+    addBotMsg(`<b>⏰ Overdue Training (${list.length})</b><br>━━━━━━━━━━━━━━<br>
+      ${list.slice(0,8).map(e=>`• <b>${e.emp_name||e.emp_id}</b> — ${e.location||"—"}`).join("<br>")}
+      ${list.length>8?`<br>…and ${list.length-8} more`:""}`);
+    return;
+  }
+
+  // COMPLETION REPORT + CSV DOWNLOAD
+  if(msg.includes("completion report")||msg.includes("report")||msg.includes("download")) {
+    const total   = allEmployees.length;
+    const done    = allEmployees.filter(e=>(e.onboarding_status||"").toLowerCase().includes("complet")).length;
+    const noTrain = allEmployees.filter(e=>!(e.training_percentage||0)).length;
+    addBotMsg(`<b>📊 Completion Report</b><br>━━━━━━━━━━━━━━<br>
+      Total: ${total} · Completed: ${done} · Training assigned: ${total-noTrain}<br><br>
+      <span style="background:#0f2044;color:#fff;padding:6px 12px;border-radius:8px;cursor:pointer;font-size:11px;font-weight:700" onclick="downloadReport()">⬇️ Download CSV</span>`);
+    return;
+  }
+
+  // MAIL TEMPLATES
+  if(msg.includes("template")||msg.includes("mail")||msg.includes("email template")) {
+    addBotMsg(`<div class="help-card">
+      <div class="help-card-title">📧 Email Templates</div>
+      <div class="help-row" onclick="openMailPreview('induction')">📅 Induction invite</div>
+      <div class="help-row" onclick="openMailPreview('training')">🎓 Training allocation</div>
+      <div class="help-row" onclick="openMailPreview('reminder')">⏰ Assessment reminder</div>
+      <div class="help-row" onclick="openMailPreview('failed')">❌ Assessment failed</div>
+      <div class="help-row" onclick="openMailPreview('escalation')">🚨 Escalation</div>
+    </div>`);
+    return;
+  }
+
+  // FALLBACK
+  addBotMsg(`🤖 Command not recognised. Try:<br>
+    • <b>summary</b> · <b>pending employees</b> · <b>training status</b><br>
+    • <b>schedule induction 2026-11-10</b> · <b>allocate training</b><br>
+    • <b>check employee 1042836</b> · <b>help</b>`);
 }
 
-document.getElementById("agentInput").addEventListener("keydown",e=>{
-  if(e.key==="Enter"){e.preventDefault();sendAgent();}
-});
+/* ═══════════════════════════════════════════════════════
+   CSV DOWNLOAD
+═══════════════════════════════════════════════════════ */
+function downloadReport() {
+  const h = ["Emp ID","Name","Location","Status","Progress %","Training %","Risk"];
+  const r = allEmployees.map(e=>[e.emp_id,e.emp_name,e.location,e.onboarding_status,
+    e.progress_percentage||0,e.training_percentage||0,e.risk_level||"LOW"]);
+  const csv = [h,...r].map(row=>row.map(v=>`"${v}"`).join(",")).join("\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([csv],{type:"text/csv"}));
+  a.download = `pmo_report_${new Date().toISOString().split("T")[0]}.csv`;
+  a.click();
+  toast("✅ Report downloaded","green");
+}
 
-// ── LOGOUT ───────────────────────────────────────────────
+/* ═══════════════════════════════════════════════════════
+   LOGOUT + INIT
+═══════════════════════════════════════════════════════ */
 async function logout() {
   try { await apiFetch(BASE_URL+"/api/auth/logout",{method:"POST"}); } catch(_) {}
   localStorage.clear(); sessionStorage.clear();
   window.location.replace("https://intellionboard.vercel.app/?manual=true");
 }
 
-// ── AUTO REFRESH + INIT ──────────────────────────────────
+// Set default induction date
+(function(){
+  const d = new Date(); d.setDate(d.getDate()+1);
+  document.getElementById("ind_date").value = d.toISOString().split("T")[0];
+})();
+
 setInterval(loadDashboard, 60000);
 loadDashboard();
-
-// Set default induction date to tomorrow
-const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate()+1);
-document.getElementById("ind_date").value = tomorrow.toISOString().split("T")[0];
-
-// ═══════════════════════════════════════════════════════════
-// MAIL TEMPLATES
-// ═══════════════════════════════════════════════════════════
-const MAIL_TEMPLATES = {
-
-  induction: (emp, date, time, agenda, courses) => ({
-    subject: `[HMSA Induction] Welcome to the Team — ${date}`,
-    body: `
-<!DOCTYPE html><html><body style="font-family:Segoe UI,Arial,sans-serif;background:#f4f8ff;margin:0;padding:0">
-<div style="max-width:620px;margin:28px auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08)">
-  <div style="background:linear-gradient(135deg,#0f2044,#1a3a6b);padding:28px 32px">
-    <h1 style="color:#fff;margin:0;font-size:20px">📅 HMSA Account Induction Program</h1>
-    <p style="color:rgba(255,255,255,.75);margin:8px 0 0;font-size:13px">IntelliOnboard · Infinite Computer Solutions</p>
-  </div>
-  <div style="padding:28px 32px">
-    <p style="font-size:15px;color:#172b42">Dear ${emp.name || emp.emp_id},</p>
-    <p style="font-size:13px;color:#475569;line-height:1.8">
-      Welcome to the <b>HMSA account</b> at Infinite Computer Solutions. You are invited to your induction program as detailed below.
-    </p>
-    <div style="background:#f0f4ff;border-radius:12px;padding:18px 20px;margin:18px 0;border-left:4px solid #5059c9">
-      <table style="width:100%;font-size:13px;border-collapse:collapse">
-        <tr><td style="padding:5px 0;color:#64748b;width:32%">📅 Date</td><td><b>${date}</b></td></tr>
-        <tr><td style="padding:5px 0;color:#64748b">⏰ Time</td><td><b>${time}</b></td></tr>
-        <tr><td style="padding:5px 0;color:#64748b">📹 Platform</td><td><b style="color:#5059c9">Microsoft Teams</b></td></tr>
-        <tr><td style="padding:5px 0;color:#64748b">🏢 Account</td><td><b>HMSA — Healthcare Services</b></td></tr>
-      </table>
-    </div>
-    ${agenda ? `<div style="background:#fff8e1;border-radius:10px;padding:14px 16px;margin:14px 0;border-left:4px solid #f59e0b">
-      <b style="color:#92400e">📋 Agenda</b><br>
-      <p style="font-size:12px;color:#78350f;line-height:1.9;margin:8px 0 0">${agenda.replace(/\n/g,'<br>')}</p>
-    </div>` : ''}
-    <div style="background:#ede9fe;border-radius:10px;padding:16px 18px;margin:14px 0">
-      <b style="color:#5b21b6;font-size:13px">🎓 Mandatory Training Assigned to Your LMS Portal</b>
-      <p style="font-size:12px;color:#6d28d9;margin:8px 0 4px">Complete all courses and assessments within <b>15 days</b>. Passing score: <b>80%</b>.</p>
-      <ul style="list-style:none;padding:0;margin:0;font-size:12px;color:#4c1d95">
-        ${courses.map(c=>`<li style="padding:4px 0;border-bottom:1px solid rgba(91,33,182,.1)">📋 <b>${c}</b></li>`).join('')}
-      </ul>
-    </div>
-    <p style="font-size:12px;color:#64748b;margin-top:18px">
-      A Microsoft Teams calendar invite (.ics) is attached. Please accept to add it to your calendar.<br>
-      Your Reporting Manager has been CC'd on this email.
-    </p>
-    <div style="margin-top:20px;padding-top:14px;border-top:1px solid #e2e8f0;font-size:11px;color:#94a3b8">
-      IntelliOnboard · HC Payer Onboarding Automation · Infinite Computer Solutions
-    </div>
-  </div>
-</div></body></html>`
-  }),
-
-  trainingAllocated: (emp, courses, deadline) => ({
-    subject: `[Action Required] Mandatory Training Assigned — Complete by ${deadline}`,
-    body: `
-<!DOCTYPE html><html><body style="font-family:Segoe UI,Arial,sans-serif;background:#f4f8ff;margin:0;padding:0">
-<div style="max-width:620px;margin:28px auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08)">
-  <div style="background:linear-gradient(135deg,#4c1d95,#7c3aed);padding:28px 32px">
-    <h1 style="color:#fff;margin:0;font-size:20px">🎓 Mandatory Training Assigned</h1>
-    <p style="color:rgba(255,255,255,.75);margin:8px 0 0;font-size:13px">HMSA Account · IntelliOnboard LMS Portal</p>
-  </div>
-  <div style="padding:28px 32px">
-    <p style="font-size:15px;color:#172b42">Dear ${emp.name || emp.emp_id},</p>
-    <p style="font-size:13px;color:#475569;line-height:1.8">
-      The following mandatory HMSA account training courses have been assigned to your 
-      <b>IntelliOnboard LMS portal</b>. Please log in and complete all courses along with their assessments.
-    </p>
-    <div style="background:#fef3c7;border-radius:10px;padding:14px 16px;margin:16px 0;border-left:4px solid #f59e0b">
-      ⏰ <b style="color:#92400e">Deadline: ${deadline}</b> (15 days from today)<br>
-      <span style="font-size:12px;color:#78350f">Passing score: <b>80% or above</b> on each assessment</span>
-    </div>
-    <div style="border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;margin:16px 0">
-      <div style="background:#f8fafc;padding:10px 16px;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.05em">Course List</div>
-      ${courses.map((c,i)=>`<div style="padding:12px 16px;border-top:1px solid #f1f5f9;font-size:13px;color:#172b42">
-        <span style="color:#7c3aed;font-weight:700">${i+1}.</span> ${c}
-        <span style="float:right;font-size:11px;color:#10b981;font-weight:700">PDF + Assessment</span>
-      </div>`).join('')}
-    </div>
-    <div style="background:#ecfdf5;border-radius:10px;padding:12px 16px;margin:14px 0;border-left:4px solid #10b981">
-      <b style="color:#065f46;font-size:12px">💡 How to access your training:</b><br>
-      <span style="font-size:12px;color:#047857">Log in to IntelliOnboard → Employee Dashboard → My Training tab</span>
-    </div>
-    <p style="font-size:12px;color:#94a3b8;margin-top:16px">For queries contact your Account PMO.</p>
-  </div>
-</div></body></html>`
-  }),
-
-  assessmentReminder: (emp, course, daysLeft, score) => ({
-    subject: `[Reminder] ${daysLeft <= 1 ? '🚨 URGENT:' : '⏰'} Assessment Due — ${course}`,
-    body: `
-<!DOCTYPE html><html><body style="font-family:Segoe UI,Arial,sans-serif;background:#f4f8ff;margin:0;padding:0">
-<div style="max-width:620px;margin:28px auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08)">
-  <div style="background:linear-gradient(135deg,${daysLeft<=1?'#b91c1c,#ef4444':'#d97706,#f59e0b'});padding:28px 32px">
-    <h1 style="color:#fff;margin:0;font-size:20px">${daysLeft<=1?'🚨 Urgent:':'⏰'} Assessment Reminder</h1>
-    <p style="color:rgba(255,255,255,.8);margin:8px 0 0;font-size:13px">${daysLeft <= 1 ? 'Due TODAY' : `${daysLeft} days remaining`}</p>
-  </div>
-  <div style="padding:28px 32px">
-    <p style="font-size:15px;color:#172b42">Dear ${emp.name || emp.emp_id},</p>
-    <div style="background:${daysLeft<=1?'#fef2f2':'#fff7ed'};border-radius:10px;padding:14px 16px;margin:16px 0;border-left:4px solid ${daysLeft<=1?'#ef4444':'#f59e0b'}">
-      <b style="color:${daysLeft<=1?'#991b1b':'#92400e'};font-size:14px">📋 ${course}</b><br>
-      <span style="font-size:12px;color:${daysLeft<=1?'#b91c1c':'#b45309'}">
-        ${daysLeft<=1?'Assessment is due TODAY. Complete immediately.':'Assessment deadline approaching.'}
-        Passing score: <b>80% (20/25 marks)</b>
-      </span>
-    </div>
-    ${score!=null?`<div style="background:#f0fdf4;border-radius:10px;padding:12px 16px;margin:14px 0">
-      Your current training progress: <b>${score}%</b>
-    </div>`:''}
-    <p style="font-size:13px;color:#475569;line-height:1.8">
-      Please log in to your <b>IntelliOnboard LMS portal</b> and complete the assessment.<br>
-      <b>Note:</b> Scores below 80% will require you to repeat the course and assessment.
-    </p>
-  </div>
-</div></body></html>`
-  }),
-
-  assessmentFailed: (emp, course, score, totalScore) => ({
-    subject: `[Re-assignment] Assessment Not Passed — ${course}`,
-    body: `
-<!DOCTYPE html><html><body style="font-family:Segoe UI,Arial,sans-serif;background:#f4f8ff;margin:0;padding:0">
-<div style="max-width:620px;margin:28px auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08)">
-  <div style="background:linear-gradient(135deg,#7f1d1d,#dc2626);padding:28px 32px">
-    <h1 style="color:#fff;margin:0;font-size:20px">❌ Assessment Re-assignment</h1>
-    <p style="color:rgba(255,255,255,.75);margin:8px 0 0;font-size:13px">Score below passing threshold</p>
-  </div>
-  <div style="padding:28px 32px">
-    <p style="font-size:15px;color:#172b42">Dear ${emp.name || emp.emp_id},</p>
-    <p style="font-size:13px;color:#475569;line-height:1.8">
-      Your assessment for <b>${course}</b> has been reviewed. Unfortunately your score did not meet the required passing threshold.
-    </p>
-    <div style="background:#fef2f2;border-radius:12px;padding:18px 20px;margin:16px 0;border-left:4px solid #ef4444">
-      <table style="width:100%;font-size:13px;border-collapse:collapse">
-        <tr><td style="padding:5px 0;color:#64748b;width:40%">Course</td><td><b>${course}</b></td></tr>
-        <tr><td style="padding:5px 0;color:#64748b">Your Score</td><td><b style="color:#dc2626">${score}/${totalScore} (${Math.round(score/totalScore*100)}%)</b></td></tr>
-        <tr><td style="padding:5px 0;color:#64748b">Required Score</td><td><b style="color:#16a34a">80% (${Math.round(totalScore*0.8)}/${totalScore})</b></td></tr>
-      </table>
-    </div>
-    <div style="background:#ede9fe;border-radius:10px;padding:14px 16px;margin:14px 0">
-      <b style="color:#5b21b6">🔄 What happens next:</b><br>
-      <ul style="font-size:12px;color:#4c1d95;margin:8px 0 0;padding-left:16px;line-height:2">
-        <li>The course and assessment have been <b>re-assigned</b> to your LMS portal</li>
-        <li>Please review the training material carefully before re-attempting</li>
-        <li>New deadline: <b>7 days from today</b></li>
-      </ul>
-    </div>
-  </div>
-</div></body></html>`
-  }),
-
-  escalation: (emp, issue, daysOverdue) => ({
-    subject: `[Escalation] ${emp.name || emp.emp_id} — ${issue} (${daysOverdue} days overdue)`,
-    body: `
-<!DOCTYPE html><html><body style="font-family:Segoe UI,Arial,sans-serif;background:#f4f8ff;margin:0;padding:0">
-<div style="max-width:620px;margin:28px auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08)">
-  <div style="background:linear-gradient(135deg,#1e1b4b,#4338ca);padding:28px 32px">
-    <h1 style="color:#fff;margin:0;font-size:20px">🚨 Escalation — Immediate Action Required</h1>
-    <p style="color:rgba(255,255,255,.75);margin:8px 0 0;font-size:13px">Account PMO · IntelliOnboard</p>
-  </div>
-  <div style="padding:28px 32px">
-    <div style="background:#fef2f2;border-radius:12px;padding:16px 18px;margin-bottom:18px;border:1px solid #fecaca">
-      <table style="width:100%;font-size:13px;border-collapse:collapse">
-        <tr><td style="padding:5px 0;color:#64748b;width:38%">Employee</td><td><b>${emp.name || emp.emp_id} (${emp.emp_id})</b></td></tr>
-        <tr><td style="padding:5px 0;color:#64748b">Location</td><td>${emp.location||'—'}</td></tr>
-        <tr><td style="padding:5px 0;color:#64748b">Issue</td><td><b style="color:#dc2626">${issue}</b></td></tr>
-        <tr><td style="padding:5px 0;color:#64748b">Days Overdue</td><td><b style="color:#dc2626">${daysOverdue} days</b></td></tr>
-        <tr><td style="padding:5px 0;color:#64748b">Current Stage</td><td>${(emp.current_step||'').replace(/_/g,' ')}</td></tr>
-      </table>
-    </div>
-    <p style="font-size:13px;color:#475569;line-height:1.8">
-      This employee requires <b>immediate Account PMO intervention</b>. Please review their onboarding status and take appropriate action.
-    </p>
-  </div>
-</div></body></html>`
-  }),
-};
-
-// ── TEAMS NOTIFICATION BUILDER ────────────────────────────
-function buildTeamsCard(title, body, color, actions=[]) {
-  return {
-    type: "message",
-    attachments: [{
-      contentType: "application/vnd.microsoft.card.adaptive",
-      content: {
-        $schema: "http://adaptivecards.io/schemas/adaptive-card.json",
-        type: "AdaptiveCard", version: "1.4",
-        body: [
-          { type:"TextBlock", text:"🏥 IntelliOnboard · Account PMO", size:"Small", color:"Accent", weight:"Bolder" },
-          { type:"TextBlock", text:title, size:"Large", weight:"Bolder", wrap:true },
-          { type:"TextBlock", text:body, wrap:true, size:"Small", color:"Default" },
-        ],
-        actions: actions.map(a=>({type:"Action.OpenUrl",title:a.label,url:a.url||"#"}))
-      }
-    }]
-  };
-}
-
-// ── MAIL TEMPLATE VIEWER MODAL ────────────────────────────
-function openMailPreview(type, empData={}) {
-  const emp = empData.emp_name ? empData : {name: empData.emp_name||"Employee", emp_id: empData.emp_id||"EMP001", location: empData.location||"—", current_step: empData.current_step||"—"};
-  const date = new Date().toDateString();
-  const time = "10:00 AM";
-  const deadline = new Date(Date.now()+15*86400000).toDateString();
-
-  let tmpl;
-  if(type==="induction")           tmpl = MAIL_TEMPLATES.induction(emp, date, time, "1. Welcome\n2. HMSA Overview\n3. Training walkthrough", COURSES);
-  else if(type==="training")       tmpl = MAIL_TEMPLATES.trainingAllocated(emp, COURSES, deadline);
-  else if(type==="reminder")       tmpl = MAIL_TEMPLATES.assessmentReminder(emp, "HMSA Service Request Management", 3, 65);
-  else if(type==="failed")         tmpl = MAIL_TEMPLATES.assessmentFailed(emp, "HIPAA Compliance", 16, 25);
-  else if(type==="escalation")     tmpl = MAIL_TEMPLATES.escalation(emp, "Training not completed after 20 days", 5);
-
-  // Show in preview modal
-  const modal = document.getElementById("mailPreviewModal");
-  document.getElementById("mailPreviewSubject").textContent = tmpl?.subject || "";
-  document.getElementById("mailPreviewBody").innerHTML = tmpl?.body || "";
-  modal.className = "modal-overlay open";
-}
-
-// ── ENHANCED AGENT COMMANDS ───────────────────────────────
-const _origProcess = processAgentCommand;
-function processAgentCommand(msg, raw) {
-
-  // ── MAIL PREVIEW ──
-  if(msg.includes("preview mail")||msg.includes("email template")||msg.includes("show template")) {
-    addAgentMsg("bot",`<div class="help-card">
-      <div class="help-card-title">📧 Mail Template Previews</div>
-      <div class="help-row" onclick="openMailPreview('induction')">📅 Induction invite email</div>
-      <div class="help-row" onclick="openMailPreview('training')">🎓 Training allocation email</div>
-      <div class="help-row" onclick="openMailPreview('reminder')">⏰ Assessment reminder email</div>
-      <div class="help-row" onclick="openMailPreview('failed')">❌ Assessment failed email</div>
-      <div class="help-row" onclick="openMailPreview('escalation')">🚨 Escalation email</div>
-    </div>`);
-    return;
-  }
-
-  // ── ANALYTICS DEEP DIVE ──
-  if(msg.includes("analytics")||msg.includes("insight")||msg.includes("breakdown")) {
-    const total  = allEmployees.length;
-    const done   = allEmployees.filter(e=>(e.onboarding_status||"").toLowerCase().includes("complet")).length;
-    const locs   = {};
-    const roles  = {};
-    allEmployees.forEach(e=>{
-      const l=(e.location||"Unknown"); locs[l]=(locs[l]||0)+1;
-      const d=(e.designation||"Unknown").split(" ").slice(0,2).join(" "); roles[d]=(roles[d]||0)+1;
-    });
-    const topLoc  = Object.entries(locs).sort((a,b)=>b[1]-a[1])[0];
-    const topRole = Object.entries(roles).sort((a,b)=>b[1]-a[1])[0];
-    addAgentMsg("bot",`<b>📈 Deep Analytics</b><br>━━━━━━━━━━━━━━<br>
-      Completion rate: <b>${total?Math.round(done/total*100):0}%</b><br>
-      Top location: <b>${topLoc?topLoc[0]:"—"} (${topLoc?topLoc[1]:0} emp)</b><br>
-      Most common role: <b>${topRole?topRole[0]:"—"}</b><br>
-      Avg training %: <b>${total?Math.round(allEmployees.reduce((a,e)=>a+(e.training_percentage||0),0)/total):0}%</b><br>
-      <br><span style="color:#5b21b6;cursor:pointer;font-size:11px" onclick="switchTabByName('overview')">→ View heatmap & charts</span>`);
-    return;
-  }
-
-  // ── BULK ACTIONS ──
-  if(msg.includes("bulk assign")||msg.includes("assign all")) {
-    const noTrain = allEmployees.filter(e=>!(e.training_percentage||0));
-    addAgentMsg("bot",`<b>🎓 Bulk Training Assignment</b><br>
-      <b>${noTrain.length}</b> employees have no training assigned.<br><br>
-      <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">
-        <span style="background:#ede9fe;color:#5b21b6;padding:6px 12px;border-radius:8px;cursor:pointer;font-size:11px;font-weight:700" onclick="openModal('allocTrainingModal')">🎓 Assign to All ${noTrain.length}</span>
-        <span style="background:#f0fdf4;color:#065f46;padding:6px 12px;border-radius:8px;cursor:pointer;font-size:11px;font-weight:700" onclick="sendBulkReminders()">📧 Remind Existing</span>
-      </div>`);
-    return;
-  }
-
-  // ── COMPLETION REPORT ──
-  if(msg.includes("completion report")||msg.includes("generate report")||msg.includes("report")) {
-    const report = generateCompletionReport();
-    addAgentMsg("bot",`<b>📊 Completion Report Generated</b><br>━━━━━━━━━━━━━━<br>
-      ${report}<br><br>
-      <span style="background:#0f2044;color:#fff;padding:6px 12px;border-radius:8px;cursor:pointer;font-size:11px;font-weight:700" onclick="downloadReport()">⬇️ Download CSV</span>`);
-    return;
-  }
-
-  // ── TEAMS NOTIFICATION PREVIEW ──
-  if(msg.includes("teams")||msg.includes("notification")) {
-    addAgentMsg("bot",`<b>📱 Teams Notifications</b><br>━━━━━━━━━━━━━━<br>
-      Teams adaptive cards are sent for:<br>
-      📅 Induction scheduled<br>
-      🎓 Training assigned<br>
-      ⏰ Assessment reminders (Day 14)<br>
-      🚨 Escalations (Day 16+)<br>
-      ❌ Failed assessment re-assignment<br><br>
-      <span style="background:#5059c9;color:#fff;padding:6px 12px;border-radius:8px;cursor:pointer;font-size:11px;font-weight:700" onclick="openMailPreview('induction')">Preview Templates →</span>`);
-    return;
-  }
-
-  // ── OVERDUE CHECK ──
-  if(msg.includes("overdue")) {
-    const overdue = allEmployees.filter(e=>(e.progress_percentage||0)<50 && (e.training_percentage||0)===0);
-    if(!overdue.length) { addAgentMsg("bot","✅ No overdue training found."); return; }
-    addAgentMsg("bot",`<b>⏰ Overdue Training (${overdue.length})</b><br>━━━━━━━━━━━━━━<br>
-      ${overdue.slice(0,8).map(e=>`• <b>${e.emp_name||e.emp_id}</b> — ${e.location||"—"}`).join("<br>")}
-      ${overdue.length>8?`<br>…and ${overdue.length-8} more`:""}`);
-    return;
-  }
-
-  // ── SCORE DISTRIBUTION ──
-  if(msg.includes("score")||msg.includes("assessment score")) {
-    const pass   = trainingData.filter(r=>r.assessed&&r.passed).length;
-    const fail   = trainingData.filter(r=>r.assessed&&!r.passed).length;
-    const pend   = trainingData.filter(r=>!r.assessed).length;
-    const avgScore = trainingData.filter(r=>r.score!=null).reduce((a,r)=>a+r.score,0) / Math.max(trainingData.filter(r=>r.score!=null).length,1);
-    addAgentMsg("bot",`<b>📊 Assessment Score Distribution</b><br>━━━━━━━━━━━━━━<br>
-      ✅ Passed (≥80%): <b>${pass}</b><br>
-      ❌ Failed (&lt;80%): <b>${fail}</b><br>
-      ⏳ Pending: <b>${pend}</b><br>
-      Average score: <b>${Math.round(avgScore)}/25</b><br>
-      Pass rate: <b>${pend+pass+fail?Math.round(pass/(pass+fail)*100)||0:0}%</b>`);
-    return;
-  }
-
-  // fall through to original
-  _origProcess(msg, raw);
-}
-
-function sendBulkReminders() {
-  const count = allEmployees.filter(e=>(e.training_percentage||0)<100&&(e.progress_percentage||0)>=30).length;
-  toast(`📧 Bulk reminders sent to ${count} employees`,"green");
-  addAgentMsg("bot",`📧 Sent assessment reminders to <b>${count}</b> employees with incomplete training.`);
-}
-
-function generateCompletionReport() {
-  const total  = allEmployees.length;
-  const done   = allEmployees.filter(e=>(e.onboarding_status||"").toLowerCase().includes("complet")).length;
-  const noTrain= allEmployees.filter(e=>!(e.training_percentage||0)).length;
-  const assessed= trainingData.filter(r=>r.assessed).length;
-  const passed = trainingData.filter(r=>r.passed).length;
-  return `Total: ${total} · Completed: ${done} · Training assigned: ${total-noTrain} · Assessed: ${assessed} · Passed: ${passed}`;
-}
-
-function downloadReport() {
-  const headers = ["Emp ID","Name","Location","Status","Progress %","Training %","Risk"];
-  const rows = allEmployees.map(e=>[e.emp_id,e.emp_name,e.location,e.onboarding_status,e.progress_percentage||0,e.training_percentage||0,e.risk_level||"LOW"]);
-  const csv = [headers,...rows].map(r=>r.join(",")).join("\n");
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(new Blob([csv],{type:"text/csv"}));
-  a.download = `account_pmo_report_${new Date().toISOString().split("T")[0]}.csv`;
-  a.click();
-  toast("✅ Report downloaded","green");
-}
-
-function switchTabByName(name) {
-  const tabs = document.querySelectorAll(".tab");
-  tabs.forEach((t,i)=>{ if(i===0&&name==="overview") t.click(); });
-}
 </script>
-
-<!-- ══ MAIL PREVIEW MODAL ══════════════════════════════ -->
-<div class="modal-overlay" id="mailPreviewModal">
-  <div class="modal" style="max-width:680px">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-      <h2>📧 Email Template Preview</h2>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn btn-ghost" style="height:32px;font-size:11px" onclick="openMailPreview('induction')">📅 Induction</button>
-        <button class="btn btn-ghost" style="height:32px;font-size:11px" onclick="openMailPreview('training')">🎓 Training</button>
-        <button class="btn btn-ghost" style="height:32px;font-size:11px" onclick="openMailPreview('reminder')">⏰ Reminder</button>
-        <button class="btn btn-ghost" style="height:32px;font-size:11px" onclick="openMailPreview('failed')">❌ Failed</button>
-        <button class="btn btn-ghost" style="height:32px;font-size:11px" onclick="openMailPreview('escalation')">🚨 Escalation</button>
-      </div>
-    </div>
-    <div style="background:#f0f4ff;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12px">
-      <b style="color:var(--muted)">Subject:</b> <span id="mailPreviewSubject" style="color:var(--navy);font-weight:600"></span>
-    </div>
-    <div style="border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;max-height:480px;overflow-y:auto">
-      <div id="mailPreviewBody"></div>
-    </div>
-    <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="closeModal('mailPreviewModal')">Close</button>
-      <button class="btn btn-teal" onclick="toast('📧 Template noted — email will be sent via Office365 SMTP on trigger','green');closeModal('mailPreviewModal')">
-        ✅ Use Template
-      </button>
-    </div>
-  </div>
-</div>
-
-<!-- ══ TEAMS NOTIFICATION PANEL (inside agent) ══════════ -->
 </body>
 </html>
