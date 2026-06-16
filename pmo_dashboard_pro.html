@@ -233,7 +233,7 @@ tbody tr:hover{background:#f8fafc}
   backdrop-filter:blur(4px)}
 .kpi-popup-overlay.open{display:flex}
 .kpi-popup{background:#fff;border-radius:22px;padding:26px;
-  width:min(92vw,860px);max-height:88vh;overflow:hidden;
+  width:min(94vw,900px);height:90vh;max-height:90vh;overflow:hidden;
   display:flex;flex-direction:column;box-shadow:0 24px 80px rgba(0,0,0,.2)}
 .kpi-popup-hdr{display:flex;align-items:center;justify-content:space-between;
   margin-bottom:14px;flex-shrink:0}
@@ -248,7 +248,7 @@ tbody tr:hover{background:#f8fafc}
   padding:9px 14px;font-size:12px;outline:none;color:var(--text);
   margin-bottom:12px;flex-shrink:0;font-family:inherit}
 .kpi-popup-search:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(25,211,162,.12)}
-.kpi-popup-body{overflow-y:auto;flex:1}
+.kpi-popup-body{overflow-y:auto;flex:1;min-height:0}
 .kpi-popup table{width:100%;border-collapse:collapse;min-width:600px}
 .kpi-popup thead{position:sticky;top:0;z-index:5;
   background:linear-gradient(180deg,#f8fafc,#f1f5f9)}
@@ -709,9 +709,12 @@ tbody tr:hover{background:#f8fafc}
         <tbody id="kpiPopupBody"></tbody>
       </table>
     </div>
-    <div class="popup-footer">
-      <div style="font-size:12px;color:var(--muted)" id="kpiPopupCount"></div>
-      <button class="btn btn-teal" style="height:34px;font-size:11px" onclick="exportKpiCSV()">⬇️ Export CSV</button>
+    <div style="padding-top:12px;border-top:1px solid #e2e8f0;flex-shrink:0">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="font-size:12px;color:var(--muted)" id="kpiPopupCount"></div>
+        <button class="btn btn-teal" style="height:34px;font-size:11px" onclick="exportKpiCSV()">⬇️ Export CSV</button>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:center;gap:8px" id="kpiPopupPager"></div>
     </div>
   </div>
 </div>
@@ -914,12 +917,18 @@ function kpiLocFilter(btn, loc) {
   document.querySelectorAll(".kpi-filter").forEach(b=>b.classList.remove("active"));
   btn.classList.add("active");
   kpiPopupFilter = loc;
-  renderKpiTable();
+  _kpiPage = 0;
+  renderKpiTable(true);
 }
 
-function kpiPopupSearch(v) { kpiPopupSearch_ = v.toLowerCase(); renderKpiTable(); }
+function kpiPopupSearch(v) { kpiPopupSearch_ = v.toLowerCase(); _kpiPage = 0; renderKpiTable(true); }
 
-function renderKpiTable() {
+let _kpiPage = 0;
+const _kpiPageSize = 50;
+let _kpiFilteredData = [];
+
+function renderKpiTable(resetPage=true) {
+  if(resetPage) _kpiPage = 0;
   let data = [...kpiPopupAllData];
   if(kpiPopupFilter !== "all") data = data.filter(e=>(e.location||"Unknown")===kpiPopupFilter);
   if(kpiPopupSearch_) data = data.filter(e=>
@@ -928,14 +937,22 @@ function renderKpiTable() {
     (e.designation||"").toLowerCase().includes(kpiPopupSearch_)||
     (e.location||"").toLowerCase().includes(kpiPopupSearch_)
   );
-  document.getElementById("kpiPopupMeta").textContent  = `${kpiPopupAllData.length} total · Showing ${data.length}`;
-  document.getElementById("kpiPopupCount").textContent = `Showing ${data.length} of ${kpiPopupAllData.length}`;
+  _kpiFilteredData = data;
+  const total      = data.length;
+  const totalPages = Math.ceil(total / _kpiPageSize);
+  const start      = _kpiPage * _kpiPageSize;
+  const pageData   = data.slice(start, start + _kpiPageSize);
+  const end_       = Math.min(start + _kpiPageSize, total);
+
+  document.getElementById("kpiPopupMeta").textContent = `${kpiPopupAllData.length} total · Showing ${total}`;
   const tbody = document.getElementById("kpiPopupBody");
-  if(!data.length) {
+  if(!total) {
     tbody.innerHTML=`<tr><td colspan="9" style="text-align:center;padding:30px;color:var(--muted)">No employees match</td></tr>`;
+    document.getElementById("kpiPopupCount").textContent = "No results";
+    document.getElementById("kpiPopupPager").innerHTML = "";
     return;
   }
-  tbody.innerHTML = data.map(emp=>{
+  tbody.innerHTML = pageData.map(emp=>{
     const pct  = emp.progress_percentage||0;
     const tpct = emp.training_percentage||0;
     const st   = emp.onboarding_status||"Pending";
@@ -956,8 +973,38 @@ function renderKpiTable() {
       <td style="font-weight:700;color:var(--teal2);font-size:12px">${tpct}%</td>
       <td><span class="badge ${rc}" style="font-size:10px">${risk}</span></td>
     </tr>`;
-  }).join("");
+  }).join(""));
+
+  // Pager + count
+  const start_disp = _kpiPage * _kpiPageSize;
+  const end_disp   = Math.min(start_disp + _kpiPageSize, _kpiFilteredData.length);
+  const tot        = _kpiFilteredData.length;
+  const tp         = Math.ceil(tot / _kpiPageSize);
+  document.getElementById("kpiPopupCount").textContent =
+    tot > _kpiPageSize ? `Showing ${start_disp+1}–${end_disp} of ${tot} employees` : `Showing all ${tot} employees`;
+
+  const pager = document.getElementById("kpiPopupPager");
+  if(!pager) return;
+  if(tp <= 1){ pager.innerHTML=""; return; }
+  pager.innerHTML = `
+    <button onclick="kpiPrevPage()" ${_kpiPage===0?"disabled":""} style="
+      padding:6px 16px;border-radius:20px;
+      border:1.5px solid ${_kpiPage===0?"#e2e8f0":"var(--navy)"};
+      background:${_kpiPage===0?"#f8fafc":"var(--navy)"};
+      color:${_kpiPage===0?"var(--muted)":"#fff"};
+      font-size:12px;font-weight:700;cursor:${_kpiPage===0?"not-allowed":"pointer"}">← Prev</button>
+    <span style="font-size:12px;font-weight:700;color:var(--navy);padding:0 12px">
+      Page ${_kpiPage+1} / ${tp}
+    </span>
+    <button onclick="kpiNextPage()" ${_kpiPage>=tp-1?"disabled":""} style="
+      padding:6px 16px;border-radius:20px;
+      border:1.5px solid ${_kpiPage>=tp-1?"#e2e8f0":"var(--navy)"};
+      background:${_kpiPage>=tp-1?"#f8fafc":"var(--navy)"};
+      color:${_kpiPage>=tp-1?"var(--muted)":"#fff"};
+      font-size:12px;font-weight:700;cursor:${_kpiPage>=tp-1?"not-allowed":"pointer"}">Next →</button>`;
 }
+function kpiPrevPage(){ if(_kpiPage>0){_kpiPage--;renderKpiTable(false);document.querySelector(".kpi-popup-body").scrollTop=0;} }
+function kpiNextPage(){ const tp=Math.ceil(_kpiFilteredData.length/_kpiPageSize); if(_kpiPage<tp-1){_kpiPage++;renderKpiTable(false);document.querySelector(".kpi-popup-body").scrollTop=0;} }
 
 function exportKpiCSV() {
   const title = document.getElementById("kpiPopupTitle").textContent.replace(/[^\w\s]/g,"").trim();
