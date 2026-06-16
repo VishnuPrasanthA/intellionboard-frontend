@@ -342,6 +342,7 @@ tbody tr:hover{background:#f8fafc}
   <button class="tab" onclick="switchTab(event,'workforce')">👥 Workforce</button>
   <button class="tab" onclick="switchTab(event,'training')">🎓 Training Monitor</button>
   <button class="tab" onclick="switchTab(event,'automation')">⚙️ Automation</button>
+  <button class="tab" onclick="switchTab(event,'addtraining')">➕ Add Training</button>
 </div>
 
 <!-- OVERVIEW -->
@@ -603,6 +604,112 @@ tbody tr:hover{background:#f8fafc}
     </div>
   </div>
 </div>
+
+<!-- ══ TAB: ADD TRAINING ══════════════════════════════════ -->
+<div class="tab-content" id="tab-addtraining">
+
+  <!-- Current account trainings overview -->
+  <div class="section">
+    <div class="sec-title" style="justify-content:space-between">
+      📚 Current Account-Level Mandatory Trainings
+      <button class="btn btn-ghost" style="height:34px;font-size:11px"
+        onclick="loadAccountTrainingList()">🔄 Refresh</button>
+    </div>
+    <div id="accountTrainingListTab">
+      <div style="text-align:center;padding:30px;color:var(--muted);font-size:12px">
+        Loading training list…
+      </div>
+    </div>
+  </div>
+
+  <!-- Add new training -->
+  <div class="section">
+    <div class="sec-title">➕ Assign New Mandatory Training to All Employees</div>
+    <div style="background:#fff;border-radius:16px;padding:24px;box-shadow:var(--shadow)">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+        <div class="form-group">
+          <label style="font-size:11px;font-weight:700;color:var(--muted)">Course Name *</label>
+          <input type="text" id="newCourseName"
+            placeholder="e.g. HMSA Release Management v2"
+            style="border:1px solid #e2e8f0;border-radius:10px;padding:10px 14px;
+              font-size:13px;outline:none;color:var(--text);font-family:inherit;width:100%">
+        </div>
+        <div class="form-group">
+          <label style="font-size:11px;font-weight:700;color:var(--muted)">Description (optional)</label>
+          <input type="text" id="newCourseDesc"
+            placeholder="Brief description of this training"
+            style="border:1px solid #e2e8f0;border-radius:10px;padding:10px 14px;
+              font-size:13px;outline:none;color:var(--text);font-family:inherit;width:100%">
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+        <div class="form-group">
+          <label style="font-size:11px;font-weight:700;color:var(--muted)">Completion Deadline (days)</label>
+          <select id="newCourseDeadline"
+            style="border:1px solid #e2e8f0;border-radius:10px;padding:10px 14px;
+              font-size:13px;outline:none;color:var(--text);font-family:inherit;width:100%">
+            <option value="7">7 days</option>
+            <option value="15" selected>15 days (default)</option>
+            <option value="21">21 days</option>
+            <option value="30">30 days</option>
+          </select>
+        </div>
+        <div style="display:flex;align-items:flex-end">
+          <button class="btn btn-purple" id="addCourseBtn" onclick="addAccountTraining()"
+            style="width:100%;height:44px;font-size:13px">
+            ➕ Assign to All Employees & Send Email
+          </button>
+        </div>
+      </div>
+
+      <!-- Info box -->
+      <div style="background:linear-gradient(135deg,#f5f3ff,#ede9fe);border-radius:12px;
+        padding:16px 20px;border-left:4px solid #7c3aed;margin-bottom:20px">
+        <div style="font-size:13px;font-weight:700;color:#5b21b6;margin-bottom:8px">
+          📋 What happens when you click "Assign to All Employees":
+        </div>
+        <div style="font-size:12px;color:#4c1d95;line-height:2">
+          ✅ Course added to <b>Account Mandatory Trainings</b> section in every employee's LMS<br>
+          ✅ Training notification email sent automatically to each employee<br>
+          ✅ Category set to <b>ACCOUNT</b> — appears in correct LMS section (not COE)<br>
+          ✅ Employees who already have the course are skipped (no duplicates)<br>
+          ✅ 15-day completion deadline applied by default
+        </div>
+      </div>
+
+      <!-- Result banner -->
+      <div id="addTrainingResult" style="display:none"></div>
+    </div>
+  </div>
+
+  <!-- Default mandatory courses reference -->
+  <div class="section">
+    <div class="sec-title">🏥 Default HMSA Mandatory Courses (auto-assigned on induction)</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px">
+      <div style="background:#fff;border-radius:14px;padding:16px 18px;box-shadow:var(--shadow);border-top:3px solid var(--purple)">
+        <div style="font-size:13px;font-weight:700;color:var(--navy)">📋 HMSA Service Request Management</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">Sequence 1 · PDF + Assessment</div>
+      </div>
+      <div style="background:#fff;border-radius:14px;padding:16px 18px;box-shadow:var(--shadow);border-top:3px solid var(--blue)">
+        <div style="font-size:13px;font-weight:700;color:var(--navy)">🔧 Problem Management</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">Sequence 2 · PDF + Assessment</div>
+      </div>
+      <div style="background:#fff;border-radius:14px;padding:16px 18px;box-shadow:var(--shadow);border-top:3px solid var(--teal)">
+        <div style="font-size:13px;font-weight:700;color:var(--navy)">🔄 Change Management</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">Sequence 3 · PDF + Assessment</div>
+      </div>
+      <div style="background:#fff;border-radius:14px;padding:16px 18px;box-shadow:var(--shadow);border-top:3px solid var(--amber)">
+        <div style="font-size:13px;font-weight:700;color:var(--navy)">🚨 Incident Management</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">Sequence 4 · PDF + Assessment</div>
+      </div>
+      <div style="background:#fff;border-radius:14px;padding:16px 18px;box-shadow:var(--shadow);border-top:3px solid var(--red)">
+        <div style="font-size:13px;font-weight:700;color:var(--navy)">🔒 HIPAA Compliance</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">Sequence 5 · PDF + Assessment</div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /addtraining -->
 </div><!-- /page -->
 
 <!-- AGENT -->
@@ -865,8 +972,9 @@ function switchTab(e, name) {
   document.querySelectorAll(".tab-content").forEach(c=>c.classList.remove("active"));
   e.currentTarget.classList.add("active");
   document.getElementById("tab-"+name).classList.add("active");
-  if(name==="training")   renderTrainingTable();
-  if(name==="automation") renderPendingActions();
+  if(name==="training")    renderTrainingTable();
+  if(name==="automation")  renderPendingActions();
+  if(name==="addtraining") loadAccountTrainingList();
 }
 
 /* ═══════════════════════════════════════════════
@@ -1926,49 +2034,84 @@ function downloadReport() {
    ADD ACCOUNT TRAINING — v4.0
 ═══════════════════════════════════════════════ */
 async function addAccountTraining() {
-  const nameEl = document.getElementById("newCourseName");
-  const descEl = document.getElementById("newCourseDesc");
-  const btn    = document.getElementById("addCourseBtn");
-  const name   = (nameEl.value || "").trim();
+  const nameEl    = document.getElementById("newCourseName");
+  const descEl    = document.getElementById("newCourseDesc");
+  const ddlEl     = document.getElementById("newCourseDeadline");
+  const btn       = document.getElementById("addCourseBtn");
+  const resultEl  = document.getElementById("addTrainingResult");
+  const name      = (nameEl.value || "").trim();
   if(!name) { toast("Please enter a course name","amber"); nameEl.focus(); return; }
 
-  btn.disabled = true;
+  btn.disabled    = true;
   btn.textContent = "⏳ Assigning…";
+  if(resultEl) { resultEl.style.display="none"; resultEl.innerHTML=""; }
   toast("Assigning course to all employees and sending emails…","amber");
 
   try {
-    const res = await apiFetch(BASE_URL + "/api/pmo/add-account-training", {
-      method: "POST",
-      headers: {"Content-Type":"application/json"},
+    const res  = await apiFetch(BASE_URL + "/api/pmo/add-account-training", {
+      method:"POST", headers:{"Content-Type":"application/json"},
       body: JSON.stringify({
-        pmo_email:   rm_email,
-        course_name: name,
-        description: descEl.value || "",
-        deadline_days: 15
+        pmo_email:    rm_email,
+        course_name:  name,
+        description:  descEl ? descEl.value || "" : "",
+        deadline_days: ddlEl ? parseInt(ddlEl.value)||15 : 15
       })
     });
     const data = await res.json();
     if(data.success) {
-      toast(`✅ "${name}" assigned to ${data.assigned} employees · ${data.emails_sent} emails sent`, "green");
+      toast(`✅ "${name}" assigned to ${data.assigned} employees · ${data.emails_sent} emails sent`,"green");
       nameEl.value = "";
-      descEl.value = "";
+      if(descEl) descEl.value = "";
+      // Show result banner
+      if(resultEl) {
+        resultEl.style.display = "block";
+        resultEl.innerHTML = `
+          <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;
+            padding:16px 20px;display:flex;align-items:flex-start;gap:12px">
+            <span style="font-size:24px">✅</span>
+            <div>
+              <div style="font-size:14px;font-weight:700;color:#065f46;margin-bottom:4px">
+                Training Successfully Assigned
+              </div>
+              <div style="font-size:13px;color:#047857;line-height:1.8">
+                <b>"${data.course_name}"</b> has been assigned to <b>${data.assigned} employees</b>.<br>
+                ${data.already_had ? `<span style="color:#6b7280">${data.already_had} already had this course (skipped).</span><br>` : ""}
+                📧 Training notification emails sent: <b>${data.emails_sent}</b><br>
+                📚 Employees can find this course under <b>Account Mandatory Trainings</b> in their LMS.
+              </div>
+            </div>
+          </div>`;
+        setTimeout(()=>{ if(resultEl) resultEl.style.display="none"; }, 10000);
+      }
+      // Refresh training lists
       loadAccountTrainingList();
     } else {
       toast("Failed: " + (data.message || "Unknown error"), "red");
+      if(resultEl) {
+        resultEl.style.display = "block";
+        resultEl.innerHTML = `<div style="background:#fef2f2;border:1px solid #fecaca;
+          border-radius:12px;padding:14px 18px;color:#dc2626;font-size:13px">
+          ❌ ${data.message || "Failed to assign training"}</div>`;
+      }
     }
   } catch(e) {
     console.error("addAccountTraining:", e);
-    toast("Error adding training — check backend", "red");
+    toast("Error adding training — check backend connection", "red");
   } finally {
-    btn.disabled  = false;
-    btn.textContent = "➕ Assign to All Employees";
+    btn.disabled    = false;
+    btn.textContent = "➕ Assign to All Employees & Send Email";
   }
 }
 
 async function loadAccountTrainingList() {
-  const el = document.getElementById("accountTrainingList");
+  // Update both the automation tab list and the dedicated tab list
+  const ids = ["accountTrainingList", "accountTrainingListTab"];
+  ids.forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.innerHTML=`<div style="text-align:center;padding:16px;color:var(--muted);font-size:12px">Loading…</div>`;
+  });
+  const el = document.getElementById("accountTrainingListTab") || document.getElementById("accountTrainingList");
   if(!el) return;
-  el.innerHTML = `<div style="text-align:center;padding:16px;color:var(--muted);font-size:12px">Loading…</div>`;
   try {
     const res  = await apiFetch(BASE_URL + "/api/pmo/list-account-trainings", {
       method: "POST",
@@ -1977,11 +2120,13 @@ async function loadAccountTrainingList() {
     });
     const data = await res.json();
     if(!data.success || !data.data || !data.data.length) {
-      el.innerHTML = `<div style="text-align:center;padding:16px;color:var(--muted);font-size:12px">
-        No account-level trainings found yet.</div>`;
+      const noHtml = `<div style="text-align:center;padding:24px;color:var(--muted);font-size:12px">
+        📭 No account-level trainings found yet.<br>
+        Use the form above to add your first course.</div>`;
+    ids.forEach(id=>{ const e2=document.getElementById(id); if(e2) e2.innerHTML=noHtml; });
       return;
     }
-    el.innerHTML = data.data.map(t => {
+    const listHtml = `<div>${data.data.map(t => {
       const pct  = Math.round(t.avg_progress || 0);
       const done = t.completed || 0;
       const total= t.total_assigned || 0;
@@ -2008,7 +2153,8 @@ async function loadAccountTrainingList() {
           </div>
         </div>
       </div>`;
-    }).join('');
+    }).join('')}</div>`;
+    ids.forEach(id=>{ const e2=document.getElementById(id); if(e2) e2.innerHTML=listHtml; });
   } catch(e) {
     console.error("loadAccountTrainingList:", e);
     el.innerHTML = `<div style="text-align:center;padding:16px;color:var(--red);font-size:12px">
