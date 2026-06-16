@@ -232,9 +232,9 @@ tbody tr:hover{background:#f8fafc}
   z-index:999998;display:none;align-items:center;justify-content:center;
   backdrop-filter:blur(4px)}
 .kpi-popup-overlay.open{display:flex}
-.kpi-popup{background:#fff;border-radius:22px;padding:26px;
-  width:min(94vw,900px);height:90vh;max-height:90vh;overflow:hidden;
-  display:flex;flex-direction:column;box-shadow:0 24px 80px rgba(0,0,0,.2)}
+.kpi-popup{background:#fff;border-radius:22px;padding:22px 26px 16px;
+  width:min(96vw,960px);height:92vh;max-height:92vh;overflow:hidden;
+  display:flex;flex-direction:column;box-shadow:0 24px 80px rgba(0,0,0,.22)}
 .kpi-popup-hdr{display:flex;align-items:center;justify-content:space-between;
   margin-bottom:14px;flex-shrink:0}
 .kpi-popup-title{font-size:17px;font-weight:800;color:var(--navy)}
@@ -248,7 +248,7 @@ tbody tr:hover{background:#f8fafc}
   padding:9px 14px;font-size:12px;outline:none;color:var(--text);
   margin-bottom:12px;flex-shrink:0;font-family:inherit}
 .kpi-popup-search:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(25,211,162,.12)}
-.kpi-popup-body{overflow-y:auto;flex:1;min-height:0}
+.kpi-popup-body{overflow-y:auto;flex:1;min-height:0;-webkit-overflow-scrolling:touch}
 .kpi-popup table{width:100%;border-collapse:collapse;min-width:600px}
 .kpi-popup thead{position:sticky;top:0;z-index:5;
   background:linear-gradient(180deg,#f8fafc,#f1f5f9)}
@@ -263,6 +263,15 @@ tbody tr:hover{background:#f8fafc}
 .popup-close:hover{background:var(--red);color:#fff}
 .popup-footer{display:flex;align-items:center;justify-content:space-between;
   margin-top:14px;padding-top:12px;border-top:1px solid #e2e8f0;flex-shrink:0}
+.pager-bar{display:flex;align-items:center;justify-content:center;gap:4px;
+  padding:10px 0 2px;flex-shrink:0}
+.pg-btn{height:32px;min-width:32px;border-radius:8px;border:1.5px solid #e2e8f0;
+  background:#fff;color:var(--navy);font-size:12px;font-weight:700;cursor:pointer;
+  padding:0 10px;transition:all .18s;display:inline-flex;align-items:center;justify-content:center}
+.pg-btn:hover:not(:disabled){background:var(--navy);color:#fff;border-color:var(--navy)}
+.pg-btn:disabled{background:#f8fafc;color:#cbd5e1;cursor:not-allowed;border-color:#f1f5f9}
+.pg-btn.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+.pg-sep{font-size:12px;color:var(--muted);padding:0 4px}
 
 /* MAIL MODAL */
 .mail-modal{background:#fff;border-radius:22px;padding:26px;
@@ -709,12 +718,12 @@ tbody tr:hover{background:#f8fafc}
         <tbody id="kpiPopupBody"></tbody>
       </table>
     </div>
-    <div style="padding-top:12px;border-top:1px solid #e2e8f0;flex-shrink:0">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+    <div style="padding-top:10px;border-top:1px solid #e2e8f0;flex-shrink:0">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
         <div style="font-size:12px;color:var(--muted)" id="kpiPopupCount"></div>
-        <button class="btn btn-teal" style="height:34px;font-size:11px" onclick="exportKpiCSV()">⬇️ Export CSV</button>
+        <button class="btn btn-teal" style="height:32px;font-size:11px" onclick="exportKpiCSV()">⬇️ Export CSV</button>
       </div>
-      <div style="display:flex;align-items:center;justify-content:center;gap:8px" id="kpiPopupPager"></div>
+      <div class="pager-bar" id="kpiPopupPager"></div>
     </div>
   </div>
 </div>
@@ -927,45 +936,94 @@ let _kpiPage = 0;
 const _kpiPageSize = 50;
 let _kpiFilteredData = [];
 
+/* Build a numbered pager — shows up to 7 page buttons with ... ellipsis */
+function buildPager(current, total, onClickFn) {
+  if(total <= 1) return '';
+  const pages = [];
+  const delta = 2;
+  for(let i=0; i<total; i++) {
+    if(i===0 || i===total-1 || (i>=current-delta && i<=current+delta)) pages.push(i);
+    else if(pages[pages.length-1] !== '...') pages.push('...');
+  }
+  const prevDis = current===0 ? 'disabled' : '';
+  const nextDis = current===total-1 ? 'disabled' : '';
+  let html = `<button class="pg-btn" ${prevDis} onclick="${onClickFn}(-1)">‹ Prev</button>`;
+  pages.forEach(p=>{
+    if(p==='...') {
+      html += `<span class="pg-sep">…</span>`;
+    } else {
+      html += `<button class="pg-btn ${p===current?'active':''}" onclick="${onClickFn}(${p})">${p+1}</button>`;
+    }
+  });
+  html += `<button class="pg-btn" ${nextDis} onclick="${onClickFn}(${total})">Next ›</button>`;
+  return html;
+}
+
+function kpiGoToPage(p) {
+  const tp = Math.ceil(_kpiFilteredData.length / _kpiPageSize);
+  if(p === -1)   p = _kpiPage - 1;
+  if(p === tp)   p = _kpiPage + 1;
+  p = Math.max(0, Math.min(p, tp-1));
+  if(p === _kpiPage) return;
+  _kpiPage = p;
+  renderKpiTable(false);
+  document.querySelector('.kpi-popup-body').scrollTop = 0;
+}
+
 function renderKpiTable(resetPage=true) {
   if(resetPage) _kpiPage = 0;
-  let data = [...kpiPopupAllData];
-  if(kpiPopupFilter !== "all") data = data.filter(e=>(e.location||"Unknown")===kpiPopupFilter);
-  if(kpiPopupSearch_) data = data.filter(e=>
-    (e.emp_name||"").toLowerCase().includes(kpiPopupSearch_)||
-    String(e.emp_id||"").includes(kpiPopupSearch_)||
-    (e.designation||"").toLowerCase().includes(kpiPopupSearch_)||
-    (e.location||"").toLowerCase().includes(kpiPopupSearch_)
-  );
-  _kpiFilteredData = data;
-  const total      = data.length;
-  const totalPages = Math.ceil(total / _kpiPageSize);
-  const start      = _kpiPage * _kpiPageSize;
-  const pageData   = data.slice(start, start + _kpiPageSize);
-  const end_       = Math.min(start + _kpiPageSize, total);
 
-  document.getElementById("kpiPopupMeta").textContent = `${kpiPopupAllData.length} total · Showing ${total}`;
-  const tbody = document.getElementById("kpiPopupBody");
+  // Filter
+  let data = [...kpiPopupAllData];
+  if(kpiPopupFilter !== 'all') data = data.filter(e=>(e.location||'Unknown')===kpiPopupFilter);
+  if(kpiPopupSearch_) {
+    const q = kpiPopupSearch_;
+    data = data.filter(e=>
+      (e.emp_name||'').toLowerCase().includes(q)||
+      String(e.emp_id||'').includes(q)||
+      (e.designation||'').toLowerCase().includes(q)||
+      (e.location||'').toLowerCase().includes(q)
+    );
+  }
+  _kpiFilteredData = data;
+
+  const total      = data.length;
+  const totalPages = Math.ceil(total / _kpiPageSize) || 1;
+  if(_kpiPage >= totalPages) _kpiPage = totalPages - 1;
+  const start    = _kpiPage * _kpiPageSize;
+  const end_     = Math.min(start + _kpiPageSize, total);
+  const pageData = data.slice(start, end_);
+
+  // Meta
+  document.getElementById('kpiPopupMeta').textContent =
+    `${kpiPopupAllData.length} total · Filtered: ${total}`;
+
+  const tbody = document.getElementById('kpiPopupBody');
+  const countEl = document.getElementById('kpiPopupCount');
+  const pagerEl = document.getElementById('kpiPopupPager');
+
   if(!total) {
-    tbody.innerHTML=`<tr><td colspan="9" style="text-align:center;padding:30px;color:var(--muted)">No employees match</td></tr>`;
-    document.getElementById("kpiPopupCount").textContent = "No results";
-    document.getElementById("kpiPopupPager").innerHTML = "";
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--muted)">No employees match this filter</td></tr>`;
+    if(countEl) countEl.textContent = 'No results';
+    if(pagerEl) pagerEl.innerHTML = '';
     return;
   }
+
+  // Render rows
   tbody.innerHTML = pageData.map(emp=>{
     const pct  = emp.progress_percentage||0;
     const tpct = emp.training_percentage||0;
-    const st   = emp.onboarding_status||"Pending";
-    const sc   = st.toLowerCase().includes("complet")?"b-done":st.toLowerCase().includes("progress")?"b-progress":"b-pending";
-    const risk = (emp.risk_level||"LOW").toUpperCase();
-    const rc   = risk==="HIGH"?"b-high":risk==="MEDIUM"?"b-med":"b-low";
-    const step = (emp.current_step||"—").replace(/_/g," ");
+    const st   = emp.onboarding_status||'Pending';
+    const sc   = st.toLowerCase().includes('complet')?'b-done':st.toLowerCase().includes('progress')?'b-progress':'b-pending';
+    const risk = (emp.risk_level||'LOW').toUpperCase();
+    const rc   = risk==='HIGH'?'b-high':risk==='MEDIUM'?'b-med':'b-low';
+    const step = (emp.current_step||'—').replace(/_/g,' ');
     return `<tr>
-      <td style="font-weight:700;color:var(--navy);font-size:11px">${emp.emp_id||"—"}</td>
-      <td><div style="font-weight:700;font-size:12px">${emp.emp_name||"—"}</div>
-          <div style="font-size:10px;color:var(--muted)">${emp.email||""}</div></td>
-      <td style="font-size:11px;color:var(--muted);max-width:150px;white-space:normal">${emp.designation||"—"}</td>
-      <td style="font-size:11px">${emp.location||"—"}</td>
+      <td style="font-weight:700;color:var(--navy);font-size:11px">${emp.emp_id||'—'}</td>
+      <td><div style="font-weight:700;font-size:12px">${emp.emp_name||'—'}</div>
+          <div style="font-size:10px;color:var(--muted)">${emp.email||''}</div></td>
+      <td style="font-size:11px;color:var(--muted);max-width:150px;white-space:normal">${emp.designation||'—'}</td>
+      <td style="font-size:11px">${emp.location||'—'}</td>
       <td><span class="badge ${sc}" style="font-size:10px">${st}</span></td>
       <td style="font-size:11px;color:var(--muted)">${step}</td>
       <td><div class="prog-bar" style="width:70px"><div class="prog-fill" style="width:${pct}%"></div></div>
@@ -973,38 +1031,34 @@ function renderKpiTable(resetPage=true) {
       <td style="font-weight:700;color:var(--teal2);font-size:12px">${tpct}%</td>
       <td><span class="badge ${rc}" style="font-size:10px">${risk}</span></td>
     </tr>`;
-  }).join("");
+  }).join('');
 
-  // Pager + count
-  const start_disp = _kpiPage * _kpiPageSize;
-  const end_disp   = Math.min(start_disp + _kpiPageSize, _kpiFilteredData.length);
-  const tot        = _kpiFilteredData.length;
-  const tp         = Math.ceil(tot / _kpiPageSize);
-  document.getElementById("kpiPopupCount").textContent =
-    tot > _kpiPageSize ? `Showing ${start_disp+1}–${end_disp} of ${tot} employees` : `Showing all ${tot} employees`;
+  // Count label
+  if(countEl) {
+    countEl.textContent = total <= _kpiPageSize
+      ? `Showing all ${total} employees`
+      : `Showing ${start+1}–${end_} of ${total} employees`;
+  }
 
-  const pager = document.getElementById("kpiPopupPager");
-  if(!pager) return;
-  if(tp <= 1){ pager.innerHTML=""; return; }
-  pager.innerHTML = `
-    <button onclick="kpiPrevPage()" ${_kpiPage===0?"disabled":""} style="
-      padding:6px 16px;border-radius:20px;
-      border:1.5px solid ${_kpiPage===0?"#e2e8f0":"var(--navy)"};
-      background:${_kpiPage===0?"#f8fafc":"var(--navy)"};
-      color:${_kpiPage===0?"var(--muted)":"#fff"};
-      font-size:12px;font-weight:700;cursor:${_kpiPage===0?"not-allowed":"pointer"}">← Prev</button>
-    <span style="font-size:12px;font-weight:700;color:var(--navy);padding:0 12px">
-      Page ${_kpiPage+1} / ${tp}
-    </span>
-    <button onclick="kpiNextPage()" ${_kpiPage>=tp-1?"disabled":""} style="
-      padding:6px 16px;border-radius:20px;
-      border:1.5px solid ${_kpiPage>=tp-1?"#e2e8f0":"var(--navy)"};
-      background:${_kpiPage>=tp-1?"#f8fafc":"var(--navy)"};
-      color:${_kpiPage>=tp-1?"var(--muted)":"#fff"};
-      font-size:12px;font-weight:700;cursor:${_kpiPage>=tp-1?"not-allowed":"pointer"}">Next →</button>`;
+  // Pager
+  if(pagerEl) {
+    pagerEl.innerHTML = buildPager(_kpiPage, totalPages, 'kpiGoToPage');
+  }
 }
-function kpiPrevPage(){ if(_kpiPage>0){_kpiPage--;renderKpiTable(false);document.querySelector(".kpi-popup-body").scrollTop=0;} }
-function kpiNextPage(){ const tp=Math.ceil(_kpiFilteredData.length/_kpiPageSize); if(_kpiPage<tp-1){_kpiPage++;renderKpiTable(false);document.querySelector(".kpi-popup-body").scrollTop=0;} }
+
+function kpiLocFilter(btn, loc) {
+  document.querySelectorAll('.kpi-filter').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  kpiPopupFilter = loc;
+  _kpiPage = 0;
+  renderKpiTable(true);
+}
+function kpiPopupSearch(v) {
+  kpiPopupSearch_ = v.toLowerCase();
+  _kpiPage = 0;
+  renderKpiTable(true);
+}
+
 
 function exportKpiCSV() {
   const title = document.getElementById("kpiPopupTitle").textContent.replace(/[^\w\s]/g,"").trim();
@@ -1151,34 +1205,49 @@ function renderTable(data, resetPage=true) {
   renderTablePage();
 }
 
+function tableGoToPage(p) {
+  const tp = Math.ceil(filteredEmployees.length / _tablePageSize);
+  if(p === -1)  p = _tablePage - 1;
+  if(p === tp)  p = _tablePage + 1;
+  p = Math.max(0, Math.min(p, tp-1));
+  if(p === _tablePage) return;
+  _tablePage = p;
+  renderTablePage();
+  document.querySelector('.table-wrap').scrollTop = 0;
+}
+
 function renderTablePage() {
-  const data = filteredEmployees;
-  const tbody = document.getElementById("tableBody");
-  const pager = document.getElementById("tablePager");
+  const data  = filteredEmployees;
+  const tbody = document.getElementById('tableBody');
+  const pager = document.getElementById('tablePager');
+
   if(!data.length) {
-    tbody.innerHTML=`<tr><td colspan="11" style="text-align:center;padding:40px;color:var(--muted)">No employees found</td></tr>`;
-    if(pager) pager.innerHTML="";
+    tbody.innerHTML = `<tr><td colspan="11" style="text-align:center;padding:40px;color:var(--muted)">No employees found</td></tr>`;
+    if(pager) pager.innerHTML = '';
     return;
   }
-  const total = data.length;
-  const totalPages = Math.ceil(total / _tablePageSize);
-  const start = _tablePage * _tablePageSize;
-  const pageData = data.slice(start, start + _tablePageSize);
 
-  pageData && (tbody.innerHTML = pageData.map(emp=>{
+  const total      = data.length;
+  const totalPages = Math.ceil(total / _tablePageSize) || 1;
+  if(_tablePage >= totalPages) _tablePage = totalPages - 1;
+  const start    = _tablePage * _tablePageSize;
+  const end_     = Math.min(start + _tablePageSize, total);
+  const pageData = data.slice(start, end_);
+
+  tbody.innerHTML = pageData.map(emp=>{
     const pct  = emp.progress_percentage||0;
     const tpct = emp.training_percentage||0;
-    const st   = emp.onboarding_status||"Pending";
-    const sc   = st.toLowerCase().includes("complet")?"b-done":st.toLowerCase().includes("progress")?"b-progress":"b-pending";
-    const risk = (emp.risk_level||"LOW").toUpperCase();
-    const rc   = risk==="HIGH"?"b-high":risk==="MEDIUM"?"b-med":"b-low";
-    const step = (emp.current_step||"—").replace(/_/g," ");
+    const st   = emp.onboarding_status||'Pending';
+    const sc   = st.toLowerCase().includes('complet')?'b-done':st.toLowerCase().includes('progress')?'b-progress':'b-pending';
+    const risk = (emp.risk_level||'LOW').toUpperCase();
+    const rc   = risk==='HIGH'?'b-high':risk==='MEDIUM'?'b-med':'b-low';
+    const step = (emp.current_step||'—').replace(/_/g,' ');
     return `<tr>
-      <td style="font-weight:700;color:var(--navy)">${emp.emp_id||"—"}</td>
-      <td><div style="font-weight:700">${emp.emp_name||"—"}</div>
-          <div style="font-size:10px;color:var(--muted)">${emp.email||""}</div></td>
-      <td>${emp.designation||"—"}</td>
-      <td>${emp.location||"—"}</td>
+      <td style="font-weight:700;color:var(--navy)">${emp.emp_id||'—'}</td>
+      <td><div style="font-weight:700">${emp.emp_name||'—'}</div>
+          <div style="font-size:10px;color:var(--muted)">${emp.email||''}</div></td>
+      <td>${emp.designation||'—'}</td>
+      <td>${emp.location||'—'}</td>
       <td><span class="badge ${sc}">${st}</span></td>
       <td style="font-size:11px;color:var(--muted)">${step}</td>
       <td><div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div>
@@ -1188,47 +1257,30 @@ function renderTablePage() {
       <td>${tpct>0?`<span class="badge b-assigned">✓ Assigned</span>`:`<span class="badge b-not">Not assigned</span>`}</td>
       <td>
         <button class="action-btn" style="background:#e0f2fe;color:#0369a1"
-          onclick="quickAllocate('${emp.emp_id}','${esc(emp.emp_name||"")}')">🎓</button>
+          onclick="quickAllocate('${emp.emp_id}','${esc(emp.emp_name||'')}')">🎓</button>
         <button class="action-btn" style="background:#fce7f3;color:#9d174d"
-          onclick="quickInduction('${emp.emp_id}','${esc(emp.emp_name||"")}')">📅</button>
+          onclick="quickInduction('${emp.emp_id}','${esc(emp.emp_name||'')}')">📅</button>
       </td>
     </tr>`;
-  }));
+  }).join('');
 
-  // Render pager
+  // Pager
   if(pager) {
-    if(totalPages <= 1) { pager.innerHTML=""; return; }
-    const showing_start = start + 1;
-    const showing_end   = Math.min(start + _tablePageSize, total);
-    pager.innerHTML = `
-      <div style="display:flex;align-items:center;justify-content:space-between;
-        padding:12px 16px;border-top:1px solid #e2e8f0;background:#f8fafc;
-        border-radius:0 0 14px 14px">
-        <span style="font-size:12px;color:var(--muted)">
-          Showing <b>${showing_start}–${showing_end}</b> of <b>${total}</b> employees
-        </span>
-        <div style="display:flex;align-items:center;gap:6px">
-          <button onclick="tablePrevPage()" ${_tablePage===0?"disabled":""} 
-            style="padding:6px 14px;border-radius:8px;border:1px solid #e2e8f0;
-              background:${_tablePage===0?"#f1f5f9":"white"};color:var(--navy);
-              font-size:12px;font-weight:700;cursor:${_tablePage===0?"not-allowed":"pointer"}">
-            ← Prev
-          </button>
-          <span style="font-size:12px;font-weight:700;color:var(--navy);padding:0 8px">
-            Page ${_tablePage+1} / ${totalPages}
-          </span>
-          <button onclick="tableNextPage()" ${_tablePage>=totalPages-1?"disabled":""} 
-            style="padding:6px 14px;border-radius:8px;border:1px solid #e2e8f0;
-              background:${_tablePage>=totalPages-1?"#f1f5f9":"white"};color:var(--navy);
-              font-size:12px;font-weight:700;cursor:${_tablePage>=totalPages-1?"not-allowed":"pointer"}">
-            Next →
-          </button>
-        </div>
+    const countHtml = total <= _tablePageSize
+      ? `<span style="font-size:12px;color:var(--muted)">Showing all ${total} employees</span>`
+      : `<span style="font-size:12px;color:var(--muted)">Showing <b>${start+1}–${end_}</b> of <b>${total}</b> employees</span>`;
+    pager.innerHTML = total <= _tablePageSize ? countHtml :
+      `<div style="display:flex;align-items:center;justify-content:space-between;
+          padding:10px 16px;background:#f8fafc;border-top:1px solid #e2e8f0;border-radius:0 0 14px 14px">
+        ${countHtml}
+        <div class="pager-bar" style="padding:0">${buildPager(_tablePage, totalPages, 'tableGoToPage')}</div>
       </div>`;
   }
 }
-function tablePrevPage() { if(_tablePage>0){_tablePage--;renderTablePage();} }
-function tableNextPage() { const tp=Math.ceil(filteredEmployees.length/_tablePageSize); if(_tablePage<tp-1){_tablePage++;renderTablePage();} }
+
+function tablePrevPage(){ tableGoToPage(_tablePage-1); }
+function tableNextPage(){ tableGoToPage(_tablePage+1); }
+
 
 function searchTable(v) {
   v = v.toLowerCase();
