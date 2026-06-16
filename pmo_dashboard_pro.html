@@ -833,9 +833,9 @@ function renderKPIs(data) {
   const rms = new Set();
   data.forEach(e=>{
     const d = (e.designation||"").toLowerCase();
-    if(/\bqa\b|quality.assur|quality.eng|test.eng|software.test|manual.test|quality.analyst|test.arch|sdet/.test(d)) qa++;
-    else if(/\bdba\b|database.admin|database.eng|sql.server|oracle dba|system.admin|sys.admin|network.eng|infrastructure|devops|cloud.eng|windows.admin|linux.admin|storage.eng|active.directory|\bit.admin\b/.test(d)) auto++;
-    else if((/develop|programmer|\bsde\b|software.dev|full.stack|backend|frontend|tech.lead/.test(d)) && !(/\bqa\b|quality|test|sdet/.test(d))) dev++;
+    if(/\bqa\b|quality assur|quality eng|test eng|software test|manual test|quality analyst|\btest lead\b|\btest arch|\btest manager\b|\btest analyst\b|sdet/i.test(d)) qa++;
+    else if(/\bdba\b|database admin|database eng|sql server|system admin|sys admin|network eng|infrastructure|devops|cloud eng|windows admin|linux admin|storage eng|active directory|it admin/i.test(d)) auto++;
+    else if((/develop|engineer|programmer|\bsde\b|software dev|full stack|backend|frontend|tech lead|module lead|project lead|technical lead|\blead\b|analyst|architect/i.test(d)) && !/\bqa\b|quality|test eng|software test|manual test|\bsdet\b|\btest lead\b|\btest arch|\btest manager\b|\btest analyst\b/i.test(d)) dev++;
     // Track unique RM emp IDs (people who ARE an RM for someone else)
   });
   document.getElementById("kpiQA").textContent   = qa;
@@ -865,17 +865,8 @@ function openKpiPopup(type) {
     pending:    { title:"⏳ Pending Onboarding",      filter: e=>(e.onboarding_status||"").toLowerCase().includes("pending") },
     inprogress: { title:"🔄 In Progress",             filter: e=>(e.onboarding_status||"").toLowerCase().includes("progress") },
     completed:  { title:"✅ Completed",               filter: e=>(e.onboarding_status||"").toLowerCase().includes("complet") },
-    qa:         { title:"🔬 QA / Quality Engineers",  filter: e=>/\bqa\b|quality.assur|quality.eng|test.eng|software.test|manual.test|quality.analyst|test.arch|sdet/.test((e.designation||"").toLowerCase()) },
-    dev:        { title:"💻 Developers / Engineers",  filter: e=>{
-      const d=(e.designation||"").toLowerCase();
-      return /develop|programmer|\bsde\b|software.dev|full.stack|backend|frontend|tech.lead/.test(d)
-        && !/\bqa\b|quality|test|sdet/.test(d);
-    }},
-    infra:      { title:"🗄️ DB / Infrastructure / Admin", filter: e=>{
-      const d=(e.designation||"").toLowerCase();
-      return /\bdba\b|database.admin|database.eng|sql.server|oracle dba|system.admin|sys.admin|network.eng|infrastructure|devops|cloud.eng|windows.admin|linux.admin|storage.eng|active.directory|\bit.admin\b/.test(d)
-        && !/develop|programmer|\bsde\b/.test(d);
-    }},
+    qa:         { title:"🔬 QA / Quality Engineers",  filter: e=>/\bqa\b|quality assur|quality eng|test eng|software test|manual test|quality analyst|\btest lead\b|\btest arch|\btest manager\b|\btest analyst\b|sdet/i.test((e.designation||"").toLowerCase()) }
+    infra:      { title:"🗄️ DB / Infrastructure / Admin", filter: e=>/\bdba\b|database admin|database eng|sql server|system admin|sys admin|network eng|infrastructure|devops|cloud eng|windows admin|linux admin|storage eng|active directory|it admin/i.test((e.designation||"").toLowerCase()) }
     rm:         { title:"👔 Reporting Managers",       filter: e=>{
       const id = String(e.emp_id||"");
       const nm = (e.emp_name||"").toLowerCase();
