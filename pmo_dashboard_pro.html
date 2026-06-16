@@ -110,7 +110,7 @@ body{font-family:"Segoe UI",system-ui,sans-serif;
   display:none;box-shadow:var(--shadow-lg);line-height:1.6}
 
 /* TABLE */
-.table-wrap{overflow-x:auto;border-radius:14px;border:1px solid #e2e8f0}
+.table-wrap{overflow-x:auto;overflow-y:auto;border-radius:14px;border:1px solid #e2e8f0;max-height:calc(100vh - 320px)}
 table{width:100%;min-width:900px;border-collapse:collapse;background:#fff}
 thead{background:linear-gradient(180deg,#f8fafc,#f1f5f9);position:sticky;top:0;z-index:10}
 th{padding:12px 14px;text-align:left;font-size:10px;font-weight:800;
@@ -417,17 +417,20 @@ tbody tr:hover{background:#f8fafc}
         <option>Completed</option>
       </select>
     </div>
-    <div class="table-wrap">
-      <table>
-        <thead><tr>
-          <th>Emp ID</th><th>Name</th><th>Designation</th><th>Location</th>
-          <th>Status</th><th>Stage</th><th>Progress</th><th>Training %</th>
-          <th>Risk</th><th>Courses</th><th>Actions</th>
-        </tr></thead>
-        <tbody id="tableBody">
-          <tr><td colspan="11" style="text-align:center;padding:40px;color:var(--muted)">Loading…</td></tr>
-        </tbody>
-      </table>
+    <div style="border-radius:14px;border:1px solid #e2e8f0;overflow:hidden">
+      <div class="table-wrap" style="border:none;border-radius:0;max-height:calc(100vh - 340px)">
+        <table>
+          <thead><tr>
+            <th>Emp ID</th><th>Name</th><th>Designation</th><th>Location</th>
+            <th>Status</th><th>Stage</th><th>Progress</th><th>Training %</th>
+            <th>Risk</th><th>Courses</th><th>Actions</th>
+          </tr></thead>
+          <tbody id="tableBody">
+            <tr><td colspan="11" style="text-align:center;padding:40px;color:var(--muted)">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div id="tablePager"></div>
     </div>
   </div>
 </div>
@@ -861,25 +864,29 @@ function renderKPIs(data) {
 ═══════════════════════════════════════════════ */
 function openKpiPopup(type) {
   const configs = {
-    total:      { title:"👥 All Employees",          filter: ()=>true },
-    pending:    { title:"⏳ Pending Onboarding",      filter: e=>(e.onboarding_status||"").toLowerCase().includes("pending") },
-    inprogress: { title:"🔄 In Progress",             filter: e=>(e.onboarding_status||"").toLowerCase().includes("progress") },
-    completed:  { title:"✅ Completed",               filter: e=>(e.onboarding_status||"").toLowerCase().includes("complet") },
-    qa:         { title:"🔬 QA / Quality Engineers",  filter: e=>/\bqa\b|quality assur|quality eng|test eng|software test|manual test|quality analyst|\btest lead\b|\btest arch|\btest manager\b|\btest analyst\b|sdet/i.test((e.designation||"").toLowerCase()) }
-    infra:      { title:"🗄️ DB / Infrastructure / Admin", filter: e=>/\bdba\b|database admin|database eng|sql server|system admin|sys admin|network eng|infrastructure|devops|cloud eng|windows admin|linux admin|storage eng|active directory|it admin/i.test((e.designation||"").toLowerCase()) }
-    rm:         { title:"👔 Reporting Managers",       filter: e=>{
-      const id = String(e.emp_id||"");
-      const nm = (e.emp_name||"").toLowerCase();
+    total:      { title:"👥 All Employees",               filter: ()=>true },
+    pending:    { title:"⏳ Pending Onboarding",           filter: e=>(e.onboarding_status||"").toLowerCase().includes("pending") },
+    inprogress: { title:"🔄 In Progress",                 filter: e=>(e.onboarding_status||"").toLowerCase().includes("progress") },
+    completed:  { title:"✅ Completed",                   filter: e=>(e.onboarding_status||"").toLowerCase().includes("complet") },
+    qa:         { title:"🔬 QA / Quality Engineers",      filter: e=>/\bqa\b|quality assur|quality eng|test eng|software test|manual test|quality analyst|\btest lead\b|\btest arch|\btest manager\b|\btest analyst\b|sdet/i.test((e.designation||"").toLowerCase()) },
+    dev:        { title:"💻 Developers / Engineers",      filter: e=>{
+      const d=(e.designation||"").toLowerCase();
+      return /develop|engineer|programmer|\bsde\b|software dev|full stack|backend|frontend|tech lead|module lead|project lead|technical lead|\blead\b|analyst|architect/i.test(d) && !/\bqa\b|quality|test eng|software test|manual test|\bsdet\b|\btest lead\b|\btest arch|\btest manager\b|\btest analyst\b/i.test(d);
+    } },
+    infra:      { title:"🗄️ DB / Infrastructure / Admin", filter: e=>/\bdba\b|database admin|database eng|sql server|system admin|sys admin|network eng|infrastructure|devops|cloud eng|windows admin|linux admin|storage eng|active directory|it admin/i.test((e.designation||"").toLowerCase()) },
+    rm:         { title:"👔 Reporting Managers",           filter: e=>{
+      const id=String(e.emp_id||"");
+      const nm=(e.emp_name||"").toLowerCase();
       return allEmployees.some(other=>
-        (other.emp_id!==e.emp_id) && (
-          String(other.reporting_manager_id||"")===id ||
+        (other.emp_id!==e.emp_id)&&(
+          String(other.reporting_manager_id||"")===id||
           (other.rm_name||"").toLowerCase()===nm
         )
       );
-    }},
-    highrisk:   { title:"🚨 High Risk Employees",      filter: e=>(e.risk_level||"").toUpperCase()==="HIGH" },
+    } },
+    highrisk:   { title:"🚨 High Risk Employees",         filter: e=>(e.risk_level||"").toUpperCase()==="HIGH" },
   };
-  const cfg = configs[type] || configs.total;
+    const cfg = configs[type] || configs.total;
   kpiPopupAllData  = allEmployees.filter(cfg.filter);
   kpiPopupFilter   = "all";
   kpiPopupSearch_  = "";
@@ -1088,13 +1095,30 @@ function hideHmTip() { document.getElementById("hmTooltip").style.display="none"
 /* ═══════════════════════════════════════════════
    WORKFORCE TABLE
 ═══════════════════════════════════════════════ */
-function renderTable(data) {
+let _tablePage = 0;
+const _tablePageSize = 50;
+
+function renderTable(data, resetPage=true) {
+  if(resetPage) _tablePage = 0;
+  filteredEmployees = data; // keep reference for pagination
+  renderTablePage();
+}
+
+function renderTablePage() {
+  const data = filteredEmployees;
   const tbody = document.getElementById("tableBody");
+  const pager = document.getElementById("tablePager");
   if(!data.length) {
     tbody.innerHTML=`<tr><td colspan="11" style="text-align:center;padding:40px;color:var(--muted)">No employees found</td></tr>`;
+    if(pager) pager.innerHTML="";
     return;
   }
-  tbody.innerHTML = data.map(emp=>{
+  const total = data.length;
+  const totalPages = Math.ceil(total / _tablePageSize);
+  const start = _tablePage * _tablePageSize;
+  const pageData = data.slice(start, start + _tablePageSize);
+
+  pageData && (tbody.innerHTML = pageData.map(emp=>{
     const pct  = emp.progress_percentage||0;
     const tpct = emp.training_percentage||0;
     const st   = emp.onboarding_status||"Pending";
@@ -1122,16 +1146,51 @@ function renderTable(data) {
           onclick="quickInduction('${emp.emp_id}','${esc(emp.emp_name||"")}')">📅</button>
       </td>
     </tr>`;
-  }).join("");
+  }).join(""));
+
+  // Render pager
+  if(pager) {
+    if(totalPages <= 1) { pager.innerHTML=""; return; }
+    const showing_start = start + 1;
+    const showing_end   = Math.min(start + _tablePageSize, total);
+    pager.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:space-between;
+        padding:12px 16px;border-top:1px solid #e2e8f0;background:#f8fafc;
+        border-radius:0 0 14px 14px">
+        <span style="font-size:12px;color:var(--muted)">
+          Showing <b>${showing_start}–${showing_end}</b> of <b>${total}</b> employees
+        </span>
+        <div style="display:flex;align-items:center;gap:6px">
+          <button onclick="tablePrevPage()" ${_tablePage===0?"disabled":""} 
+            style="padding:6px 14px;border-radius:8px;border:1px solid #e2e8f0;
+              background:${_tablePage===0?"#f1f5f9":"white"};color:var(--navy);
+              font-size:12px;font-weight:700;cursor:${_tablePage===0?"not-allowed":"pointer"}">
+            ← Prev
+          </button>
+          <span style="font-size:12px;font-weight:700;color:var(--navy);padding:0 8px">
+            Page ${_tablePage+1} / ${totalPages}
+          </span>
+          <button onclick="tableNextPage()" ${_tablePage>=totalPages-1?"disabled":""} 
+            style="padding:6px 14px;border-radius:8px;border:1px solid #e2e8f0;
+              background:${_tablePage>=totalPages-1?"#f1f5f9":"white"};color:var(--navy);
+              font-size:12px;font-weight:700;cursor:${_tablePage>=totalPages-1?"not-allowed":"pointer"}">
+            Next →
+          </button>
+        </div>
+      </div>`;
+  }
 }
+function tablePrevPage() { if(_tablePage>0){_tablePage--;renderTablePage();} }
+function tableNextPage() { const tp=Math.ceil(filteredEmployees.length/_tablePageSize); if(_tablePage<tp-1){_tablePage++;renderTablePage();} }
+
 function searchTable(v) {
   v = v.toLowerCase();
-  filteredEmployees = allEmployees.filter(e=>JSON.stringify(e).toLowerCase().includes(v));
-  renderTable(filteredEmployees);
+  const result = allEmployees.filter(e=>JSON.stringify(e).toLowerCase().includes(v));
+  renderTable(result, true);
 }
 function filterStatus(v) {
-  filteredEmployees = v ? allEmployees.filter(e=>(e.onboarding_status||"").toLowerCase().includes(v.toLowerCase())) : [...allEmployees];
-  renderTable(filteredEmployees);
+  const result = v ? allEmployees.filter(e=>(e.onboarding_status||"").toLowerCase().includes(v.toLowerCase())) : [...allEmployees];
+  renderTable(result, true);
 }
 
 /* ═══════════════════════════════════════════════
