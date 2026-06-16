@@ -608,7 +608,7 @@ tbody tr:hover{background:#f8fafc}
 <!-- ══ TAB: ADD TRAINING ══════════════════════════════════ -->
 <div class="tab-content" id="tab-addtraining">
 
-  <!-- Current account trainings overview -->
+  <!-- ── SECTION 1: Current trainings ── -->
   <div class="section">
     <div class="sec-title" style="justify-content:space-between">
       📚 Current Account-Level Mandatory Trainings
@@ -616,17 +616,17 @@ tbody tr:hover{background:#f8fafc}
         onclick="loadAccountTrainingList()">🔄 Refresh</button>
     </div>
     <div id="accountTrainingListTab">
-      <div style="text-align:center;padding:30px;color:var(--muted);font-size:12px">
-        Loading training list…
-      </div>
+      <div style="text-align:center;padding:30px;color:var(--muted);font-size:12px">Loading…</div>
     </div>
   </div>
 
-  <!-- Add new training -->
+  <!-- ── SECTION 2: Add new training with PDF ── -->
   <div class="section">
-    <div class="sec-title">➕ Assign New Mandatory Training to All Employees</div>
-    <div style="background:#fff;border-radius:16px;padding:24px;box-shadow:var(--shadow)">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+    <div class="sec-title">➕ Add New Mandatory Training</div>
+    <div style="background:#fff;border-radius:16px;padding:24px 26px;box-shadow:var(--shadow)">
+
+      <!-- Row 1: Name + Description -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:14px">
         <div class="form-group">
           <label style="font-size:11px;font-weight:700;color:var(--muted)">Course Name *</label>
           <input type="text" id="newCourseName"
@@ -637,14 +637,50 @@ tbody tr:hover{background:#f8fafc}
         <div class="form-group">
           <label style="font-size:11px;font-weight:700;color:var(--muted)">Description (optional)</label>
           <input type="text" id="newCourseDesc"
-            placeholder="Brief description of this training"
+            placeholder="Brief description of what employees will learn"
             style="border:1px solid #e2e8f0;border-radius:10px;padding:10px 14px;
               font-size:13px;outline:none;color:var(--text);font-family:inherit;width:100%">
         </div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+
+      <!-- Row 2: PDF + Deadline -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:14px">
         <div class="form-group">
-          <label style="font-size:11px;font-weight:700;color:var(--muted)">Completion Deadline (days)</label>
+          <label style="font-size:11px;font-weight:700;color:var(--muted)">
+            📄 PDF / Resource Link
+            <span style="font-weight:400;color:var(--muted);font-size:10px;margin-left:4px">(SharePoint, OneDrive, or any URL)</span>
+          </label>
+          <input type="url" id="newCoursePdfUrl"
+            placeholder="https://company.sharepoint.com/sites/training/document.pdf"
+            style="border:1px solid #e2e8f0;border-radius:10px;padding:10px 14px;
+              font-size:12px;outline:none;color:var(--text);font-family:inherit;width:100%">
+          <div style="font-size:10px;color:var(--muted);margin-top:4px">
+            Paste any URL — SharePoint, OneDrive, Google Drive, or direct PDF link
+          </div>
+        </div>
+        <div class="form-group">
+          <label style="font-size:11px;font-weight:700;color:var(--muted)">— OR — Upload PDF File</label>
+          <div style="border:2px dashed #e2e8f0;border-radius:10px;padding:10px 14px;
+            text-align:center;cursor:pointer;background:#f8fafc;transition:all .2s"
+            onclick="document.getElementById('newCoursePdfFile').click()"
+            id="pdfDropZone"
+            ondragover="event.preventDefault();this.style.borderColor='var(--purple)'"
+            ondragleave="this.style.borderColor='#e2e8f0'"
+            ondrop="handlePdfDrop(event)">
+            <div style="font-size:20px;margin-bottom:4px">📁</div>
+            <div style="font-size:12px;color:var(--muted)" id="pdfFileLabel">
+              Click to browse or drag & drop PDF here
+            </div>
+          </div>
+          <input type="file" id="newCoursePdfFile" accept=".pdf"
+            style="display:none" onchange="onPdfFileSelected(this)">
+        </div>
+      </div>
+
+      <!-- Row 3: Deadline + Button -->
+      <div style="display:grid;grid-template-columns:200px 1fr;gap:16px;margin-bottom:20px;align-items:end">
+        <div class="form-group">
+          <label style="font-size:11px;font-weight:700;color:var(--muted)">Completion Deadline</label>
           <select id="newCourseDeadline"
             style="border:1px solid #e2e8f0;border-radius:10px;padding:10px 14px;
               font-size:13px;outline:none;color:var(--text);font-family:inherit;width:100%">
@@ -654,58 +690,37 @@ tbody tr:hover{background:#f8fafc}
             <option value="30">30 days</option>
           </select>
         </div>
-        <div style="display:flex;align-items:flex-end">
-          <button class="btn btn-purple" id="addCourseBtn" onclick="addAccountTraining()"
-            style="width:100%;height:44px;font-size:13px">
-            ➕ Assign to All Employees & Send Email
-          </button>
-        </div>
+        <button class="btn btn-purple" id="addCourseBtn" onclick="addAccountTraining()"
+          style="width:100%;height:44px;font-size:14px;font-weight:800">
+          ➕ Assign to All Employees & Send Email
+        </button>
       </div>
 
       <!-- Info box -->
       <div style="background:linear-gradient(135deg,#f5f3ff,#ede9fe);border-radius:12px;
-        padding:16px 20px;border-left:4px solid #7c3aed;margin-bottom:20px">
-        <div style="font-size:13px;font-weight:700;color:#5b21b6;margin-bottom:8px">
-          📋 What happens when you click "Assign to All Employees":
-        </div>
-        <div style="font-size:12px;color:#4c1d95;line-height:2">
-          ✅ Course added to <b>Account Mandatory Trainings</b> section in every employee's LMS<br>
+        padding:14px 18px;border-left:4px solid #7c3aed;margin-bottom:16px">
+        <div style="font-size:12px;font-weight:700;color:#5b21b6;margin-bottom:6px">📋 What happens:</div>
+        <div style="font-size:12px;color:#4c1d95;line-height:1.9">
+          ✅ Course added to <b>Account Mandatory Trainings</b> in every employee's LMS (not COE)<br>
+          ✅ PDF/resource link saved — employees see it when opening the course<br>
           ✅ Training notification email sent automatically to each employee<br>
-          ✅ Category set to <b>ACCOUNT</b> — appears in correct LMS section (not COE)<br>
-          ✅ Employees who already have the course are skipped (no duplicates)<br>
-          ✅ 15-day completion deadline applied by default
+          ✅ Employees who already have the course are skipped (no duplicates)
         </div>
       </div>
-
-      <!-- Result banner -->
       <div id="addTrainingResult" style="display:none"></div>
     </div>
   </div>
 
-  <!-- Default mandatory courses reference -->
+  <!-- ── SECTION 3: Manage content for existing default courses ── -->
   <div class="section">
-    <div class="sec-title">🏥 Default HMSA Mandatory Courses (auto-assigned on induction)</div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px">
-      <div style="background:#fff;border-radius:14px;padding:16px 18px;box-shadow:var(--shadow);border-top:3px solid var(--purple)">
-        <div style="font-size:13px;font-weight:700;color:var(--navy)">📋 HMSA Service Request Management</div>
-        <div style="font-size:11px;color:var(--muted);margin-top:4px">Sequence 1 · PDF + Assessment</div>
-      </div>
-      <div style="background:#fff;border-radius:14px;padding:16px 18px;box-shadow:var(--shadow);border-top:3px solid var(--blue)">
-        <div style="font-size:13px;font-weight:700;color:var(--navy)">🔧 Problem Management</div>
-        <div style="font-size:11px;color:var(--muted);margin-top:4px">Sequence 2 · PDF + Assessment</div>
-      </div>
-      <div style="background:#fff;border-radius:14px;padding:16px 18px;box-shadow:var(--shadow);border-top:3px solid var(--teal)">
-        <div style="font-size:13px;font-weight:700;color:var(--navy)">🔄 Change Management</div>
-        <div style="font-size:11px;color:var(--muted);margin-top:4px">Sequence 3 · PDF + Assessment</div>
-      </div>
-      <div style="background:#fff;border-radius:14px;padding:16px 18px;box-shadow:var(--shadow);border-top:3px solid var(--amber)">
-        <div style="font-size:13px;font-weight:700;color:var(--navy)">🚨 Incident Management</div>
-        <div style="font-size:11px;color:var(--muted);margin-top:4px">Sequence 4 · PDF + Assessment</div>
-      </div>
-      <div style="background:#fff;border-radius:14px;padding:16px 18px;box-shadow:var(--shadow);border-top:3px solid var(--red)">
-        <div style="font-size:13px;font-weight:700;color:var(--navy)">🔒 HIPAA Compliance</div>
-        <div style="font-size:11px;color:var(--muted);margin-top:4px">Sequence 5 · PDF + Assessment</div>
-      </div>
+    <div class="sec-title">🏥 Manage Content for Default HMSA Courses</div>
+    <div style="background:#f8fafc;border-radius:12px;padding:14px 18px;
+      font-size:12px;color:var(--muted);margin-bottom:16px;border:1px solid #e2e8f0">
+      ℹ️ These 5 courses are auto-assigned to every employee on induction.
+      Add PDF links or upload files so employees can access the reference material in their LMS.
+    </div>
+    <div id="defaultCoursesManage">
+      <div style="text-align:center;padding:20px;color:var(--muted);font-size:12px">Loading…</div>
     </div>
   </div>
 
@@ -974,7 +989,7 @@ function switchTab(e, name) {
   document.getElementById("tab-"+name).classList.add("active");
   if(name==="training")    renderTrainingTable();
   if(name==="automation")  renderPendingActions();
-  if(name==="addtraining") loadAccountTrainingList();
+  if(name==="addtraining") { loadAccountTrainingList(); loadTrainingResources(); }
 }
 
 /* ═══════════════════════════════════════════════
@@ -2048,6 +2063,13 @@ async function addAccountTraining() {
   toast("Assigning course to all employees and sending emails…","amber");
 
   try {
+    // If a PDF file was selected, upload it first
+    let pdfUrlToSave = (document.getElementById("newCoursePdfUrl")?.value||"").trim();
+    if(_selectedPdfFile && !pdfUrlToSave) {
+      toast("Uploading PDF…","amber");
+      pdfUrlToSave = await uploadCoursePdf(name, _selectedPdfFile, null) || "";
+    }
+
     const res  = await apiFetch(BASE_URL + "/api/pmo/add-account-training", {
       method:"POST", headers:{"Content-Type":"application/json"},
       body: JSON.stringify({
@@ -2083,8 +2105,24 @@ async function addAccountTraining() {
           </div>`;
         setTimeout(()=>{ if(resultEl) resultEl.style.display="none"; }, 10000);
       }
-      // Refresh training lists
+      // Save PDF URL/file if provided
+      const pdfUrlEl2 = document.getElementById("newCoursePdfUrl");
+      const finalUrl  = pdfUrlToSave || (pdfUrlEl2?.value||"").trim();
+      if(finalUrl) {
+        await saveCoursePdfUrl(name, finalUrl,
+          _selectedPdfFile ? _selectedPdfFile.name : (finalUrl.split("/").pop()||name+".pdf"));
+        toast("📄 PDF resource saved for this course","green");
+        if(pdfUrlEl2) pdfUrlEl2.value="";
+      }
+      // Reset PDF file selection
+      _selectedPdfFile = null;
+      const lbl2 = document.getElementById("pdfFileLabel");
+      if(lbl2) lbl2.innerHTML="Click to browse or drag & drop PDF here";
+      const dz2 = document.getElementById("pdfDropZone");
+      if(dz2) dz2.style.borderColor="#e2e8f0";
+      // Refresh training lists + resource panel
       loadAccountTrainingList();
+      loadTrainingResources();
     } else {
       toast("Failed: " + (data.message || "Unknown error"), "red");
       if(resultEl) {
@@ -2159,6 +2197,233 @@ async function loadAccountTrainingList() {
     console.error("loadAccountTrainingList:", e);
     el.innerHTML = `<div style="text-align:center;padding:16px;color:var(--red);font-size:12px">
       Error loading training list.</div>`;
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   TRAINING RESOURCE / PDF MANAGEMENT
+═══════════════════════════════════════════════ */
+let _selectedPdfFile = null;
+
+function handlePdfDrop(e) {
+  e.preventDefault();
+  document.getElementById('pdfDropZone').style.borderColor = '#e2e8f0';
+  const file = e.dataTransfer.files[0];
+  if(file && file.name.toLowerCase().endsWith('.pdf')) {
+    _selectedPdfFile = file;
+    document.getElementById('pdfFileLabel').innerHTML =
+      `<b style="color:var(--navy)">📄 ${file.name}</b><br>
+       <span style="font-size:10px;color:var(--muted)">${(file.size/1024).toFixed(1)} KB — ready to upload</span>`;
+    document.getElementById('pdfDropZone').style.borderColor = 'var(--purple)';
+  } else {
+    toast("Only PDF files are allowed","amber");
+  }
+}
+
+function onPdfFileSelected(input) {
+  const file = input.files[0];
+  if(!file) return;
+  if(!file.name.toLowerCase().endsWith('.pdf')) {
+    toast("Only PDF files allowed","amber"); input.value=""; return;
+  }
+  _selectedPdfFile = file;
+  document.getElementById('pdfFileLabel').innerHTML =
+    `<b style="color:var(--navy)">📄 ${file.name}</b><br>
+     <span style="font-size:10px;color:var(--muted)">${(file.size/1024).toFixed(1)} KB — ready to upload</span>`;
+  document.getElementById('pdfDropZone').style.borderColor = 'var(--purple)';
+}
+
+// Upload PDF for a specific course (used for both new and existing courses)
+async function uploadCoursePdf(courseName, file, resultCallback) {
+  if(!file) return null;
+  const fd = new FormData();
+  fd.append("pmo_email", rm_email);
+  fd.append("training_name", courseName);
+  fd.append("file", file);
+  try {
+    const res  = await apiFetch(BASE_URL + "/api/pmo/upload-training-pdf", {
+      method: "POST", body: fd,
+      // Don't set Content-Type — let browser set multipart boundary
+      headers: {"ngrok-skip-browser-warning":"true"},
+      credentials: "include"
+    });
+    const data = await res.json();
+    if(data.success) {
+      if(resultCallback) resultCallback(data.pdf_url, data.filename);
+      return data.pdf_url;
+    } else {
+      toast("Upload failed: " + (data.message||"error"), "red");
+      return null;
+    }
+  } catch(e) {
+    console.error("PDF upload error:", e);
+    toast("PDF upload failed — check backend", "red");
+    return null;
+  }
+}
+
+// Save PDF URL (SharePoint/OneDrive link) for a course
+async function saveCoursePdfUrl(courseName, pdfUrl, pdfFilename) {
+  try {
+    const res  = await apiFetch(BASE_URL + "/api/pmo/set-training-resource", {
+      method: "POST", headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({
+        pmo_email:     rm_email,
+        training_name: courseName,
+        pdf_url:       pdfUrl,
+        pdf_filename:  pdfFilename || pdfUrl.split("/").pop() || courseName + ".pdf",
+      })
+    });
+    const data = await res.json();
+    return data.success;
+  } catch(e) {
+    console.error("Save PDF URL error:", e);
+    return false;
+  }
+}
+
+// Load training resources from DB and render the default courses manage section
+async function loadTrainingResources() {
+  const el = document.getElementById("defaultCoursesManage");
+  if(!el) return;
+
+  const DEFAULT_COURSES = [
+    {name:"HMSA Service Request Management", seq:1, icon:"📋", color:"var(--purple)"},
+    {name:"Problem Management",              seq:2, icon:"🔧", color:"var(--blue)"},
+    {name:"Change Management",               seq:3, icon:"🔄", color:"var(--teal)"},
+    {name:"Incident Management",             seq:4, icon:"🚨", color:"var(--amber)"},
+    {name:"HIPAA Compliance",                seq:5, icon:"🔒", color:"var(--red)"},
+  ];
+
+  // Fetch existing resources
+  let resources = {};
+  try {
+    const res  = await apiFetch(BASE_URL + "/api/pmo/get-training-resources", {
+      method: "POST", headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({email: rm_email})
+    });
+    const data = await res.json();
+    if(data.success) {
+      (data.data||[]).forEach(r=>{ resources[r.training_name.toLowerCase()] = r; });
+    }
+  } catch(e) { console.warn("load resources:", e); }
+
+  el.innerHTML = DEFAULT_COURSES.map(c=>{
+    const r   = resources[c.name.toLowerCase()] || {};
+    const hasPdf = r.pdf_url || r.sharepoint_url;
+    const safeId = c.name.replace(/[^a-zA-Z0-9]/g,"_");
+    return `
+      <div style="background:#fff;border-radius:16px;padding:20px 22px;
+        margin-bottom:14px;box-shadow:var(--shadow);border-left:4px solid ${c.color}">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:22px">${c.icon}</span>
+            <div>
+              <div style="font-size:14px;font-weight:800;color:var(--navy)">${c.name}</div>
+              <div style="font-size:11px;color:var(--muted)">Sequence ${c.seq} · Auto-assigned on induction</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            ${hasPdf
+              ? `<span style="background:#f0fdf4;color:#059669;border:1px solid #bbf7d0;
+                  border-radius:20px;padding:4px 12px;font-size:11px;font-weight:700">✅ PDF linked</span>`
+              : `<span style="background:#fff7ed;color:#d97706;border:1px solid #fed7aa;
+                  border-radius:20px;padding:4px 12px;font-size:11px;font-weight:700">⚠️ No PDF yet</span>`
+            }
+          </div>
+        </div>
+
+        <!-- Current resource info -->
+        ${hasPdf ? `
+          <div style="background:#f0fdf4;border-radius:10px;padding:10px 14px;
+            margin-bottom:12px;display:flex;align-items:center;gap:10px">
+            <span style="font-size:18px">📄</span>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:12px;font-weight:700;color:#065f46;
+                overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+                ${r.pdf_filename || "PDF / Resource linked"}
+              </div>
+              <a href="${r.pdf_url||r.sharepoint_url}" target="_blank"
+                style="font-size:11px;color:#059669;text-decoration:none;
+                  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block">
+                ${(r.pdf_url||r.sharepoint_url).substring(0,70)}${(r.pdf_url||r.sharepoint_url).length>70?"…":""}
+              </a>
+            </div>
+            <a href="${r.pdf_url||r.sharepoint_url}" target="_blank"
+              class="btn btn-teal" style="height:30px;font-size:11px;flex-shrink:0">👁 Open</a>
+          </div>` : ""}
+
+        <!-- Update resource form -->
+        <details style="cursor:pointer">
+          <summary style="font-size:12px;font-weight:700;color:var(--navy);
+            list-style:none;display:flex;align-items:center;gap:6px;user-select:none">
+            <span style="font-size:14px">${hasPdf?"✏️":"➕"}</span>
+            ${hasPdf ? "Update PDF / Resource" : "Add PDF or Resource Link"}
+          </summary>
+          <div style="padding-top:14px">
+            <!-- Option 1: URL link -->
+            <div style="margin-bottom:12px">
+              <label style="font-size:11px;font-weight:700;color:var(--muted);display:block;margin-bottom:4px">
+                🔗 Paste PDF URL (SharePoint / OneDrive / any link)
+              </label>
+              <div style="display:flex;gap:8px">
+                <input type="url" id="pdfUrl_${safeId}"
+                  placeholder="https://company.sharepoint.com/sites/.../training.pdf"
+                  value="${r.pdf_url||r.sharepoint_url||""}"
+                  style="flex:1;border:1px solid #e2e8f0;border-radius:8px;padding:8px 12px;
+                    font-size:12px;outline:none;color:var(--text);font-family:inherit">
+                <button onclick="saveCourseUrlInline('${c.name}','${safeId}')"
+                  class="btn btn-teal" style="height:36px;font-size:11px;flex-shrink:0">
+                  💾 Save Link
+                </button>
+              </div>
+            </div>
+            <!-- Option 2: Upload file -->
+            <div>
+              <label style="font-size:11px;font-weight:700;color:var(--muted);display:block;margin-bottom:4px">
+                📁 OR Upload PDF File
+              </label>
+              <div style="display:flex;gap:8px;align-items:center">
+                <input type="file" id="pdfFile_${safeId}" accept=".pdf"
+                  style="flex:1;font-size:12px;color:var(--text)">
+                <button onclick="uploadCourseFileInline('${c.name}','${safeId}')"
+                  class="btn btn-navy" style="height:36px;font-size:11px;flex-shrink:0">
+                  ⬆️ Upload
+                </button>
+              </div>
+              <div style="font-size:10px;color:var(--muted);margin-top:4px">
+                Max 50MB · PDF only · Stored on server at uploads/training_resources/
+              </div>
+            </div>
+          </div>
+        </details>
+      </div>`;
+  }).join("");
+}
+
+async function saveCourseUrlInline(courseName, safeId) {
+  const urlEl = document.getElementById("pdfUrl_"+safeId);
+  const url   = (urlEl?.value||"").trim();
+  if(!url) { toast("Please enter a URL","amber"); urlEl.focus(); return; }
+  toast("Saving resource link…","amber");
+  const ok = await saveCoursePdfUrl(courseName, url, "");
+  if(ok) {
+    toast(`✅ Resource linked for "${courseName}"`,"green");
+    setTimeout(loadTrainingResources, 800);
+  } else {
+    toast("Failed to save — check backend","red");
+  }
+}
+
+async function uploadCourseFileInline(courseName, safeId) {
+  const fileInput = document.getElementById("pdfFile_"+safeId);
+  const file = fileInput?.files?.[0];
+  if(!file) { toast("Please select a PDF file","amber"); return; }
+  toast(`Uploading ${file.name}…`,"amber");
+  const pdfUrl = await uploadCoursePdf(courseName, file, null);
+  if(pdfUrl) {
+    toast(`✅ "${file.name}" uploaded for "${courseName}"`,"green");
+    setTimeout(loadTrainingResources, 800);
   }
 }
 
