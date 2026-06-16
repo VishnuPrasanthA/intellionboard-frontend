@@ -973,7 +973,7 @@ function renderKpiTable(resetPage=true) {
       <td style="font-weight:700;color:var(--teal2);font-size:12px">${tpct}%</td>
       <td><span class="badge ${rc}" style="font-size:10px">${risk}</span></td>
     </tr>`;
-  }).join(""));
+  }).join("");
 
   // Pager + count
   const start_disp = _kpiPage * _kpiPageSize;
@@ -1193,7 +1193,7 @@ function renderTablePage() {
           onclick="quickInduction('${emp.emp_id}','${esc(emp.emp_name||"")}')">📅</button>
       </td>
     </tr>`;
-  }).join(""));
+  }));
 
   // Render pager
   if(pager) {
