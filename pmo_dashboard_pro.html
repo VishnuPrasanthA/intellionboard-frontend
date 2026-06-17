@@ -256,17 +256,16 @@ tbody tr:hover{background:#f8fafc}
   cursor:pointer;transition:all .2s}
 .kpi-filter.active{background:var(--navy);color:#fff;border-color:var(--navy)}
 .kpi-popup-search{
-  width:calc(100% - 48px);margin:10px 24px 0;
+  width:calc(100% - 48px);margin:8px 24px 6px;
   border:1px solid #e2e8f0;border-radius:10px;
   padding:9px 14px;font-size:12px;outline:none;
   color:var(--text);font-family:inherit;flex-shrink:0;display:block;
 }
 .kpi-popup-search:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(25,211,162,.12)}
 .kpi-popup-body{
-  overflow-y:scroll;      /* always show scrollbar so height is stable */
+  overflow-y:scroll;
   flex:1;
-  min-height:0;           /* critical — lets flex child shrink below content size */
-  margin:10px 0 0;
+  min-height:0;
   -webkit-overflow-scrolling:touch;
 }
 .kpi-popup table{width:100%;border-collapse:collapse;min-width:600px}
@@ -468,10 +467,26 @@ tbody tr:hover{background:#f8fafc}
 <!-- TRAINING MONITOR -->
 <div class="tab-content" id="tab-training">
   <div class="grid4" style="margin-bottom:14px">
-    <div class="kpi green"><div class="kpi-label">Courses Assigned</div><div class="kpi-val" id="tmAssigned">—</div></div>
-    <div class="kpi blue"><div class="kpi-label">Assessments Done</div><div class="kpi-val" id="tmAssessed">—</div></div>
-    <div class="kpi amber"><div class="kpi-label">Pending Assessment</div><div class="kpi-val" id="tmPending">—</div></div>
-    <div class="kpi red"><div class="kpi-label">Failed (&lt;80%)</div><div class="kpi-val" id="tmFailed">—</div></div>
+    <div class="kpi green" onclick="filterTraining('all')" style="cursor:pointer">
+      <div class="kpi-label">Courses Assigned</div>
+      <div class="kpi-val" id="tmAssigned">—</div>
+      <div class="kpi-sub">Click to view all</div>
+    </div>
+    <div class="kpi blue" onclick="filterTraining('assessed')" style="cursor:pointer">
+      <div class="kpi-label">Assessments Done</div>
+      <div class="kpi-val" id="tmAssessed">—</div>
+      <div class="kpi-sub">Click to view assessed</div>
+    </div>
+    <div class="kpi amber" onclick="filterTraining('pending')" style="cursor:pointer">
+      <div class="kpi-label">Pending Assessment</div>
+      <div class="kpi-val" id="tmPending">—</div>
+      <div class="kpi-sub">Click to view pending</div>
+    </div>
+    <div class="kpi red" onclick="filterTraining('failed')" style="cursor:pointer">
+      <div class="kpi-label">Failed (&lt;80%)</div>
+      <div class="kpi-val" id="tmFailed">—</div>
+      <div class="kpi-sub">Click to view failed</div>
+    </div>
   </div>
   <div class="section">
     <div class="sec-title" style="justify-content:space-between">
@@ -1469,8 +1484,34 @@ function tableNextPage(){ tableGoToPage(_tablePage+1); }
 
 
 function searchTable(v) {
-  v = v.toLowerCase();
-  const result = allEmployees.filter(e=>JSON.stringify(e).toLowerCase().includes(v));
+  v = v.toLowerCase().trim();
+
+  // Switch to workforce tab so results are visible
+  const workforceTab = document.querySelector('.tab[onclick*="workforce"]');
+  if(workforceTab && !workforceTab.classList.contains("active")) {
+    document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+    document.querySelectorAll(".tab-content").forEach(c=>c.classList.remove("active"));
+    workforceTab.classList.add("active");
+    document.getElementById("tab-workforce").classList.add("active");
+  }
+
+  if(!v) {
+    renderTable([...allEmployees], true);
+    return;
+  }
+
+  // Search across all key fields — not just JSON stringify (faster + more accurate)
+  const result = allEmployees.filter(e =>
+    String(e.emp_id      ||"").toLowerCase().includes(v) ||
+    (e.emp_name          ||"").toLowerCase().includes(v) ||
+    (e.email             ||"").toLowerCase().includes(v) ||
+    (e.designation       ||"").toLowerCase().includes(v) ||
+    (e.location          ||"").toLowerCase().includes(v) ||
+    (e.onboarding_status ||"").toLowerCase().includes(v) ||
+    (e.current_step      ||"").toLowerCase().includes(v) ||
+    (e.rm_name           ||"").toLowerCase().includes(v) ||
+    (e.project_name      ||"").toLowerCase().includes(v)
+  );
   renderTable(result, true);
 }
 function filterStatus(v) {
@@ -1504,13 +1545,40 @@ function buildTrainingData(data) {
   document.getElementById("tmPending").textContent  = trainingData.filter(r=>!r.assessed).length;
   document.getElementById("tmFailed").textContent   = trainingData.filter(r=>r.assessed&&!r.passed).length;
 }
+let _trainingFilter = "all"; // all | assessed | pending | failed
+
+function filterTraining(type) {
+  _trainingFilter = type;
+  // Highlight the active KPI card
+  document.querySelectorAll("#tab-training .kpi").forEach((el,i)=>{
+    const types = ["all","assessed","pending","failed"];
+    el.style.outline = types[i]===type ? "3px solid var(--teal)" : "none";
+  });
+  renderTrainingTable();
+  // Scroll to training table
+  document.getElementById("trainingBody")?.closest(".section")?.scrollIntoView({behavior:"smooth"});
+}
+
 function renderTrainingTable() {
   const tbody = document.getElementById("trainingBody");
   if(!trainingData.length) {
     tbody.innerHTML=`<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--muted)">No training data. Click "Allocate Training" first.</td></tr>`;
     return;
   }
-  tbody.innerHTML = trainingData.map(r=>{
+
+  // Apply filter based on active KPI
+  let filtered = trainingData;
+  if(_trainingFilter === "assessed") filtered = trainingData.filter(r=>r.assessed);
+  else if(_trainingFilter === "pending") filtered = trainingData.filter(r=>!r.assessed);
+  else if(_trainingFilter === "failed")  filtered = trainingData.filter(r=>r.assessed&&!r.passed);
+
+  if(!filtered.length) {
+    tbody.innerHTML=`<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--muted)">
+      No records match this filter.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(r=>{
     const scorePct = r.score!=null ? Math.round((r.score/TOTAL_MARKS)*100) : null;
     const passed   = scorePct!=null && scorePct>=PASS_PCT;
     return `<tr>
