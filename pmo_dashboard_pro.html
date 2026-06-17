@@ -957,7 +957,7 @@ const R_QA    = /qa|quality assur|quality eng|test eng|software test|manual te
 const R_INFRA = /dba|database admin|database eng|sql server|system admin|sys admin|network eng|infrastructure|devops|cloud eng|windows admin|linux admin|storage eng|active directory|it admin/i;
 const R_DEV_INC = /develop|engineer|programmer|sde|software dev|full stack|backend|frontend|tech lead|module lead|project lead|technical lead|lead|analyst|architect|consultant|specialist/i;
 const R_DEV_EXC = /qa|quality|test eng|software test|manual test|sdet|test lead|test arch|test manager|test analyst/i;
-const R_MGMT  = /manager|director|president|head of|vp |scrum master|agile coach|pmo|delivery|account lead/i;
+const R_MGMT  = /manager|director|president|head of|vp |scrum master|agile coach|pmo|delivery/i;
 
 function classifyDesignation(designation) {
   const d = (designation || "").toLowerCase();
