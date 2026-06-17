@@ -346,7 +346,7 @@ tbody tr:hover{background:#f8fafc}
 
 <!-- OVERVIEW -->
 <div class="tab-content active" id="tab-overview">
-  <div class="grid4">
+  <div class="grid4" style="margin-bottom:12px">
     <div class="kpi teal" onclick="openKpiPopup('total')">
       <div class="kpi-label">Total Employees</div>
       <div class="kpi-val" id="kpiTotal">—</div>
@@ -368,6 +368,7 @@ tbody tr:hover{background:#f8fafc}
       <div class="kpi-sub">Click to view completed</div>
     </div>
   </div>
+  <!-- Row 2: Role breakdown — QA | Dev | DB/Infra | Management -->
   <div class="grid4">
     <div class="kpi purple" onclick="openKpiPopup('qa')">
       <div class="kpi-label">QA / Quality Engineers</div>
@@ -382,28 +383,34 @@ tbody tr:hover{background:#f8fafc}
     <div class="kpi amber" onclick="openKpiPopup('infra')">
       <div class="kpi-label">DB / Infra / Admin</div>
       <div class="kpi-val" id="kpiAuto">—</div>
-      <div class="kpi-sub">Click to view DB & Admin</div>
+      <div class="kpi-sub">Click to view DB &amp; Admin</div>
     </div>
+    <div class="kpi green" onclick="openKpiPopup('mgmt')">
+      <div class="kpi-label">Management / Other</div>
+      <div class="kpi-val" id="kpiMgmt">—</div>
+      <div class="kpi-sub">Managers · Directors · VPs</div>
+    </div>
+  </div>
+  <!-- Row 3: Reporting Managers only (full width single card) -->
+  <div style="display:grid;grid-template-columns:1fr 3fr;gap:12px;margin-bottom:14px">
     <div class="kpi teal" onclick="openKpiPopup('rm')">
       <div class="kpi-label">Reporting Managers</div>
       <div class="kpi-val" id="kpiRM">—</div>
       <div class="kpi-sub">Click to view RMs</div>
     </div>
-  </div>
-  <div class="grid4" style="margin-bottom:0">
-    <div class="kpi green" onclick="openKpiPopup('mgmt')" style="border-color:#10b981">
-      <div class="kpi-label">Management / Other</div>
-      <div class="kpi-val" id="kpiMgmt" style="color:#10b981">—</div>
-      <div class="kpi-sub" style="color:var(--muted);font-size:9px">Managers · Directors · VPs · Consultants</div>
+    <div style="background:var(--glass);backdrop-filter:blur(16px);border:1px solid var(--border);
+      border-radius:16px;padding:14px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+      <span style="font-size:12px;color:var(--muted)">
+        📊 Role breakdown — QA: <b id="sumQA" style="color:var(--purple)">—</b>
+        &nbsp;·&nbsp; Dev: <b id="sumDev" style="color:var(--blue)">—</b>
+        &nbsp;·&nbsp; DB/Infra: <b id="sumInfra" style="color:var(--amber)">—</b>
+        &nbsp;·&nbsp; Mgmt: <b id="sumMgmt" style="color:var(--green)">—</b>
+        &nbsp;·&nbsp; Total: <b id="sumTotal" style="color:var(--navy)">—</b>
+      </span>
+      <span id="kpiSumCheck" style="font-size:11px;font-weight:700;color:var(--green)"></span>
     </div>
-    <div class="kpi" style="border-color:#e2e8f0;background:#f8fafc;cursor:default">
-      <div class="kpi-label" style="color:var(--muted)">QA + Dev + DB + Mgmt</div>
-      <div class="kpi-val" id="kpiRoleSum" style="color:var(--navy);font-size:22px">—</div>
-      <div class="kpi-sub" style="color:var(--green);font-size:9px" id="kpiSumCheck">Should equal Total</div>
-    </div>
-    <div style="grid-column:span 2"></div>
   </div>
-  <div class="grid3">
+  <div class="grid3" style="margin-top:6px">
     <div class="section" style="min-height:300px">
       <div class="sec-title">📊 Status Distribution</div>
       <div style="position:relative;height:220px;display:flex;align-items:center;justify-content:center">
@@ -1102,14 +1109,18 @@ function renderKPIs(data) {
   const rmCount = data.filter(e=> rmSet.has((e.emp_name||"").toLowerCase())).length;
   document.getElementById("kpiRM").textContent = rmCount;
 
-  // Live sum check — shows QA+Dev+DB+Mgmt = Total
+  // Update role breakdown info bar
   const roleSum = qa + dev + infra + mgmt;
-  const sumEl   = document.getElementById("kpiRoleSum");
-  const chkEl   = document.getElementById("kpiSumCheck");
-  if(sumEl) sumEl.textContent = roleSum;
+  const setSafe = (id, val) => { const el=document.getElementById(id); if(el) el.textContent=val; };
+  setSafe("sumQA",    qa);
+  setSafe("sumDev",   dev);
+  setSafe("sumInfra", infra);
+  setSafe("sumMgmt",  mgmt);
+  setSafe("sumTotal", roleSum);
+  const chkEl = document.getElementById("kpiSumCheck");
   if(chkEl) {
     const match = roleSum === data.length;
-    chkEl.textContent = match ? `✅ Matches total (${data.length})` : `⚠️ Gap: ${data.length - roleSum} uncategorised`;
+    chkEl.textContent = match ? `✅ ${roleSum} = Total` : `⚠️ ${data.length - roleSum} uncategorised`;
     chkEl.style.color = match ? "var(--green)" : "var(--red)";
   }
 
