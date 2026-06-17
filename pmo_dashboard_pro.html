@@ -390,6 +390,19 @@ tbody tr:hover{background:#f8fafc}
       <div class="kpi-sub">Click to view RMs</div>
     </div>
   </div>
+  <div class="grid4" style="margin-bottom:0">
+    <div class="kpi green" onclick="openKpiPopup('mgmt')" style="border-color:#10b981">
+      <div class="kpi-label">Management / Other</div>
+      <div class="kpi-val" id="kpiMgmt" style="color:#10b981">—</div>
+      <div class="kpi-sub" style="color:var(--muted);font-size:9px">Managers · Directors · VPs · Consultants</div>
+    </div>
+    <div class="kpi" style="border-color:#e2e8f0;background:#f8fafc;cursor:default">
+      <div class="kpi-label" style="color:var(--muted)">QA + Dev + DB + Mgmt</div>
+      <div class="kpi-val" id="kpiRoleSum" style="color:var(--navy);font-size:22px">—</div>
+      <div class="kpi-sub" style="color:var(--green);font-size:9px" id="kpiSumCheck">Should equal Total</div>
+    </div>
+    <div style="grid-column:span 2"></div>
+  </div>
   <div class="grid3">
     <div class="section" style="min-height:300px">
       <div class="sec-title">📊 Status Distribution</div>
@@ -939,6 +952,25 @@ const TOTAL_MARKS = 25;
 const PASS_MARKS  = 20;
 const PASS_PCT    = 80;
 
+/* ── Designation classification — single source of truth ──
+   Used by BOTH KPI cards AND popup filters so counts always match.
+   An employee matches the FIRST bucket that fits (priority order).
+   Everyone else → "mgmt" (Management / Other).
+*/
+const R_QA    = /qa|quality assur|quality eng|test eng|software test|manual test|quality analyst|test lead|test arch|test manager|test analyst|sdet/i;
+const R_INFRA = /dba|database admin|database eng|sql server|system admin|sys admin|network eng|infrastructure|devops|cloud eng|windows admin|linux admin|storage eng|active directory|it admin/i;
+const R_DEV_INC = /develop|engineer|programmer|sde|software dev|full stack|backend|frontend|tech lead|module lead|project lead|technical lead|lead|analyst|architect|consultant|specialist/i;
+const R_DEV_EXC = /qa|quality|test eng|software test|manual test|sdet|test lead|test arch|test manager|test analyst/i;
+const R_MGMT  = /manager|director|president|head of|vp |scrum master|agile coach|pmo|delivery|account lead/i;
+
+function classifyDesignation(designation) {
+  const d = (designation || "").toLowerCase();
+  if(R_QA.test(d))                           return "qa";
+  if(R_INFRA.test(d))                        return "infra";
+  if(R_DEV_INC.test(d) && !R_DEV_EXC.test(d)) return "dev";
+  return "mgmt"; // Managers, Directors, VPs, Consultants, Specialists, etc.
+}
+
 // Location aliases — merge these into a single canonical name
 const LOC_ALIASES = {
   "Bangalore - Campus": "Bangalore",
@@ -1045,24 +1077,41 @@ function renderKPIs(data) {
   document.getElementById("kpiProgress").textContent = data.filter(e=>(e.onboarding_status||"").toLowerCase().includes("progress")).length;
   document.getElementById("kpiDone").textContent     = data.filter(e=>(e.onboarding_status||"").toLowerCase().includes("complet")).length;
 
-  let qa=0, dev=0, auto=0;
-  const rms = new Set();
+  // Use shared classifyDesignation so KPI card counts match popup filters exactly
+  let qa=0, dev=0, infra=0, mgmt=0;
   data.forEach(e=>{
-    const d = (e.designation||"").toLowerCase();
-    if(/\bqa\b|quality assur|quality eng|test eng|software test|manual test|quality analyst|\btest lead\b|\btest arch|\btest manager\b|\btest analyst\b|sdet/i.test(d)) qa++;
-    else if(/\bdba\b|database admin|database eng|sql server|system admin|sys admin|network eng|infrastructure|devops|cloud eng|windows admin|linux admin|storage eng|active directory|it admin/i.test(d)) auto++;
-    else if((/develop|engineer|programmer|\bsde\b|software dev|full stack|backend|frontend|tech lead|module lead|project lead|technical lead|\blead\b|analyst|architect/i.test(d)) && !/\bqa\b|quality|test eng|software test|manual test|\bsdet\b|\btest lead\b|\btest arch|\btest manager\b|\btest analyst\b/i.test(d)) dev++;
-    // Track unique RM emp IDs (people who ARE an RM for someone else)
+    const bucket = classifyDesignation(e.designation);
+    if(bucket==="qa")    qa++;
+    else if(bucket==="infra") infra++;
+    else if(bucket==="dev")   dev++;
+    else                      mgmt++;   // managers, directors, VPs, consultants, specialists
   });
+
   document.getElementById("kpiQA").textContent   = qa;
   document.getElementById("kpiDev").textContent  = dev;
-  document.getElementById("kpiAuto").textContent = auto;
-  // Count employees who ARE reporting managers (appear as rm_name/rm_id for others)
+  document.getElementById("kpiAuto").textContent = infra;
+  document.getElementById("kpiMgmt").textContent = mgmt;  // new card
+
+  // Verify sum (debug — remove in prod)
+  const sum = qa + dev + infra + mgmt;
+  if(sum !== data.length) console.warn(`KPI sum mismatch: ${sum} vs total ${data.length}`);
+
+  // Reporting managers — employees who are an RM for at least one other person
   const rmSet = new Set();
   data.forEach(e=>{ if(e.rm_name) rmSet.add((e.rm_name||"").toLowerCase()); });
-  // Count data employees whose name matches an RM name
   const rmCount = data.filter(e=> rmSet.has((e.emp_name||"").toLowerCase())).length;
-  document.getElementById("kpiRM").textContent   = rmCount;
+  document.getElementById("kpiRM").textContent = rmCount;
+
+  // Live sum check — shows QA+Dev+DB+Mgmt = Total
+  const roleSum = qa + dev + infra + mgmt;
+  const sumEl   = document.getElementById("kpiRoleSum");
+  const chkEl   = document.getElementById("kpiSumCheck");
+  if(sumEl) sumEl.textContent = roleSum;
+  if(chkEl) {
+    const match = roleSum === data.length;
+    chkEl.textContent = match ? `✅ Matches total (${data.length})` : `⚠️ Gap: ${data.length - roleSum} uncategorised`;
+    chkEl.style.color = match ? "var(--green)" : "var(--red)";
+  }
 
   const high    = data.filter(e=>(e.risk_level||"").toUpperCase()==="HIGH").length;
   const delayed = data.filter(e=>(e.onboarding_status||"").toLowerCase().includes("delay")).length;
@@ -1077,17 +1126,15 @@ function renderKPIs(data) {
 ═══════════════════════════════════════════════ */
 function openKpiPopup(type) {
   const configs = {
-    total:      { title:"👥 All Employees",               filter: ()=>true },
-    pending:    { title:"⏳ Pending Onboarding",           filter: e=>(e.onboarding_status||"").toLowerCase().includes("pending") },
-    inprogress: { title:"🔄 In Progress",                 filter: e=>(e.onboarding_status||"").toLowerCase().includes("progress") },
-    completed:  { title:"✅ Completed",                   filter: e=>(e.onboarding_status||"").toLowerCase().includes("complet") },
-    qa:         { title:"🔬 QA / Quality Engineers",      filter: e=>/\bqa\b|quality assur|quality eng|test eng|software test|manual test|quality analyst|\btest lead\b|\btest arch|\btest manager\b|\btest analyst\b|sdet/i.test((e.designation||"").toLowerCase()) },
-    dev:        { title:"💻 Developers / Engineers",      filter: e=>{
-      const d=(e.designation||"").toLowerCase();
-      return /develop|engineer|programmer|\bsde\b|software dev|full stack|backend|frontend|tech lead|module lead|project lead|technical lead|\blead\b|analyst|architect/i.test(d) && !/\bqa\b|quality|test eng|software test|manual test|\bsdet\b|\btest lead\b|\btest arch|\btest manager\b|\btest analyst\b/i.test(d);
-    } },
-    infra:      { title:"🗄️ DB / Infrastructure / Admin", filter: e=>/\bdba\b|database admin|database eng|sql server|system admin|sys admin|network eng|infrastructure|devops|cloud eng|windows admin|linux admin|storage eng|active directory|it admin/i.test((e.designation||"").toLowerCase()) },
-    rm:         { title:"👔 Reporting Managers",           filter: e=>{
+    total:      { title:"👥 All Employees",                  filter: ()=>true },
+    pending:    { title:"⏳ Pending Onboarding",              filter: e=>(e.onboarding_status||"").toLowerCase().includes("pending") },
+    inprogress: { title:"🔄 In Progress",                    filter: e=>(e.onboarding_status||"").toLowerCase().includes("progress") },
+    completed:  { title:"✅ Completed",                      filter: e=>(e.onboarding_status||"").toLowerCase().includes("complet") },
+    qa:         { title:"🔬 QA / Quality Engineers",         filter: e=>classifyDesignation(e.designation)==="qa" },
+    dev:        { title:"💻 Developers / Engineers",         filter: e=>classifyDesignation(e.designation)==="dev" },
+    infra:      { title:"🗄️ DB / Infrastructure / Admin",   filter: e=>classifyDesignation(e.designation)==="infra" },
+    mgmt:       { title:"🏢 Management / Other",             filter: e=>classifyDesignation(e.designation)==="mgmt" },
+    rm:         { title:"👔 Reporting Managers",              filter: e=>{
       const id=String(e.emp_id||"");
       const nm=(e.emp_name||"").toLowerCase();
       return allEmployees.some(other=>
@@ -1097,7 +1144,7 @@ function openKpiPopup(type) {
         )
       );
     } },
-    highrisk:   { title:"🚨 High Risk Employees",         filter: e=>(e.risk_level||"").toUpperCase()==="HIGH" },
+    highrisk:   { title:"🚨 High Risk Employees",            filter: e=>(e.risk_level||"").toUpperCase()==="HIGH" },
   };
     const cfg = configs[type] || configs.total;
   kpiPopupAllData  = allEmployees.filter(cfg.filter);
