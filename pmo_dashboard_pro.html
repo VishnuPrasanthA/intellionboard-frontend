@@ -1526,21 +1526,123 @@ function renderTrainingTable() {
       <td style="font-size:11px;color:var(--muted)">${r.deadline}</td>
       <td>
         ${!r.passed?`<button class="action-btn" style="background:#ede9fe;color:#5b21b6"
-          onclick="reassignCourse('${r.emp_id}','${esc(r.course)}')">🔄 Reassign</button>`:""}
+          onclick="reassignCourse('${r.emp_id}','${esc(r.course)}',${r.score||0})">🔄 Reassign</button>`:""}
         <button class="action-btn" style="background:#e0f2fe;color:#0369a1"
-          onclick="sendCourseEmail('${esc(r.emp_name)}','${esc(r.course)}')">📧</button>
+          onclick="sendCourseEmail('${r.emp_id}','${esc(r.emp_name)}','${esc(r.course)}')">📧</button>
       </td>
     </tr>`;
   }).join("");
 }
-function reassignCourse(empId, course) {
-  toast(`🔄 Reassigning "${course}" to ${empId}…`,"amber");
-  setTimeout(()=>toast(`✅ Course + assessment reassigned; failed email sent to ${empId}`,"green"), 1500);
+async function reassignCourse(empId, course, score=0) {
+  const emp = allEmployees.find(e=>String(e.emp_id)===String(empId));
+  if(!emp){ toast("Employee not found in current data","amber"); return; }
+
+  toast(`🔄 Re-assigning "${course}" to ${emp.emp_name||empId}…`,"amber");
+
+  try {
+    const res  = await apiFetch(BASE_URL + "/api/pmo/reassign-course", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({
+        pmo_email:   rm_email,
+        emp_id:      String(empId),
+        emp_name:    emp.emp_name || "",
+        emp_email:   emp.email    || "",
+        course_name: course,
+        score:       score || 0,
+        total_marks: 25,
+        pass_marks:  20
+      })
+    });
+    const data = await res.json();
+    if(data.success) {
+      toast(`✅ "${course}" re-assigned to ${emp.emp_name||empId} · ${data.email_sent?"Failure email sent":"No email (no email on file)"}`, "green");
+    } else {
+      toast("Re-assign failed: " + (data.message||"error"), "red");
+    }
+  } catch(e) {
+    console.error("reassignCourse:", e);
+    toast("Backend error — check connection","red");
+  }
 }
-function sendCourseEmail(name, course) { toast(`📧 Reminder sent to ${name} for: ${course}`,"green"); }
-function sendReminders() {
-  const n = trainingData.filter(r=>!r.assessed).length;
-  toast(`📧 Assessment reminders sent to ${n} employees`,"green");
+async function sendCourseEmail(empId, empName, course) {
+  // Lookup by emp_id — exact match, no ambiguity
+  const emp = allEmployees.find(e=>String(e.emp_id)===String(empId));
+  if(!emp || !emp.email || !emp.email.includes("@")) {
+    toast(`⚠️ No email address on file for ${empName} (${empId})`,"amber");
+    return;
+  }
+  toast(`📧 Sending reminder to ${empName}…`,"amber");
+  try {
+    const res = await apiFetch(BASE_URL + "/api/pmo/send-reminder", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({
+        pmo_email:   rm_email,
+        emp_name:    empName,
+        emp_email:   emp.email,
+        course_name: course,
+        days_left:   3   // single-row reminder always 3-day urgency
+      })
+    });
+    const data = await res.json();
+    if(data.success) {
+      toast(`✅ Reminder sent to ${empName} · ${emp.email}`,"green");
+    } else {
+      toast("Email failed: " + (data.message||"error"), "red");
+    }
+  } catch(e) {
+    console.error("sendCourseEmail:", e);
+    toast("Backend error sending reminder","red");
+  }
+  // NOTE: this only sends to this ONE employee for this ONE course.
+  // The bulk "Send Reminders" button sends to ALL pending employees.
+}
+async function sendReminders() {
+  // Gather all employees with incomplete training who have an email
+  const pending = allEmployees.filter(e =>
+    (e.training_percentage||0) < 100 &&
+    (e.progress_percentage||0) >= 20 &&
+    e.email && e.email.includes("@")
+  );
+
+  if(!pending.length) {
+    toast("No employees with pending training found","amber");
+    return;
+  }
+
+  const btn = document.querySelector('[onclick="sendReminders()"]');
+  if(btn) { btn.disabled=true; btn.textContent="⏳ Sending…"; }
+  toast(`📧 Sending reminders to ${pending.length} employees…`,"amber");
+
+  // Build employees array — one entry per employee per incomplete course
+  const employees = [];
+  pending.forEach(emp => {
+    COURSES.forEach(course => {
+      employees.push({
+        emp_name:    emp.emp_name    || "Employee",
+        emp_email:   emp.email       || "",
+        course_name: course,
+        days_left:   3
+      });
+    });
+  });
+
+  try {
+    const res  = await apiFetch(BASE_URL + "/api/pmo/send-bulk-reminders", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({ pmo_email: rm_email, employees })
+    });
+    const data = await res.json();
+    if(data.success) {
+      toast(`✅ Reminders sent: ${data.sent} emails · Failed: ${data.failed} · Skipped: ${data.skipped}`, "green");
+    } else {
+      toast("Bulk reminder failed: " + (data.message||"error"), "red");
+    }
+  } catch(e) {
+    console.error("sendReminders:", e);
+    toast("Backend error sending bulk reminders","red");
+  } finally {
+    if(btn) { btn.disabled=false; btn.textContent="📧 Send Reminders"; }
+  }
 }
 
 /* ═══════════════════════════════════════════════
