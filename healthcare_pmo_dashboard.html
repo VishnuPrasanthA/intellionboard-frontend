@@ -4123,6 +4123,135 @@ function clearSearch() {
     CURRENT_PAGE = 1;
     renderEmployees(filteredEmployees);
 }
+
+
+/* =========================================================
+   CHAT TOGGLE
+========================================================= */
+function toggleChat() {
+    chatOpen = !chatOpen;
+    const panel = document.getElementById("chatPanel");
+    if (!panel) return;
+    panel.style.display = chatOpen ? "flex" : "none";
+    if (chatOpen) {
+        const input = document.getElementById("chatInput");
+        if (input) setTimeout(() => input.focus(), 100);
+    }
+}
+
+/* =========================================================
+   ADD CHAT MESSAGE
+========================================================= */
+function addChat(role, html) {
+    const body = document.getElementById("chatBody");
+    if (!body) return;
+
+    const div = document.createElement("div");
+    div.className = "chat-message " + (role === "YOU" ? "you" : role === "AI" ? "ai" : "system");
+
+    const label = role === "YOU" ? "You" : role === "AI" ? "PMO AI" : "System";
+    div.innerHTML = `<b>${label}</b><div>${html}</div>`;
+
+    body.appendChild(div);
+    body.scrollTop = body.scrollHeight;
+}
+
+/* =========================================================
+   QUICK ACTION BUTTON HANDLER
+========================================================= */
+function quickAction(cmd) {
+    const input = document.getElementById("chatInput");
+    if (input) input.value = cmd;
+    askAgent();
+}
+
+/* =========================================================
+   SHOW ONBOARD INPUT IN CHAT
+========================================================= */
+function showOnboardInput() {
+    if (!chatOpen) toggleChat();
+
+    const body = document.getElementById("chatBody");
+    if (!body) return;
+
+    // Remove any existing input group
+    const existing = document.getElementById("onboardInputGroup");
+    if (existing) existing.remove();
+
+    const div = document.createElement("div");
+    div.className = "chat-message ai";
+    div.innerHTML = `<b>PMO AI</b><div>
+        <div style="margin-bottom:6px;font-weight:700;">🚀 Onboard Employee</div>
+        <div class="onboard-input-group" id="onboardInputGroup">
+            <input id="onboardEmpInput" placeholder="Enter Employee ID (e.g. 1042836)"
+                onkeydown="if(event.key==='Enter') confirmOnboard()" />
+            <button onclick="confirmOnboard()">🚀 Start Onboarding</button>
+        </div>
+    </div>`;
+    body.appendChild(div);
+    body.scrollTop = body.scrollHeight;
+
+    setTimeout(() => {
+        const inp = document.getElementById("onboardEmpInput");
+        if (inp) inp.focus();
+    }, 100);
+}
+
+/* =========================================================
+   SHOW BULK CONFIRM IN CHAT
+========================================================= */
+function showBulkConfirm() {
+    if (!chatOpen) toggleChat();
+
+    const pending = allEmployees.filter(emp =>
+        String(emp.onboarding_status || "").toUpperCase().includes("PENDING")
+    );
+
+    if (!pending.length) {
+        addChat("AI", "⚠ No pending employees found to bulk onboard.");
+        return;
+    }
+
+    const body = document.getElementById("chatBody");
+    if (!body) return;
+
+    const existing = document.getElementById("bulkConfirmGroup");
+    if (existing) existing.remove();
+
+    const div = document.createElement("div");
+    div.className = "chat-message ai";
+    div.innerHTML = `<b>PMO AI</b><div>
+        <div style="margin-bottom:8px;">
+            📦 Ready to bulk onboard <b>${pending.length}</b> pending employees.<br>
+            <span style="font-size:11px;color:#7d8da5;">
+                This will trigger onboarding workflows for all pending employees.
+            </span>
+        </div>
+        <div id="bulkConfirmGroup" style="display:flex;gap:8px;margin-top:8px;">
+            <button onclick="confirmBulkOnboard()"
+                style="flex:1;background:linear-gradient(135deg,#19d3a2,#0f9e75);
+                color:white;border:none;border-radius:10px;padding:9px 14px;
+                font-size:12px;font-weight:700;cursor:pointer;">
+                ✅ Yes, Onboard All ${pending.length}
+            </button>
+            <button onclick="document.getElementById('bulkConfirmGroup').closest('.chat-message').remove()"
+                style="background:#f0f4f8;color:#7d8da5;border:none;border-radius:10px;
+                padding:9px 14px;font-size:12px;font-weight:700;cursor:pointer;">
+                ✕ Cancel
+            </button>
+        </div>
+    </div>`;
+    body.appendChild(div);
+    body.scrollTop = body.scrollHeight;
+}
+
+/* =========================================================
+   LOAD EMPLOYEES ALIAS (used in startOnboarding)
+========================================================= */
+async function loadEmployees() {
+    await loadDashboard();
+}
+
 </script>
 
     <!-- EMPLOYEE DETAIL POPUP -->
