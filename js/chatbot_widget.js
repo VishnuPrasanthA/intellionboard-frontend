@@ -1,27 +1,9 @@
-
 /* ================================================================
    chatbot_widget.js  —  Universal drop-in for ALL dashboard pages
-   
-   PASTE THIS entire block into each dashboard HTML <script> section.
-   Replace whatever askAgent / sendAgent / sendMessage / processCmd
-   / runCmd / sendBotMsg / botCmd was there before.
-
-   Works for:
-     ✅ pmo_dashboard_pro.html      (sendAgent → calls API)
-     ✅ leadership_dashboard.html   (sendMessage → calls API)
-     ✅ healthcare_pmo_dashboard.html (askAgent → calls API)
-     ✅ admin_dashboard.html        (sendBotMsg → calls API)
-     ✅ Any future page             (just paste and set PAGE_ROLE)
 ================================================================ */
 
-/* ── SET THIS per page ──────────────────────────────────────────
-   PAGE_ROLE is sent to backend so logs are tagged per page type.
-   Values: "HC_PMO" | "ACCOUNT_PMO" | "LEADERSHIP" | "ADMIN" | "ITSG"
-   Change to match the page you're pasting into.
-   ────────────────────────────────────────────────────────────── */
 const PAGE_ROLE = "HC_PMO";  // ← change per page
 
-/* ── Detect API base — works across all pages ────────────────── */
 const _CHAT_API = (typeof BASE_URL !== "undefined" ? BASE_URL :
                    typeof API_BASE !== "undefined" ? API_BASE :
                    "https://manatee-dislike-lifting.ngrok-free.dev")
@@ -32,7 +14,7 @@ const _userEmail = () =>
     localStorage.getItem("email")      ||
     (typeof rm_email !== "undefined" ? rm_email : "") || "";
 
-/* ── Universal chat send — all pages call this ──────────────── */
+/* ── Universal chat send ─────────────────────────────────────── */
 async function _chatSend(inputId, addFn) {
     const inp = document.getElementById(inputId);
     if (!inp) return;
@@ -41,34 +23,62 @@ async function _chatSend(inputId, addFn) {
     addFn("YOU", msg);
     inp.value = "";
 
-    // Typing indicator
+    // ── Typing indicator — injected as its own message ────────
     const tid = "typing_" + Date.now();
     addFn("AI", `<span id="${tid}">🤖 Thinking...</span>`);
 
     try {
-        const opts = { method: "POST",
-            headers: {"Content-Type":"application/json",
-                      "ngrok-skip-browser-warning":"true"},
+        const res  = await fetch(_CHAT_API, {
+            method:      "POST",
             credentials: "include",
+            headers: {
+                "Content-Type":              "application/json",
+                "ngrok-skip-browser-warning":"true"
+            },
             body: JSON.stringify({
                 message:    msg,
                 user_email: _userEmail(),
                 user_role:  PAGE_ROLE,
                 page:       PAGE_ROLE
             })
-        };
-        const res  = await fetch(_CHAT_API, opts);
+        });
+
         const data = await res.json();
 
+        // ── Remove typing indicator ───────────────────────────
+        // Walk up from the span until we find a direct child of
+        // the chat container, then remove that whole wrapper div
         const tel = document.getElementById(tid);
-        if (tel) tel.closest("[class*='chat-message'],[class*='msg']")?.remove();
+        if (tel) {
+            // Try common chat container IDs
+            const chatContainer =
+                document.getElementById("chatBody")   ||
+                document.getElementById("agentChat")  ||
+                document.getElementById("botChat")    ||
+                document.getElementById("chatLog")    ||
+                tel.parentElement?.parentElement;
+
+            if (chatContainer) {
+                // Find the direct child of chatContainer that contains our span
+                let node = tel;
+                while (node && node.parentElement !== chatContainer) {
+                    node = node.parentElement;
+                }
+                if (node && node.parentElement === chatContainer) {
+                    chatContainer.removeChild(node);
+                }
+            } else {
+                // Fallback: just remove the span's immediate parent div
+                const parent = tel.parentElement;
+                if (parent) parent.remove();
+            }
+        }
 
         if (!data.success) {
             addFn("AI", "❌ " + (data.message || "Server error"));
             return;
         }
 
-        // If typo was corrected, show it subtly
         if (data.corrected) {
             addFn("AI", `<small style="color:#94a3b8;font-size:10px;">
                 💬 Interpreted as: "<i>${data.corrected}</i>"</small>`);
@@ -77,8 +87,12 @@ async function _chatSend(inputId, addFn) {
         addFn("AI", _fmtReply(data.reply));
 
     } catch(e) {
+        // Remove typing indicator on error too
         const tel = document.getElementById(tid);
-        if (tel) tel.closest("[class*='chat-message'],[class*='msg']")?.remove();
+        if (tel) {
+            const parent = tel.parentElement;
+            if (parent) parent.remove();
+        }
         console.error("Chat error:", e);
         addFn("AI", "❌ Cannot reach AI backend. Check connection.");
     }
@@ -92,9 +106,10 @@ function _fmtReply(r) {
     if (t === "summary") {
         const d = r.data || {};
         const rows = Object.entries(d).map(([k,v]) =>
-            `<tr><td style="color:#7d8da5;padding:4px 8px;font-size:11px;">${
-                k.replace(/_/g," ")}</td>
-             <td style="font-weight:800;padding:4px 8px;font-size:13px;">${v}</td></tr>`
+            `<tr>
+               <td style="color:#7d8da5;padding:4px 8px;font-size:11px;">${k.replace(/_/g," ")}</td>
+               <td style="font-weight:800;padding:4px 8px;font-size:13px;">${v}</td>
+             </tr>`
         ).join("");
         return `<b>${r.title}</b><br>
             <table style="margin-top:6px;border-collapse:collapse">${rows}</table>`;
@@ -129,9 +144,10 @@ function _fmtReply(r) {
             ["ID Card",  d.id_card_status||"—"],
             ["Risk",     d.risk_level||"LOW"],
         ].filter(([,v])=>v).map(([k,v])=>
-            `<tr><td style="color:#7d8da5;padding:3px 8px;font-size:11px;
-              white-space:nowrap">${k}</td>
-             <td style="font-weight:700;padding:3px 8px;font-size:12px;">${v}</td></tr>`
+            `<tr>
+               <td style="color:#7d8da5;padding:3px 8px;font-size:11px;white-space:nowrap">${k}</td>
+               <td style="font-weight:700;padding:3px 8px;font-size:12px;">${v}</td>
+             </tr>`
         ).join("");
         return `<b>👤 ${d.emp_name||"—"}</b><br>
             <table style="margin-top:6px;border-collapse:collapse">${fields}</table>`;
@@ -200,13 +216,10 @@ function _fmtReply(r) {
 
 /* ================================================================
    PAGE-SPECIFIC WRAPPERS
-   Each page's existing send function now just calls _chatSend.
-   The function NAMES stay the same — no other code breaks.
 ================================================================ */
 
-/* ── HC PMO / Account PMO ── askAgent() + addChat() ─────────── */
 function askAgent() {
-    const addFn = (typeof addChat !== "undefined")   ? addChat :
+    const addFn = (typeof addChat !== "undefined") ? addChat :
                   (typeof addBotMsg !== "undefined") ?
                       (role, html) => addBotMsg(html) :
                       (role, html) => console.log(role, html);
@@ -214,13 +227,9 @@ function askAgent() {
     _chatSend("agentInput", addFn);
 }
 
-/* ── Account PMO ── sendAgent() ─────────────────────────────── */
-function sendAgent() { askAgent(); }
-
-/* ── Account PMO ── processCmd() (called by sendAgent) ──────── */
+function sendAgent()          { askAgent(); }
 function processCmd(msg, raw) { askAgent(); }
 
-/* ── Leadership ── sendMessage() ────────────────────────────── */
 function sendMessage() {
     const addFn = (typeof addChat !== "undefined") ? addChat :
         (role, html) => {
@@ -234,7 +243,6 @@ function sendMessage() {
     _chatSend("chatInput", addFn);
 }
 
-/* ── Admin ── sendBotMsg() ───────────────────────────────────── */
 function sendBotMsg() {
     const addFn = (typeof addChat !== "undefined") ? addChat :
         (role, html) => {
@@ -248,29 +256,25 @@ function sendBotMsg() {
     _chatSend("chatInput", addFn);
 }
 
-/* ── Admin ── botCmd() alias ────────────────────────────────── */
 function botCmd(cmd) {
     const inp = document.getElementById("chatInput");
     if (inp) { inp.value = cmd; sendBotMsg(); }
 }
 
-/* ── Leadership ── runCmd() alias ───────────────────────────── */
 function runCmd(cmd) {
     const inp = document.getElementById("chatInput");
     if (inp) { inp.value = cmd; sendMessage(); }
 }
 
-/* ── agentCmd() (Account PMO) ───────────────────────────────── */
 function agentCmd(cmd) {
     const inp = document.getElementById("agentInput") ||
                 document.getElementById("chatInput");
     if (inp) { inp.value = cmd; askAgent(); }
 }
 
-/* ── quickAction() (HC PMO quick buttons) ───────────────────── */
 function quickAction(cmd) { agentCmd(cmd); }
 
-/* ── Bind Enter key for all input IDs ──────────────────────── */
+/* ── Bind Enter key ─────────────────────────────────────────── */
 document.addEventListener("DOMContentLoaded", () => {
     ["chatInput","agentInput","user_input"].forEach(id => {
         const el = document.getElementById(id);
@@ -278,11 +282,10 @@ document.addEventListener("DOMContentLoaded", () => {
         el.addEventListener("keydown", e => {
             if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
-                // Call whichever send function exists on this page
-                (typeof askAgent     !== "undefined" ? askAgent     :
-                 typeof sendMessage  !== "undefined" ? sendMessage  :
-                 typeof sendBotMsg   !== "undefined" ? sendBotMsg   :
-                 typeof sendAgent    !== "undefined" ? sendAgent     : ()=>{})();
+                (typeof askAgent    !== "undefined" ? askAgent    :
+                 typeof sendMessage !== "undefined" ? sendMessage :
+                 typeof sendBotMsg  !== "undefined" ? sendBotMsg  :
+                 typeof sendAgent   !== "undefined" ? sendAgent   : ()=>{})();
             }
         });
     });
