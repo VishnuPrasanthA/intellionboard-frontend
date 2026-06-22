@@ -1,20 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- SECURITY HEADERS -->
-    <meta http-equiv="Content-Security-Policy" 
-        content="default-src 'self' https://manatee-dislike-lifting.ngrok-free.dev https://cdn.jsdelivr.net; 
-                 script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; 
-                 style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; 
-                 font-src 'self' https://fonts.gstatic.com; 
-                 connect-src 'self' https://manatee-dislike-lifting.ngrok-free.dev wss://; 
-                 img-src 'self' data: https:; 
-                 frame-ancestors 'none'">
-    <meta http-equiv="X-Content-Type-Options" content="nosniff">
-    <meta http-equiv="X-Frame-Options" content="DENY">
-    <meta http-equiv="Referrer-Policy" content="no-referrer">
+    <!-- robots: security headers sent as HTTP headers by Flask middleware -->
     <meta name="robots" content="noindex, nofollow, noarchive">
-
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Account PMO — IntelliOnboard</title>
@@ -2034,200 +2022,275 @@ function openMailPreview(type) {
 /* ═══════════════════════════════════════════════
    AGENT
 ═══════════════════════════════════════════════ */
-let agentOpen = false;
-function toggleAgent() {
-  agentOpen = !agentOpen;
-  document.getElementById("agentPanel").className = agentOpen ? "agent-panel open" : "agent-panel";
-}
-function addBotMsg(html) {
-  const b = document.getElementById("agentBody");
-  const d = document.createElement("div");
-  d.className = "msg bot"; d.innerHTML = `<div>${html}</div>`;
-  b.appendChild(d); b.scrollTop = b.scrollHeight;
-}
-function addUserMsg(text) {
-  const b = document.getElementById("agentBody");
-  const d = document.createElement("div");
-  d.className = "msg user"; d.innerHTML = `<div>${text}</div>`;
-  b.appendChild(d); b.scrollTop = b.scrollHeight;
-}
-function agentCmd(cmd) {
-  document.getElementById("agentInput").value = cmd;
-  sendAgent();
-}
-function sendAgent() {
-  const inp = document.getElementById("agentInput");
-  const raw = (inp.value||"").trim();
-  if(!raw) return;
-  addUserMsg(raw);
-  inp.value = "";
-  processCmd(raw.toLowerCase(), raw);
-}
-document.getElementById("agentInput").addEventListener("keydown", e=>{
-  if(e.key==="Enter"){e.preventDefault();sendAgent();}
-});
-
-// Show employee ID prompt — agent asks for ID before looking up
-function promptEmployeeId(defaultId) {
-  toggleAgent();
-  if(!agentOpen) toggleAgent();
-  const body = document.getElementById("agentBody");
-  const d = document.createElement("div");
-  d.className = "msg bot";
-  d.innerHTML = `<div>
-    <div class="agent-prompt">
-      <div style="font-size:12px;font-weight:700;color:#0c4a6e;margin-bottom:6px">🔍 Check Employee</div>
-      <div style="font-size:11px;color:#0369a1;margin-bottom:8px">Enter the employee ID to look up:</div>
-      <input class="agent-prompt-input" id="empIdInput" type="text" placeholder="e.g. 1042836"
-        value="${defaultId||""}" onkeydown="if(event.key==='Enter')lookupEmpById()">
-      <div style="display:flex;gap:8px;margin-top:8px">
-        <button onclick="lookupEmpById()" style="flex:1;background:var(--navy);color:#fff;border:none;border-radius:8px;padding:8px;font-size:12px;font-weight:700;cursor:pointer">🔍 Search</button>
-      </div>
-    </div>
-  </div>`;
-  body.appendChild(d); body.scrollTop = body.scrollHeight;
-}
-
-function lookupEmpById() {
-  const val = (document.getElementById("empIdInput")?.value||"").trim();
-  if(!val) return;
-  agentCmd(`check ${val}`);
-}
-
-/* ── processCmd replaced by chatbot_widget.js ─────────────────────
-   All logic moved to _chatSend() + _fmtReply() below.
-   PAGE_ROLE = "ACCOUNT_PMO" — commands from this page tagged in DB.
-*/
-
-async function logout() {
-  try { await apiFetch(BASE_URL+"/api/auth/logout",{method:"POST"}); } catch(_) {}
-  localStorage.clear(); sessionStorage.clear();
-  window.location.replace("https://intellionboard.vercel.app/?manual=true");
-}
-// Init
-(function(){
-  const d = new Date(); d.setDate(d.getDate()+1);
-  document.getElementById("ind_date").value = d.toISOString().split("T")[0];
-})();
-setInterval(loadDashboard, 60000);
-loadDashboard();
-
-
-/* ════ chatbot_widget.js ════ */
 /* ================================================================
-   chatbot_widget.js  —  Universal drop-in for ALL dashboard pages
-   
-   PASTE THIS entire block into each dashboard HTML <script> section.
-   Replace whatever askAgent / sendAgent / sendMessage / processCmd
-   / runCmd / sendBotMsg / botCmd was there before.
-
-   Works for:
-     ✅ pmo_dashboard_pro.html      (sendAgent → calls API)
-     ✅ leadership_dashboard.html   (sendMessage → calls API)
-     ✅ healthcare_pmo_dashboard.html (askAgent → calls API)
-     ✅ admin_dashboard.html        (sendBotMsg → calls API)
-     ✅ Any future page             (just paste and set PAGE_ROLE)
+   ACCOUNT PMO — SELF-LEARNING AI CHATBOT
+   Wired to /api/chatbot (NLP + TF-IDF + auto-retrain backend)
+   Security: all output escaped, input sanitized, rate-limited
 ================================================================ */
 
-/* ── SET THIS per page ──────────────────────────────────────────
-   PAGE_ROLE is sent to backend so logs are tagged per page type.
-   Values: "HC_PMO" | "ACCOUNT_PMO" | "LEADERSHIP" | "ADMIN" | "ITSG"
-   Change to match the page you're pasting into.
-   ────────────────────────────────────────────────────────────── */
-const PAGE_ROLE = "ACCOUNT_PMO";  // ← change per page
+let agentOpen = false;
 
-/* ── Detect API base — works across all pages ────────────────── */
-const _CHAT_API = (typeof BASE_URL !== "undefined" ? BASE_URL :
-                   typeof API_BASE !== "undefined" ? API_BASE :
-                   "https://manatee-dislike-lifting.ngrok-free.dev")
-                  + "/api/chatbot";
-
-const _userEmail = () =>
-    localStorage.getItem("user_email") ||
-    localStorage.getItem("email")      ||
-    (typeof rm_email !== "undefined" ? rm_email : "") || "";
-
-/* ── Universal chat send — all pages call this ──────────────── */
-async function _chatSend(inputId, addFn) {
-    const inp = document.getElementById(inputId);
-    if (!inp) return;
-    const msg = (inp.value || "").trim();
-    if (!msg) return;
-    addFn("YOU", msg);
-    inp.value = "";
-
-    // Typing indicator
-    const tid = "typing_" + Date.now();
-    addFn("AI", `<span id="${tid}">🤖 Thinking...</span>`);
-
-    try {
-        const opts = { method: "POST",
-            headers: {"Content-Type":"application/json",
-                      "ngrok-skip-browser-warning":"true"},
-            credentials: "include",
-            body: JSON.stringify({
-                message:    msg,
-                user_email: _userEmail(),
-                user_role:  PAGE_ROLE,
-                page:       PAGE_ROLE
-            })
-        };
-        const res  = await fetch(_CHAT_API, opts);
-        const data = await res.json();
-
-        const tel = document.getElementById(tid);
-        if (tel) tel.closest("[class*='chat-message'],[class*='msg']")?.remove();
-
-        if (!data.success) {
-            addFn("AI", "❌ " + (data.message || "Server error"));
-            return;
-        }
-
-        // If typo was corrected, show it subtly
-        if (data.corrected) {
-            addFn("AI", `<small style="color:#94a3b8;font-size:10px;">
-                💬 Interpreted as: "<i>${data.corrected}</i>"</small>`);
-        }
-
-        addFn("AI", _fmtReply(data.reply));
-
-    } catch(e) {
-        const tel = document.getElementById(tid);
-        if (tel) tel.closest("[class*='chat-message'],[class*='msg']")?.remove();
-        console.error("Chat error:", e);
-        addFn("AI", "❌ Cannot reach AI backend. Check connection.");
+function toggleAgent() {
+    agentOpen = !agentOpen;
+    const p = document.getElementById("agentPanel");
+    if (!p) return;
+    p.className = agentOpen ? "agent-panel open" : "agent-panel";
+    if (agentOpen) {
+        const inp = document.getElementById("agentInput");
+        if (inp) setTimeout(() => inp.focus(), 120);
     }
 }
 
-/* ── FORMAT REPLY ───────────────────────────────────────────── */
-function _fmtReply(r) {
-    if (!r) return "⚠️ No response.";
+/* ── Safe HTML escape — used on ALL API/user data ──────────── */
+function _esc(s) {
+    if (s === null || s === undefined) return "";
+    return String(s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#x27;");
+}
+
+/* ── Add bot message ───────────────────────────────────────── */
+function addBotMsg(html) {
+    const b = document.getElementById("agentBody");
+    if (!b) return;
+    const d = document.createElement("div");
+    d.className = "msg bot";
+    d.innerHTML = `<div>${html}</div>`;
+    b.appendChild(d);
+    b.scrollTop = b.scrollHeight;
+}
+
+/* ── Add user message (always escaped) ────────────────────── */
+function addUserMsg(text) {
+    const b = document.getElementById("agentBody");
+    if (!b) return;
+    const d = document.createElement("div");
+    d.className = "msg user";
+    d.innerHTML = `<div>${_esc(text)}</div>`;
+    b.appendChild(d);
+    b.scrollTop = b.scrollHeight;
+}
+
+/* ── Typing indicator ──────────────────────────────────────── */
+function _addTyping() {
+    const b = document.getElementById("agentBody");
+    if (!b) return null;
+    const tid = "typ_" + Date.now();
+    const d = document.createElement("div");
+    d.className = "msg bot";
+    d.id = "wrap_" + tid;
+    d.innerHTML = `<div style="display:flex;align-items:center;gap:4px;padding:4px 0">
+        <span style="width:7px;height:7px;background:#94a3b8;border-radius:50%;
+            animation:typDot 1.2s infinite" id="${_esc(tid)}"></span>
+        <span style="width:7px;height:7px;background:#94a3b8;border-radius:50%;
+            animation:typDot 1.2s .2s infinite"></span>
+        <span style="width:7px;height:7px;background:#94a3b8;border-radius:50%;
+            animation:typDot 1.2s .4s infinite"></span>
+    </div>`;
+    b.appendChild(d);
+    b.scrollTop = b.scrollHeight;
+    return tid;
+}
+
+function _removeTyping(tid) {
+    if (!tid) return;
+    const w = document.getElementById("wrap_" + tid);
+    if (w) w.remove();
+}
+
+/* ── Rate limiter — 25 messages per 60s ───────────────────── */
+const _msgTs = [];
+function _checkRate() {
+    const now = Date.now();
+    while (_msgTs.length && _msgTs[0] < now - 60000) _msgTs.shift();
+    if (_msgTs.length >= 25) return false;
+    _msgTs.push(now);
+    return true;
+}
+
+/* ── Input sanitizer ───────────────────────────────────────── */
+function _sanitize(val, max) {
+    if (!val) return "";
+    const s = String(val).trim().slice(0, max || 400);
+    // Block SQL injection patterns
+    const BAD = /(\b(DROP|DELETE|TRUNCATE|ALTER|EXEC|EXECUTE|UNION\s+SELECT|INSERT\s+INTO|UPDATE\s+SET)\b|--|\/\*|\*\/|xp_|0x[0-9a-f]{4,})/gi;
+    return BAD.test(s) ? "" : s;
+}
+
+/* ── Get user email from storage (never expose in DOM) ─────── */
+function _getEmail() {
+    return localStorage.getItem("user_email") ||
+           localStorage.getItem("email")      ||
+           (typeof rm_email !== "undefined" ? rm_email : "") || "";
+}
+
+/* ================================================================
+   MAIN SEND — all commands go through /api/chatbot
+================================================================ */
+async function _doSend(raw) {
+    if (!raw) return;
+
+    if (!_checkRate()) {
+        addBotMsg("⚠️ Too many messages — please wait a moment before sending more.");
+        return;
+    }
+
+    addUserMsg(raw);
+
+    // Show typing indicator
+    const tid = _addTyping();
+
+    try {
+        const res = await fetch(BASE_URL + "/api/chatbot", {
+            method:      "POST",
+            credentials: "include",
+            headers: {
+                "Content-Type":               "application/json",
+                "ngrok-skip-browser-warning": "true"
+            },
+            body: JSON.stringify({
+                message:    raw,
+                user_email: _getEmail(),
+                user_role:  "ACCOUNT_PMO",
+                page:       "ACCOUNT_PMO"
+            })
+        });
+
+        _removeTyping(tid);
+
+        if (!res.ok) {
+            if (res.status === 401) {
+                addBotMsg("🔒 Session expired — please refresh the page and log in again.");
+                return;
+            }
+            if (res.status === 429) {
+                addBotMsg("⚠️ Server is busy — please try again in a moment.");
+                return;
+            }
+            addBotMsg("❌ Server error (" + res.status + "). Check ngrok is running.");
+            return;
+        }
+
+        let data;
+        try { data = await res.json(); }
+        catch {
+            addBotMsg("❌ Server returned an invalid response. Check Flask logs.");
+            return;
+        }
+
+        if (!data.success) {
+            addBotMsg("❌ " + _esc(data.message || "Unknown error"));
+            return;
+        }
+
+        // Show typo correction subtly
+        if (data.corrected) {
+            addBotMsg(`<small style="color:#94a3b8;font-size:10px">
+                💬 Interpreted as: "<i>${_esc(data.corrected)}</i>"</small>`);
+        }
+
+        // Render structured reply
+        const rendered = _renderReply(data.reply);
+
+        // Intercept action-type replies — wire to dashboard functions
+        if (data.reply && data.reply.type === "action") {
+            _handleAction(data.reply.action, rendered);
+        } else if (data.reply && data.reply.type === "confirm") {
+            _handleConfirmReply(data.reply);
+        } else {
+            addBotMsg(rendered);
+        }
+
+    } catch (err) {
+        _removeTyping(tid);
+        console.warn("Chatbot fetch failed:", err.message);
+        addBotMsg("❌ Cannot reach backend. Check ngrok is running.");
+    }
+}
+
+/* ── Action handler — bot says "open modal" → actually does it */
+function _handleAction(action, rendered) {
+    addBotMsg(rendered);
+    const actionMap = {
+        "openInductionModal":  () => openModal("inductionModal"),
+        "openTrainingModal":   () => openModal("allocTrainingModal"),
+        "openMailModal":       () => openModal("mailPreviewModal"),
+    };
+    if (actionMap[action]) {
+        setTimeout(() => { if (actionMap[action]) actionMap[action](); }, 600);
+    }
+}
+
+/* ── Confirm reply — wire bot confirm button to real dashboard actions */
+function _handleConfirmReply(reply) {
+    const actionMap = {
+        "sendReminders": sendReminders,
+        "bulkInitiate":  typeof bulkInitiate !== "undefined" ? bulkInitiate : null,
+    };
+    const b = document.getElementById("agentBody");
+    if (!b) return;
+    const d = document.createElement("div");
+    d.className = "msg bot";
+    d.innerHTML = `<div>
+        <b>${_esc(reply.title)}</b><br>
+        ${_esc(reply.message)}<br>
+        <button onclick="(${JSON.stringify(actionMap[reply.action] ? reply.action : 'null')})" 
+            style="margin-top:8px;background:linear-gradient(135deg,#19d3a2,#0f9e75);
+            color:white;border:none;border-radius:10px;padding:8px 16px;
+            font-size:12px;font-weight:700;cursor:pointer"
+            id="confirmBtn_${_esc(reply.action)}">
+            ✅ Confirm
+        </button>
+    </div>`;
+    b.appendChild(d);
+    b.scrollTop = b.scrollHeight;
+
+    // Wire button after DOM insertion
+    const btn = document.getElementById("confirmBtn_" + reply.action);
+    if (btn && actionMap[reply.action]) {
+        btn.onclick = () => { actionMap[reply.action](); btn.disabled = true; btn.textContent = "✅ Done"; };
+    }
+}
+
+/* ================================================================
+   REPLY RENDERER — structured dict → safe HTML
+================================================================ */
+function _renderReply(r) {
+    if (!r) return "⚠️ No response from server.";
     const t = r.type;
 
     if (t === "summary") {
         const d = r.data || {};
-        const rows = Object.entries(d).map(([k,v]) =>
-            `<tr><td style="color:#7d8da5;padding:4px 8px;font-size:11px;">${
-                k.replace(/_/g," ")}</td>
-             <td style="font-weight:800;padding:4px 8px;font-size:13px;">${v}</td></tr>`
+        const rows = Object.entries(d).map(([k, v]) =>
+            `<tr>
+               <td style="color:#7d8da5;padding:4px 8px;font-size:11px;white-space:nowrap">
+                   ${_esc(k.replace(/_/g, " "))}</td>
+               <td style="font-weight:800;padding:4px 8px;font-size:13px;color:#172b42">
+                   ${_esc(String(v))}</td>
+             </tr>`
         ).join("");
-        return `<b>${r.title}</b><br>
-            <table style="margin-top:6px;border-collapse:collapse">${rows}</table>`;
+        return `<b>${_esc(r.title)}</b><br>
+            <table style="margin-top:6px;border-collapse:collapse;width:100%">${rows}</table>`;
     }
 
     if (t === "list") {
-        if (!(r.items||[]).length) return `${r.title||""} — No records found.`;
-        const rows = (r.items||[]).slice(0,8).map(row => {
-            const name = row.emp_name || row.location || row.account_name || "—";
+        if (!(r.items || []).length) return `${_esc(r.title || "")} — No records found.`;
+        const rows = (r.items || []).slice(0, 8).map(row => {
+            const name = _esc(row.emp_name || row.location || row.account_name || "—");
             const sub  = row.current_step
-                ? row.current_step.replace(/_/g," ")
-                : row.count ? `${row.count} employees` : "";
-            const loc  = row.location ? ` · ${row.location}` : "";
-            return `• <b>${name}</b>${loc}${sub ? " — "+sub : ""}`;
+                ? " — " + _esc(row.current_step.replace(/_/g, " "))
+                : row.count ? ` — ${row.count} employees` : "";
+            const loc  = row.location ? ` · ${_esc(row.location)}` : "";
+            return `• <b>${name}</b>${loc}${sub}`;
         }).join("<br>");
-        const more = (r.total||0) > 8
-            ? `<br><span style="color:#94a3b8;font-size:10px;">…and ${r.total-8} more</span>` : "";
-        return `<b>${r.title}</b><br>━━━━━━━━━━━━━━<br>${rows}${more}`;
+        const more = (r.total || 0) > 8
+            ? `<br><span style="color:#94a3b8;font-size:10px">…and ${r.total - 8} more</span>` : "";
+        return `<b>${_esc(r.title)}</b><br>
+            <div style="border-top:1px solid #e2e8f0;margin:4px 0 6px"></div>
+            ${rows}${more}`;
     }
 
     if (t === "employee") {
@@ -2237,171 +2300,118 @@ function _fmtReply(r) {
             ["Role",     d.designation],
             ["Location", d.location],
             ["Status",   d.onboarding_status],
-            ["Step",     (d.current_step||"").replace(/_/g," ")],
-            ["Progress", (d.progress||0)+"%"],
-            ["Training", (d.training_percentage||0)+"%"],
-            ["Laptop",   d.laptop_status||"—"],
-            ["ID Card",  d.id_card_status||"—"],
-            ["Risk",     d.risk_level||"LOW"],
-        ].filter(([,v])=>v).map(([k,v])=>
-            `<tr><td style="color:#7d8da5;padding:3px 8px;font-size:11px;
-              white-space:nowrap">${k}</td>
-             <td style="font-weight:700;padding:3px 8px;font-size:12px;">${v}</td></tr>`
+            ["Step",     (d.current_step || "").replace(/_/g, " ")],
+            ["Progress", (d.progress || 0) + "%"],
+            ["Training", (d.training_percentage || 0) + "%"],
+            ["Laptop",   d.laptop_status || "—"],
+            ["ID Card",  d.id_card_status || "—"],
+            ["Risk",     d.risk_level || "LOW"],
+        ].filter(([, v]) => v).map(([k, v]) =>
+            `<tr>
+               <td style="color:#7d8da5;padding:3px 8px;font-size:11px;white-space:nowrap">${_esc(k)}</td>
+               <td style="font-weight:700;padding:3px 8px;font-size:12px;color:#172b42">${_esc(String(v))}</td>
+             </tr>`
         ).join("");
-        return `<b>👤 ${d.emp_name||"—"}</b><br>
+        return `<b>👤 ${_esc(d.emp_name || "—")}</b><br>
             <table style="margin-top:6px;border-collapse:collapse">${fields}</table>`;
     }
 
     if (t === "help") {
-        const items = (r.intents||[]).map(c => {
-            const cmd = c.split("/")[0].trim();
-            return `<div onclick="
-                    const inp=document.getElementById('chatInput')||
-                               document.getElementById('agentInput');
-                    if(inp){inp.value='${cmd}';
-                    (typeof askAgent!=='undefined'?askAgent:
-                     typeof sendAgent!=='undefined'?sendAgent:
-                     typeof sendMessage!=='undefined'?sendMessage:
-                     typeof sendBotMsg!=='undefined'?sendBotMsg:()=>{})();}
-                " style="padding:7px 10px;margin:3px 0;border-radius:8px;
-                    border:1px solid #e8f0f8;cursor:pointer;font-size:12px;
-                    background:#f8fbff;transition:all .15s"
-                onmouseover="this.style.background='#e8f5f0'"
-                onmouseout="this.style.background='#f8fbff'">
-                ${c} <span style="color:#19d3a2;font-size:10px;font-weight:800">▶ click</span>
+        const items = (r.intents || []).map(c => {
+            const cmd = _esc(c.split("/")[0].trim());
+            return `<div onclick="agentCmd('${cmd}')"
+                style="padding:6px 10px;margin:3px 0;border-radius:8px;
+                    border:1px solid rgba(15,32,68,.12);cursor:pointer;font-size:11px;
+                    background:rgba(15,32,68,.04);color:#0f2044;transition:all .15s"
+                onmouseover="this.style.background='rgba(15,32,68,.12)'"
+                onmouseout="this.style.background='rgba(15,32,68,.04)'">
+                ${cmd}
+                <span style="color:var(--teal);font-size:10px;font-weight:800;float:right">▶</span>
             </div>`;
         }).join("");
-        return `<b>${r.title}</b><br>
-            <small style="color:#7d8da5">I learn new commands automatically from every use.</small>
+        return `<b>${_esc(r.title)}</b><br>
+            <small style="color:#94a3b8;font-size:10px">
+                Powered by NLP — learns from every interaction.</small>
             <div style="margin-top:8px">${items}</div>`;
     }
 
     if (t === "confirm") {
-        return `<b>${r.title}</b><br>${r.message}<br>
-            <button onclick="${r.action}()" style="margin-top:8px;
-                background:linear-gradient(135deg,#19d3a2,#0f9e75);
-                color:white;border:none;border-radius:10px;
-                padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;">
-                ✅ Confirm
-            </button>`;
+        return `<b>${_esc(r.title)}</b><br>${_esc(r.message)}`;
     }
 
     if (t === "action") {
-        return `<b>${r.title}</b><br>${r.message}<br>
-            <button onclick="${r.action}()" style="margin-top:8px;
-                background:linear-gradient(135deg,#3ea6ff,#73c7ff);
-                color:white;border:none;border-radius:10px;
-                padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;">
-                ▶ Open
-            </button>`;
+        return `<b>${_esc(r.title)}</b><br>${_esc(r.message)}`;
     }
 
     if (t === "count") {
-        return `<b>${r.title}</b><br>
-            <span style="font-size:26px;font-weight:900">${r.count}</span><br>
-            <small style="color:#7d8da5">${r.message||""}</small>`;
+        return `<b>${_esc(r.title)}</b><br>
+            <span style="font-size:28px;font-weight:900;color:#172b42">
+                ${_esc(String(r.count))}</span><br>
+            <small style="color:#94a3b8">${_esc(r.message || "")}</small>`;
     }
 
     if (t === "fallback") {
-        return `🤖 ${r.message}<br>
-            <small style="color:#94a3b8;font-size:10px;">
-                ✍️ "<i>${r.raw_input||""}</i>" logged — model learns it automatically.
-            </small>`;
+        return `🤖 ${_esc(r.message)}<br>
+            <small style="color:#94a3b8;font-size:10px">
+                ✍️ "<i>${_esc(r.raw_input || "")}</i>" logged — model learns automatically.</small>`;
     }
 
-    if (t === "prompt" || t === "not_found") return `⚠️ ${r.message}`;
-    return r.message || JSON.stringify(r);
+    if (t === "prompt" || t === "not_found") return `⚠️ ${_esc(r.message)}`;
+    return _esc(r.message) || "Response received.";
 }
 
 /* ================================================================
-   PAGE-SPECIFIC WRAPPERS
-   Each page's existing send function now just calls _chatSend.
-   The function NAMES stay the same — no other code breaks.
+   PUBLIC API — wired to HTML buttons/Enter
 ================================================================ */
 
-/* ── HC PMO / Account PMO ── askAgent() + addChat() ─────────── */
-function askAgent() {
-    const addFn = (typeof addChat !== "undefined")   ? addChat :
-                  (typeof addBotMsg !== "undefined") ?
-                      (role, html) => addBotMsg(html) :
-                      (role, html) => console.log(role, html);
-    _chatSend("chatInput", addFn) ||
-    _chatSend("agentInput", addFn);
+/* ── sendAgent — called by Send button ────────────────────── */
+function sendAgent() {
+    const inp = document.getElementById("agentInput");
+    if (!inp) return;
+    const raw = _sanitize((inp.value || "").trim(), 400);
+    if (!raw) return;
+    inp.value = "";
+    _doSend(raw);
 }
 
-/* ── Account PMO ── sendAgent() ─────────────────────────────── */
-function sendAgent() { askAgent(); }
-
-/* ── Account PMO ── processCmd() (called by sendAgent) ──────── */
-function processCmd(msg, raw) { askAgent(); }
-
-/* ── Leadership ── sendMessage() ────────────────────────────── */
-function sendMessage() {
-    const addFn = (typeof addChat !== "undefined") ? addChat :
-        (role, html) => {
-            const b = document.getElementById("chatBody");
-            if (!b) return;
-            const d = document.createElement("div");
-            d.className = "chat-message " + (role==="YOU"?"you":"ai");
-            d.innerHTML = `<b>${role==="YOU"?"You":"AI"}</b><div>${html}</div>`;
-            b.appendChild(d); b.scrollTop = b.scrollHeight;
-        };
-    _chatSend("chatInput", addFn);
-}
-
-/* ── Admin ── sendBotMsg() ───────────────────────────────────── */
-function sendBotMsg() {
-    const addFn = (typeof addChat !== "undefined") ? addChat :
-        (role, html) => {
-            const b = document.getElementById("chatBody");
-            if (!b) return;
-            const d = document.createElement("div");
-            d.className = "chat-message " + (role==="YOU"?"you":"ai");
-            d.innerHTML = `<b>${role==="YOU"?"You":"AI"}</b><div>${html}</div>`;
-            b.appendChild(d); b.scrollTop = b.scrollHeight;
-        };
-    _chatSend("chatInput", addFn);
-}
-
-/* ── Admin ── botCmd() alias ────────────────────────────────── */
-function botCmd(cmd) {
-    const inp = document.getElementById("chatInput");
-    if (inp) { inp.value = cmd; sendBotMsg(); }
-}
-
-/* ── Leadership ── runCmd() alias ───────────────────────────── */
-function runCmd(cmd) {
-    const inp = document.getElementById("chatInput");
-    if (inp) { inp.value = cmd; sendMessage(); }
-}
-
-/* ── agentCmd() (Account PMO) ───────────────────────────────── */
+/* ── agentCmd — called by quick action buttons ─────────────── */
 function agentCmd(cmd) {
-    const inp = document.getElementById("agentInput") ||
-                document.getElementById("chatInput");
-    if (inp) { inp.value = cmd; askAgent(); }
+    const safe = _sanitize(String(cmd || ""), 200);
+    if (!safe) return;
+    if (!agentOpen) toggleAgent();
+    const inp = document.getElementById("agentInput");
+    if (inp) inp.value = safe;
+    sendAgent();
 }
 
-/* ── quickAction() (HC PMO quick buttons) ───────────────────── */
-function quickAction(cmd) { agentCmd(cmd); }
-
-/* ── Bind Enter key for all input IDs ──────────────────────── */
-document.addEventListener("DOMContentLoaded", () => {
-    ["chatInput","agentInput","user_input"].forEach(id => {
-        const el = document.getElementById(id);
-        if (!el) return;
-        el.addEventListener("keydown", e => {
-            if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                // Call whichever send function exists on this page
-                (typeof askAgent     !== "undefined" ? askAgent     :
-                 typeof sendMessage  !== "undefined" ? sendMessage  :
-                 typeof sendBotMsg   !== "undefined" ? sendBotMsg   :
-                 typeof sendAgent    !== "undefined" ? sendAgent     : ()=>{})();
-            }
-        });
+/* ── Enter key ─────────────────────────────────────────────── */
+(function () {
+    const inp = document.getElementById("agentInput");
+    if (!inp) return;
+    inp.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            sendAgent();
+        }
     });
-});
+})();
+
+/* ── processCmd — kept as alias so existing onclick=""s work ── */
+function processCmd(msg, raw) {
+    _doSend(_sanitize(raw || msg, 400));
+}
+
+/* ── Typing dot animation ───────────────────────────────────── */
+(function injectTypingCSS() {
+    if (document.getElementById("_typingCSS")) return;
+    const s = document.createElement("style");
+    s.id = "_typingCSS";
+    s.textContent = `@keyframes typDot {
+        0%,80%,100%{ transform:scale(0.6);opacity:.4 }
+        40%{ transform:scale(1.0);opacity:1 }
+    }`;
+    document.head.appendChild(s);
+})();
 
 
 
