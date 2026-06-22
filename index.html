@@ -676,7 +676,7 @@ async function login() {
 
         // ✅ Success — store session data and redirect
         const backendRole = String(result.user?.role || "").trim().toUpperCase();
-        localStorage.setItem("token",         result.token           || "session-active");
+        // IOB-H001 fix: JWT not stored in localStorage — Flask session cookie used for auth;
         localStorage.setItem("user_email",    result.user?.email     || "");
         localStorage.setItem("user_role",     backendRole);
         localStorage.setItem("user_location", result.user?.location  || "");
@@ -746,7 +746,7 @@ async function validateSession() {
         const user = result.user || {};
         const role = String(user.role || "").trim().toUpperCase();
         // Store for other dashboards
-        localStorage.setItem("token",         "session-active");
+        // IOB-H001: token removed from localStorage
         localStorage.setItem("user_email",    user.email    || "");
         localStorage.setItem("user_role",     role);
         localStorage.setItem("user_location", user.location || "");
