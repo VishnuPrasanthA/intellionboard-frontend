@@ -3029,41 +3029,25 @@ console.log("%cThis console is for authorized developers only. Do not paste any 
 
 
 /* ================================================================
-   PAGE INIT — session validation + dashboard load
+   PAGE INIT — dashboard load
+   NOTE: validate-session skipped here because cookie is cross-origin
+   (Vercel → ngrok). Login page already validates session before
+   redirecting here. rm_email from localStorage is the source of truth.
 ================================================================ */
 (async function init() {
-    // 1. Validate session with backend
-    try {
-        const res = await apiFetch(BASE_URL + "/api/auth/validate-session", {
-            method: "GET", credentials: "include"
-        });
-        const d = await res.json();
-        if (!d.success) {
-            window.location.href = "index.html?manual=true";
-            return;
-        }
-        // Sync rm_email from server session (more reliable than localStorage)
-        if (d.user && d.user.email) {
-            rm_email = d.user.email;
-            localStorage.setItem("user_email", d.user.email);
-            localStorage.setItem("email",      d.user.email);
-        }
-    } catch (err) {
-        console.warn("Session check failed, continuing with localStorage:", err.message);
-    }
-
-    // 2. Verify rm_email is set
+    // Get email from localStorage (set by login page)
     if (!rm_email) {
         rm_email = localStorage.getItem("user_email") ||
                    localStorage.getItem("email") || "";
     }
 
+    // If no email at all, redirect to login
     if (!rm_email) {
         window.location.href = "index.html?manual=true";
         return;
     }
 
-    // 3. Load dashboard + start auto-refresh
+    // Load dashboard + auto-refresh every 60s
     await loadDashboard();
     setInterval(loadDashboard, 60000);
 })();
