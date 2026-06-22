@@ -1,12 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- robots: security headers sent as HTTP headers by Flask middleware -->
-    <meta name="robots" content="noindex, nofollow, noarchive">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Account PMO — IntelliOnboard</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js" crossorigin="anonymous"></script>
 <style>
 :root{
   --teal:#19d3a2;--teal2:#0fa67f;
@@ -309,11 +307,6 @@ tbody tr:hover{background:#f8fafc}
 
 @media(max-width:1100px){.grid4{grid-template-columns:repeat(2,1fr)}.grid3{grid-template-columns:1fr}}
 @media(max-width:768px){.page{padding-top:130px}.grid2{grid-template-columns:1fr}.agent-panel{width:95%;right:2.5%}}
-
-    @keyframes popIn {
-        from { opacity:0; transform:scale(0.92) translateY(8px); }
-        to   { opacity:1; transform:scale(1)    translateY(0); }
-    }
 </style>
 </head>
 <body>
@@ -948,7 +941,7 @@ tbody tr:hover{background:#f8fafc}
 /* ═══════════════════════════════════════════════
    CONFIG
 ═══════════════════════════════════════════════ */
-const BASE_URL   = "https://lxlt6hvb-5332.inc1.devtunnels.ms/";
+const BASE_URL   = "https://manatee-dislike-lifting.ngrok-free.dev";
 const COURSES    = ["HMSA Service Request Management","Problem Management",
                     "Change Management","Incident Management","HIPAA Compliance"];
 const TOTAL_MARKS = 25;
@@ -2022,275 +2015,201 @@ function openMailPreview(type) {
 /* ═══════════════════════════════════════════════
    AGENT
 ═══════════════════════════════════════════════ */
-/* ================================================================
-   ACCOUNT PMO — SELF-LEARNING AI CHATBOT
-   Wired to /api/chatbot (NLP + TF-IDF + auto-retrain backend)
-   Security: all output escaped, input sanitized, rate-limited
-================================================================ */
-
 let agentOpen = false;
-
 function toggleAgent() {
-    agentOpen = !agentOpen;
-    const p = document.getElementById("agentPanel");
-    if (!p) return;
-    p.className = agentOpen ? "agent-panel open" : "agent-panel";
-    if (agentOpen) {
-        const inp = document.getElementById("agentInput");
-        if (inp) setTimeout(() => inp.focus(), 120);
-    }
+  agentOpen = !agentOpen;
+  document.getElementById("agentPanel").className = agentOpen ? "agent-panel open" : "agent-panel";
 }
-
-/* ── Safe HTML escape — used on ALL API/user data ──────────── */
-function _esc(s) {
-    if (s === null || s === undefined) return "";
-    return String(s)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#x27;");
-}
-
-/* ── Add bot message ───────────────────────────────────────── */
 function addBotMsg(html) {
-    const b = document.getElementById("agentBody");
-    if (!b) return;
-    const d = document.createElement("div");
-    d.className = "msg bot";
-    d.innerHTML = `<div>${html}</div>`;
-    b.appendChild(d);
-    b.scrollTop = b.scrollHeight;
+  const b = document.getElementById("agentBody");
+  const d = document.createElement("div");
+  d.className = "msg bot"; d.innerHTML = `<div>${html}</div>`;
+  b.appendChild(d); b.scrollTop = b.scrollHeight;
 }
-
-/* ── Add user message (always escaped) ────────────────────── */
 function addUserMsg(text) {
-    const b = document.getElementById("agentBody");
-    if (!b) return;
-    const d = document.createElement("div");
-    d.className = "msg user";
-    d.innerHTML = `<div>${_esc(text)}</div>`;
-    b.appendChild(d);
-    b.scrollTop = b.scrollHeight;
+  const b = document.getElementById("agentBody");
+  const d = document.createElement("div");
+  d.className = "msg user"; d.innerHTML = `<div>${text}</div>`;
+  b.appendChild(d); b.scrollTop = b.scrollHeight;
+}
+function agentCmd(cmd) {
+  document.getElementById("agentInput").value = cmd;
+  sendAgent();
+}
+function sendAgent() {
+  const inp = document.getElementById("agentInput");
+  const raw = (inp.value||"").trim();
+  if(!raw) return;
+  addUserMsg(raw);
+  inp.value = "";
+  processCmd(raw.toLowerCase(), raw);
+}
+document.getElementById("agentInput").addEventListener("keydown", e=>{
+  if(e.key==="Enter"){e.preventDefault();sendAgent();}
+});
+
+// Show employee ID prompt — agent asks for ID before looking up
+function promptEmployeeId(defaultId) {
+  toggleAgent();
+  if(!agentOpen) toggleAgent();
+  const body = document.getElementById("agentBody");
+  const d = document.createElement("div");
+  d.className = "msg bot";
+  d.innerHTML = `<div>
+    <div class="agent-prompt">
+      <div style="font-size:12px;font-weight:700;color:#0c4a6e;margin-bottom:6px">🔍 Check Employee</div>
+      <div style="font-size:11px;color:#0369a1;margin-bottom:8px">Enter the employee ID to look up:</div>
+      <input class="agent-prompt-input" id="empIdInput" type="text" placeholder="e.g. 1042836"
+        value="${defaultId||""}" onkeydown="if(event.key==='Enter')lookupEmpById()">
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button onclick="lookupEmpById()" style="flex:1;background:var(--navy);color:#fff;border:none;border-radius:8px;padding:8px;font-size:12px;font-weight:700;cursor:pointer">🔍 Search</button>
+      </div>
+    </div>
+  </div>`;
+  body.appendChild(d); body.scrollTop = body.scrollHeight;
 }
 
-/* ── Typing indicator ──────────────────────────────────────── */
-function _addTyping() {
-    const b = document.getElementById("agentBody");
-    if (!b) return null;
-    const tid = "typ_" + Date.now();
-    const d = document.createElement("div");
-    d.className = "msg bot";
-    d.id = "wrap_" + tid;
-    d.innerHTML = `<div style="display:flex;align-items:center;gap:4px;padding:4px 0">
-        <span style="width:7px;height:7px;background:#94a3b8;border-radius:50%;
-            animation:typDot 1.2s infinite" id="${_esc(tid)}"></span>
-        <span style="width:7px;height:7px;background:#94a3b8;border-radius:50%;
-            animation:typDot 1.2s .2s infinite"></span>
-        <span style="width:7px;height:7px;background:#94a3b8;border-radius:50%;
-            animation:typDot 1.2s .4s infinite"></span>
-    </div>`;
-    b.appendChild(d);
-    b.scrollTop = b.scrollHeight;
-    return tid;
+function lookupEmpById() {
+  const val = (document.getElementById("empIdInput")?.value||"").trim();
+  if(!val) return;
+  agentCmd(`check ${val}`);
 }
 
-function _removeTyping(tid) {
-    if (!tid) return;
-    const w = document.getElementById("wrap_" + tid);
-    if (w) w.remove();
-}
+/* ── processCmd replaced by chatbot_widget.js ─────────────────────
+   All logic moved to _chatSend() + _fmtReply() below.
+   PAGE_ROLE = "ACCOUNT_PMO" — commands from this page tagged in DB.
+*/
 
-/* ── Rate limiter — 25 messages per 60s ───────────────────── */
-const _msgTs = [];
-function _checkRate() {
-    const now = Date.now();
-    while (_msgTs.length && _msgTs[0] < now - 60000) _msgTs.shift();
-    if (_msgTs.length >= 25) return false;
-    _msgTs.push(now);
-    return true;
+async function logout() {
+  try { await apiFetch(BASE_URL+"/api/auth/logout",{method:"POST"}); } catch(_) {}
+  localStorage.clear(); sessionStorage.clear();
+  window.location.replace("https://intellionboard.vercel.app/?manual=true");
 }
+// Init
+(function(){
+  const d = new Date(); d.setDate(d.getDate()+1);
+  document.getElementById("ind_date").value = d.toISOString().split("T")[0];
+})();
+setInterval(loadDashboard, 60000);
+loadDashboard();
 
-/* ── Input sanitizer ───────────────────────────────────────── */
-function _sanitize(val, max) {
-    if (!val) return "";
-    const s = String(val).trim().slice(0, max || 400);
-    // Block SQL injection patterns
-    const BAD = /(\b(DROP|DELETE|TRUNCATE|ALTER|EXEC|EXECUTE|UNION\s+SELECT|INSERT\s+INTO|UPDATE\s+SET)\b|--|\/\*|\*\/|xp_|0x[0-9a-f]{4,})/gi;
-    return BAD.test(s) ? "" : s;
-}
 
-/* ── Get user email from storage (never expose in DOM) ─────── */
-function _getEmail() {
-    return localStorage.getItem("user_email") ||
-           localStorage.getItem("email")      ||
-           (typeof rm_email !== "undefined" ? rm_email : "") || "";
-}
-
+/* ════ chatbot_widget.js ════ */
 /* ================================================================
-   MAIN SEND — all commands go through /api/chatbot
+   chatbot_widget.js  —  Universal drop-in for ALL dashboard pages
+   
+   PASTE THIS entire block into each dashboard HTML <script> section.
+   Replace whatever askAgent / sendAgent / sendMessage / processCmd
+   / runCmd / sendBotMsg / botCmd was there before.
+
+   Works for:
+     ✅ pmo_dashboard_pro.html      (sendAgent → calls API)
+     ✅ leadership_dashboard.html   (sendMessage → calls API)
+     ✅ healthcare_pmo_dashboard.html (askAgent → calls API)
+     ✅ admin_dashboard.html        (sendBotMsg → calls API)
+     ✅ Any future page             (just paste and set PAGE_ROLE)
 ================================================================ */
-async function _doSend(raw) {
-    if (!raw) return;
 
-    if (!_checkRate()) {
-        addBotMsg("⚠️ Too many messages — please wait a moment before sending more.");
-        return;
-    }
+/* ── SET THIS per page ──────────────────────────────────────────
+   PAGE_ROLE is sent to backend so logs are tagged per page type.
+   Values: "HC_PMO" | "ACCOUNT_PMO" | "LEADERSHIP" | "ADMIN" | "ITSG"
+   Change to match the page you're pasting into.
+   ────────────────────────────────────────────────────────────── */
+const PAGE_ROLE = "ACCOUNT_PMO";  // ← change per page
 
-    addUserMsg(raw);
+/* ── Detect API base — works across all pages ────────────────── */
+// Strip trailing slash before appending path — prevents //api/chatbot
+const _BASE = (typeof BASE_URL !== "undefined" ? BASE_URL :
+               typeof API_BASE !== "undefined" ? API_BASE :
+               "https://manatee-dislike-lifting.ngrok-free.dev").replace(/\/+$/, "");
+const _CHAT_API = _BASE + "/api/chatbot";
 
-    // Show typing indicator
-    const tid = _addTyping();
+const _userEmail = () =>
+    localStorage.getItem("user_email") ||
+    localStorage.getItem("email")      ||
+    (typeof rm_email !== "undefined" ? rm_email : "") || "";
+
+/* ── Universal chat send — all pages call this ──────────────── */
+async function _chatSend(inputId, addFn) {
+    const inp = document.getElementById(inputId);
+    if (!inp) return;
+    const msg = (inp.value || "").trim();
+    if (!msg) return;
+    addFn("YOU", msg);
+    inp.value = "";
+
+    // Typing indicator
+    const tid = "typing_" + Date.now();
+    addFn("AI", `<span id="${tid}">🤖 Thinking...</span>`);
 
     try {
-        const res = await fetch(BASE_URL + "/api/chatbot", {
-            method:      "POST",
+        const opts = { method: "POST",
+            headers: {"Content-Type":"application/json",
+                      "ngrok-skip-browser-warning":"true"},
             credentials: "include",
-            headers: {
-                "Content-Type":               "application/json",
-                "ngrok-skip-browser-warning": "true"
-            },
             body: JSON.stringify({
-                message:    raw,
-                user_email: _getEmail(),
-                user_role:  "ACCOUNT_PMO",
-                page:       "ACCOUNT_PMO"
+                message:    msg,
+                user_email: _userEmail(),
+                user_role:  PAGE_ROLE,
+                page:       PAGE_ROLE
             })
-        });
+        };
+        const res  = await fetch(_CHAT_API, opts);
+        const data = await res.json();
 
-        _removeTyping(tid);
-
-        if (!res.ok) {
-            if (res.status === 401) {
-                addBotMsg("🔒 Session expired — please refresh the page and log in again.");
-                return;
-            }
-            if (res.status === 429) {
-                addBotMsg("⚠️ Server is busy — please try again in a moment.");
-                return;
-            }
-            addBotMsg("❌ Server error (" + res.status + "). Check ngrok is running.");
-            return;
-        }
-
-        let data;
-        try { data = await res.json(); }
-        catch {
-            addBotMsg("❌ Server returned an invalid response. Check Flask logs.");
-            return;
-        }
+        const tel = document.getElementById(tid);
+        if (tel) { const w=tel.closest('.chat-message,.msg'); if(w) w.remove(); else tel.remove(); }
 
         if (!data.success) {
-            addBotMsg("❌ " + _esc(data.message || "Unknown error"));
+            addFn("AI", "❌ " + (data.message || "Server error"));
             return;
         }
 
-        // Show typo correction subtly
+        // If typo was corrected, show it subtly
         if (data.corrected) {
-            addBotMsg(`<small style="color:#94a3b8;font-size:10px">
-                💬 Interpreted as: "<i>${_esc(data.corrected)}</i>"</small>`);
+            addFn("AI", `<small style="color:#94a3b8;font-size:10px;">
+                💬 Interpreted as: "<i>${data.corrected}</i>"</small>`);
         }
 
-        // Render structured reply
-        const rendered = _renderReply(data.reply);
+        addFn("AI", _fmtReply(data.reply));
 
-        // Intercept action-type replies — wire to dashboard functions
-        if (data.reply && data.reply.type === "action") {
-            _handleAction(data.reply.action, rendered);
-        } else if (data.reply && data.reply.type === "confirm") {
-            _handleConfirmReply(data.reply);
-        } else {
-            addBotMsg(rendered);
-        }
-
-    } catch (err) {
-        _removeTyping(tid);
-        console.warn("Chatbot fetch failed:", err.message);
-        addBotMsg("❌ Cannot reach backend. Check ngrok is running.");
+    } catch(e) {
+        const tel = document.getElementById(tid);
+        if (tel) { const w=tel.closest('.chat-message,.msg'); if(w) w.remove(); else tel.remove(); }
+        console.error("Chat error:", e);
+        addFn("AI", "❌ Cannot reach AI backend. Check connection.");
     }
 }
 
-/* ── Action handler — bot says "open modal" → actually does it */
-function _handleAction(action, rendered) {
-    addBotMsg(rendered);
-    const actionMap = {
-        "openInductionModal":  () => openModal("inductionModal"),
-        "openTrainingModal":   () => openModal("allocTrainingModal"),
-        "openMailModal":       () => openModal("mailPreviewModal"),
-    };
-    if (actionMap[action]) {
-        setTimeout(() => { if (actionMap[action]) actionMap[action](); }, 600);
-    }
-}
-
-/* ── Confirm reply — wire bot confirm button to real dashboard actions */
-function _handleConfirmReply(reply) {
-    const actionMap = {
-        "sendReminders": sendReminders,
-        "bulkInitiate":  typeof bulkInitiate !== "undefined" ? bulkInitiate : null,
-    };
-    const b = document.getElementById("agentBody");
-    if (!b) return;
-    const d = document.createElement("div");
-    d.className = "msg bot";
-    d.innerHTML = `<div>
-        <b>${_esc(reply.title)}</b><br>
-        ${_esc(reply.message)}<br>
-        <button onclick="(${JSON.stringify(actionMap[reply.action] ? reply.action : 'null')})" 
-            style="margin-top:8px;background:linear-gradient(135deg,#19d3a2,#0f9e75);
-            color:white;border:none;border-radius:10px;padding:8px 16px;
-            font-size:12px;font-weight:700;cursor:pointer"
-            id="confirmBtn_${_esc(reply.action)}">
-            ✅ Confirm
-        </button>
-    </div>`;
-    b.appendChild(d);
-    b.scrollTop = b.scrollHeight;
-
-    // Wire button after DOM insertion
-    const btn = document.getElementById("confirmBtn_" + reply.action);
-    if (btn && actionMap[reply.action]) {
-        btn.onclick = () => { actionMap[reply.action](); btn.disabled = true; btn.textContent = "✅ Done"; };
-    }
-}
-
-/* ================================================================
-   REPLY RENDERER — structured dict → safe HTML
-================================================================ */
-function _renderReply(r) {
-    if (!r) return "⚠️ No response from server.";
+/* ── FORMAT REPLY ───────────────────────────────────────────── */
+function _fmtReply(r) {
+    if (!r) return "⚠️ No response.";
     const t = r.type;
 
     if (t === "summary") {
         const d = r.data || {};
-        const rows = Object.entries(d).map(([k, v]) =>
-            `<tr>
-               <td style="color:#7d8da5;padding:4px 8px;font-size:11px;white-space:nowrap">
-                   ${_esc(k.replace(/_/g, " "))}</td>
-               <td style="font-weight:800;padding:4px 8px;font-size:13px;color:#172b42">
-                   ${_esc(String(v))}</td>
-             </tr>`
+        const rows = Object.entries(d).map(([k,v]) =>
+            `<tr><td style="color:#7d8da5;padding:4px 8px;font-size:11px;">${
+                k.replace(/_/g," ")}</td>
+             <td style="font-weight:800;padding:4px 8px;font-size:13px;">${v}</td></tr>`
         ).join("");
-        return `<b>${_esc(r.title)}</b><br>
-            <table style="margin-top:6px;border-collapse:collapse;width:100%">${rows}</table>`;
+        return `<b>${r.title}</b><br>
+            <table style="margin-top:6px;border-collapse:collapse">${rows}</table>`;
     }
 
     if (t === "list") {
-        if (!(r.items || []).length) return `${_esc(r.title || "")} — No records found.`;
-        const rows = (r.items || []).slice(0, 8).map(row => {
-            const name = _esc(row.emp_name || row.location || row.account_name || "—");
+        if (!(r.items||[]).length) return `${r.title||""} — No records found.`;
+        const rows = (r.items||[]).slice(0,8).map(row => {
+            const name = row.emp_name || row.location || row.account_name || "—";
             const sub  = row.current_step
-                ? " — " + _esc(row.current_step.replace(/_/g, " "))
-                : row.count ? ` — ${row.count} employees` : "";
-            const loc  = row.location ? ` · ${_esc(row.location)}` : "";
-            return `• <b>${name}</b>${loc}${sub}`;
+                ? row.current_step.replace(/_/g," ")
+                : row.count ? `${row.count} employees` : "";
+            const loc  = row.location ? ` · ${row.location}` : "";
+            return `• <b>${name}</b>${loc}${sub ? " — "+sub : ""}`;
         }).join("<br>");
-        const more = (r.total || 0) > 8
-            ? `<br><span style="color:#94a3b8;font-size:10px">…and ${r.total - 8} more</span>` : "";
-        return `<b>${_esc(r.title)}</b><br>
-            <div style="border-top:1px solid #e2e8f0;margin:4px 0 6px"></div>
-            ${rows}${more}`;
+        const more = (r.total||0) > 8
+            ? `<br><span style="color:#94a3b8;font-size:10px;">…and ${r.total-8} more</span>` : "";
+        return `<b>${r.title}</b><br>━━━━━━━━━━━━━━<br>${rows}${more}`;
     }
 
     if (t === "employee") {
@@ -2300,757 +2219,172 @@ function _renderReply(r) {
             ["Role",     d.designation],
             ["Location", d.location],
             ["Status",   d.onboarding_status],
-            ["Step",     (d.current_step || "").replace(/_/g, " ")],
-            ["Progress", (d.progress || 0) + "%"],
-            ["Training", (d.training_percentage || 0) + "%"],
-            ["Laptop",   d.laptop_status || "—"],
-            ["ID Card",  d.id_card_status || "—"],
-            ["Risk",     d.risk_level || "LOW"],
-        ].filter(([, v]) => v).map(([k, v]) =>
-            `<tr>
-               <td style="color:#7d8da5;padding:3px 8px;font-size:11px;white-space:nowrap">${_esc(k)}</td>
-               <td style="font-weight:700;padding:3px 8px;font-size:12px;color:#172b42">${_esc(String(v))}</td>
-             </tr>`
+            ["Step",     (d.current_step||"").replace(/_/g," ")],
+            ["Progress", (d.progress||0)+"%"],
+            ["Training", (d.training_percentage||0)+"%"],
+            ["Laptop",   d.laptop_status||"—"],
+            ["ID Card",  d.id_card_status||"—"],
+            ["Risk",     d.risk_level||"LOW"],
+        ].filter(([,v])=>v).map(([k,v])=>
+            `<tr><td style="color:#7d8da5;padding:3px 8px;font-size:11px;
+              white-space:nowrap">${k}</td>
+             <td style="font-weight:700;padding:3px 8px;font-size:12px;">${v}</td></tr>`
         ).join("");
-        return `<b>👤 ${_esc(d.emp_name || "—")}</b><br>
+        return `<b>👤 ${d.emp_name||"—"}</b><br>
             <table style="margin-top:6px;border-collapse:collapse">${fields}</table>`;
     }
 
     if (t === "help") {
-        const items = (r.intents || []).map(c => {
-            const cmd = _esc(c.split("/")[0].trim());
-            return `<div onclick="agentCmd('${cmd}')"
-                style="padding:6px 10px;margin:3px 0;border-radius:8px;
-                    border:1px solid rgba(15,32,68,.12);cursor:pointer;font-size:11px;
-                    background:rgba(15,32,68,.04);color:#0f2044;transition:all .15s"
-                onmouseover="this.style.background='rgba(15,32,68,.12)'"
-                onmouseout="this.style.background='rgba(15,32,68,.04)'">
-                ${cmd}
-                <span style="color:var(--teal);font-size:10px;font-weight:800;float:right">▶</span>
+        const items = (r.intents||[]).map(c => {
+            const cmd = c.split("/")[0].trim();
+            return `<div onclick="
+                    const inp=document.getElementById('chatInput')||
+                               document.getElementById('agentInput');
+                    if(inp){inp.value='${cmd}';
+                    (typeof askAgent!=='undefined'?askAgent:
+                     typeof sendAgent!=='undefined'?sendAgent:
+                     typeof sendMessage!=='undefined'?sendMessage:
+                     typeof sendBotMsg!=='undefined'?sendBotMsg:()=>{})();}
+                " style="padding:7px 10px;margin:3px 0;border-radius:8px;
+                    border:1px solid #e8f0f8;cursor:pointer;font-size:12px;
+                    background:#f8fbff;transition:all .15s"
+                onmouseover="this.style.background='#e8f5f0'"
+                onmouseout="this.style.background='#f8fbff'">
+                ${c} <span style="color:#19d3a2;font-size:10px;font-weight:800">▶ click</span>
             </div>`;
         }).join("");
-        return `<b>${_esc(r.title)}</b><br>
-            <small style="color:#94a3b8;font-size:10px">
-                Powered by NLP — learns from every interaction.</small>
+        return `<b>${r.title}</b><br>
+            <small style="color:#7d8da5">I learn new commands automatically from every use.</small>
             <div style="margin-top:8px">${items}</div>`;
     }
 
     if (t === "confirm") {
-        return `<b>${_esc(r.title)}</b><br>${_esc(r.message)}`;
+        return `<b>${r.title}</b><br>${r.message}<br>
+            <button onclick="${r.action}()" style="margin-top:8px;
+                background:linear-gradient(135deg,#19d3a2,#0f9e75);
+                color:white;border:none;border-radius:10px;
+                padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;">
+                ✅ Confirm
+            </button>`;
     }
 
     if (t === "action") {
-        return `<b>${_esc(r.title)}</b><br>${_esc(r.message)}`;
+        return `<b>${r.title}</b><br>${r.message}<br>
+            <button onclick="${r.action}()" style="margin-top:8px;
+                background:linear-gradient(135deg,#3ea6ff,#73c7ff);
+                color:white;border:none;border-radius:10px;
+                padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;">
+                ▶ Open
+            </button>`;
     }
 
     if (t === "count") {
-        return `<b>${_esc(r.title)}</b><br>
-            <span style="font-size:28px;font-weight:900;color:#172b42">
-                ${_esc(String(r.count))}</span><br>
-            <small style="color:#94a3b8">${_esc(r.message || "")}</small>`;
+        return `<b>${r.title}</b><br>
+            <span style="font-size:26px;font-weight:900">${r.count}</span><br>
+            <small style="color:#7d8da5">${r.message||""}</small>`;
     }
 
     if (t === "fallback") {
-        return `🤖 ${_esc(r.message)}<br>
-            <small style="color:#94a3b8;font-size:10px">
-                ✍️ "<i>${_esc(r.raw_input || "")}</i>" logged — model learns automatically.</small>`;
+        return `🤖 ${r.message}<br>
+            <small style="color:#94a3b8;font-size:10px;">
+                ✍️ "<i>${r.raw_input||""}</i>" logged — model learns it automatically.
+            </small>`;
     }
 
-    if (t === "prompt" || t === "not_found") return `⚠️ ${_esc(r.message)}`;
-    return _esc(r.message) || "Response received.";
+    if (t === "prompt" || t === "not_found") return `⚠️ ${r.message}`;
+    return r.message || JSON.stringify(r);
 }
 
 /* ================================================================
-   PUBLIC API — wired to HTML buttons/Enter
+   PAGE-SPECIFIC WRAPPERS
+   Each page's existing send function now just calls _chatSend.
+   The function NAMES stay the same — no other code breaks.
 ================================================================ */
 
-/* ── sendAgent — called by Send button ────────────────────── */
-function sendAgent() {
-    const inp = document.getElementById("agentInput");
-    if (!inp) return;
-    const raw = _sanitize((inp.value || "").trim(), 400);
-    if (!raw) return;
-    inp.value = "";
-    _doSend(raw);
+/* ── HC PMO / Account PMO ── askAgent() + addChat() ─────────── */
+function askAgent() {
+    const addFn = (typeof addChat !== "undefined")   ? addChat :
+                  (typeof addBotMsg !== "undefined") ?
+                      (role, html) => addBotMsg(html) :
+                      (role, html) => console.log(role, html);
+    _chatSend("chatInput", addFn) ||
+    _chatSend("agentInput", addFn);
 }
 
-/* ── agentCmd — called by quick action buttons ─────────────── */
+/* ── Account PMO ── sendAgent() ─────────────────────────────── */
+function sendAgent() { askAgent(); }
+
+/* ── Account PMO ── processCmd() (called by sendAgent) ──────── */
+function processCmd(msg, raw) { askAgent(); }
+
+/* ── Leadership ── sendMessage() ────────────────────────────── */
+function sendMessage() {
+    const addFn = (typeof addChat !== "undefined") ? addChat :
+        (role, html) => {
+            const b = document.getElementById("chatBody");
+            if (!b) return;
+            const d = document.createElement("div");
+            d.className = "chat-message " + (role==="YOU"?"you":"ai");
+            d.innerHTML = `<b>${role==="YOU"?"You":"AI"}</b><div>${html}</div>`;
+            b.appendChild(d); b.scrollTop = b.scrollHeight;
+        };
+    _chatSend("chatInput", addFn);
+}
+
+/* ── Admin ── sendBotMsg() ───────────────────────────────────── */
+function sendBotMsg() {
+    const addFn = (typeof addChat !== "undefined") ? addChat :
+        (role, html) => {
+            const b = document.getElementById("chatBody");
+            if (!b) return;
+            const d = document.createElement("div");
+            d.className = "chat-message " + (role==="YOU"?"you":"ai");
+            d.innerHTML = `<b>${role==="YOU"?"You":"AI"}</b><div>${html}</div>`;
+            b.appendChild(d); b.scrollTop = b.scrollHeight;
+        };
+    _chatSend("chatInput", addFn);
+}
+
+/* ── Admin ── botCmd() alias ────────────────────────────────── */
+function botCmd(cmd) {
+    const inp = document.getElementById("chatInput");
+    if (inp) { inp.value = cmd; sendBotMsg(); }
+}
+
+/* ── Leadership ── runCmd() alias ───────────────────────────── */
+function runCmd(cmd) {
+    const inp = document.getElementById("chatInput");
+    if (inp) { inp.value = cmd; sendMessage(); }
+}
+
+/* ── agentCmd() (Account PMO) ───────────────────────────────── */
 function agentCmd(cmd) {
-    const safe = _sanitize(String(cmd || ""), 200);
-    if (!safe) return;
-    if (!agentOpen) toggleAgent();
-    const inp = document.getElementById("agentInput");
-    if (inp) inp.value = safe;
-    sendAgent();
+    const inp = document.getElementById("agentInput") ||
+                document.getElementById("chatInput");
+    if (inp) { inp.value = cmd; askAgent(); }
 }
 
-/* ── Enter key ─────────────────────────────────────────────── */
-(function () {
-    const inp = document.getElementById("agentInput");
-    if (!inp) return;
-    inp.addEventListener("keydown", function (e) {
-        if (e.key === "Enter" && !e.shiftKey) {
-            e.preventDefault();
-            sendAgent();
-        }
-    });
-})();
+/* ── quickAction() (HC PMO quick buttons) ───────────────────── */
+function quickAction(cmd) { agentCmd(cmd); }
 
-/* ── processCmd — kept as alias so existing onclick=""s work ── */
-function processCmd(msg, raw) {
-    _doSend(_sanitize(raw || msg, 400));
-}
-
-/* ── Typing dot animation ───────────────────────────────────── */
-(function injectTypingCSS() {
-    if (document.getElementById("_typingCSS")) return;
-    const s = document.createElement("style");
-    s.id = "_typingCSS";
-    s.textContent = `@keyframes typDot {
-        0%,80%,100%{ transform:scale(0.6);opacity:.4 }
-        40%{ transform:scale(1.0);opacity:1 }
-    }`;
-    document.head.appendChild(s);
-})();
-
-
-
-/* ======== SECURITY PATCH INJECTED ======== */
-
-/* ================================================================
-   SECURITY LAYER v2.0  —  Account PMO Dashboard
-   - XSS prevention: all user/API data HTML-escaped before DOM insertion
-   - CSP meta tag added
-   - No raw innerHTML from API data (uses esc() everywhere)
-   - Confirmation dialogs for ALL bulk/email actions
-   - DELETE command blocking
-   - Backend URL obfuscation
-   - Rate limiting on agent commands
-   - No sensitive data in localStorage / console
-================================================================ */
-
-/* ── HTML escape — ALWAYS use before any innerHTML insertion ── */
-function esc(s) {
-    if (s === null || s === undefined) return "";
-    return String(s)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#x27;")
-        .replace(/\//g, "&#x2F;");
-}
-
-/* ── Block dangerous SQL/shell keywords in any user input ────── */
-function sanitizeInput(val, maxLen = 300) {
-    if (!val) return "";
-    const s = String(val).trim().slice(0, maxLen);
-    const BLOCKED = /((DROP|DELETE|TRUNCATE|ALTER|EXEC|EXECUTE|INSERT\s+INTO|UPDATE\s+SET|UNION\s+SELECT|--|;--|\/\*|\*\/|xp_|sp_|0x[0-9a-f]+))/gi;
-    if (BLOCKED.test(s)) {
-        console.warn("Blocked dangerous input pattern");
-        return "";
-    }
-    return s;
-}
-
-/* ── Rate limiter for agent commands (max 20/min) ────────────── */
-const _cmdTimestamps = [];
-function _rateLimitCmd() {
-    const now = Date.now();
-    const windowMs = 60000;
-    while (_cmdTimestamps.length && _cmdTimestamps[0] < now - windowMs) _cmdTimestamps.shift();
-    if (_cmdTimestamps.length >= 20) {
-        toast("⚠️ Too many commands. Please wait a moment.", "amber");
-        return false;
-    }
-    _cmdTimestamps.push(now);
-    return true;
-}
-
-/* ── Confirmation dialog — replaces window.confirm ──────────── */
-function showConfirm(opts) {
-    // opts: { title, message, detail, confirmLabel, cancelLabel, type, onConfirm }
-    const existing = document.getElementById("_confirmOverlay");
-    if (existing) existing.remove();
-
-    const typeColors = {
-        danger:  { bg: "#fef2f2", border: "#f87171", btn: "linear-gradient(135deg,#ef4444,#f87171)", icon: "⚠️" },
-        warning: { bg: "#fff7ed", border: "#fcd34d", btn: "linear-gradient(135deg,#f59e0b,#fcd34d)", icon: "📧" },
-        info:    { bg: "#eff6ff", border: "#60a5fa", btn: "linear-gradient(135deg,#3b82f6,#60a5fa)", icon: "ℹ️" },
-    };
-    const c = typeColors[opts.type || "warning"];
-
-    const overlay = document.createElement("div");
-    overlay.id = "_confirmOverlay";
-    overlay.style.cssText = `position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999999;
-        display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)`;
-
-    overlay.innerHTML = `
-        <div style="background:#fff;border-radius:22px;padding:28px 30px;
-            width:min(94vw,480px);box-shadow:0 24px 80px rgba(0,0,0,.22);
-            animation:popIn .25s cubic-bezier(.22,1,.36,1)">
-            <div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:20px">
-                <div style="width:48px;height:48px;border-radius:14px;background:${c.bg};
-                    border:1px solid ${c.border};display:flex;align-items:center;
-                    justify-content:center;font-size:22px;flex-shrink:0">${c.icon}</div>
-                <div>
-                    <div style="font-size:17px;font-weight:800;color:#172b42;margin-bottom:4px">
-                        ${esc(opts.title || "Confirm Action")}</div>
-                    <div style="font-size:13px;color:#475569;line-height:1.7">
-                        ${opts.message || ""}</div>
-                </div>
-            </div>
-            ${opts.detail ? `<div style="background:${c.bg};border:1px solid ${c.border};
-                border-radius:12px;padding:12px 16px;font-size:12px;color:#475569;
-                margin-bottom:20px;line-height:1.8">${opts.detail}</div>` : ""}
-            <div style="display:flex;gap:10px;justify-content:flex-end">
-                <button id="_confirmCancel" style="height:40px;padding:0 18px;border-radius:12px;
-                    border:1.5px solid #e2e8f0;background:#f8fafc;color:#64748b;
-                    font-size:13px;font-weight:700;cursor:pointer">
-                    ${esc(opts.cancelLabel || "Cancel")}
-                </button>
-                <button id="_confirmOK" style="height:40px;padding:0 20px;border-radius:12px;
-                    border:none;background:${c.btn};color:#fff;
-                    font-size:13px;font-weight:700;cursor:pointer">
-                    ${esc(opts.confirmLabel || "Confirm")}
-                </button>
-            </div>
-        </div>`;
-
-    document.body.appendChild(overlay);
-
-    document.getElementById("_confirmOK").onclick = () => {
-        overlay.remove();
-        if (opts.onConfirm) opts.onConfirm();
-    };
-    document.getElementById("_confirmCancel").onclick = () => overlay.remove();
-    overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
-}
-
-/* ================================================================
-   OVERRIDE BULK / EMAIL ACTIONS WITH CONFIRMATION
-================================================================ */
-
-/* ── scheduleInduction ─────────────────────────────────────── */
-const _origScheduleInduction = typeof scheduleInduction !== "undefined" ? scheduleInduction : null;
-function scheduleInduction() {
-    const date  = document.getElementById("ind_date")?.value;
-    const time  = document.getElementById("ind_time")?.value;
-    if (!date || !time) { toast("Please select a date and time", "amber"); return; }
-
-    const newJ  = allEmployees.filter(e =>
-        (e.progress_percentage || 0) < 50 ||
-        (e.onboarding_status || "").toLowerCase().includes("pending")
-    );
-
-    showConfirm({
-        title:        "Schedule Induction",
-        message:      `You are about to send induction invites to <b>${newJ.length} employees</b>.`,
-        detail:       `📅 Date: <b>${esc(date)}</b> &nbsp;⏰ Time: <b>${esc(time)}</b><br>
-                       📧 Teams invite + training allocation email will be sent to all ${newJ.length} employees.<br>
-                       RMs will be CC'd. This action cannot be undone.`,
-        confirmLabel: `✅ Yes, Send to ${newJ.length} Employees`,
-        cancelLabel:  "Cancel",
-        type:         "warning",
-        onConfirm:    _doScheduleInduction
-    });
-}
-
-async function _doScheduleInduction() {
-    const date   = document.getElementById("ind_date").value;
-    const time   = document.getElementById("ind_time").value;
-    const newJ   = allEmployees.filter(e =>
-        (e.progress_percentage || 0) < 50 ||
-        (e.onboarding_status || "").toLowerCase().includes("pending")
-    );
-    const rms = [...new Set(newJ.map(e => e.reporting_manager_email).filter(Boolean))];
-    try {
-        await apiFetch(BASE_URL + "/api/pmo/schedule-induction", {
-            method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                pmo_email:    rm_email,
-                title:        sanitizeInput(document.getElementById("ind_title")?.value || ""),
-                date, time,
-                duration_min: parseInt(document.getElementById("ind_dur")?.value || 60),
-                agenda:       sanitizeInput(document.getElementById("ind_agenda")?.value || ""),
-                attendees:    newJ.map(e => ({ emp_id: e.emp_id, name: e.emp_name, email: e.email })),
-                cc_rms:       rms,
-                courses:      COURSES
-            })
-        });
-        toast(`✅ Induction scheduled for ${newJ.length} employees · Teams invite + email sent`, "green");
-    } catch (e) {
-        toast(`✅ Induction scheduled for ${newJ.length} employees`, "green");
-    }
-    closeModal("inductionModal");
-}
-
-/* ── allocateTraining ──────────────────────────────────────── */
-function allocateTraining() {
-    const target   = document.getElementById("allocTarget")?.value || "all";
-    const deadline = document.getElementById("allocDeadline")?.value || "";
-    let targets = allEmployees;
-    if (target === "pending")    targets = allEmployees.filter(e => (e.onboarding_status || "").toLowerCase().includes("pending"));
-    if (target === "inprogress") targets = allEmployees.filter(e => (e.onboarding_status || "").toLowerCase().includes("progress"));
-
-    showConfirm({
-        title:        "Allocate Mandatory Training",
-        message:      `You are about to assign 5 HMSA courses to <b>${targets.length} employees</b> and send training emails.`,
-        detail:       `📚 5 HMSA courses + assessments will be assigned in LMS.<br>
-                       📧 Training notification email sent to <b>each employee</b>.<br>
-                       ⏰ Deadline: <b>${esc(deadline || "15 days from today")}</b><br>
-                       Target group: <b>${esc(target)}</b>`,
-        confirmLabel: `🎓 Yes, Assign to ${targets.length} Employees`,
-        cancelLabel:  "Cancel",
-        type:         "warning",
-        onConfirm:    () => _doAllocateTraining(targets, deadline)
-    });
-}
-
-async function _doAllocateTraining(targets, deadline) {
-    closeModal("allocTrainingModal");
-    toast(`🎓 Assigning training to ${targets.length} employees…`, "amber");
-    for (const emp of targets.slice(0, 10)) {
-        try {
-            await apiFetch(BASE_URL + "/api/pmo/schedule-induction", {
-                method: "POST", headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    pmo_email:    rm_email,
-                    title:        "Training Allocation",
-                    date:         deadline || new Date().toISOString().split("T")[0],
-                    time:         "10:00", duration_min: 60, agenda: "",
-                    attendees:    [{ emp_id: emp.emp_id, name: emp.emp_name, email: emp.email }],
-                    cc_rms:       [], courses: COURSES
-                })
-            });
-        } catch (_) {}
-    }
-    toast(`✅ 5 HMSA courses + assessments assigned to ${targets.length} employees · Training emails sent`, "green");
-    setTimeout(loadDashboard, 1500);
-}
-
-/* ── sendReminders ─────────────────────────────────────────── */
-const _origSendReminders = typeof sendReminders !== "undefined" ? sendReminders : null;
-function sendReminders() {
-    const pending = allEmployees.filter(e =>
-        (e.training_percentage || 0) < 100 &&
-        (e.progress_percentage || 0) >= 20 &&
-        e.email && e.email.includes("@")
-    );
-    if (!pending.length) { toast("No employees with pending training found", "amber"); return; }
-
-    showConfirm({
-        title:        "Send Assessment Reminders",
-        message:      `You are about to send reminder emails to <b>${pending.length} employees</b> with incomplete training.`,
-        detail:       `📧 Each employee will receive a reminder for every incomplete HMSA course.<br>
-                       📊 Estimated emails: <b>${pending.length * COURSES.length}</b> total<br>
-                       ⚠️ This cannot be undone. Employees will receive emails immediately.`,
-        confirmLabel: `📧 Yes, Send ${pending.length} Reminders`,
-        cancelLabel:  "Cancel",
-        type:         "warning",
-        onConfirm:    () => _doSendReminders(pending)
-    });
-}
-
-async function _doSendReminders(pending) {
-    const btn = document.querySelector('[onclick="sendReminders()"]');
-    if (btn) { btn.disabled = true; btn.textContent = "⏳ Sending…"; }
-    toast(`📧 Sending reminders to ${pending.length} employees…`, "amber");
-
-    const employees = [];
-    pending.forEach(emp => {
-        COURSES.forEach(course => {
-            employees.push({
-                emp_name:    emp.emp_name || "Employee",
-                emp_email:   emp.email || "",
-                course_name: course,
-                days_left:   3
-            });
-        });
-    });
-
-    try {
-        const res  = await apiFetch(BASE_URL + "/api/pmo/send-bulk-reminders", {
-            method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ pmo_email: rm_email, employees })
-        });
-        const data = await res.json();
-        if (data.success) {
-            toast(`✅ Reminders sent: ${data.sent} · Failed: ${data.failed} · Skipped: ${data.skipped}`, "green");
-        } else {
-            toast("Bulk reminder failed: " + sanitizeInput(data.message || "error"), "red");
-        }
-    } catch (e) {
-        toast("Backend error sending bulk reminders", "red");
-    } finally {
-        if (btn) { btn.disabled = false; btn.textContent = "📧 Send Reminders"; }
-    }
-}
-
-/* ── addAccountTraining ────────────────────────────────────── */
-const _origAddAccountTraining = typeof addAccountTraining !== "undefined" ? addAccountTraining : null;
-function addAccountTraining() {
-    const nameEl = document.getElementById("newCourseName");
-    const name   = sanitizeInput(nameEl?.value || "");
-    if (!name) { toast("Please enter a course name", "amber"); nameEl?.focus(); return; }
-
-    const targetCount = allEmployees.length;
-    showConfirm({
-        title:        "Add New Training Course",
-        message:      `You are about to assign <b>"${esc(name)}"</b> to <b>${targetCount} employees</b> and send emails.`,
-        detail:       `📚 Course will be added to Account Mandatory Trainings in every employee's LMS.<br>
-                       📧 Training notification email will be sent to <b>all ${targetCount} employees</b>.<br>
-                       ⏰ Completion deadline: <b>${document.getElementById("newCourseDeadline")?.value || 15} days</b>`,
-        confirmLabel: `➕ Yes, Assign to All ${targetCount} Employees`,
-        cancelLabel:  "Cancel",
-        type:         "info",
-        onConfirm:    _doAddAccountTraining
-    });
-}
-
-async function _doAddAccountTraining() {
-    const nameEl   = document.getElementById("newCourseName");
-    const descEl   = document.getElementById("newCourseDesc");
-    const ddlEl    = document.getElementById("newCourseDeadline");
-    const btn      = document.getElementById("addCourseBtn");
-    const resultEl = document.getElementById("addTrainingResult");
-    const name     = sanitizeInput(nameEl?.value || "");
-    if (!name) return;
-
-    if (btn) { btn.disabled = true; btn.textContent = "⏳ Assigning…"; }
-    if (resultEl) { resultEl.style.display = "none"; resultEl.innerHTML = ""; }
-    toast("Assigning course to all employees and sending emails…", "amber");
-
-    try {
-        let pdfUrlToSave = sanitizeInput(document.getElementById("newCoursePdfUrl")?.value || "");
-        if (typeof _selectedPdfFile !== "undefined" && _selectedPdfFile && !pdfUrlToSave) {
-            toast("Uploading PDF…", "amber");
-            pdfUrlToSave = await uploadCoursePdf(name, _selectedPdfFile, null) || "";
-        }
-
-        const res  = await apiFetch(BASE_URL + "/api/pmo/add-account-training", {
-            method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                pmo_email:     rm_email,
-                course_name:   name,
-                description:   sanitizeInput(descEl?.value || ""),
-                deadline_days: parseInt(ddlEl?.value || 15) || 15
-            })
-        });
-        const data = await res.json();
-        if (data.success) {
-            toast(`✅ "${esc(name)}" assigned to ${data.assigned} employees · ${data.emails_sent} emails sent`, "green");
-            if (nameEl) nameEl.value = "";
-            if (descEl) descEl.value = "";
-            if (resultEl) {
-                resultEl.style.display = "block";
-                resultEl.innerHTML = `<div style="background:#f0fdf4;border:1px solid #bbf7d0;
-                    border-radius:12px;padding:16px 20px;display:flex;align-items:flex-start;gap:12px">
-                    <span style="font-size:24px">✅</span>
-                    <div>
-                        <div style="font-size:14px;font-weight:700;color:#065f46;margin-bottom:4px">
-                            Training Successfully Assigned</div>
-                        <div style="font-size:13px;color:#047857;line-height:1.8">
-                            <b>"${esc(data.course_name)}"</b> assigned to <b>${data.assigned} employees</b>.<br>
-                            ${data.already_had ? `<span style="color:#6b7280">${data.already_had} already had this course (skipped).</span><br>` : ""}
-                            📧 Emails sent: <b>${data.emails_sent}</b>
-                        </div>
-                    </div></div>`;
-                setTimeout(() => { if (resultEl) resultEl.style.display = "none"; }, 10000);
+/* ── Bind Enter key for all input IDs ──────────────────────── */
+document.addEventListener("DOMContentLoaded", () => {
+    ["chatInput","agentInput","user_input"].forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.addEventListener("keydown", e => {
+            if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                // Call whichever send function exists on this page
+                (typeof askAgent     !== "undefined" ? askAgent     :
+                 typeof sendMessage  !== "undefined" ? sendMessage  :
+                 typeof sendBotMsg   !== "undefined" ? sendBotMsg   :
+                 typeof sendAgent    !== "undefined" ? sendAgent     : ()=>{})();
             }
-            if (typeof loadAccountTrainingList === "function") loadAccountTrainingList();
-            if (typeof loadTrainingResources   === "function") loadTrainingResources();
-        } else {
-            toast("Failed: " + sanitizeInput(data.message || "Unknown error"), "red");
-        }
-    } catch (e) {
-        toast("Error adding training — check backend connection", "red");
-    } finally {
-        if (btn) { btn.disabled = false; btn.textContent = "➕ Assign to All Employees & Send Email"; }
-    }
-}
-
-/* ── quickAllocate ─────────────────────────────────────────── */
-const _origQuickAllocate = typeof quickAllocate !== "undefined" ? quickAllocate : null;
-function quickAllocate(empId, empName) {
-    const safeId   = sanitizeInput(String(empId));
-    const safeName = sanitizeInput(String(empName || empId));
-    showConfirm({
-        title:        "Allocate Training",
-        message:      `Assign 5 HMSA mandatory courses to <b>${esc(safeName)}</b>?`,
-        detail:       `📚 5 HMSA courses + assessments will be assigned in LMS.<br>
-                       📧 Training notification email will be sent immediately.`,
-        confirmLabel: "🎓 Yes, Allocate",
-        cancelLabel:  "Cancel",
-        type:         "info",
-        onConfirm: () => {
-            toast(`🎓 Allocating 5 HMSA courses to ${esc(safeName)}…`, "amber");
-            apiFetch(BASE_URL + "/api/pmo/schedule-induction", {
-                method: "POST", headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    pmo_email: rm_email, title: "Training Allocation",
-                    date: new Date().toISOString().split("T")[0],
-                    time: "10:00", duration_min: 60, agenda: "",
-                    attendees: [{ emp_id: safeId, name: safeName, email: "" }],
-                    cc_rms: [], courses: COURSES
-                })
-            }).then(() => {
-                toast(`✅ 5 HMSA courses assigned · Training email sent to ${esc(safeName)}`, "green");
-                setTimeout(loadDashboard, 1500);
-            }).catch(() => {
-                toast(`✅ Courses assigned to ${esc(safeName)}`, "green");
-            });
-        }
-    });
-}
-
-/* ── bulkInitiate (header button) ──────────────────────────── */
-const _origBulkInitiate = typeof bulkInitiate !== "undefined" ? bulkInitiate : null;
-function bulkInitiate() {
-    const pending = allEmployees.filter(e =>
-        (e.onboarding_status || "").toUpperCase().includes("PENDING")
-    );
-    showConfirm({
-        title:        "Bulk Onboard",
-        message:      `Start onboarding workflow for <b>${pending.length} pending employees</b>?`,
-        detail:       `🚀 Onboarding will be triggered for all pending employees simultaneously.<br>
-                       📧 Welcome emails will be sent to each employee.<br>
-                       ⚠️ This is a large-scale operation and cannot be undone.`,
-        confirmLabel: `🚀 Yes, Onboard All ${pending.length}`,
-        cancelLabel:  "Cancel",
-        type:         "danger",
-        onConfirm:    _origBulkInitiate || (() => toast("Bulk onboard triggered", "green"))
-    });
-}
-
-/* ── confirmBulkOnboard (agent) ────────────────────────────── */
-const _origConfirmBulkOnboard = typeof confirmBulkOnboard !== "undefined" ? confirmBulkOnboard : null;
-function confirmBulkOnboard() {
-    const pending = allEmployees.filter(e =>
-        (e.onboarding_status || "").toUpperCase().includes("PENDING")
-    );
-    showConfirm({
-        title:        "Bulk Onboard All Pending",
-        message:      `You are about to onboard <b>${pending.length} employees</b>.`,
-        detail:       `📧 Welcome emails + onboarding workflows triggered for all ${pending.length} employees.<br>
-                       ⚠️ This action is irreversible.`,
-        confirmLabel: `🚀 Yes, Onboard All ${pending.length}`,
-        cancelLabel:  "Cancel",
-        type:         "danger",
-        onConfirm:    _origConfirmBulkOnboard || (() => toast("Bulk onboard triggered", "green"))
-    });
-}
-
-/* ── reassignCourse ────────────────────────────────────────── */
-const _origReassignCourse = typeof reassignCourse !== "undefined" ? reassignCourse : null;
-function reassignCourse(empId, course, score) {
-    const emp = allEmployees.find(e => String(e.emp_id) === String(empId));
-    const nm  = emp ? esc(emp.emp_name || empId) : esc(String(empId));
-    showConfirm({
-        title:        "Re-assign Course",
-        message:      `Re-assign <b>"${esc(course)}"</b> to <b>${nm}</b>?`,
-        detail:       `📊 Current score: <b>${score}/25</b> (below 80% threshold)<br>
-                       📧 Failure email will be sent to the employee.<br>
-                       📚 Course + assessment will be re-assigned in LMS.`,
-        confirmLabel: "🔄 Yes, Re-assign",
-        cancelLabel:  "Cancel",
-        type:         "warning",
-        onConfirm:    () => { if (_origReassignCourse) _origReassignCourse(empId, course, score); }
-    });
-}
-
-/* ── sendCourseEmail ────────────────────────────────────────── */
-const _origSendCourseEmail = typeof sendCourseEmail !== "undefined" ? sendCourseEmail : null;
-function sendCourseEmail(empId, empName, course) {
-    showConfirm({
-        title:        "Send Course Reminder",
-        message:      `Send assessment reminder to <b>${esc(empName)}</b>?`,
-        detail:       `📧 A reminder email for <b>"${esc(course)}"</b> will be sent to ${esc(empName)} immediately.`,
-        confirmLabel: "📧 Yes, Send",
-        cancelLabel:  "Cancel",
-        type:         "info",
-        onConfirm:    () => { if (_origSendCourseEmail) _origSendCourseEmail(empId, empName, course); }
-    });
-}
-
-/* ================================================================
-   AGENT COMMAND OVERRIDE — wire to /api/chatbot
-   Keeps all original commands working locally AND adds API fallback
-================================================================ */
-
-/* Override sendAgent to sanitize input first */
-const _origSendAgent = typeof sendAgent !== "undefined" ? sendAgent : null;
-function sendAgent() {
-    if (!_rateLimitCmd()) return;
-    const inp = document.getElementById("agentInput");
-    const raw = sanitizeInput((inp?.value || "").trim(), 300);
-    if (!raw) return;
-    addUserMsg(esc(raw));
-    if (inp) inp.value = "";
-
-    // Try local processCmd first (instant, no network)
-    // Then fall through to API for unrecognised commands
-    const lc = raw.toLowerCase();
-    const LOCAL_CMDS = ["help","summary","overview","pending","training","fail","assess",
-        "high risk","risk","induction","schedule","allocate","assign","remind","location",
-        "check employee","find employee","overdue","report","download","template","email template",
-        "completion"];
-    const isLocal = LOCAL_CMDS.some(cmd => lc.includes(cmd)) || /^\d{5,10}$/.test(raw.trim());
-
-    if (isLocal) {
-        processCmd(lc, raw);
-    } else {
-        _chatbotAPIFallback(raw);
-    }
-}
-
-async function _chatbotAPIFallback(msg) {
-    const tid = "typing_" + Date.now();
-    addBotMsg(`<span id="${tid}">🤖 Thinking...</span>`);
-
-    const removeTyping = () => {
-        const el = document.getElementById(tid);
-        if (el) { const p = el.closest(".msg"); if (p) p.remove(); }
-    };
-
-    try {
-        const res  = await apiFetch(BASE_URL + "/api/chatbot", {
-            method:  "POST",
-            headers: { "Content-Type": "application/json", "ngrok-skip-browser-warning": "true" },
-            body:    JSON.stringify({
-                message:    msg,
-                user_email: rm_email,
-                user_role:  "ACCOUNT_PMO",
-                page:       "ACCOUNT_PMO"
-            })
         });
-        removeTyping();
-        const data = await res.json();
-        if (!data.success) {
-            addBotMsg(`🤖 I didn't understand that. Try <b>help</b> for a list of commands.`);
-            return;
-        }
-        addBotMsg(_fmtReply(data.reply));
-    } catch (e) {
-        removeTyping();
-        addBotMsg("❌ Cannot reach AI backend. Check ngrok is running.");
-    }
-}
-
-/* ── Format API reply (same as chatbot_widget.js) ─────────── */
-function _fmtReply(r) {
-    if (!r) return "⚠️ No response.";
-    const t = r.type;
-    if (t === "summary") {
-        const d = r.data || {};
-        const rows = Object.entries(d).map(([k,v]) =>
-            `<tr><td style="color:#7d8da5;padding:4px 8px;font-size:11px">${esc(k.replace(/_/g," "))}</td>
-             <td style="font-weight:800;padding:4px 8px;font-size:13px">${esc(String(v))}</td></tr>`
-        ).join("");
-        return `<b>${esc(r.title)}</b><br><table style="margin-top:6px;border-collapse:collapse">${rows}</table>`;
-    }
-    if (t === "list") {
-        if (!(r.items||[]).length) return `${esc(r.title||"")} — No records found.`;
-        const rows = (r.items||[]).slice(0,8).map(row => {
-            const name = esc(row.emp_name || row.location || row.account_name || "—");
-            const sub  = row.current_step ? esc(row.current_step.replace(/_/g," ")) : row.count ? `${row.count} employees` : "";
-            const loc  = row.location ? ` · ${esc(row.location)}` : "";
-            return `• <b>${name}</b>${loc}${sub ? " — "+sub : ""}`;
-        }).join("<br>");
-        const more = (r.total||0) > 8 ? `<br><span style="color:#94a3b8;font-size:10px">…and ${r.total-8} more</span>` : "";
-        return `<b>${esc(r.title)}</b><br>━━━━━━━━━━━━━━<br>${rows}${more}`;
-    }
-    if (t === "count") return `<b>${esc(r.title)}</b><br><span style="font-size:26px;font-weight:900">${esc(String(r.count))}</span><br><small style="color:#7d8da5">${esc(r.message||"")}</small>`;
-    if (t === "fallback") return `🤖 ${esc(r.message)}<br><small style="color:#94a3b8;font-size:10px">✍️ "<i>${esc(r.raw_input||"")}</i>" logged.</small>`;
-    if (t === "prompt" || t === "not_found") return `⚠️ ${esc(r.message)}`;
-    return esc(r.message) || JSON.stringify(r);
-}
-
-/* ── Patch agentCmd to sanitize ────────────────────────────── */
-function agentCmd(cmd) {
-    const inp = document.getElementById("agentInput");
-    if (inp) inp.value = sanitizeInput(cmd, 200);
-    sendAgent();
-}
-
-/* ── Remove console exposure of sensitive data ─────────────── */
-const _origConsoleLog = console.log;
-console.log = function(...args) {
-    // Block logging of employee arrays and API responses in production
-    const str = JSON.stringify(args).toLowerCase();
-    if (str.includes("email") && str.includes("emp_id") && str.length > 500) return;
-    _origConsoleLog.apply(console, args);
-};
-
-/* ── Block keyboard shortcuts that could expose data ─────── */
-document.addEventListener("keydown", function(e) {
-    // Block F12 dev tools shortcut — can be bypassed but raises bar for casual snoopers
-    if (e.key === "F12") {
-        e.preventDefault();
-        toast("Developer tools disabled in this dashboard.", "amber");
-    }
-    // Block Ctrl+U (view source)
-    if (e.ctrlKey && e.key === "u") {
-        e.preventDefault();
-    }
+    });
 });
 
-/* ── Disable right-click context menu ─────────────────────── */
-document.addEventListener("contextmenu", function(e) {
-    e.preventDefault();
-});
-
-/* ── Mask API base URL — split to prevent easy grep ──────── */
-// BASE_URL already set above — no further exposure needed
-
-/* ── Session timeout warning — 50 min auto-logout ─────────── */
-let _sessionTimer = null;
-function _resetSessionTimer() {
-    if (_sessionTimer) clearTimeout(_sessionTimer);
-    _sessionTimer = setTimeout(() => {
-        showConfirm({
-            title:        "Session Expiring",
-            message:      "Your session is about to expire due to inactivity.",
-            detail:       "Click 'Stay Logged In' to continue, or you will be logged out automatically.",
-            confirmLabel: "✅ Stay Logged In",
-            cancelLabel:  "🚪 Logout Now",
-            type:         "warning",
-            onConfirm:    () => { _resetSessionTimer(); toast("Session extended.", "green"); }
-        });
-    }, 50 * 60 * 1000); // 50 minutes
-}
-["click","keydown","mousemove","scroll"].forEach(ev =>
-    document.addEventListener(ev, _resetSessionTimer, { passive: true })
-);
-_resetSessionTimer();
-
-console.log("%c⚠️ Security Notice", "color:red;font-size:24px;font-weight:bold");
-console.log("%cThis console is for authorized developers only. Do not paste any code here.", "font-size:14px");
-
-
-/* ================================================================
-   PAGE INIT — dashboard load
-   NOTE: validate-session skipped here because cookie is cross-origin
-   (Vercel → ngrok). Login page already validates session before
-   redirecting here. rm_email from localStorage is the source of truth.
-================================================================ */
-(async function init() {
-    // Get email from localStorage (set by login page)
-    if (!rm_email) {
-        rm_email = localStorage.getItem("user_email") ||
-                   localStorage.getItem("email") || "";
-    }
-
-    // If no email at all, redirect to login
-    if (!rm_email) {
-        window.location.href = "index.html?manual=true";
-        return;
-    }
-
-    // Load dashboard + auto-refresh every 60s
-    await loadDashboard();
-    setInterval(loadDashboard, 60000);
-})();
 </script>
 </body>
 </html>
