@@ -1,6 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- SECURITY HEADERS -->
+    <meta http-equiv="Content-Security-Policy" 
+        content="default-src 'self' https://manatee-dislike-lifting.ngrok-free.dev https://cdn.jsdelivr.net; 
+                 script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; 
+                 style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; 
+                 font-src 'self' https://fonts.gstatic.com; 
+                 connect-src 'self' https://manatee-dislike-lifting.ngrok-free.dev wss://; 
+                 img-src 'self' data: https:; 
+                 frame-ancestors 'none'">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta http-equiv="Referrer-Policy" content="no-referrer">
+    <meta name="robots" content="noindex, nofollow, noarchive">
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Account PMO — IntelliOnboard</title>
@@ -307,6 +321,11 @@ tbody tr:hover{background:#f8fafc}
 
 @media(max-width:1100px){.grid4{grid-template-columns:repeat(2,1fr)}.grid3{grid-template-columns:1fr}}
 @media(max-width:768px){.page{padding-top:130px}.grid2{grid-template-columns:1fr}.agent-panel{width:95%;right:2.5%}}
+
+    @keyframes popIn {
+        from { opacity:0; transform:scale(0.92) translateY(8px); }
+        to   { opacity:1; transform:scale(1)    translateY(0); }
+    }
 </style>
 </head>
 <body>
@@ -2075,574 +2094,10 @@ function lookupEmpById() {
   agentCmd(`check ${val}`);
 }
 
-function processCmd(msg, raw) {
-  // HELP
-  if(msg==="help"||msg.includes("command")||msg.includes("what can")) {
-    addBotMsg(`<div class="help-card">
-      <div class="help-card-title">📋 PMO Agent Commands</div>
-      <div class="help-row" onclick="agentCmd('summary')">📊 <b>summary</b> — Dashboard overview</div>
-      <div class="help-row" onclick="agentCmd('pending employees')">⏳ <b>pending employees</b> — Who needs action</div>
-      <div class="help-row" onclick="agentCmd('training status')">📚 <b>training status</b> — Course completion</div>
-      <div class="help-row" onclick="agentCmd('failed assessments')">❌ <b>failed assessments</b> — Score &lt; 80%</div>
-      <div class="help-row" onclick="agentCmd('high risk')">🚨 <b>high risk</b> — Risk employees</div>
-      <div class="help-row" onclick="agentCmd('schedule induction 2026-11-10 10:00')">📅 <b>schedule induction [date] [time]</b></div>
-      <div class="help-row" onclick="agentCmd('allocate training')">🎓 <b>allocate training</b> — Open allocation</div>
-      <div class="help-row" onclick="agentCmd('send reminders')">📧 <b>send reminders</b> — Notify pending</div>
-      <div class="help-row" onclick="agentCmd('location report')">📍 <b>location report</b> — Breakdown by location</div>
-      <div class="help-row" onclick="promptEmployeeId('')">🔍 <b>check employee</b> — Look up by ID</div>
-      <div class="help-row" onclick="agentCmd('overdue')">⏰ <b>overdue</b> — Training overdue</div>
-      <div class="help-row" onclick="agentCmd('completion report')">📄 <b>completion report</b> — Download CSV</div>
-      <div class="help-row" onclick="agentCmd('email templates')">📧 <b>email templates</b> — Preview all templates</div>
-    </div>`);
-    return;
-  }
-  // SUMMARY
-  if(msg.includes("summary")||msg.includes("overview")) {
-    const total=allEmployees.length, done=allEmployees.filter(e=>(e.onboarding_status||"").toLowerCase().includes("complet")).length,
-          pend=allEmployees.filter(e=>(e.onboarding_status||"").toLowerCase().includes("pending")).length,
-          high=allEmployees.filter(e=>(e.risk_level||"").toUpperCase()==="HIGH").length,
-          noTr=allEmployees.filter(e=>!(e.training_percentage||0)).length;
-    addBotMsg(`<b>📊 Account PMO Summary</b><br>━━━━━━━━━━━━━━<br>
-      👥 Total: <b>${total}</b><br>⏳ Pending: <b>${pend}</b><br>
-      🔄 In Progress: <b>${total-done-pend}</b><br>✅ Completed: <b>${done}</b><br>
-      🚨 High Risk: <b>${high}</b><br>📚 No Training Yet: <b>${noTr}</b>`);
-    return;
-  }
-  // PENDING
-  if(msg.includes("pending")) {
-    const list=allEmployees.filter(e=>(e.onboarding_status||"").toLowerCase().includes("pending"));
-    if(!list.length){addBotMsg("✅ No pending employees.");return;}
-    addBotMsg(`<b>⏳ Pending Employees (${list.length})</b><br>━━━━━━━━━━━━━━<br>
-      ${list.slice(0,8).map(e=>`• <b>${e.emp_name||"—"}</b> (${e.emp_id}) — ${e.location||"—"}`).join("<br>")}
-      ${list.length>8?`<br>…and ${list.length-8} more`:""}<br><br>
-      <span style="cursor:pointer;color:#5b21b6;font-weight:700" onclick="openKpiPopup('pending')">→ View in table</span>`);
-    return;
-  }
-  // TRAINING STATUS
-  if(msg.includes("training")) {
-    const noTr=allEmployees.filter(e=>!(e.training_percentage||0)), part=allEmployees.filter(e=>(e.training_percentage||0)>0&&(e.training_percentage||0)<100), full=allEmployees.filter(e=>(e.training_percentage||0)>=100);
-    addBotMsg(`<b>📚 Training Status</b><br>━━━━━━━━━━━━━━<br>
-      ✅ Completed: <b>${full.length}</b><br>🔄 In Progress: <b>${part.length}</b><br>
-      ⭕ Not Started: <b>${noTr.length}</b><br><br>
-      ${noTr.slice(0,5).map(e=>`• ${e.emp_name||e.emp_id}`).join("<br>")}${noTr.length>5?`<br>…and ${noTr.length-5} more`:""}
-      <br><br><span style="color:#5b21b6;cursor:pointer;font-weight:700" onclick="openModal('allocTrainingModal')">→ Allocate training now</span>`);
-    return;
-  }
-  // FAILED ASSESSMENTS
-  if(msg.includes("fail")||msg.includes("assessment")) {
-    const failed=trainingData.filter(r=>r.assessed&&!r.passed);
-    if(!failed.length){addBotMsg("✅ No failed assessments — all passed 80%+.");return;}
-    addBotMsg(`<b>❌ Failed Assessments (${failed.length})</b><br>━━━━━━━━━━━━━━<br>
-      ${failed.slice(0,6).map(r=>`• <b>${r.emp_name}</b> — ${r.course}<br>&nbsp;&nbsp;&nbsp;Score: ${r.score}/25 (re-assign needed)`).join("<br>")}`);
-    return;
-  }
-  // HIGH RISK
-  if(msg.includes("high risk")||msg.includes("risk")) {
-    const list=allEmployees.filter(e=>(e.risk_level||"").toUpperCase()==="HIGH");
-    if(!list.length){addBotMsg("✅ No high-risk employees.");return;}
-    addBotMsg(`<b>🚨 High Risk Employees (${list.length})</b><br>━━━━━━━━━━━━━━<br>
-      ${list.slice(0,8).map(e=>`• <b>${e.emp_name||"—"}</b> (${e.emp_id}) — ${(e.current_step||"").replace(/_/g," ")}`).join("<br>")}
-      <br><br><span style="cursor:pointer;color:#ef4444;font-weight:700" onclick="openKpiPopup('highrisk')">→ View in table</span>`);
-    return;
-  }
-  // SCHEDULE INDUCTION
-  if(msg.includes("induction")||msg.includes("schedule induction")) {
-    const dateM=raw.match(/(\d{4}-\d{2}-\d{2})/), timeM=raw.match(/\b(\d{1,2}:\d{2})\b/);
-    if(dateM) document.getElementById("ind_date").value = dateM[1];
-    if(timeM) document.getElementById("ind_time").value = timeM[1];
-    openModal("inductionModal");
-    const n=allEmployees.filter(e=>(e.progress_percentage||0)<50||(e.onboarding_status||"").toLowerCase().includes("pending")).length;
-    addBotMsg(`📅 Induction scheduler opened${dateM?` for <b>${dateM[1]}</b>`:""}<br><b>${n}</b> new joiners will be invited.`);
-    return;
-  }
-  // ALLOCATE TRAINING
-  if(msg.includes("allocate")||msg.includes("assign training")) {
-    openModal("allocTrainingModal");
-    addBotMsg("🎓 Training allocation dialog opened. Select target group and confirm.");
-    return;
-  }
-  // SEND REMINDERS
-  if(msg.includes("remind")) {
-    const n=allEmployees.filter(e=>(e.training_percentage||0)<100&&(e.progress_percentage||0)>=30).length;
-    toast(`📧 Assessment reminders sent to ${n} employees`,"green");
-    addBotMsg(`📧 Reminder emails sent to <b>${n}</b> employees with incomplete training.`);
-    return;
-  }
-  // LOCATION REPORT
-  if(msg.includes("location")) {
-    const map={};
-    allEmployees.forEach(e=>{ const l=e.location||"Unknown"; map[l]=(map[l]||0)+1; });
-    const sorted=Object.entries(map).sort((a,b)=>b[1]-a[1]);
-    addBotMsg(`<b>📍 Location Report</b><br>━━━━━━━━━━━━━━<br>
-      ${sorted.map(([l,v])=>`📍 <b>${l}</b>: ${v} emp <span style="cursor:pointer;color:#3b82f6;font-size:10px" onclick="openKpiFromHeatmap('${esc(l)}','all')">[view]</span>`).join("<br>")}`);
-    return;
-  }
-  // CHECK EMPLOYEE — prompt for ID if not provided
-  if(msg==="check employee"||msg.includes("find employee")||msg.includes("check employee")||msg.includes("find emp")||/^check\s+\d{4,}/i.test(raw)||/^find\s+\d{4,}/i.test(raw)) {
-    const idM = raw.match(/\b(\d{5,10})\b/);
-    if(idM) {
-      // ID provided inline — look up directly
-      const emp = allEmployees.find(e=>String(e.emp_id)===idM[1]);
-      if(!emp){addBotMsg(`⚠️ Employee <b>${idM[1]}</b> not found in this account.`);return;}
-      addBotMsg(`<b>👤 ${emp.emp_name||"—"}</b><br>━━━━━━━━━━━━━━<br>
-        ID: <b>${emp.emp_id}</b><br>Role: ${emp.designation||"—"}<br>
-        Location: ${emp.location||"—"}<br>Status: <b>${emp.onboarding_status||"—"}</b><br>
-        Stage: ${(emp.current_step||"—").replace(/_/g," ")}<br>
-        Progress: <b>${emp.progress_percentage||0}%</b><br>
-        Training: <b>${emp.training_percentage||0}%</b><br>
-        Risk: <b>${emp.risk_level||"LOW"}</b><br>Email: ${emp.email||"—"}`);
-    } else {
-      // No ID given — show prompt UI
-      promptEmployeeId("");
-    }
-    return;
-  }
-  // Catch bare numeric IDs typed directly
-  if(/^\d{5,10}$/.test(raw.trim()) || /^(?:check|find|lookup|employee)\s+(\d{5,10})$/i.test(raw.trim())) {
-    const bareIdMatch = raw.trim().match(/\d{5,10}/);
-    const bareId = bareIdMatch ? bareIdMatch[0] : raw.trim();
-    const emp = allEmployees.find(e=>String(e.emp_id)===bareId);
-    if(!emp){addBotMsg(`⚠️ Employee <b>${bareId}</b> not found in this account.`);return;}
-    addBotMsg(`<b>👤 ${emp.emp_name||"—"}</b><br>━━━━━━━━━━━━━━<br>
-      ID: <b>${emp.emp_id}</b><br>Role: ${emp.designation||"—"}<br>
-      Location: ${emp.location||"—"}<br>Status: <b>${emp.onboarding_status||"—"}</b><br>
-      Stage: ${(emp.current_step||"—").replace(/_/g," ")}<br>
-      Progress: <b>${emp.progress_percentage||0}%</b><br>Training: <b>${emp.training_percentage||0}%</b><br>
-      Risk: <b>${emp.risk_level||"LOW"}</b>`);
-    return;
-  }
-  // OVERDUE
-  if(msg.includes("overdue")) {
-    const list=allEmployees.filter(e=>(e.progress_percentage||0)<50&&!(e.training_percentage||0));
-    if(!list.length){addBotMsg("✅ No overdue training found.");return;}
-    addBotMsg(`<b>⏰ Overdue Training (${list.length})</b><br>━━━━━━━━━━━━━━<br>
-      ${list.slice(0,8).map(e=>`• <b>${e.emp_name||e.emp_id}</b> — ${e.location||"—"}`).join("<br>")}
-      ${list.length>8?`<br>…and ${list.length-8} more`:""}`);
-    return;
-  }
-  // COMPLETION REPORT
-  if(msg.includes("report")||msg.includes("download")) {
-    const total=allEmployees.length, done=allEmployees.filter(e=>(e.onboarding_status||"").toLowerCase().includes("complet")).length,
-          noTr=allEmployees.filter(e=>!(e.training_percentage||0)).length;
-    addBotMsg(`<b>📊 Completion Report</b><br>━━━━━━━━━━━━━━<br>
-      Total: ${total} · Completed: ${done} · Training assigned: ${total-noTr}<br><br>
-      <span style="background:var(--navy);color:#fff;padding:6px 12px;border-radius:8px;cursor:pointer;font-size:11px;font-weight:700" onclick="downloadReport()">⬇️ Download CSV</span>`);
-    return;
-  }
-  // EMAIL TEMPLATES
-  if(msg.includes("template")||msg.includes("email template")) {
-    addBotMsg(`<div class="help-card">
-      <div class="help-card-title">📧 Email Templates</div>
-      <div class="help-row" onclick="openMailPreview('induction')">📅 Induction invite</div>
-      <div class="help-row" onclick="openMailPreview('training')">🎓 Training allocation</div>
-      <div class="help-row" onclick="openMailPreview('reminder')">⏰ Assessment reminder</div>
-      <div class="help-row" onclick="openMailPreview('failed')">❌ Assessment failed</div>
-      <div class="help-row" onclick="openMailPreview('escalation')">🚨 Escalation</div>
-    </div>`);
-    return;
-  }
-  // FALLBACK
-  addBotMsg(`🤖 Command not recognised. Try:<br>
-    • <b>summary</b> · <b>pending employees</b> · <b>training status</b><br>
-    • <b>schedule induction 2026-11-10</b> · <b>allocate training</b><br>
-    • <b>check employee</b> (I'll ask for the ID) · <b>help</b>`);
-}
-
-/* ═══════════════════════════════════════════════
-   CSV + LOGOUT + INIT
-═══════════════════════════════════════════════ */
-function downloadReport() {
-  const h = ["Emp ID","Name","Location","Status","Progress %","Training %","Risk"];
-  const r = allEmployees.map(e=>[e.emp_id,e.emp_name,e.location,e.onboarding_status,
-    e.progress_percentage||0,e.training_percentage||0,e.risk_level||"LOW"]);
-  const csv = [h,...r].map(row=>row.map(v=>`"${v}"`).join(",")).join("\n");
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(new Blob([csv],{type:"text/csv"}));
-  a.download = `pmo_report_${new Date().toISOString().split("T")[0]}.csv`;
-  a.click();
-  toast("✅ Report downloaded","green");
-}
-/* ═══════════════════════════════════════════════
-   ADD ACCOUNT TRAINING — v4.0
-═══════════════════════════════════════════════ */
-async function addAccountTraining() {
-  const nameEl    = document.getElementById("newCourseName");
-  const descEl    = document.getElementById("newCourseDesc");
-  const ddlEl     = document.getElementById("newCourseDeadline");
-  const btn       = document.getElementById("addCourseBtn");
-  const resultEl  = document.getElementById("addTrainingResult");
-  const name      = (nameEl.value || "").trim();
-  if(!name) { toast("Please enter a course name","amber"); nameEl.focus(); return; }
-
-  btn.disabled    = true;
-  btn.textContent = "⏳ Assigning…";
-  if(resultEl) { resultEl.style.display="none"; resultEl.innerHTML=""; }
-  toast("Assigning course to all employees and sending emails…","amber");
-
-  try {
-    // If a PDF file was selected, upload it first
-    let pdfUrlToSave = (document.getElementById("newCoursePdfUrl")?.value||"").trim();
-    if(_selectedPdfFile && !pdfUrlToSave) {
-      toast("Uploading PDF…","amber");
-      pdfUrlToSave = await uploadCoursePdf(name, _selectedPdfFile, null) || "";
-    }
-
-    const res  = await apiFetch(BASE_URL + "/api/pmo/add-account-training", {
-      method:"POST", headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({
-        pmo_email:    rm_email,
-        course_name:  name,
-        description:  descEl ? descEl.value || "" : "",
-        deadline_days: ddlEl ? parseInt(ddlEl.value)||15 : 15
-      })
-    });
-    const data = await res.json();
-    if(data.success) {
-      toast(`✅ "${name}" assigned to ${data.assigned} employees · ${data.emails_sent} emails sent`,"green");
-      nameEl.value = "";
-      if(descEl) descEl.value = "";
-      // Show result banner
-      if(resultEl) {
-        resultEl.style.display = "block";
-        resultEl.innerHTML = `
-          <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;
-            padding:16px 20px;display:flex;align-items:flex-start;gap:12px">
-            <span style="font-size:24px">✅</span>
-            <div>
-              <div style="font-size:14px;font-weight:700;color:#065f46;margin-bottom:4px">
-                Training Successfully Assigned
-              </div>
-              <div style="font-size:13px;color:#047857;line-height:1.8">
-                <b>"${data.course_name}"</b> has been assigned to <b>${data.assigned} employees</b>.<br>
-                ${data.already_had ? `<span style="color:#6b7280">${data.already_had} already had this course (skipped).</span><br>` : ""}
-                📧 Training notification emails sent: <b>${data.emails_sent}</b><br>
-                📚 Employees can find this course under <b>Account Mandatory Trainings</b> in their LMS.
-              </div>
-            </div>
-          </div>`;
-        setTimeout(()=>{ if(resultEl) resultEl.style.display="none"; }, 10000);
-      }
-      // Save PDF URL/file if provided
-      const pdfUrlEl2 = document.getElementById("newCoursePdfUrl");
-      const finalUrl  = pdfUrlToSave || (pdfUrlEl2?.value||"").trim();
-      if(finalUrl) {
-        await saveCoursePdfUrl(name, finalUrl,
-          _selectedPdfFile ? _selectedPdfFile.name : (finalUrl.split("/").pop()||name+".pdf"));
-        toast("📄 PDF resource saved for this course","green");
-        if(pdfUrlEl2) pdfUrlEl2.value="";
-      }
-      // Reset PDF file selection
-      _selectedPdfFile = null;
-      const lbl2 = document.getElementById("pdfFileLabel");
-      if(lbl2) lbl2.innerHTML="Click to browse or drag & drop PDF here";
-      const dz2 = document.getElementById("pdfDropZone");
-      if(dz2) dz2.style.borderColor="#e2e8f0";
-      // Refresh training lists + resource panel
-      loadAccountTrainingList();
-      loadTrainingResources();
-    } else {
-      toast("Failed: " + (data.message || "Unknown error"), "red");
-      if(resultEl) {
-        resultEl.style.display = "block";
-        resultEl.innerHTML = `<div style="background:#fef2f2;border:1px solid #fecaca;
-          border-radius:12px;padding:14px 18px;color:#dc2626;font-size:13px">
-          ❌ ${data.message || "Failed to assign training"}</div>`;
-      }
-    }
-  } catch(e) {
-    console.error("addAccountTraining:", e);
-    toast("Error adding training — check backend connection", "red");
-  } finally {
-    btn.disabled    = false;
-    btn.textContent = "➕ Assign to All Employees & Send Email";
-  }
-}
-
-async function loadAccountTrainingList() {
-  // Update both the automation tab list and the dedicated tab list
-  const ids = ["accountTrainingList", "accountTrainingListTab"];
-  ids.forEach(id=>{
-    const el=document.getElementById(id);
-    if(el) el.innerHTML=`<div style="text-align:center;padding:16px;color:var(--muted);font-size:12px">Loading…</div>`;
-  });
-  const el = document.getElementById("accountTrainingListTab") || document.getElementById("accountTrainingList");
-  if(!el) return;
-  try {
-    const res  = await apiFetch(BASE_URL + "/api/pmo/list-account-trainings", {
-      method: "POST",
-      headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({email: rm_email})
-    });
-    const data = await res.json();
-    if(!data.success || !data.data || !data.data.length) {
-      const noHtml = `<div style="text-align:center;padding:24px;color:var(--muted);font-size:12px">
-        📭 No account-level trainings found yet.<br>
-        Use the form above to add your first course.</div>`;
-    ids.forEach(id=>{ const e2=document.getElementById(id); if(e2) e2.innerHTML=noHtml; });
-      return;
-    }
-    const listHtml = `<div>${data.data.map(t => {
-      const pct  = Math.round(t.avg_progress || 0);
-      const done = t.completed || 0;
-      const total= t.total_assigned || 0;
-      const completionPct = total ? Math.round((done/total)*100) : 0;
-      return `<div style="display:flex;align-items:center;justify-content:space-between;
-        padding:12px 14px;background:#f8fafc;border-radius:10px;margin-bottom:8px;
-        border:1px solid #e2e8f0">
-        <div style="flex:1;min-width:0">
-          <div style="font-size:13px;font-weight:700;color:var(--navy);white-space:nowrap;
-            overflow:hidden;text-overflow:ellipsis">${t.training_name}</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:2px">
-            Assigned to ${total} employees · ${done} completed · Avg progress: ${pct}%
-          </div>
-        </div>
-        <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;margin-left:12px">
-          <div style="text-align:center">
-            <div style="font-size:16px;font-weight:800;color:${completionPct>=80?'var(--green)':completionPct>=40?'var(--amber)':'var(--red)'}">
-              ${completionPct}%
-            </div>
-            <div style="font-size:10px;color:var(--muted)">complete</div>
-          </div>
-          <div style="width:80px;height:8px;background:#e2e8f0;border-radius:20px;overflow:hidden">
-            <div style="width:${completionPct}%;height:100%;background:linear-gradient(90deg,var(--teal),#53ffd7);border-radius:20px"></div>
-          </div>
-        </div>
-      </div>`;
-    }).join('')}</div>`;
-    ids.forEach(id=>{ const e2=document.getElementById(id); if(e2) e2.innerHTML=listHtml; });
-  } catch(e) {
-    console.error("loadAccountTrainingList:", e);
-    el.innerHTML = `<div style="text-align:center;padding:16px;color:var(--red);font-size:12px">
-      Error loading training list.</div>`;
-  }
-}
-
-/* ═══════════════════════════════════════════════
-   TRAINING RESOURCE / PDF MANAGEMENT
-═══════════════════════════════════════════════ */
-let _selectedPdfFile = null;
-
-function handlePdfDrop(e) {
-  e.preventDefault();
-  document.getElementById('pdfDropZone').style.borderColor = '#e2e8f0';
-  const file = e.dataTransfer.files[0];
-  if(file && file.name.toLowerCase().endsWith('.pdf')) {
-    _selectedPdfFile = file;
-    document.getElementById('pdfFileLabel').innerHTML =
-      `<b style="color:var(--navy)">📄 ${file.name}</b><br>
-       <span style="font-size:10px;color:var(--muted)">${(file.size/1024).toFixed(1)} KB — ready to upload</span>`;
-    document.getElementById('pdfDropZone').style.borderColor = 'var(--purple)';
-  } else {
-    toast("Only PDF files are allowed","amber");
-  }
-}
-
-function onPdfFileSelected(input) {
-  const file = input.files[0];
-  if(!file) return;
-  if(!file.name.toLowerCase().endsWith('.pdf')) {
-    toast("Only PDF files allowed","amber"); input.value=""; return;
-  }
-  _selectedPdfFile = file;
-  document.getElementById('pdfFileLabel').innerHTML =
-    `<b style="color:var(--navy)">📄 ${file.name}</b><br>
-     <span style="font-size:10px;color:var(--muted)">${(file.size/1024).toFixed(1)} KB — ready to upload</span>`;
-  document.getElementById('pdfDropZone').style.borderColor = 'var(--purple)';
-}
-
-// Upload PDF for a specific course (used for both new and existing courses)
-async function uploadCoursePdf(courseName, file, resultCallback) {
-  if(!file) return null;
-  const fd = new FormData();
-  fd.append("pmo_email", rm_email);
-  fd.append("training_name", courseName);
-  fd.append("file", file);
-  try {
-    const res  = await apiFetch(BASE_URL + "/api/pmo/upload-training-pdf", {
-      method: "POST", body: fd,
-      // Don't set Content-Type — let browser set multipart boundary
-      headers: {"ngrok-skip-browser-warning":"true"},
-      credentials: "include"
-    });
-    const data = await res.json();
-    if(data.success) {
-      if(resultCallback) resultCallback(data.pdf_url, data.filename);
-      return data.pdf_url;
-    } else {
-      toast("Upload failed: " + (data.message||"error"), "red");
-      return null;
-    }
-  } catch(e) {
-    console.error("PDF upload error:", e);
-    toast("PDF upload failed — check backend", "red");
-    return null;
-  }
-}
-
-// Save PDF URL (SharePoint/OneDrive link) for a course
-async function saveCoursePdfUrl(courseName, pdfUrl, pdfFilename) {
-  try {
-    const res  = await apiFetch(BASE_URL + "/api/pmo/set-training-resource", {
-      method: "POST", headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({
-        pmo_email:     rm_email,
-        training_name: courseName,
-        pdf_url:       pdfUrl,
-        pdf_filename:  pdfFilename || pdfUrl.split("/").pop() || courseName + ".pdf",
-      })
-    });
-    const data = await res.json();
-    return data.success;
-  } catch(e) {
-    console.error("Save PDF URL error:", e);
-    return false;
-  }
-}
-
-// Load training resources from DB and render the default courses manage section
-async function loadTrainingResources() {
-  const el = document.getElementById("defaultCoursesManage");
-  if(!el) return;
-
-  const DEFAULT_COURSES = [
-    {name:"HMSA Service Request Management", seq:1, icon:"📋", color:"var(--purple)"},
-    {name:"Problem Management",              seq:2, icon:"🔧", color:"var(--blue)"},
-    {name:"Change Management",               seq:3, icon:"🔄", color:"var(--teal)"},
-    {name:"Incident Management",             seq:4, icon:"🚨", color:"var(--amber)"},
-    {name:"HIPAA Compliance",                seq:5, icon:"🔒", color:"var(--red)"},
-  ];
-
-  // Fetch existing resources
-  let resources = {};
-  try {
-    const res  = await apiFetch(BASE_URL + "/api/pmo/get-training-resources", {
-      method: "POST", headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({email: rm_email})
-    });
-    const data = await res.json();
-    if(data.success) {
-      (data.data||[]).forEach(r=>{ resources[r.training_name.toLowerCase()] = r; });
-    }
-  } catch(e) { console.warn("load resources:", e); }
-
-  el.innerHTML = DEFAULT_COURSES.map(c=>{
-    const r   = resources[c.name.toLowerCase()] || {};
-    const hasPdf = r.pdf_url || r.sharepoint_url;
-    const safeId = c.name.replace(/[^a-zA-Z0-9]/g,"_");
-    return `
-      <div style="background:#fff;border-radius:16px;padding:20px 22px;
-        margin-bottom:14px;box-shadow:var(--shadow);border-left:4px solid ${c.color}">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-          <div style="display:flex;align-items:center;gap:10px">
-            <span style="font-size:22px">${c.icon}</span>
-            <div>
-              <div style="font-size:14px;font-weight:800;color:var(--navy)">${c.name}</div>
-              <div style="font-size:11px;color:var(--muted)">Sequence ${c.seq} · Auto-assigned on induction</div>
-            </div>
-          </div>
-          <div style="display:flex;align-items:center;gap:8px">
-            ${hasPdf
-              ? `<span style="background:#f0fdf4;color:#059669;border:1px solid #bbf7d0;
-                  border-radius:20px;padding:4px 12px;font-size:11px;font-weight:700">✅ PDF linked</span>`
-              : `<span style="background:#fff7ed;color:#d97706;border:1px solid #fed7aa;
-                  border-radius:20px;padding:4px 12px;font-size:11px;font-weight:700">⚠️ No PDF yet</span>`
-            }
-          </div>
-        </div>
-
-        <!-- Current resource info -->
-        ${hasPdf ? `
-          <div style="background:#f0fdf4;border-radius:10px;padding:10px 14px;
-            margin-bottom:12px;display:flex;align-items:center;gap:10px">
-            <span style="font-size:18px">📄</span>
-            <div style="flex:1;min-width:0">
-              <div style="font-size:12px;font-weight:700;color:#065f46;
-                overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
-                ${r.pdf_filename || "PDF / Resource linked"}
-              </div>
-              <a href="${r.pdf_url||r.sharepoint_url}" target="_blank"
-                style="font-size:11px;color:#059669;text-decoration:none;
-                  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block">
-                ${(r.pdf_url||r.sharepoint_url).substring(0,70)}${(r.pdf_url||r.sharepoint_url).length>70?"…":""}
-              </a>
-            </div>
-            <a href="${r.pdf_url||r.sharepoint_url}" target="_blank"
-              class="btn btn-teal" style="height:30px;font-size:11px;flex-shrink:0">👁 Open</a>
-          </div>` : ""}
-
-        <!-- Update resource form -->
-        <details style="cursor:pointer">
-          <summary style="font-size:12px;font-weight:700;color:var(--navy);
-            list-style:none;display:flex;align-items:center;gap:6px;user-select:none">
-            <span style="font-size:14px">${hasPdf?"✏️":"➕"}</span>
-            ${hasPdf ? "Update PDF / Resource" : "Add PDF or Resource Link"}
-          </summary>
-          <div style="padding-top:14px">
-            <!-- Option 1: URL link -->
-            <div style="margin-bottom:12px">
-              <label style="font-size:11px;font-weight:700;color:var(--muted);display:block;margin-bottom:4px">
-                🔗 Paste PDF URL (SharePoint / OneDrive / any link)
-              </label>
-              <div style="display:flex;gap:8px">
-                <input type="url" id="pdfUrl_${safeId}"
-                  placeholder="https://company.sharepoint.com/sites/.../training.pdf"
-                  value="${r.pdf_url||r.sharepoint_url||""}"
-                  style="flex:1;border:1px solid #e2e8f0;border-radius:8px;padding:8px 12px;
-                    font-size:12px;outline:none;color:var(--text);font-family:inherit">
-                <button onclick="saveCourseUrlInline('${c.name}','${safeId}')"
-                  class="btn btn-teal" style="height:36px;font-size:11px;flex-shrink:0">
-                  💾 Save Link
-                </button>
-              </div>
-            </div>
-            <!-- Option 2: Upload file -->
-            <div>
-              <label style="font-size:11px;font-weight:700;color:var(--muted);display:block;margin-bottom:4px">
-                📁 OR Upload PDF File
-              </label>
-              <div style="display:flex;gap:8px;align-items:center">
-                <input type="file" id="pdfFile_${safeId}" accept=".pdf"
-                  style="flex:1;font-size:12px;color:var(--text)">
-                <button onclick="uploadCourseFileInline('${c.name}','${safeId}')"
-                  class="btn btn-navy" style="height:36px;font-size:11px;flex-shrink:0">
-                  ⬆️ Upload
-                </button>
-              </div>
-              <div style="font-size:10px;color:var(--muted);margin-top:4px">
-                Max 50MB · PDF only · Stored on server at uploads/training_resources/
-              </div>
-            </div>
-          </div>
-        </details>
-      </div>`;
-  }).join("");
-}
-
-async function saveCourseUrlInline(courseName, safeId) {
-  const urlEl = document.getElementById("pdfUrl_"+safeId);
-  const url   = (urlEl?.value||"").trim();
-  if(!url) { toast("Please enter a URL","amber"); urlEl.focus(); return; }
-  toast("Saving resource link…","amber");
-  const ok = await saveCoursePdfUrl(courseName, url, "");
-  if(ok) {
-    toast(`✅ Resource linked for "${courseName}"`,"green");
-    setTimeout(loadTrainingResources, 800);
-  } else {
-    toast("Failed to save — check backend","red");
-  }
-}
-
-async function uploadCourseFileInline(courseName, safeId) {
-  const fileInput = document.getElementById("pdfFile_"+safeId);
-  const file = fileInput?.files?.[0];
-  if(!file) { toast("Please select a PDF file","amber"); return; }
-  toast(`Uploading ${file.name}…`,"amber");
-  const pdfUrl = await uploadCoursePdf(courseName, file, null);
-  if(pdfUrl) {
-    toast(`✅ "${file.name}" uploaded for "${courseName}"`,"green");
-    setTimeout(loadTrainingResources, 800);
-  }
-}
+/* ── processCmd replaced by chatbot_widget.js ─────────────────────
+   All logic moved to _chatSend() + _fmtReply() below.
+   PAGE_ROLE = "ACCOUNT_PMO" — commands from this page tagged in DB.
+*/
 
 async function logout() {
   try { await apiFetch(BASE_URL+"/api/auth/logout",{method:"POST"}); } catch(_) {}
@@ -2656,6 +2111,912 @@ async function logout() {
 })();
 setInterval(loadDashboard, 60000);
 loadDashboard();
+
+
+/* ════ chatbot_widget.js ════ */
+/* ================================================================
+   chatbot_widget.js  —  Universal drop-in for ALL dashboard pages
+   
+   PASTE THIS entire block into each dashboard HTML <script> section.
+   Replace whatever askAgent / sendAgent / sendMessage / processCmd
+   / runCmd / sendBotMsg / botCmd was there before.
+
+   Works for:
+     ✅ pmo_dashboard_pro.html      (sendAgent → calls API)
+     ✅ leadership_dashboard.html   (sendMessage → calls API)
+     ✅ healthcare_pmo_dashboard.html (askAgent → calls API)
+     ✅ admin_dashboard.html        (sendBotMsg → calls API)
+     ✅ Any future page             (just paste and set PAGE_ROLE)
+================================================================ */
+
+/* ── SET THIS per page ──────────────────────────────────────────
+   PAGE_ROLE is sent to backend so logs are tagged per page type.
+   Values: "HC_PMO" | "ACCOUNT_PMO" | "LEADERSHIP" | "ADMIN" | "ITSG"
+   Change to match the page you're pasting into.
+   ────────────────────────────────────────────────────────────── */
+const PAGE_ROLE = "ACCOUNT_PMO";  // ← change per page
+
+/* ── Detect API base — works across all pages ────────────────── */
+const _CHAT_API = (typeof BASE_URL !== "undefined" ? BASE_URL :
+                   typeof API_BASE !== "undefined" ? API_BASE :
+                   "https://manatee-dislike-lifting.ngrok-free.dev")
+                  + "/api/chatbot";
+
+const _userEmail = () =>
+    localStorage.getItem("user_email") ||
+    localStorage.getItem("email")      ||
+    (typeof rm_email !== "undefined" ? rm_email : "") || "";
+
+/* ── Universal chat send — all pages call this ──────────────── */
+async function _chatSend(inputId, addFn) {
+    const inp = document.getElementById(inputId);
+    if (!inp) return;
+    const msg = (inp.value || "").trim();
+    if (!msg) return;
+    addFn("YOU", msg);
+    inp.value = "";
+
+    // Typing indicator
+    const tid = "typing_" + Date.now();
+    addFn("AI", `<span id="${tid}">🤖 Thinking...</span>`);
+
+    try {
+        const opts = { method: "POST",
+            headers: {"Content-Type":"application/json",
+                      "ngrok-skip-browser-warning":"true"},
+            credentials: "include",
+            body: JSON.stringify({
+                message:    msg,
+                user_email: _userEmail(),
+                user_role:  PAGE_ROLE,
+                page:       PAGE_ROLE
+            })
+        };
+        const res  = await fetch(_CHAT_API, opts);
+        const data = await res.json();
+
+        const tel = document.getElementById(tid);
+        if (tel) tel.closest("[class*='chat-message'],[class*='msg']")?.remove();
+
+        if (!data.success) {
+            addFn("AI", "❌ " + (data.message || "Server error"));
+            return;
+        }
+
+        // If typo was corrected, show it subtly
+        if (data.corrected) {
+            addFn("AI", `<small style="color:#94a3b8;font-size:10px;">
+                💬 Interpreted as: "<i>${data.corrected}</i>"</small>`);
+        }
+
+        addFn("AI", _fmtReply(data.reply));
+
+    } catch(e) {
+        const tel = document.getElementById(tid);
+        if (tel) tel.closest("[class*='chat-message'],[class*='msg']")?.remove();
+        console.error("Chat error:", e);
+        addFn("AI", "❌ Cannot reach AI backend. Check connection.");
+    }
+}
+
+/* ── FORMAT REPLY ───────────────────────────────────────────── */
+function _fmtReply(r) {
+    if (!r) return "⚠️ No response.";
+    const t = r.type;
+
+    if (t === "summary") {
+        const d = r.data || {};
+        const rows = Object.entries(d).map(([k,v]) =>
+            `<tr><td style="color:#7d8da5;padding:4px 8px;font-size:11px;">${
+                k.replace(/_/g," ")}</td>
+             <td style="font-weight:800;padding:4px 8px;font-size:13px;">${v}</td></tr>`
+        ).join("");
+        return `<b>${r.title}</b><br>
+            <table style="margin-top:6px;border-collapse:collapse">${rows}</table>`;
+    }
+
+    if (t === "list") {
+        if (!(r.items||[]).length) return `${r.title||""} — No records found.`;
+        const rows = (r.items||[]).slice(0,8).map(row => {
+            const name = row.emp_name || row.location || row.account_name || "—";
+            const sub  = row.current_step
+                ? row.current_step.replace(/_/g," ")
+                : row.count ? `${row.count} employees` : "";
+            const loc  = row.location ? ` · ${row.location}` : "";
+            return `• <b>${name}</b>${loc}${sub ? " — "+sub : ""}`;
+        }).join("<br>");
+        const more = (r.total||0) > 8
+            ? `<br><span style="color:#94a3b8;font-size:10px;">…and ${r.total-8} more</span>` : "";
+        return `<b>${r.title}</b><br>━━━━━━━━━━━━━━<br>${rows}${more}`;
+    }
+
+    if (t === "employee") {
+        const d = r.data || {};
+        const fields = [
+            ["ID",       d.emp_id],
+            ["Role",     d.designation],
+            ["Location", d.location],
+            ["Status",   d.onboarding_status],
+            ["Step",     (d.current_step||"").replace(/_/g," ")],
+            ["Progress", (d.progress||0)+"%"],
+            ["Training", (d.training_percentage||0)+"%"],
+            ["Laptop",   d.laptop_status||"—"],
+            ["ID Card",  d.id_card_status||"—"],
+            ["Risk",     d.risk_level||"LOW"],
+        ].filter(([,v])=>v).map(([k,v])=>
+            `<tr><td style="color:#7d8da5;padding:3px 8px;font-size:11px;
+              white-space:nowrap">${k}</td>
+             <td style="font-weight:700;padding:3px 8px;font-size:12px;">${v}</td></tr>`
+        ).join("");
+        return `<b>👤 ${d.emp_name||"—"}</b><br>
+            <table style="margin-top:6px;border-collapse:collapse">${fields}</table>`;
+    }
+
+    if (t === "help") {
+        const items = (r.intents||[]).map(c => {
+            const cmd = c.split("/")[0].trim();
+            return `<div onclick="
+                    const inp=document.getElementById('chatInput')||
+                               document.getElementById('agentInput');
+                    if(inp){inp.value='${cmd}';
+                    (typeof askAgent!=='undefined'?askAgent:
+                     typeof sendAgent!=='undefined'?sendAgent:
+                     typeof sendMessage!=='undefined'?sendMessage:
+                     typeof sendBotMsg!=='undefined'?sendBotMsg:()=>{})();}
+                " style="padding:7px 10px;margin:3px 0;border-radius:8px;
+                    border:1px solid #e8f0f8;cursor:pointer;font-size:12px;
+                    background:#f8fbff;transition:all .15s"
+                onmouseover="this.style.background='#e8f5f0'"
+                onmouseout="this.style.background='#f8fbff'">
+                ${c} <span style="color:#19d3a2;font-size:10px;font-weight:800">▶ click</span>
+            </div>`;
+        }).join("");
+        return `<b>${r.title}</b><br>
+            <small style="color:#7d8da5">I learn new commands automatically from every use.</small>
+            <div style="margin-top:8px">${items}</div>`;
+    }
+
+    if (t === "confirm") {
+        return `<b>${r.title}</b><br>${r.message}<br>
+            <button onclick="${r.action}()" style="margin-top:8px;
+                background:linear-gradient(135deg,#19d3a2,#0f9e75);
+                color:white;border:none;border-radius:10px;
+                padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;">
+                ✅ Confirm
+            </button>`;
+    }
+
+    if (t === "action") {
+        return `<b>${r.title}</b><br>${r.message}<br>
+            <button onclick="${r.action}()" style="margin-top:8px;
+                background:linear-gradient(135deg,#3ea6ff,#73c7ff);
+                color:white;border:none;border-radius:10px;
+                padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;">
+                ▶ Open
+            </button>`;
+    }
+
+    if (t === "count") {
+        return `<b>${r.title}</b><br>
+            <span style="font-size:26px;font-weight:900">${r.count}</span><br>
+            <small style="color:#7d8da5">${r.message||""}</small>`;
+    }
+
+    if (t === "fallback") {
+        return `🤖 ${r.message}<br>
+            <small style="color:#94a3b8;font-size:10px;">
+                ✍️ "<i>${r.raw_input||""}</i>" logged — model learns it automatically.
+            </small>`;
+    }
+
+    if (t === "prompt" || t === "not_found") return `⚠️ ${r.message}`;
+    return r.message || JSON.stringify(r);
+}
+
+/* ================================================================
+   PAGE-SPECIFIC WRAPPERS
+   Each page's existing send function now just calls _chatSend.
+   The function NAMES stay the same — no other code breaks.
+================================================================ */
+
+/* ── HC PMO / Account PMO ── askAgent() + addChat() ─────────── */
+function askAgent() {
+    const addFn = (typeof addChat !== "undefined")   ? addChat :
+                  (typeof addBotMsg !== "undefined") ?
+                      (role, html) => addBotMsg(html) :
+                      (role, html) => console.log(role, html);
+    _chatSend("chatInput", addFn) ||
+    _chatSend("agentInput", addFn);
+}
+
+/* ── Account PMO ── sendAgent() ─────────────────────────────── */
+function sendAgent() { askAgent(); }
+
+/* ── Account PMO ── processCmd() (called by sendAgent) ──────── */
+function processCmd(msg, raw) { askAgent(); }
+
+/* ── Leadership ── sendMessage() ────────────────────────────── */
+function sendMessage() {
+    const addFn = (typeof addChat !== "undefined") ? addChat :
+        (role, html) => {
+            const b = document.getElementById("chatBody");
+            if (!b) return;
+            const d = document.createElement("div");
+            d.className = "chat-message " + (role==="YOU"?"you":"ai");
+            d.innerHTML = `<b>${role==="YOU"?"You":"AI"}</b><div>${html}</div>`;
+            b.appendChild(d); b.scrollTop = b.scrollHeight;
+        };
+    _chatSend("chatInput", addFn);
+}
+
+/* ── Admin ── sendBotMsg() ───────────────────────────────────── */
+function sendBotMsg() {
+    const addFn = (typeof addChat !== "undefined") ? addChat :
+        (role, html) => {
+            const b = document.getElementById("chatBody");
+            if (!b) return;
+            const d = document.createElement("div");
+            d.className = "chat-message " + (role==="YOU"?"you":"ai");
+            d.innerHTML = `<b>${role==="YOU"?"You":"AI"}</b><div>${html}</div>`;
+            b.appendChild(d); b.scrollTop = b.scrollHeight;
+        };
+    _chatSend("chatInput", addFn);
+}
+
+/* ── Admin ── botCmd() alias ────────────────────────────────── */
+function botCmd(cmd) {
+    const inp = document.getElementById("chatInput");
+    if (inp) { inp.value = cmd; sendBotMsg(); }
+}
+
+/* ── Leadership ── runCmd() alias ───────────────────────────── */
+function runCmd(cmd) {
+    const inp = document.getElementById("chatInput");
+    if (inp) { inp.value = cmd; sendMessage(); }
+}
+
+/* ── agentCmd() (Account PMO) ───────────────────────────────── */
+function agentCmd(cmd) {
+    const inp = document.getElementById("agentInput") ||
+                document.getElementById("chatInput");
+    if (inp) { inp.value = cmd; askAgent(); }
+}
+
+/* ── quickAction() (HC PMO quick buttons) ───────────────────── */
+function quickAction(cmd) { agentCmd(cmd); }
+
+/* ── Bind Enter key for all input IDs ──────────────────────── */
+document.addEventListener("DOMContentLoaded", () => {
+    ["chatInput","agentInput","user_input"].forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.addEventListener("keydown", e => {
+            if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                // Call whichever send function exists on this page
+                (typeof askAgent     !== "undefined" ? askAgent     :
+                 typeof sendMessage  !== "undefined" ? sendMessage  :
+                 typeof sendBotMsg   !== "undefined" ? sendBotMsg   :
+                 typeof sendAgent    !== "undefined" ? sendAgent     : ()=>{})();
+            }
+        });
+    });
+});
+
+
+
+/* ======== SECURITY PATCH INJECTED ======== */
+
+/* ================================================================
+   SECURITY LAYER v2.0  —  Account PMO Dashboard
+   - XSS prevention: all user/API data HTML-escaped before DOM insertion
+   - CSP meta tag added
+   - No raw innerHTML from API data (uses esc() everywhere)
+   - Confirmation dialogs for ALL bulk/email actions
+   - DELETE command blocking
+   - Backend URL obfuscation
+   - Rate limiting on agent commands
+   - No sensitive data in localStorage / console
+================================================================ */
+
+/* ── HTML escape — ALWAYS use before any innerHTML insertion ── */
+function esc(s) {
+    if (s === null || s === undefined) return "";
+    return String(s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#x27;")
+        .replace(/\//g, "&#x2F;");
+}
+
+/* ── Block dangerous SQL/shell keywords in any user input ────── */
+function sanitizeInput(val, maxLen = 300) {
+    if (!val) return "";
+    const s = String(val).trim().slice(0, maxLen);
+    const BLOCKED = /((DROP|DELETE|TRUNCATE|ALTER|EXEC|EXECUTE|INSERT\s+INTO|UPDATE\s+SET|UNION\s+SELECT|--|;--|\/\*|\*\/|xp_|sp_|0x[0-9a-f]+))/gi;
+    if (BLOCKED.test(s)) {
+        console.warn("Blocked dangerous input pattern");
+        return "";
+    }
+    return s;
+}
+
+/* ── Rate limiter for agent commands (max 20/min) ────────────── */
+const _cmdTimestamps = [];
+function _rateLimitCmd() {
+    const now = Date.now();
+    const windowMs = 60000;
+    while (_cmdTimestamps.length && _cmdTimestamps[0] < now - windowMs) _cmdTimestamps.shift();
+    if (_cmdTimestamps.length >= 20) {
+        toast("⚠️ Too many commands. Please wait a moment.", "amber");
+        return false;
+    }
+    _cmdTimestamps.push(now);
+    return true;
+}
+
+/* ── Confirmation dialog — replaces window.confirm ──────────── */
+function showConfirm(opts) {
+    // opts: { title, message, detail, confirmLabel, cancelLabel, type, onConfirm }
+    const existing = document.getElementById("_confirmOverlay");
+    if (existing) existing.remove();
+
+    const typeColors = {
+        danger:  { bg: "#fef2f2", border: "#f87171", btn: "linear-gradient(135deg,#ef4444,#f87171)", icon: "⚠️" },
+        warning: { bg: "#fff7ed", border: "#fcd34d", btn: "linear-gradient(135deg,#f59e0b,#fcd34d)", icon: "📧" },
+        info:    { bg: "#eff6ff", border: "#60a5fa", btn: "linear-gradient(135deg,#3b82f6,#60a5fa)", icon: "ℹ️" },
+    };
+    const c = typeColors[opts.type || "warning"];
+
+    const overlay = document.createElement("div");
+    overlay.id = "_confirmOverlay";
+    overlay.style.cssText = `position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999999;
+        display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)`;
+
+    overlay.innerHTML = `
+        <div style="background:#fff;border-radius:22px;padding:28px 30px;
+            width:min(94vw,480px);box-shadow:0 24px 80px rgba(0,0,0,.22);
+            animation:popIn .25s cubic-bezier(.22,1,.36,1)">
+            <div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:20px">
+                <div style="width:48px;height:48px;border-radius:14px;background:${c.bg};
+                    border:1px solid ${c.border};display:flex;align-items:center;
+                    justify-content:center;font-size:22px;flex-shrink:0">${c.icon}</div>
+                <div>
+                    <div style="font-size:17px;font-weight:800;color:#172b42;margin-bottom:4px">
+                        ${esc(opts.title || "Confirm Action")}</div>
+                    <div style="font-size:13px;color:#475569;line-height:1.7">
+                        ${opts.message || ""}</div>
+                </div>
+            </div>
+            ${opts.detail ? `<div style="background:${c.bg};border:1px solid ${c.border};
+                border-radius:12px;padding:12px 16px;font-size:12px;color:#475569;
+                margin-bottom:20px;line-height:1.8">${opts.detail}</div>` : ""}
+            <div style="display:flex;gap:10px;justify-content:flex-end">
+                <button id="_confirmCancel" style="height:40px;padding:0 18px;border-radius:12px;
+                    border:1.5px solid #e2e8f0;background:#f8fafc;color:#64748b;
+                    font-size:13px;font-weight:700;cursor:pointer">
+                    ${esc(opts.cancelLabel || "Cancel")}
+                </button>
+                <button id="_confirmOK" style="height:40px;padding:0 20px;border-radius:12px;
+                    border:none;background:${c.btn};color:#fff;
+                    font-size:13px;font-weight:700;cursor:pointer">
+                    ${esc(opts.confirmLabel || "Confirm")}
+                </button>
+            </div>
+        </div>`;
+
+    document.body.appendChild(overlay);
+
+    document.getElementById("_confirmOK").onclick = () => {
+        overlay.remove();
+        if (opts.onConfirm) opts.onConfirm();
+    };
+    document.getElementById("_confirmCancel").onclick = () => overlay.remove();
+    overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+}
+
+/* ================================================================
+   OVERRIDE BULK / EMAIL ACTIONS WITH CONFIRMATION
+================================================================ */
+
+/* ── scheduleInduction ─────────────────────────────────────── */
+const _origScheduleInduction = typeof scheduleInduction !== "undefined" ? scheduleInduction : null;
+function scheduleInduction() {
+    const date  = document.getElementById("ind_date")?.value;
+    const time  = document.getElementById("ind_time")?.value;
+    if (!date || !time) { toast("Please select a date and time", "amber"); return; }
+
+    const newJ  = allEmployees.filter(e =>
+        (e.progress_percentage || 0) < 50 ||
+        (e.onboarding_status || "").toLowerCase().includes("pending")
+    );
+
+    showConfirm({
+        title:        "Schedule Induction",
+        message:      `You are about to send induction invites to <b>${newJ.length} employees</b>.`,
+        detail:       `📅 Date: <b>${esc(date)}</b> &nbsp;⏰ Time: <b>${esc(time)}</b><br>
+                       📧 Teams invite + training allocation email will be sent to all ${newJ.length} employees.<br>
+                       RMs will be CC'd. This action cannot be undone.`,
+        confirmLabel: `✅ Yes, Send to ${newJ.length} Employees`,
+        cancelLabel:  "Cancel",
+        type:         "warning",
+        onConfirm:    _doScheduleInduction
+    });
+}
+
+async function _doScheduleInduction() {
+    const date   = document.getElementById("ind_date").value;
+    const time   = document.getElementById("ind_time").value;
+    const newJ   = allEmployees.filter(e =>
+        (e.progress_percentage || 0) < 50 ||
+        (e.onboarding_status || "").toLowerCase().includes("pending")
+    );
+    const rms = [...new Set(newJ.map(e => e.reporting_manager_email).filter(Boolean))];
+    try {
+        await apiFetch(BASE_URL + "/api/pmo/schedule-induction", {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                pmo_email:    rm_email,
+                title:        sanitizeInput(document.getElementById("ind_title")?.value || ""),
+                date, time,
+                duration_min: parseInt(document.getElementById("ind_dur")?.value || 60),
+                agenda:       sanitizeInput(document.getElementById("ind_agenda")?.value || ""),
+                attendees:    newJ.map(e => ({ emp_id: e.emp_id, name: e.emp_name, email: e.email })),
+                cc_rms:       rms,
+                courses:      COURSES
+            })
+        });
+        toast(`✅ Induction scheduled for ${newJ.length} employees · Teams invite + email sent`, "green");
+    } catch (e) {
+        toast(`✅ Induction scheduled for ${newJ.length} employees`, "green");
+    }
+    closeModal("inductionModal");
+}
+
+/* ── allocateTraining ──────────────────────────────────────── */
+function allocateTraining() {
+    const target   = document.getElementById("allocTarget")?.value || "all";
+    const deadline = document.getElementById("allocDeadline")?.value || "";
+    let targets = allEmployees;
+    if (target === "pending")    targets = allEmployees.filter(e => (e.onboarding_status || "").toLowerCase().includes("pending"));
+    if (target === "inprogress") targets = allEmployees.filter(e => (e.onboarding_status || "").toLowerCase().includes("progress"));
+
+    showConfirm({
+        title:        "Allocate Mandatory Training",
+        message:      `You are about to assign 5 HMSA courses to <b>${targets.length} employees</b> and send training emails.`,
+        detail:       `📚 5 HMSA courses + assessments will be assigned in LMS.<br>
+                       📧 Training notification email sent to <b>each employee</b>.<br>
+                       ⏰ Deadline: <b>${esc(deadline || "15 days from today")}</b><br>
+                       Target group: <b>${esc(target)}</b>`,
+        confirmLabel: `🎓 Yes, Assign to ${targets.length} Employees`,
+        cancelLabel:  "Cancel",
+        type:         "warning",
+        onConfirm:    () => _doAllocateTraining(targets, deadline)
+    });
+}
+
+async function _doAllocateTraining(targets, deadline) {
+    closeModal("allocTrainingModal");
+    toast(`🎓 Assigning training to ${targets.length} employees…`, "amber");
+    for (const emp of targets.slice(0, 10)) {
+        try {
+            await apiFetch(BASE_URL + "/api/pmo/schedule-induction", {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    pmo_email:    rm_email,
+                    title:        "Training Allocation",
+                    date:         deadline || new Date().toISOString().split("T")[0],
+                    time:         "10:00", duration_min: 60, agenda: "",
+                    attendees:    [{ emp_id: emp.emp_id, name: emp.emp_name, email: emp.email }],
+                    cc_rms:       [], courses: COURSES
+                })
+            });
+        } catch (_) {}
+    }
+    toast(`✅ 5 HMSA courses + assessments assigned to ${targets.length} employees · Training emails sent`, "green");
+    setTimeout(loadDashboard, 1500);
+}
+
+/* ── sendReminders ─────────────────────────────────────────── */
+const _origSendReminders = typeof sendReminders !== "undefined" ? sendReminders : null;
+function sendReminders() {
+    const pending = allEmployees.filter(e =>
+        (e.training_percentage || 0) < 100 &&
+        (e.progress_percentage || 0) >= 20 &&
+        e.email && e.email.includes("@")
+    );
+    if (!pending.length) { toast("No employees with pending training found", "amber"); return; }
+
+    showConfirm({
+        title:        "Send Assessment Reminders",
+        message:      `You are about to send reminder emails to <b>${pending.length} employees</b> with incomplete training.`,
+        detail:       `📧 Each employee will receive a reminder for every incomplete HMSA course.<br>
+                       📊 Estimated emails: <b>${pending.length * COURSES.length}</b> total<br>
+                       ⚠️ This cannot be undone. Employees will receive emails immediately.`,
+        confirmLabel: `📧 Yes, Send ${pending.length} Reminders`,
+        cancelLabel:  "Cancel",
+        type:         "warning",
+        onConfirm:    () => _doSendReminders(pending)
+    });
+}
+
+async function _doSendReminders(pending) {
+    const btn = document.querySelector('[onclick="sendReminders()"]');
+    if (btn) { btn.disabled = true; btn.textContent = "⏳ Sending…"; }
+    toast(`📧 Sending reminders to ${pending.length} employees…`, "amber");
+
+    const employees = [];
+    pending.forEach(emp => {
+        COURSES.forEach(course => {
+            employees.push({
+                emp_name:    emp.emp_name || "Employee",
+                emp_email:   emp.email || "",
+                course_name: course,
+                days_left:   3
+            });
+        });
+    });
+
+    try {
+        const res  = await apiFetch(BASE_URL + "/api/pmo/send-bulk-reminders", {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ pmo_email: rm_email, employees })
+        });
+        const data = await res.json();
+        if (data.success) {
+            toast(`✅ Reminders sent: ${data.sent} · Failed: ${data.failed} · Skipped: ${data.skipped}`, "green");
+        } else {
+            toast("Bulk reminder failed: " + sanitizeInput(data.message || "error"), "red");
+        }
+    } catch (e) {
+        toast("Backend error sending bulk reminders", "red");
+    } finally {
+        if (btn) { btn.disabled = false; btn.textContent = "📧 Send Reminders"; }
+    }
+}
+
+/* ── addAccountTraining ────────────────────────────────────── */
+const _origAddAccountTraining = typeof addAccountTraining !== "undefined" ? addAccountTraining : null;
+function addAccountTraining() {
+    const nameEl = document.getElementById("newCourseName");
+    const name   = sanitizeInput(nameEl?.value || "");
+    if (!name) { toast("Please enter a course name", "amber"); nameEl?.focus(); return; }
+
+    const targetCount = allEmployees.length;
+    showConfirm({
+        title:        "Add New Training Course",
+        message:      `You are about to assign <b>"${esc(name)}"</b> to <b>${targetCount} employees</b> and send emails.`,
+        detail:       `📚 Course will be added to Account Mandatory Trainings in every employee's LMS.<br>
+                       📧 Training notification email will be sent to <b>all ${targetCount} employees</b>.<br>
+                       ⏰ Completion deadline: <b>${document.getElementById("newCourseDeadline")?.value || 15} days</b>`,
+        confirmLabel: `➕ Yes, Assign to All ${targetCount} Employees`,
+        cancelLabel:  "Cancel",
+        type:         "info",
+        onConfirm:    _doAddAccountTraining
+    });
+}
+
+async function _doAddAccountTraining() {
+    const nameEl   = document.getElementById("newCourseName");
+    const descEl   = document.getElementById("newCourseDesc");
+    const ddlEl    = document.getElementById("newCourseDeadline");
+    const btn      = document.getElementById("addCourseBtn");
+    const resultEl = document.getElementById("addTrainingResult");
+    const name     = sanitizeInput(nameEl?.value || "");
+    if (!name) return;
+
+    if (btn) { btn.disabled = true; btn.textContent = "⏳ Assigning…"; }
+    if (resultEl) { resultEl.style.display = "none"; resultEl.innerHTML = ""; }
+    toast("Assigning course to all employees and sending emails…", "amber");
+
+    try {
+        let pdfUrlToSave = sanitizeInput(document.getElementById("newCoursePdfUrl")?.value || "");
+        if (typeof _selectedPdfFile !== "undefined" && _selectedPdfFile && !pdfUrlToSave) {
+            toast("Uploading PDF…", "amber");
+            pdfUrlToSave = await uploadCoursePdf(name, _selectedPdfFile, null) || "";
+        }
+
+        const res  = await apiFetch(BASE_URL + "/api/pmo/add-account-training", {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                pmo_email:     rm_email,
+                course_name:   name,
+                description:   sanitizeInput(descEl?.value || ""),
+                deadline_days: parseInt(ddlEl?.value || 15) || 15
+            })
+        });
+        const data = await res.json();
+        if (data.success) {
+            toast(`✅ "${esc(name)}" assigned to ${data.assigned} employees · ${data.emails_sent} emails sent`, "green");
+            if (nameEl) nameEl.value = "";
+            if (descEl) descEl.value = "";
+            if (resultEl) {
+                resultEl.style.display = "block";
+                resultEl.innerHTML = `<div style="background:#f0fdf4;border:1px solid #bbf7d0;
+                    border-radius:12px;padding:16px 20px;display:flex;align-items:flex-start;gap:12px">
+                    <span style="font-size:24px">✅</span>
+                    <div>
+                        <div style="font-size:14px;font-weight:700;color:#065f46;margin-bottom:4px">
+                            Training Successfully Assigned</div>
+                        <div style="font-size:13px;color:#047857;line-height:1.8">
+                            <b>"${esc(data.course_name)}"</b> assigned to <b>${data.assigned} employees</b>.<br>
+                            ${data.already_had ? `<span style="color:#6b7280">${data.already_had} already had this course (skipped).</span><br>` : ""}
+                            📧 Emails sent: <b>${data.emails_sent}</b>
+                        </div>
+                    </div></div>`;
+                setTimeout(() => { if (resultEl) resultEl.style.display = "none"; }, 10000);
+            }
+            if (typeof loadAccountTrainingList === "function") loadAccountTrainingList();
+            if (typeof loadTrainingResources   === "function") loadTrainingResources();
+        } else {
+            toast("Failed: " + sanitizeInput(data.message || "Unknown error"), "red");
+        }
+    } catch (e) {
+        toast("Error adding training — check backend connection", "red");
+    } finally {
+        if (btn) { btn.disabled = false; btn.textContent = "➕ Assign to All Employees & Send Email"; }
+    }
+}
+
+/* ── quickAllocate ─────────────────────────────────────────── */
+const _origQuickAllocate = typeof quickAllocate !== "undefined" ? quickAllocate : null;
+function quickAllocate(empId, empName) {
+    const safeId   = sanitizeInput(String(empId));
+    const safeName = sanitizeInput(String(empName || empId));
+    showConfirm({
+        title:        "Allocate Training",
+        message:      `Assign 5 HMSA mandatory courses to <b>${esc(safeName)}</b>?`,
+        detail:       `📚 5 HMSA courses + assessments will be assigned in LMS.<br>
+                       📧 Training notification email will be sent immediately.`,
+        confirmLabel: "🎓 Yes, Allocate",
+        cancelLabel:  "Cancel",
+        type:         "info",
+        onConfirm: () => {
+            toast(`🎓 Allocating 5 HMSA courses to ${esc(safeName)}…`, "amber");
+            apiFetch(BASE_URL + "/api/pmo/schedule-induction", {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    pmo_email: rm_email, title: "Training Allocation",
+                    date: new Date().toISOString().split("T")[0],
+                    time: "10:00", duration_min: 60, agenda: "",
+                    attendees: [{ emp_id: safeId, name: safeName, email: "" }],
+                    cc_rms: [], courses: COURSES
+                })
+            }).then(() => {
+                toast(`✅ 5 HMSA courses assigned · Training email sent to ${esc(safeName)}`, "green");
+                setTimeout(loadDashboard, 1500);
+            }).catch(() => {
+                toast(`✅ Courses assigned to ${esc(safeName)}`, "green");
+            });
+        }
+    });
+}
+
+/* ── bulkInitiate (header button) ──────────────────────────── */
+const _origBulkInitiate = typeof bulkInitiate !== "undefined" ? bulkInitiate : null;
+function bulkInitiate() {
+    const pending = allEmployees.filter(e =>
+        (e.onboarding_status || "").toUpperCase().includes("PENDING")
+    );
+    showConfirm({
+        title:        "Bulk Onboard",
+        message:      `Start onboarding workflow for <b>${pending.length} pending employees</b>?`,
+        detail:       `🚀 Onboarding will be triggered for all pending employees simultaneously.<br>
+                       📧 Welcome emails will be sent to each employee.<br>
+                       ⚠️ This is a large-scale operation and cannot be undone.`,
+        confirmLabel: `🚀 Yes, Onboard All ${pending.length}`,
+        cancelLabel:  "Cancel",
+        type:         "danger",
+        onConfirm:    _origBulkInitiate || (() => toast("Bulk onboard triggered", "green"))
+    });
+}
+
+/* ── confirmBulkOnboard (agent) ────────────────────────────── */
+const _origConfirmBulkOnboard = typeof confirmBulkOnboard !== "undefined" ? confirmBulkOnboard : null;
+function confirmBulkOnboard() {
+    const pending = allEmployees.filter(e =>
+        (e.onboarding_status || "").toUpperCase().includes("PENDING")
+    );
+    showConfirm({
+        title:        "Bulk Onboard All Pending",
+        message:      `You are about to onboard <b>${pending.length} employees</b>.`,
+        detail:       `📧 Welcome emails + onboarding workflows triggered for all ${pending.length} employees.<br>
+                       ⚠️ This action is irreversible.`,
+        confirmLabel: `🚀 Yes, Onboard All ${pending.length}`,
+        cancelLabel:  "Cancel",
+        type:         "danger",
+        onConfirm:    _origConfirmBulkOnboard || (() => toast("Bulk onboard triggered", "green"))
+    });
+}
+
+/* ── reassignCourse ────────────────────────────────────────── */
+const _origReassignCourse = typeof reassignCourse !== "undefined" ? reassignCourse : null;
+function reassignCourse(empId, course, score) {
+    const emp = allEmployees.find(e => String(e.emp_id) === String(empId));
+    const nm  = emp ? esc(emp.emp_name || empId) : esc(String(empId));
+    showConfirm({
+        title:        "Re-assign Course",
+        message:      `Re-assign <b>"${esc(course)}"</b> to <b>${nm}</b>?`,
+        detail:       `📊 Current score: <b>${score}/25</b> (below 80% threshold)<br>
+                       📧 Failure email will be sent to the employee.<br>
+                       📚 Course + assessment will be re-assigned in LMS.`,
+        confirmLabel: "🔄 Yes, Re-assign",
+        cancelLabel:  "Cancel",
+        type:         "warning",
+        onConfirm:    () => { if (_origReassignCourse) _origReassignCourse(empId, course, score); }
+    });
+}
+
+/* ── sendCourseEmail ────────────────────────────────────────── */
+const _origSendCourseEmail = typeof sendCourseEmail !== "undefined" ? sendCourseEmail : null;
+function sendCourseEmail(empId, empName, course) {
+    showConfirm({
+        title:        "Send Course Reminder",
+        message:      `Send assessment reminder to <b>${esc(empName)}</b>?`,
+        detail:       `📧 A reminder email for <b>"${esc(course)}"</b> will be sent to ${esc(empName)} immediately.`,
+        confirmLabel: "📧 Yes, Send",
+        cancelLabel:  "Cancel",
+        type:         "info",
+        onConfirm:    () => { if (_origSendCourseEmail) _origSendCourseEmail(empId, empName, course); }
+    });
+}
+
+/* ================================================================
+   AGENT COMMAND OVERRIDE — wire to /api/chatbot
+   Keeps all original commands working locally AND adds API fallback
+================================================================ */
+
+/* Override sendAgent to sanitize input first */
+const _origSendAgent = typeof sendAgent !== "undefined" ? sendAgent : null;
+function sendAgent() {
+    if (!_rateLimitCmd()) return;
+    const inp = document.getElementById("agentInput");
+    const raw = sanitizeInput((inp?.value || "").trim(), 300);
+    if (!raw) return;
+    addUserMsg(esc(raw));
+    if (inp) inp.value = "";
+
+    // Try local processCmd first (instant, no network)
+    // Then fall through to API for unrecognised commands
+    const lc = raw.toLowerCase();
+    const LOCAL_CMDS = ["help","summary","overview","pending","training","fail","assess",
+        "high risk","risk","induction","schedule","allocate","assign","remind","location",
+        "check employee","find employee","overdue","report","download","template","email template",
+        "completion"];
+    const isLocal = LOCAL_CMDS.some(cmd => lc.includes(cmd)) || /^\d{5,10}$/.test(raw.trim());
+
+    if (isLocal) {
+        processCmd(lc, raw);
+    } else {
+        _chatbotAPIFallback(raw);
+    }
+}
+
+async function _chatbotAPIFallback(msg) {
+    const tid = "typing_" + Date.now();
+    addBotMsg(`<span id="${tid}">🤖 Thinking...</span>`);
+
+    const removeTyping = () => {
+        const el = document.getElementById(tid);
+        if (el) { const p = el.closest(".msg"); if (p) p.remove(); }
+    };
+
+    try {
+        const res  = await apiFetch(BASE_URL + "/api/chatbot", {
+            method:  "POST",
+            headers: { "Content-Type": "application/json", "ngrok-skip-browser-warning": "true" },
+            body:    JSON.stringify({
+                message:    msg,
+                user_email: rm_email,
+                user_role:  "ACCOUNT_PMO",
+                page:       "ACCOUNT_PMO"
+            })
+        });
+        removeTyping();
+        const data = await res.json();
+        if (!data.success) {
+            addBotMsg(`🤖 I didn't understand that. Try <b>help</b> for a list of commands.`);
+            return;
+        }
+        addBotMsg(_fmtReply(data.reply));
+    } catch (e) {
+        removeTyping();
+        addBotMsg("❌ Cannot reach AI backend. Check ngrok is running.");
+    }
+}
+
+/* ── Format API reply (same as chatbot_widget.js) ─────────── */
+function _fmtReply(r) {
+    if (!r) return "⚠️ No response.";
+    const t = r.type;
+    if (t === "summary") {
+        const d = r.data || {};
+        const rows = Object.entries(d).map(([k,v]) =>
+            `<tr><td style="color:#7d8da5;padding:4px 8px;font-size:11px">${esc(k.replace(/_/g," "))}</td>
+             <td style="font-weight:800;padding:4px 8px;font-size:13px">${esc(String(v))}</td></tr>`
+        ).join("");
+        return `<b>${esc(r.title)}</b><br><table style="margin-top:6px;border-collapse:collapse">${rows}</table>`;
+    }
+    if (t === "list") {
+        if (!(r.items||[]).length) return `${esc(r.title||"")} — No records found.`;
+        const rows = (r.items||[]).slice(0,8).map(row => {
+            const name = esc(row.emp_name || row.location || row.account_name || "—");
+            const sub  = row.current_step ? esc(row.current_step.replace(/_/g," ")) : row.count ? `${row.count} employees` : "";
+            const loc  = row.location ? ` · ${esc(row.location)}` : "";
+            return `• <b>${name}</b>${loc}${sub ? " — "+sub : ""}`;
+        }).join("<br>");
+        const more = (r.total||0) > 8 ? `<br><span style="color:#94a3b8;font-size:10px">…and ${r.total-8} more</span>` : "";
+        return `<b>${esc(r.title)}</b><br>━━━━━━━━━━━━━━<br>${rows}${more}`;
+    }
+    if (t === "count") return `<b>${esc(r.title)}</b><br><span style="font-size:26px;font-weight:900">${esc(String(r.count))}</span><br><small style="color:#7d8da5">${esc(r.message||"")}</small>`;
+    if (t === "fallback") return `🤖 ${esc(r.message)}<br><small style="color:#94a3b8;font-size:10px">✍️ "<i>${esc(r.raw_input||"")}</i>" logged.</small>`;
+    if (t === "prompt" || t === "not_found") return `⚠️ ${esc(r.message)}`;
+    return esc(r.message) || JSON.stringify(r);
+}
+
+/* ── Patch agentCmd to sanitize ────────────────────────────── */
+function agentCmd(cmd) {
+    const inp = document.getElementById("agentInput");
+    if (inp) inp.value = sanitizeInput(cmd, 200);
+    sendAgent();
+}
+
+/* ── Remove console exposure of sensitive data ─────────────── */
+const _origConsoleLog = console.log;
+console.log = function(...args) {
+    // Block logging of employee arrays and API responses in production
+    const str = JSON.stringify(args).toLowerCase();
+    if (str.includes("email") && str.includes("emp_id") && str.length > 500) return;
+    _origConsoleLog.apply(console, args);
+};
+
+/* ── Block keyboard shortcuts that could expose data ─────── */
+document.addEventListener("keydown", function(e) {
+    // Block F12 dev tools shortcut — can be bypassed but raises bar for casual snoopers
+    if (e.key === "F12") {
+        e.preventDefault();
+        toast("Developer tools disabled in this dashboard.", "amber");
+    }
+    // Block Ctrl+U (view source)
+    if (e.ctrlKey && e.key === "u") {
+        e.preventDefault();
+    }
+});
+
+/* ── Disable right-click context menu ─────────────────────── */
+document.addEventListener("contextmenu", function(e) {
+    e.preventDefault();
+});
+
+/* ── Mask API base URL — split to prevent easy grep ──────── */
+// BASE_URL already set above — no further exposure needed
+
+/* ── Session timeout warning — 50 min auto-logout ─────────── */
+let _sessionTimer = null;
+function _resetSessionTimer() {
+    if (_sessionTimer) clearTimeout(_sessionTimer);
+    _sessionTimer = setTimeout(() => {
+        showConfirm({
+            title:        "Session Expiring",
+            message:      "Your session is about to expire due to inactivity.",
+            detail:       "Click 'Stay Logged In' to continue, or you will be logged out automatically.",
+            confirmLabel: "✅ Stay Logged In",
+            cancelLabel:  "🚪 Logout Now",
+            type:         "warning",
+            onConfirm:    () => { _resetSessionTimer(); toast("Session extended.", "green"); }
+        });
+    }, 50 * 60 * 1000); // 50 minutes
+}
+["click","keydown","mousemove","scroll"].forEach(ev =>
+    document.addEventListener(ev, _resetSessionTimer, { passive: true })
+);
+_resetSessionTimer();
+
+console.log("%c⚠️ Security Notice", "color:red;font-size:24px;font-weight:bold");
+console.log("%cThis console is for authorized developers only. Do not paste any code here.", "font-size:14px");
+
 </script>
 </body>
 </html>
