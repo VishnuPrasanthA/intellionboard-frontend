@@ -1668,7 +1668,11 @@ async function _doSend(raw) {
     addUserMsg(raw);
     var tid=_addTyping();
     try {
-        var res=await fetch(_BASE+"/api/chatbot",{method:"POST",credentials:"include",headers:{"Content-Type":"application/json","ngrok-skip-browser-warning":"true"},body:JSON.stringify({message:raw.slice(0,400),user_email:rm_email,user_role:PAGE_ROLE,page:PAGE_ROLE})});
+        var _ac=new AbortController();
+        var _to=setTimeout(function(){_ac.abort();},15000); // 15s timeout
+        var res;
+        try { res=await fetch(_BASE+"/api/chatbot",{method:"POST",credentials:"include",signal:_ac.signal,headers:{"Content-Type":"application/json","ngrok-skip-browser-warning":"true"},body:JSON.stringify({message:raw.slice(0,400),user_email:rm_email,user_role:PAGE_ROLE,page:PAGE_ROLE})});}
+        finally { clearTimeout(_to); }
         _removeTyping(tid);
         if(!res.ok){var errMap={401:"🔒 Session expired.",429:"⚠️ Too many requests.",403:"🔒 Access denied."};addBotMsg(errMap[res.status]||"❌ Server error ("+res.status+").");return;}
         var data; try{data=await res.json();}catch(e){addBotMsg("❌ Invalid server response.");return;}
@@ -1678,7 +1682,11 @@ async function _doSend(raw) {
         if(reply&&reply.type==="action"){addBotMsg(_renderReply(reply));var am={openInductionModal:function(){openModal("inductionModal");},openTrainingModal:function(){openModal("allocTrainingModal");}};if(am[reply.action]) setTimeout(am[reply.action],600);}
         else if(reply&&reply.type==="confirm"){_handleConfirmReply(reply);}
         else addBotMsg(_renderReply(reply));
-    } catch(err) { _removeTyping(tid); addBotMsg("❌ Cannot reach backend. Check tunnel is running."); }
+    } catch(err) {
+        _removeTyping(tid);
+        if(err.name==="AbortError") addBotMsg("⏱️ Request timed out — backend is slow or tunnel dropped. Try again.");
+        else addBotMsg("❌ Cannot reach backend. Is VS Code tunnel running?");
+    }
 }
 
 function _handleConfirmReply(reply) {
