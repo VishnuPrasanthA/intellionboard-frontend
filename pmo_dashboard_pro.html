@@ -947,82 +947,59 @@ tbody tr:hover{background:#f8fafc}
 <script>
 "use strict";
 /* ================================================================
-   ACCOUNT PMO DASHBOARD — COMPLETE SECURE SCRIPT
-   Security: WAF-style input filtering, XSS prevention,
-             rate limiting, session timeout, inspect blocker,
-             CSP enforcement, SQL injection blocking
-   Chatbot: Self-learning NLP via /api/chatbot, fully wired
+   ACCOUNT PMO DASHBOARD — Complete Secure Script v3.0
+   WAF + XSS prevention + Rate limiting + Inspect blocker
+   Chatbot: _doSend → /api/chatbot (NLP backend)
 ================================================================ */
 
-/* ─────────────────────────────────────────────────────────────
-   1. CONFIG
-───────────────────────────────────────────────────────────── */
+/* ── CONFIG ─────────────────────────────────────────────────── */
 const BASE_URL    = "https://lxlt6hvb-5332.inc1.devtunnels.ms";
-const _BASE       = BASE_URL.replace(/\/+$/, "");  // strip trailing slash
+const _BASE       = BASE_URL.replace(/\/+$/, "");
+const PAGE_ROLE   = "ACCOUNT_PMO";
 const COURSES     = ["HMSA Service Request Management","Problem Management",
                      "Change Management","Incident Management","HIPAA Compliance"];
 const TOTAL_MARKS = 25;
 const PASS_MARKS  = 20;
 const PASS_PCT    = 80;
-const PAGE_ROLE   = "ACCOUNT_PMO";
 
-/* ─────────────────────────────────────────────────────────────
-   2. WAF — Web Application Firewall (client-side layer)
-   Blocks known attack patterns before they reach the backend.
-   Backend has its own sanitize_input() as the second layer.
-───────────────────────────────────────────────────────────── */
+/* ── WAF: client-side firewall ──────────────────────────────── */
 const _WAF = {
-    /* SQL injection patterns */
-    SQL: /(\b(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|EXEC|EXECUTE|
-          UNION|TRUNCATE|DECLARE|CAST|CONVERT|GRANT|REVOKE|SHUTDOWN|
-          WAITFOR|DELAY|BENCHMARK|SLEEP)\b|--|;--|\/\*|\*\/|xp_|sp_|\x00|\x1a)/gi,
-    /* XSS patterns */
-    XSS: /(<script[\s\S]*?>|<\/script>|javascript\s*:|vbscript\s*:|
-          on\w+\s*=|data\s*:text\/html|<iframe|<object|<embed|
-          <link.*?href|<meta.*?http-equiv)/gi,
-    /* Path traversal */
-    PATH: /(\.\.[\/\\]|%2e%2e[\/\\]|%252e%252e)/gi,
-    /* Command injection */
-    CMD: /(;\s*(ls|cat|whoami|id|pwd|wget|curl|nc|bash|sh|cmd|powershell)|
-          `[^`]*`|\$\([^)]*\))/gi,
+    SQL: /SELECT|INSERT|UPDATE|DELETE|DROP|ALTER|EXEC|UNION|TRUNCATE|SHUTDOWN|--|xp_|sp_/gi,
+    XSS: /<script|javascript:|vbscript:|onerror=|onload=|onclick=|<iframe|<object/gi,
+    PATH: /\.\.[\/\\]/g,
+    CMD: /;\s*(ls|cat|whoami|wget|curl|bash|cmd|powershell)/gi,
 
     check(val) {
-        if (!val) return { safe: true, val: "" };
-        const s = String(val).trim();
-        if (this.SQL.test(s)) return { safe: false, reason: "SQL pattern blocked" };
-        if (this.XSS.test(s)) return { safe: false, reason: "Script content blocked" };
-        if (this.PATH.test(s)) return { safe: false, reason: "Path traversal blocked" };
-        if (this.CMD.test(s))  return { safe: false, reason: "Command pattern blocked" };
-        // Reset regex lastIndex (stateful with /g flag)
-        [this.SQL, this.XSS, this.PATH, this.CMD].forEach(r => r.lastIndex = 0);
-        return { safe: true, val: s };
+        if (!val) return { safe: true };
+        const s = String(val);
+        const tests = [this.SQL, this.XSS, this.PATH, this.CMD];
+        for (const t of tests) {
+            t.lastIndex = 0;
+            if (t.test(s)) {
+                t.lastIndex = 0;
+                return { safe: false, reason: "Blocked pattern detected" };
+            }
+        }
+        return { safe: true };
     },
 
-    sanitize(val, maxLen = 400) {
+    sanitize(val, maxLen) {
         const r = this.check(val);
-        if (!r.safe) {
-            console.warn(`[WAF] Blocked: ${r.reason}`);
-            return "";
-        }
-        return r.val.slice(0, maxLen);
+        if (!r.safe) { console.warn("[WAF] Input blocked"); return ""; }
+        return String(val || "").trim().slice(0, maxLen || 400);
     }
 };
 
-/* ─────────────────────────────────────────────────────────────
-   3. SECURITY UTILITIES
-───────────────────────────────────────────────────────────── */
-/* HTML escape — ALWAYS use before any .innerHTML insertion */
+/* ── HTML escape — always use before innerHTML ──────────────── */
 function _esc(s) {
     if (s == null) return "";
     return String(s)
         .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
-        .replace(/"/g,"&quot;").replace(/'/g,"&#x27;").replace(/\//g,"&#x2F;");
+        .replace(/"/g,"&quot;").replace(/'/g,"&#x27;");
 }
-
-/* Safe legacy esc() alias used by table renderers */
 function esc(s) { return _esc(s); }
 
-/* Rate limiter — 25 messages per 60 seconds */
+/* ── Rate limiter: 25 msgs / 60s ───────────────────────────── */
 const _RL = { ts: [], max: 25, win: 60000 };
 function _checkRate() {
     const now = Date.now();
@@ -1032,23 +1009,11 @@ function _checkRate() {
     return true;
 }
 
-/* Get user email — never expose in DOM */
-function _getEmail() {
-    return localStorage.getItem("user_email") ||
-           localStorage.getItem("email") ||
-           (typeof rm_email !== "undefined" ? rm_email : "") || "";
-}
-
-/* ─────────────────────────────────────────────────────────────
-   4. STATE
-───────────────────────────────────────────────────────────── */
-let allEmployees      = [];
-let filteredEmployees = [];
-let trainingData      = [];
-let kpiPopupAllData   = [];
-let kpiPopupFilter    = "all";
-let kpiPopupSearch_   = "";
+/* ── State ──────────────────────────────────────────────────── */
+let allEmployees = [], filteredEmployees = [], trainingData = [];
+let kpiPopupAllData = [], kpiPopupFilter = "all", kpiPopupSearch_ = "";
 let rm_email = localStorage.getItem("user_email") || localStorage.getItem("email") || "";
+let agentOpen = false;
 
 const LOC_ALIASES = {
     "Bangalore - Campus": "Bangalore", "Bangalore - GA": "Bangalore",
@@ -1056,34 +1021,32 @@ const LOC_ALIASES = {
 };
 function normalizeLoc(loc) { return LOC_ALIASES[loc] || loc || "Unknown"; }
 
-const R_QA    = /qa|quality assur|quality eng|test eng|software test|manual test|quality analyst|test lead|test arch|test manager|test analyst|sdet/i;
-const R_INFRA = /dba|database admin|database eng|sql server|system admin|sys admin|network eng|infrastructure|devops|cloud eng|windows admin|linux admin|storage eng|active directory|it admin/i;
-const R_DEV_INC = /develop|engineer|programmer|sde|software dev|full stack|backend|frontend|tech lead|module lead|project lead|technical lead|lead|analyst|architect|consultant|specialist/i;
-const R_DEV_EXC = /qa|quality|test eng|software test|manual test|sdet|test lead|test arch|test manager|test analyst/i;
+const R_QA    = /qa|quality assur|quality eng|test eng|software test|manual test|quality analyst|test lead|sdet/i;
+const R_INFRA = /dba|database admin|database eng|sql server|system admin|sys admin|network eng|infrastructure|devops|cloud eng|it admin/i;
+const R_DEV   = /develop|engineer|programmer|sde|full stack|backend|frontend|tech lead|module lead|project lead|technical lead/i;
 
-function classifyDesignation(designation) {
-    const d = (designation || "").toLowerCase();
-    if (R_QA.test(d)) return "qa";
-    if (R_INFRA.test(d)) return "infra";
-    if (R_DEV_INC.test(d) && !R_DEV_EXC.test(d)) return "dev";
+function classifyDesignation(d) {
+    const s = (d || "").toLowerCase();
+    if (R_QA.test(s)) return "qa";
+    if (R_INFRA.test(s)) return "infra";
+    if (R_DEV.test(s)) return "dev";
     return "mgmt";
 }
 
-/* ─────────────────────────────────────────────────────────────
-   5. CORE UTILITIES
-───────────────────────────────────────────────────────────── */
-function apiFetch(url, opts = {}) {
+/* ── Core utils ─────────────────────────────────────────────── */
+function apiFetch(url, opts) {
+    opts = opts || {};
     opts.headers = Object.assign({ "ngrok-skip-browser-warning": "true" }, opts.headers || {});
     opts.credentials = opts.credentials || "include";
     return fetch(url, opts);
 }
 
-function toast(msg, type = "green") {
+function toast(msg, type) {
     const t = document.getElementById("toast");
     if (!t) return;
-    t.textContent = _WAF.sanitize(msg, 200) || msg;
-    t.className = `toast toast-${type} show`;
-    setTimeout(() => { t.className = "toast"; }, 4000);
+    t.textContent = msg;
+    t.className = "toast toast-" + (type || "green") + " show";
+    setTimeout(function() { t.className = "toast"; }, 4000);
 }
 
 function openModal(id) {
@@ -1093,10 +1056,9 @@ function openModal(id) {
         if (el) el.value = d.toISOString().split("T")[0];
     }
     if (id === "inductionModal") {
-        const n = allEmployees.filter(e =>
-            (e.progress_percentage || 0) < 50 ||
-            (e.onboarding_status || "").toLowerCase().includes("pending")
-        ).length;
+        const n = allEmployees.filter(function(e) {
+            return (e.progress_percentage || 0) < 50 || (e.onboarding_status || "").toLowerCase().indexOf("pending") >= 0;
+        }).length;
         const el = document.getElementById("attendeeCount");
         if (el) el.textContent = n;
     }
@@ -1109,9 +1071,8 @@ function closeModal(id) {
     if (el) el.className = "modal-overlay";
 }
 
-document.addEventListener("click", e => {
-    if (e.target.classList.contains("modal-overlay"))
-        e.target.className = "modal-overlay";
+document.addEventListener("click", function(e) {
+    if (e.target.classList.contains("modal-overlay")) e.target.className = "modal-overlay";
 });
 
 function setIndDate(days, fixed) {
@@ -1122,12 +1083,10 @@ function setIndDate(days, fixed) {
     el.value = d.toISOString().split("T")[0];
 }
 
-/* ─────────────────────────────────────────────────────────────
-   6. TABS
-───────────────────────────────────────────────────────────── */
+/* ── Tabs ───────────────────────────────────────────────────── */
 function switchTab(e, name) {
-    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
-    document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+    document.querySelectorAll(".tab").forEach(function(t) { t.classList.remove("active"); });
+    document.querySelectorAll(".tab-content").forEach(function(c) { c.classList.remove("active"); });
     e.currentTarget.classList.add("active");
     document.getElementById("tab-" + name).classList.add("active");
     if (name === "training")    renderTrainingTable();
@@ -1135,1350 +1094,677 @@ function switchTab(e, name) {
     if (name === "addtraining") { loadAccountTrainingList(); loadTrainingResources(); }
 }
 
-/* ─────────────────────────────────────────────────────────────
-   7. LOAD DASHBOARD
-───────────────────────────────────────────────────────────── */
+/* ── Dashboard ──────────────────────────────────────────────── */
 async function loadDashboard() {
     try {
         const res = await apiFetch(_BASE + "/account-pmo-dashboard", {
-            method: "POST", headers: { "Content-Type": "application/json" },
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ email: rm_email })
         });
         const d = await res.json();
         const data = d.data || (Array.isArray(d) ? d : []);
-        data.forEach(e => { e.location_orig = e.location; e.location = normalizeLoc(e.location); });
+        data.forEach(function(e) { e.location = normalizeLoc(e.location); });
         allEmployees = data;
-        filteredEmployees = [...data];
-        const acct = d.account_name || "";
+        filteredEmployees = data.slice();
         const titleEl = document.getElementById("accountTitle");
         const subtEl  = document.getElementById("accountSubt");
-        if (titleEl) titleEl.textContent = acct ? `Account PMO — ${_esc(acct)}` : "Account PMO Dashboard";
-        if (subtEl)  subtEl.textContent  = `${data.length} employees · HMSA Workforce Intelligence`;
+        if (titleEl) titleEl.textContent = d.account_name ? "Account PMO — " + d.account_name : "Account PMO Dashboard";
+        if (subtEl)  subtEl.textContent  = data.length + " employees · HMSA Workforce Intelligence";
         renderKPIs(data);
         renderCharts(data);
         renderHeatmap(data);
         renderTable(data);
         buildTrainingData(data);
-    } catch (e) {
-        console.error(e);
+    } catch(e) {
         toast("Could not load dashboard — check backend", "red");
     }
 }
 
-/* ─────────────────────────────────────────────────────────────
-   8. KPIs
-───────────────────────────────────────────────────────────── */
+/* ── KPIs ───────────────────────────────────────────────────── */
 function renderKPIs(data) {
-    const setSafe = (id, val) => {
-        const el = document.getElementById(id);
-        if (el) el.textContent = val;
-    };
-    setSafe("kpiTotal",   data.length);
-    setSafe("kpiPending", data.filter(e => (e.onboarding_status || "").toLowerCase().includes("pending")).length);
-    setSafe("kpiProgress",data.filter(e => (e.onboarding_status || "").toLowerCase().includes("progress")).length);
-    setSafe("kpiDone",    data.filter(e => (e.onboarding_status || "").toLowerCase().includes("complet")).length);
-
-    let qa = 0, dev = 0, infra = 0, mgmt = 0;
-    data.forEach(e => {
-        const b = classifyDesignation(e.designation);
-        if (b === "qa") qa++; else if (b === "infra") infra++;
-        else if (b === "dev") dev++; else mgmt++;
+    function set(id, val) { const el = document.getElementById(id); if (el) el.textContent = val; }
+    set("kpiTotal",    data.length);
+    set("kpiPending",  data.filter(function(e) { return (e.onboarding_status||"").toLowerCase().indexOf("pending") >= 0; }).length);
+    set("kpiProgress", data.filter(function(e) { return (e.onboarding_status||"").toLowerCase().indexOf("progress") >= 0; }).length);
+    set("kpiDone",     data.filter(function(e) { return (e.onboarding_status||"").toLowerCase().indexOf("complet") >= 0; }).length);
+    var qa=0, dev=0, infra=0, mgmt=0;
+    data.forEach(function(e) {
+        var b = classifyDesignation(e.designation);
+        if (b==="qa") qa++; else if (b==="infra") infra++; else if (b==="dev") dev++; else mgmt++;
     });
-    setSafe("kpiQA", qa); setSafe("kpiDev", dev);
-    setSafe("kpiAuto", infra); setSafe("kpiMgmt", mgmt);
-
-    const rmSet = new Set();
-    data.forEach(e => { if (e.rm_name) rmSet.add((e.rm_name || "").toLowerCase()); });
-    setSafe("kpiRM", data.filter(e => rmSet.has((e.emp_name || "").toLowerCase())).length);
-
-    const high    = data.filter(e => (e.risk_level || "").toUpperCase() === "HIGH").length;
-    const delayed = data.filter(e => (e.onboarding_status || "").toLowerCase().includes("delay")).length;
-    const avg     = data.length
-        ? Math.round(data.reduce((a, e) => a + (e.progress_percentage || 0), 0) / data.length) : 0;
-    setSafe("kpiHigh", high); setSafe("kpiDelayed", delayed); setSafe("kpiAvg", avg + "%");
+    set("kpiQA", qa); set("kpiDev", dev); set("kpiAuto", infra); set("kpiMgmt", mgmt);
+    var rmSet = new Set();
+    data.forEach(function(e) { if (e.rm_name) rmSet.add((e.rm_name||"").toLowerCase()); });
+    set("kpiRM", data.filter(function(e) { return rmSet.has((e.emp_name||"").toLowerCase()); }).length);
+    var high    = data.filter(function(e) { return (e.risk_level||"").toUpperCase() === "HIGH"; }).length;
+    var delayed = data.filter(function(e) { return (e.onboarding_status||"").toLowerCase().indexOf("delay") >= 0; }).length;
+    var avg     = data.length ? Math.round(data.reduce(function(a,e) { return a + (e.progress_percentage||0); }, 0) / data.length) : 0;
+    set("kpiHigh", high); set("kpiDelayed", delayed); set("kpiAvg", avg + "%");
 }
 
-/* ─────────────────────────────────────────────────────────────
-   9. KPI POPUP
-───────────────────────────────────────────────────────────── */
+/* ── KPI popup ──────────────────────────────────────────────── */
 function openKpiPopup(type) {
-    const configs = {
-        total:     { title: "👥 All Employees",              filter: () => true },
-        pending:   { title: "⏳ Pending Onboarding",          filter: e => (e.onboarding_status || "").toLowerCase().includes("pending") },
-        inprogress:{ title: "🔄 In Progress",                filter: e => (e.onboarding_status || "").toLowerCase().includes("progress") },
-        completed: { title: "✅ Completed",                  filter: e => (e.onboarding_status || "").toLowerCase().includes("complet") },
-        qa:        { title: "🔬 QA / Quality Engineers",     filter: e => classifyDesignation(e.designation) === "qa" },
-        dev:       { title: "💻 Developers / Engineers",     filter: e => classifyDesignation(e.designation) === "dev" },
-        infra:     { title: "🗄️ DB / Infrastructure",       filter: e => classifyDesignation(e.designation) === "infra" },
-        mgmt:      { title: "🏢 Management / Other",         filter: e => classifyDesignation(e.designation) === "mgmt" },
-        highrisk:  { title: "🚨 High Risk Employees",        filter: e => (e.risk_level || "").toUpperCase() === "HIGH" },
-        rm:        { title: "👔 Reporting Managers",         filter: e => {
-            const id = String(e.emp_id || ""), nm = (e.emp_name || "").toLowerCase();
-            return allEmployees.some(o => o.emp_id !== e.emp_id && (
-                String(o.reporting_manager_id || "") === id ||
-                (o.rm_name || "").toLowerCase() === nm
-            ));
+    var configs = {
+        total:     { title:"👥 All Employees",            filter: function() { return true; } },
+        pending:   { title:"⏳ Pending",                   filter: function(e) { return (e.onboarding_status||"").toLowerCase().indexOf("pending") >= 0; } },
+        inprogress:{ title:"🔄 In Progress",               filter: function(e) { return (e.onboarding_status||"").toLowerCase().indexOf("progress") >= 0; } },
+        completed: { title:"✅ Completed",                 filter: function(e) { return (e.onboarding_status||"").toLowerCase().indexOf("complet") >= 0; } },
+        qa:        { title:"🔬 QA Engineers",             filter: function(e) { return classifyDesignation(e.designation) === "qa"; } },
+        dev:       { title:"💻 Developers",               filter: function(e) { return classifyDesignation(e.designation) === "dev"; } },
+        infra:     { title:"🗄️ DB / Infra",              filter: function(e) { return classifyDesignation(e.designation) === "infra"; } },
+        mgmt:      { title:"🏢 Management",               filter: function(e) { return classifyDesignation(e.designation) === "mgmt"; } },
+        highrisk:  { title:"🚨 High Risk",                filter: function(e) { return (e.risk_level||"").toUpperCase() === "HIGH"; } },
+        rm:        { title:"👔 Reporting Managers",        filter: function(e) {
+            var id = String(e.emp_id||""), nm = (e.emp_name||"").toLowerCase();
+            return allEmployees.some(function(o) {
+                return o.emp_id !== e.emp_id && (String(o.reporting_manager_id||"") === id || (o.rm_name||"").toLowerCase() === nm);
+            });
         }},
     };
-    const cfg = configs[type] || configs.total;
+    var cfg = configs[type] || configs.total;
     kpiPopupAllData = allEmployees.filter(cfg.filter);
     kpiPopupFilter  = "all";
     kpiPopupSearch_ = "";
-    const searchEl = document.getElementById("kpiPopupSearch");
+    var searchEl = document.getElementById("kpiPopupSearch");
     if (searchEl) searchEl.value = "";
-    const titleEl = document.getElementById("kpiPopupTitle");
+    var titleEl = document.getElementById("kpiPopupTitle");
     if (titleEl) titleEl.textContent = cfg.title;
-
-    const locs = [...new Set(kpiPopupAllData.map(e => e.location || "Unknown"))].sort();
-    const filtersEl = document.getElementById("kpiPopupFilters");
+    var locs = [];
+    kpiPopupAllData.forEach(function(e) { var l = e.location||"Unknown"; if (locs.indexOf(l)<0) locs.push(l); });
+    locs.sort();
+    var filtersEl = document.getElementById("kpiPopupFilters");
     if (filtersEl) {
         if (locs.length > 1) {
-            filtersEl.innerHTML =
-                `<button class="kpi-filter active" onclick="kpiLocFilter(this,'all')">All</button>` +
-                locs.map(l => `<button class="kpi-filter" onclick="kpiLocFilter(this,'${_esc(l)}')">${_esc(l)}</button>`).join("");
-        } else {
-            filtersEl.innerHTML = "";
-        }
+            filtersEl.innerHTML = '<button class="kpi-filter active" onclick="kpiLocFilter(this,\'all\')">All</button>' +
+                locs.map(function(l) { return '<button class="kpi-filter" onclick="kpiLocFilter(this,\'' + _esc(l) + '\')">' + _esc(l) + '</button>'; }).join("");
+        } else { filtersEl.innerHTML = ""; }
     }
     renderKpiTable();
-    const overlay = document.getElementById("kpiPopupOverlay");
+    var overlay = document.getElementById("kpiPopupOverlay");
     if (overlay) overlay.className = "kpi-popup-overlay open";
 }
 
-function closeKpiPopup() {
-    const el = document.getElementById("kpiPopupOverlay");
-    if (el) el.className = "kpi-popup-overlay";
-}
+function closeKpiPopup() { var el = document.getElementById("kpiPopupOverlay"); if (el) el.className = "kpi-popup-overlay"; }
 
 function kpiLocFilter(btn, loc) {
-    document.querySelectorAll(".kpi-filter").forEach(b => b.classList.remove("active"));
+    document.querySelectorAll(".kpi-filter").forEach(function(b) { b.classList.remove("active"); });
     btn.classList.add("active");
     kpiPopupFilter = loc;
     _kpiPage = 0;
     renderKpiTable(true);
 }
 
-function kpiPopupSearch(v) {
-    kpiPopupSearch_ = (v || "").toLowerCase();
-    _kpiPage = 0;
-    renderKpiTable(true);
-}
+function kpiPopupSearch(v) { kpiPopupSearch_ = (v||"").toLowerCase(); _kpiPage = 0; renderKpiTable(true); }
 
-let _kpiPage = 0;
-const _kpiPageSize = 50;
-let _kpiFilteredData = [];
+var _kpiPage = 0, _kpiPageSize = 50, _kpiFilteredData = [];
 
 function buildPager(current, total, fn) {
     if (total <= 1) return "";
-    const pages = [];
-    for (let i = 0; i < total; i++) {
-        if (i === 0 || i === total - 1 || (i >= current - 2 && i <= current + 2)) pages.push(i);
-        else if (pages[pages.length - 1] !== "...") pages.push("...");
+    var h = '<button class="pg-btn" ' + (current===0?"disabled":"") + ' onclick="' + fn + '(-1)">‹ Prev</button>';
+    for (var i=0; i<total; i++) {
+        if (i===0 || i===total-1 || (i>=current-2 && i<=current+2))
+            h += '<button class="pg-btn ' + (i===current?"active":"") + '" onclick="' + fn + '(' + i + ')">' + (i+1) + '</button>';
+        else if (h.slice(-11) !== 'class="pg-sep">…</span>') h += '<span class="pg-sep">…</span>';
     }
-    let h = `<button class="pg-btn" ${current===0?"disabled":""} onclick="${fn}(-1)">‹ Prev</button>`;
-    pages.forEach(p => {
-        h += p === "..."
-            ? `<span class="pg-sep">…</span>`
-            : `<button class="pg-btn ${p===current?"active":""}" onclick="${fn}(${p})">${p+1}</button>`;
-    });
-    return h + `<button class="pg-btn" ${current===total-1?"disabled":""} onclick="${fn}(${total})">Next ›</button>`;
+    return h + '<button class="pg-btn" ' + (current===total-1?"disabled":"") + ' onclick="' + fn + '(' + total + ')">Next ›</button>';
 }
 
 function kpiGoToPage(p) {
-    const tp = Math.ceil(_kpiFilteredData.length / _kpiPageSize);
-    if (p === -1) p = _kpiPage - 1;
-    if (p === tp) p = _kpiPage + 1;
-    p = Math.max(0, Math.min(p, tp - 1));
+    var tp = Math.ceil(_kpiFilteredData.length / _kpiPageSize);
+    if (p===-1) p = _kpiPage-1;
+    if (p===tp)  p = _kpiPage+1;
+    p = Math.max(0, Math.min(p, tp-1));
     if (p === _kpiPage) return;
     _kpiPage = p;
     renderKpiTable(false);
 }
 
-function renderKpiTable(resetPage = true) {
-    if (resetPage) _kpiPage = 0;
-    let data = [...kpiPopupAllData];
-    if (kpiPopupFilter !== "all") data = data.filter(e => (e.location || "Unknown") === kpiPopupFilter);
+function renderKpiTable(resetPage) {
+    if (resetPage !== false) _kpiPage = 0;
+    var data = kpiPopupAllData.slice();
+    if (kpiPopupFilter !== "all") data = data.filter(function(e) { return (e.location||"Unknown") === kpiPopupFilter; });
     if (kpiPopupSearch_) {
-        const q = kpiPopupSearch_;
-        data = data.filter(e =>
-            (e.emp_name || "").toLowerCase().includes(q) ||
-            String(e.emp_id || "").includes(q) ||
-            (e.designation || "").toLowerCase().includes(q) ||
-            (e.location || "").toLowerCase().includes(q)
-        );
+        var q = kpiPopupSearch_;
+        data = data.filter(function(e) {
+            return (e.emp_name||"").toLowerCase().indexOf(q)>=0 || String(e.emp_id||"").indexOf(q)>=0 ||
+                   (e.designation||"").toLowerCase().indexOf(q)>=0 || (e.location||"").toLowerCase().indexOf(q)>=0;
+        });
     }
     _kpiFilteredData = data;
-    const total = data.length, tp = Math.ceil(total / _kpiPageSize) || 1;
-    if (_kpiPage >= tp) _kpiPage = tp - 1;
-    const start = _kpiPage * _kpiPageSize, end = Math.min(start + _kpiPageSize, total);
-
-    const metaEl  = document.getElementById("kpiPopupMeta");
-    const tbody   = document.getElementById("kpiPopupBody");
-    const countEl = document.getElementById("kpiPopupCount");
-    const pagerEl = document.getElementById("kpiPopupPager");
-
-    if (metaEl) metaEl.textContent = `${kpiPopupAllData.length} total · Filtered: ${total}`;
-
+    var total = data.length, tp = Math.ceil(total/_kpiPageSize)||1;
+    if (_kpiPage >= tp) _kpiPage = tp-1;
+    var start = _kpiPage * _kpiPageSize, end = Math.min(start+_kpiPageSize, total);
+    var metaEl = document.getElementById("kpiPopupMeta");
+    var tbody  = document.getElementById("kpiPopupBody");
+    var countEl= document.getElementById("kpiPopupCount");
+    var pagerEl= document.getElementById("kpiPopupPager");
+    if (metaEl) metaEl.textContent = kpiPopupAllData.length + " total · Filtered: " + total;
     if (!total) {
-        if (tbody) tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--muted)">No employees match this filter</td></tr>`;
+        if (tbody)  tbody.innerHTML  = '<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--muted)">No results</td></tr>';
         if (countEl) countEl.textContent = "No results";
         if (pagerEl) pagerEl.innerHTML = "";
         return;
     }
-
-    if (tbody) tbody.innerHTML = data.slice(start, end).map(emp => {
-        const pct = emp.progress_percentage || 0;
-        const tpct = emp.training_percentage || 0;
-        const st   = emp.onboarding_status || "Pending";
-        const sc   = st.toLowerCase().includes("complet") ? "b-done" : st.toLowerCase().includes("progress") ? "b-progress" : "b-pending";
-        const risk = (emp.risk_level || "LOW").toUpperCase();
-        const rc   = risk === "HIGH" ? "b-high" : risk === "MEDIUM" ? "b-med" : "b-low";
-        return `<tr>
-          <td style="font-weight:700;color:var(--navy);font-size:11px">${_esc(emp.emp_id||"—")}</td>
-          <td><div style="font-weight:700;font-size:12px">${_esc(emp.emp_name||"—")}</div>
-              <div style="font-size:10px;color:var(--muted)">${_esc(emp.email||"")}</div></td>
-          <td style="font-size:11px;color:var(--muted);max-width:150px;white-space:normal">${_esc(emp.designation||"—")}</td>
-          <td style="font-size:11px">${_esc(emp.location||"—")}</td>
-          <td><span class="badge ${sc}" style="font-size:10px">${_esc(st)}</span></td>
-          <td style="font-size:11px;color:var(--muted)">${_esc((emp.current_step||"—").replace(/_/g," "))}</td>
-          <td><div class="prog-bar" style="width:70px"><div class="prog-fill" style="width:${pct}%"></div></div>
-              <span style="font-size:10px;color:var(--muted);margin-left:4px">${pct}%</span></td>
-          <td style="font-weight:700;color:var(--teal2);font-size:12px">${tpct}%</td>
-          <td><span class="badge ${rc}" style="font-size:10px">${risk}</span></td>
-        </tr>`;
+    if (tbody) tbody.innerHTML = data.slice(start, end).map(function(emp) {
+        var pct  = emp.progress_percentage||0;
+        var tpct = emp.training_percentage||0;
+        var st   = emp.onboarding_status||"Pending";
+        var sc   = st.toLowerCase().indexOf("complet")>=0?"b-done":st.toLowerCase().indexOf("progress")>=0?"b-progress":"b-pending";
+        var risk = (emp.risk_level||"LOW").toUpperCase();
+        var rc   = risk==="HIGH"?"b-high":risk==="MEDIUM"?"b-med":"b-low";
+        return "<tr><td style='font-weight:700;color:var(--navy);font-size:11px'>" + _esc(emp.emp_id||"—") + "</td>" +
+               "<td><div style='font-weight:700;font-size:12px'>" + _esc(emp.emp_name||"—") + "</div><div style='font-size:10px;color:var(--muted)'>" + _esc(emp.email||"") + "</div></td>" +
+               "<td style='font-size:11px;color:var(--muted)'>" + _esc(emp.designation||"—") + "</td>" +
+               "<td style='font-size:11px'>" + _esc(emp.location||"—") + "</td>" +
+               "<td><span class='badge " + sc + "' style='font-size:10px'>" + _esc(st) + "</span></td>" +
+               "<td style='font-size:11px;color:var(--muted)'>" + _esc((emp.current_step||"—").replace(/_/g," ")) + "</td>" +
+               "<td><div class='prog-bar' style='width:70px'><div class='prog-fill' style='width:" + pct + "%'></div></div><span style='font-size:10px;color:var(--muted);margin-left:4px'>" + pct + "%</span></td>" +
+               "<td style='font-weight:700;color:var(--teal2);font-size:12px'>" + tpct + "%</td>" +
+               "<td><span class='badge " + rc + "' style='font-size:10px'>" + risk + "</span></td></tr>";
     }).join("");
-
-    if (countEl) countEl.textContent = total <= _kpiPageSize
-        ? `Showing all ${total} employees`
-        : `Showing ${start+1}–${end} of ${total} employees`;
+    if (countEl) countEl.textContent = total<=_kpiPageSize ? "Showing all "+total+" employees" : "Showing "+(start+1)+"–"+end+" of "+total;
     if (pagerEl) pagerEl.innerHTML = buildPager(_kpiPage, tp, "kpiGoToPage");
 }
 
 function exportKpiCSV() {
-    const title = (document.getElementById("kpiPopupTitle")?.textContent || "export").replace(/[^\w\s]/g,"").trim();
-    const h = ["Emp ID","Name","Designation","Location","Status","Stage","Progress %","Training %","Risk"];
-    const r = kpiPopupAllData.map(e => [
-        e.emp_id, e.emp_name, e.designation, e.location, e.onboarding_status,
-        (e.current_step || "").replace(/_/g," "), e.progress_percentage || 0,
-        e.training_percentage || 0, e.risk_level || "LOW"
-    ]);
-    const csv = [h, ...r].map(row => row.map(v => `"${String(v).replace(/"/g,'""')}"`).join(",")).join("\n");
-    const a   = document.createElement("a");
-    a.href    = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
-    a.download = `${title.replace(/\s+/g,"_")}_${new Date().toISOString().split("T")[0]}.csv`;
+    var title = (_esc(document.getElementById("kpiPopupTitle").textContent||"export")).replace(/[^\w\s]/g,"").trim();
+    var h = ["Emp ID","Name","Designation","Location","Status","Stage","Progress %","Training %","Risk"];
+    var r = kpiPopupAllData.map(function(e) {
+        return [e.emp_id,e.emp_name,e.designation,e.location,e.onboarding_status,(e.current_step||"").replace(/_/g," "),e.progress_percentage||0,e.training_percentage||0,e.risk_level||"LOW"];
+    });
+    var csv = [h].concat(r).map(function(row) { return row.map(function(v) { return '"'+String(v||"").replace(/"/g,'""')+'"'; }).join(","); }).join("\n");
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([csv], { type:"text/csv" }));
+    a.download = title.replace(/\s+/g,"_") + "_" + new Date().toISOString().split("T")[0] + ".csv";
     a.click();
     toast("✅ CSV downloaded", "green");
 }
 
-/* ─────────────────────────────────────────────────────────────
-   10. CHARTS
-───────────────────────────────────────────────────────────── */
-const _charts = {};
-function mkChart(id, type, labels, data, colors, opts = {}) {
+/* ── Charts ─────────────────────────────────────────────────── */
+var _charts = {};
+function mkChart(id, type, labels, data, colors, opts) {
     if (_charts[id]) _charts[id].destroy();
-    const ctx = document.getElementById(id)?.getContext("2d");
+    var ctx = document.getElementById(id);
     if (!ctx) return;
+    ctx = ctx.getContext("2d");
     _charts[id] = new Chart(ctx, {
-        type,
-        data: { labels, datasets: [{ label: "Employees", data, backgroundColor: colors, borderRadius: 6, borderWidth: 0 }] },
-        options: { responsive: true, maintainAspectRatio: false,
-            plugins: { legend: { position: "bottom", labels: { font: { size: 11 }, boxWidth: 12, padding: 10 } } }, ...opts }
+        type: type,
+        data: { labels: labels, datasets:[{ label:"Employees", data:data, backgroundColor:colors, borderRadius:6, borderWidth:0 }] },
+        options: Object.assign({ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:"bottom", labels:{ font:{size:11}, boxWidth:12, padding:10 } } } }, opts||{})
     });
 }
 function renderCharts(data) {
-    const done = data.filter(e => (e.onboarding_status || "").toLowerCase().includes("complet")).length;
-    const prog = data.filter(e => (e.onboarding_status || "").toLowerCase().includes("progress")).length;
-    const pend = data.length - done - prog;
+    var done = data.filter(function(e) { return (e.onboarding_status||"").toLowerCase().indexOf("complet")>=0; }).length;
+    var prog = data.filter(function(e) { return (e.onboarding_status||"").toLowerCase().indexOf("progress")>=0; }).length;
+    var pend = data.length - done - prog;
     mkChart("statusChart","doughnut",["Completed","In Progress","Pending"],[done,prog,pend],["#10b981","#3b82f6","#f59e0b"]);
-    const b80  = data.filter(e => (e.training_percentage||0) >= 80).length;
-    const b50  = data.filter(e => (e.training_percentage||0) >= 50 && (e.training_percentage||0) < 80).length;
-    const b0   = data.filter(e => (e.training_percentage||0) > 0  && (e.training_percentage||0) < 50).length;
-    const bNone= data.filter(e => !(e.training_percentage||0)).length;
-    mkChart("trainingChart","bar",[">80%","50–80%","<50%","Not Started"],[b80,b50,b0,bNone],
-        ["#10b981","#3b82f6","#f59e0b","#e2e8f0"],
-        { scales: { y: { beginAtZero: true, grid: { color: "#f1f5f9" } }, x: { grid: { display: false } } } });
+    var b80   = data.filter(function(e) { return (e.training_percentage||0)>=80; }).length;
+    var b50   = data.filter(function(e) { return (e.training_percentage||0)>=50&&(e.training_percentage||0)<80; }).length;
+    var b0    = data.filter(function(e) { return (e.training_percentage||0)>0&&(e.training_percentage||0)<50; }).length;
+    var bNone = data.filter(function(e) { return !(e.training_percentage||0); }).length;
+    mkChart("trainingChart","bar",[">80%","50–80%","<50%","Not Started"],[b80,b50,b0,bNone],["#10b981","#3b82f6","#f59e0b","#e2e8f0"],{scales:{y:{beginAtZero:true,grid:{color:"#f1f5f9"}},x:{grid:{display:false}}}});
 }
 
-/* ─────────────────────────────────────────────────────────────
-   11. HEATMAP
-───────────────────────────────────────────────────────────── */
+/* ── Heatmap ─────────────────────────────────────────────────── */
 function renderHeatmap(data) {
-    const stages = ["Pending","In Progress","Completed","High Risk"];
-    const locs   = [...new Set(data.map(e => e.location || "Unknown"))].filter(Boolean).sort();
+    var stages = ["Pending","In Progress","Completed","High Risk"];
+    var locs = [];
+    data.forEach(function(e) { var l=e.location||"Unknown"; if(locs.indexOf(l)<0) locs.push(l); });
+    locs.sort();
     if (!locs.length) return;
-    const colLabels = document.getElementById("hmColLabels");
-    if (colLabels) colLabels.innerHTML = stages.map(s => `<div class="hm-col-label">${_esc(s)}</div>`).join("");
+    var colEl = document.getElementById("hmColLabels");
+    if (colEl) colEl.innerHTML = stages.map(function(s) { return '<div class="hm-col-label">'+_esc(s)+'</div>'; }).join("");
     function heatColor(val, max) {
-        if (!max || !val) return { bg:"#f0fdf4", fg:"#94a3b8" };
-        const r = val/max;
-        if (r<0.15) return { bg:"#dcfce7", fg:"#166534" };
-        if (r<0.30) return { bg:"#86efac", fg:"#14532d" };
-        if (r<0.50) return { bg:"#4ade80", fg:"#052e16" };
-        if (r<0.70) return { bg:"#16a34a", fg:"#ffffff" };
-        if (r<0.85) return { bg:"#15803d", fg:"#ffffff" };
-        return { bg:"#14532d", fg:"#ffffff" };
+        if (!max||!val) return {bg:"#f0fdf4",fg:"#94a3b8"};
+        var r=val/max;
+        if(r<0.15) return{bg:"#dcfce7",fg:"#166534"};if(r<0.30) return{bg:"#86efac",fg:"#14532d"};
+        if(r<0.50) return{bg:"#4ade80",fg:"#052e16"};if(r<0.70) return{bg:"#16a34a",fg:"#fff"};
+        if(r<0.85) return{bg:"#15803d",fg:"#fff"};return{bg:"#14532d",fg:"#fff"};
     }
     function riskColor(val, max) {
-        if (!max || !val) return { bg:"#fef2f2", fg:"#94a3b8" };
-        const r = val/max;
-        if (r<0.15) return { bg:"#fee2e2", fg:"#991b1b" };
-        if (r<0.35) return { bg:"#fca5a5", fg:"#7f1d1d" };
-        if (r<0.55) return { bg:"#f87171", fg:"#450a0a" };
-        if (r<0.75) return { bg:"#ef4444", fg:"#ffffff" };
-        return { bg:"#b91c1c", fg:"#ffffff" };
+        if (!max||!val) return {bg:"#fef2f2",fg:"#94a3b8"};
+        var r=val/max;
+        if(r<0.15) return{bg:"#fee2e2",fg:"#991b1b"};if(r<0.35) return{bg:"#fca5a5",fg:"#7f1d1d"};
+        if(r<0.55) return{bg:"#f87171",fg:"#450a0a"};if(r<0.75) return{bg:"#ef4444",fg:"#fff"};
+        return{bg:"#b91c1c",fg:"#fff"};
     }
-    const matrix = locs.map(loc => {
-        const ld = data.filter(e => (e.location || "Unknown") === loc);
+    var matrix = locs.map(function(loc) {
+        var ld = data.filter(function(e) { return (e.location||"Unknown")===loc; });
         return [
-            ld.filter(e => (e.onboarding_status||"").toLowerCase().includes("pending")).length,
-            ld.filter(e => (e.onboarding_status||"").toLowerCase().includes("progress")).length,
-            ld.filter(e => (e.onboarding_status||"").toLowerCase().includes("complet")).length,
-            ld.filter(e => (e.risk_level||"").toUpperCase() === "HIGH").length,
+            ld.filter(function(e){return(e.onboarding_status||"").toLowerCase().indexOf("pending")>=0;}).length,
+            ld.filter(function(e){return(e.onboarding_status||"").toLowerCase().indexOf("progress")>=0;}).length,
+            ld.filter(function(e){return(e.onboarding_status||"").toLowerCase().indexOf("complet")>=0;}).length,
+            ld.filter(function(e){return(e.risk_level||"").toUpperCase()==="HIGH";}).length,
         ];
     });
-    const maxVals = stages.map((_,ci) => Math.max(...matrix.map(r => r[ci]), 1));
-    const grid = document.getElementById("hmGrid");
-    if (grid) grid.innerHTML = locs.map((loc,ri) => `
-        <div class="heatmap-row">
-          <div class="hm-label" onclick="openKpiFromHeatmap('${_esc(loc)}','all')">${_esc(loc)}</div>
-          ${matrix[ri].map((val,ci) => {
-              const c  = ci===3 ? riskColor(val,maxVals[ci]) : heatColor(val,maxVals[ci]);
-              const sf = stages[ci];
-              const oc = val>0 ? `openKpiFromHeatmap('${_esc(loc)}','${_esc(sf)}')` : "";
-              return `<div class="hm-cell" style="background:${c.bg};color:${c.fg};cursor:${val>0?"pointer":"default"}"
-                  onmouseenter="showHmTip(event,'${_esc(loc)}','${_esc(sf)}',${val})"
-                  onmouseleave="hideHmTip()" onclick="${oc}">${val||""}</div>`;
-          }).join("")}
-        </div>`).join("");
+    var maxVals = stages.map(function(_,ci) { return Math.max.apply(null, matrix.map(function(r){return r[ci];}).concat([1])); });
+    var grid = document.getElementById("hmGrid");
+    if (grid) grid.innerHTML = locs.map(function(loc,ri) {
+        return '<div class="heatmap-row"><div class="hm-label" onclick="openKpiFromHeatmap(\''+_esc(loc)+'\',\'all\')">'+_esc(loc)+'</div>' +
+            matrix[ri].map(function(val,ci) {
+                var c = ci===3?riskColor(val,maxVals[ci]):heatColor(val,maxVals[ci]);
+                var sf=stages[ci];
+                var oc=val>0?"openKpiFromHeatmap('"+_esc(loc)+"','"+_esc(sf)+"')":"";
+                return '<div class="hm-cell" style="background:'+c.bg+';color:'+c.fg+';cursor:'+(val>0?'pointer':'default')+'" '+
+                    'onmouseenter="showHmTip(event,\''+_esc(loc)+'\',\''+_esc(sf)+'\','+val+')" '+
+                    'onmouseleave="hideHmTip()" onclick="'+oc+'">'+( val||"")+'</div>';
+            }).join("") + '</div>';
+    }).join("");
 }
 
 function openKpiFromHeatmap(loc, stage) {
-    const sm = {
-        "Pending":    e => (e.onboarding_status||"").toLowerCase().includes("pending"),
-        "In Progress":e => (e.onboarding_status||"").toLowerCase().includes("progress"),
-        "Completed":  e => (e.onboarding_status||"").toLowerCase().includes("complet"),
-        "High Risk":  e => (e.risk_level||"").toUpperCase() === "HIGH",
-        "all":        () => true,
+    var sm = {
+        "Pending":    function(e){return(e.onboarding_status||"").toLowerCase().indexOf("pending")>=0;},
+        "In Progress":function(e){return(e.onboarding_status||"").toLowerCase().indexOf("progress")>=0;},
+        "Completed":  function(e){return(e.onboarding_status||"").toLowerCase().indexOf("complet")>=0;},
+        "High Risk":  function(e){return(e.risk_level||"").toUpperCase()==="HIGH";},
+        "all":        function(){return true;}
     };
-    kpiPopupAllData = allEmployees.filter(e => (e.location||"Unknown") === loc && (sm[stage]||sm.all)(e));
-    kpiPopupFilter  = "all";
-    kpiPopupSearch_ = "";
-    const searchEl = document.getElementById("kpiPopupSearch");
-    if (searchEl) searchEl.value = "";
-    const titleEl = document.getElementById("kpiPopupTitle");
-    if (titleEl) titleEl.textContent = `📍 ${loc}${stage !== "all" ? " · " + stage : ""}`;
-    const filtersEl = document.getElementById("kpiPopupFilters");
-    if (filtersEl) filtersEl.innerHTML = "";
+    var f = sm[stage]||sm.all;
+    kpiPopupAllData = allEmployees.filter(function(e){return(e.location||"Unknown")===loc&&f(e);});
+    kpiPopupFilter="all"; kpiPopupSearch_="";
+    var searchEl=document.getElementById("kpiPopupSearch"); if(searchEl) searchEl.value="";
+    var titleEl=document.getElementById("kpiPopupTitle"); if(titleEl) titleEl.textContent="📍 "+loc+(stage!=="all"?" · "+stage:"");
+    var filtersEl=document.getElementById("kpiPopupFilters"); if(filtersEl) filtersEl.innerHTML="";
     renderKpiTable();
-    const overlay = document.getElementById("kpiPopupOverlay");
-    if (overlay) overlay.className = "kpi-popup-overlay open";
+    var overlay=document.getElementById("kpiPopupOverlay"); if(overlay) overlay.className="kpi-popup-overlay open";
 }
 
 function showHmTip(e, loc, stage, val) {
-    const t = document.getElementById("hmTooltip");
-    if (!t) return;
-    t.innerHTML = `<b>${_esc(loc)}</b><br>${_esc(stage)}: <b>${val} employee${val!==1?"s":""}</b>`;
-    t.style.display = "block";
-    t.style.left = (e.clientX + 14) + "px";
-    t.style.top  = (e.clientY - 10) + "px";
+    var t=document.getElementById("hmTooltip"); if(!t) return;
+    t.innerHTML="<b>"+_esc(loc)+"</b><br>"+_esc(stage)+": <b>"+val+" employee"+(val!==1?"s":"")+"</b>";
+    t.style.display="block"; t.style.left=(e.clientX+14)+"px"; t.style.top=(e.clientY-10)+"px";
 }
-function hideHmTip() {
-    const t = document.getElementById("hmTooltip");
-    if (t) t.style.display = "none";
-}
+function hideHmTip() { var t=document.getElementById("hmTooltip"); if(t) t.style.display="none"; }
 
-/* ─────────────────────────────────────────────────────────────
-   12. WORKFORCE TABLE
-───────────────────────────────────────────────────────────── */
-let _tablePage = 0;
-const _tablePageSize = 50;
-
-function renderTable(data, resetPage = true) {
-    if (resetPage) _tablePage = 0;
-    filteredEmployees = data;
+/* ── Workforce table ─────────────────────────────────────────── */
+var _tablePage=0, _tablePageSize=50;
+function renderTable(data, resetPage) {
+    if (resetPage!==false) _tablePage=0;
+    filteredEmployees=data;
     renderTablePage();
 }
-
 function tableGoToPage(p) {
-    const tp = Math.ceil(filteredEmployees.length / _tablePageSize);
-    if (p === -1) p = _tablePage - 1;
-    if (p === tp) p = _tablePage + 1;
-    p = Math.max(0, Math.min(p, tp - 1));
-    if (p === _tablePage) return;
-    _tablePage = p;
-    renderTablePage();
+    var tp=Math.ceil(filteredEmployees.length/_tablePageSize);
+    if(p===-1) p=_tablePage-1; if(p===tp) p=_tablePage+1;
+    p=Math.max(0,Math.min(p,tp-1));
+    if(p===_tablePage) return;
+    _tablePage=p; renderTablePage();
 }
-
 function renderTablePage() {
-    const tbody = document.getElementById("tableBody");
-    const pager = document.getElementById("tablePager");
-    const data  = filteredEmployees;
-    if (!data.length) {
-        if (tbody) tbody.innerHTML = `<tr><td colspan="11" style="text-align:center;padding:40px;color:var(--muted)">No employees found</td></tr>`;
-        if (pager) pager.innerHTML = "";
-        return;
-    }
-    const total = data.length, tp = Math.ceil(total / _tablePageSize) || 1;
-    if (_tablePage >= tp) _tablePage = tp - 1;
-    const start = _tablePage * _tablePageSize, end = Math.min(start + _tablePageSize, total);
-    if (tbody) tbody.innerHTML = data.slice(start, end).map(emp => {
-        const pct  = emp.progress_percentage || 0;
-        const tpct = emp.training_percentage || 0;
-        const st   = emp.onboarding_status || "Pending";
-        const sc   = st.toLowerCase().includes("complet") ? "b-done" : st.toLowerCase().includes("progress") ? "b-progress" : "b-pending";
-        const risk = (emp.risk_level || "LOW").toUpperCase();
-        const rc   = risk === "HIGH" ? "b-high" : risk === "MEDIUM" ? "b-med" : "b-low";
-        const empId   = String(emp.emp_id || "").replace(/'/g,"");
-        const empName = String(emp.emp_name || "").replace(/'/g,"\\'").replace(/"/g,"&quot;");
-        return `<tr>
-          <td style="font-weight:700;color:var(--navy)">${_esc(emp.emp_id||"—")}</td>
-          <td><div style="font-weight:700">${_esc(emp.emp_name||"—")}</div>
-              <div style="font-size:10px;color:var(--muted)">${_esc(emp.email||"")}</div></td>
-          <td>${_esc(emp.designation||"—")}</td>
-          <td>${_esc(emp.location||"—")}</td>
-          <td><span class="badge ${sc}">${_esc(st)}</span></td>
-          <td style="font-size:11px;color:var(--muted)">${_esc((emp.current_step||"—").replace(/_/g," "))}</td>
-          <td><div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div>
-              <span style="font-size:10px;color:var(--muted);margin-left:4px">${pct}%</span></td>
-          <td style="font-weight:700;color:var(--teal2)">${tpct}%</td>
-          <td><span class="badge ${rc}">${risk}</span></td>
-          <td>${tpct>0?`<span class="badge b-assigned">✓ Assigned</span>`:`<span class="badge b-not">Not assigned</span>`}</td>
-          <td>
-            <button class="action-btn" style="background:#e0f2fe;color:#0369a1"
-              onclick="quickAllocate('${empId}','${empName}')">🎓</button>
-            <button class="action-btn" style="background:#fce7f3;color:#9d174d"
-              onclick="quickInduction('${empId}','${empName}')">📅</button>
-          </td>
-        </tr>`;
+    var tbody=document.getElementById("tableBody"), pager=document.getElementById("tablePager");
+    var data=filteredEmployees;
+    if(!data.length){if(tbody) tbody.innerHTML='<tr><td colspan="11" style="text-align:center;padding:40px;color:var(--muted)">No employees</td></tr>'; if(pager) pager.innerHTML=""; return;}
+    var total=data.length, tp=Math.ceil(total/_tablePageSize)||1;
+    if(_tablePage>=tp) _tablePage=tp-1;
+    var start=_tablePage*_tablePageSize, end=Math.min(start+_tablePageSize,total);
+    if(tbody) tbody.innerHTML=data.slice(start,end).map(function(emp){
+        var pct=emp.progress_percentage||0, tpct=emp.training_percentage||0;
+        var st=emp.onboarding_status||"Pending";
+        var sc=st.toLowerCase().indexOf("complet")>=0?"b-done":st.toLowerCase().indexOf("progress")>=0?"b-progress":"b-pending";
+        var risk=(emp.risk_level||"LOW").toUpperCase(), rc=risk==="HIGH"?"b-high":risk==="MEDIUM"?"b-med":"b-low";
+        var id=String(emp.emp_id||"").replace(/'/g,""), nm=String(emp.emp_name||"").replace(/'/g,"\\'");
+        return "<tr><td style='font-weight:700;color:var(--navy)'>"+_esc(emp.emp_id||"—")+"</td>"+
+            "<td><div style='font-weight:700'>"+_esc(emp.emp_name||"—")+"</div><div style='font-size:10px;color:var(--muted)'>"+_esc(emp.email||"")+"</div></td>"+
+            "<td>"+_esc(emp.designation||"—")+"</td><td>"+_esc(emp.location||"—")+"</td>"+
+            "<td><span class='badge "+sc+"'>"+_esc(st)+"</span></td>"+
+            "<td style='font-size:11px;color:var(--muted)'>"+_esc((emp.current_step||"—").replace(/_/g," "))+"</td>"+
+            "<td><div class='prog-bar'><div class='prog-fill' style='width:"+pct+"%'></div></div><span style='font-size:10px;color:var(--muted);margin-left:4px'>"+pct+"%</span></td>"+
+            "<td style='font-weight:700;color:var(--teal2)'>"+tpct+"%</td>"+
+            "<td><span class='badge "+rc+"'>"+risk+"</span></td>"+
+            "<td>"+(tpct>0?"<span class='badge b-assigned'>✓ Assigned</span>":"<span class='badge b-not'>Not assigned</span>")+"</td>"+
+            "<td><button class='action-btn' style='background:#e0f2fe;color:#0369a1' onclick=\"quickAllocate('"+id+"','"+nm+"')\">🎓</button>"+
+            "<button class='action-btn' style='background:#fce7f3;color:#9d174d' onclick=\"quickInduction('"+id+"','"+nm+"')\">📅</button></td></tr>";
     }).join("");
-    if (pager) {
-        const countHtml = total <= _tablePageSize
-            ? `<span style="font-size:12px;color:var(--muted)">Showing all ${total} employees</span>`
-            : `<span style="font-size:12px;color:var(--muted)">Showing <b>${start+1}–${end}</b> of <b>${total}</b></span>`;
-        pager.innerHTML = total <= _tablePageSize ? countHtml :
-            `<div style="display:flex;align-items:center;justify-content:space-between;
-                padding:10px 16px;background:#f8fafc;border-top:1px solid #e2e8f0;border-radius:0 0 14px 14px">
-              ${countHtml}
-              <div class="pager-bar" style="padding:0">${buildPager(_tablePage, tp, "tableGoToPage")}</div>
-            </div>`;
+    if(pager){
+        var countHtml=total<=_tablePageSize?"<span style='font-size:12px;color:var(--muted)'>Showing all "+total+"</span>":
+            "<span style='font-size:12px;color:var(--muted)'>Showing <b>"+(start+1)+"–"+end+"</b> of <b>"+total+"</b></span>";
+        pager.innerHTML=total<=_tablePageSize?countHtml:
+            "<div style='display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:#f8fafc;border-top:1px solid #e2e8f0;border-radius:0 0 14px 14px'>"+
+            countHtml+"<div class='pager-bar' style='padding:0'>"+buildPager(_tablePage,tp,"tableGoToPage")+"</div></div>";
     }
 }
-
 function searchTable(v) {
-    v = (v || "").toLowerCase().trim();
-    const workforceTab = document.querySelector(".tab[onclick*=\"workforce\"]");
-    if (workforceTab && !workforceTab.classList.contains("active")) {
-        document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
-        document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
-        workforceTab.classList.add("active");
-        document.getElementById("tab-workforce").classList.add("active");
-    }
-    renderTable(v ? allEmployees.filter(e =>
-        String(e.emp_id||"").toLowerCase().includes(v) ||
-        (e.emp_name||"").toLowerCase().includes(v) ||
-        (e.designation||"").toLowerCase().includes(v) ||
-        (e.location||"").toLowerCase().includes(v) ||
-        (e.onboarding_status||"").toLowerCase().includes(v)
-    ) : [...allEmployees], true);
+    v=(v||"").toLowerCase().trim();
+    var tab=document.querySelector(".tab[onclick*='workforce']");
+    if(tab&&!tab.classList.contains("active")){document.querySelectorAll(".tab").forEach(function(t){t.classList.remove("active");});document.querySelectorAll(".tab-content").forEach(function(c){c.classList.remove("active");});tab.classList.add("active");document.getElementById("tab-workforce").classList.add("active");}
+    renderTable(v?allEmployees.filter(function(e){return String(e.emp_id||"").toLowerCase().indexOf(v)>=0||(e.emp_name||"").toLowerCase().indexOf(v)>=0||(e.designation||"").toLowerCase().indexOf(v)>=0||(e.location||"").toLowerCase().indexOf(v)>=0||(e.onboarding_status||"").toLowerCase().indexOf(v)>=0;}):allEmployees.slice(),true);
 }
-
 function filterStatus(v) {
-    renderTable(v ? allEmployees.filter(e =>
-        (e.onboarding_status||"").toLowerCase().includes(v.toLowerCase())
-    ) : [...allEmployees], true);
+    renderTable(v?allEmployees.filter(function(e){return(e.onboarding_status||"").toLowerCase().indexOf(v.toLowerCase())>=0;}):allEmployees.slice(),true);
 }
 
-/* ─────────────────────────────────────────────────────────────
-   13. TRAINING
-───────────────────────────────────────────────────────────── */
+/* ── Training ────────────────────────────────────────────────── */
 function buildTrainingData(data) {
-    trainingData = [];
-    const ddl = new Date(); ddl.setDate(ddl.getDate() + 15);
-    const ddlStr = ddl.toISOString().split("T")[0];
-    data.forEach(emp => {
-        if ((emp.training_percentage||0) > 0 || (emp.progress_percentage||0) >= 50) {
-            COURSES.forEach(course => {
-                const tpct = emp.training_percentage || 0;
-                const done = tpct >= 100;
-                const score = done ? Math.floor(12 + Math.random() * 13) : null;
-                trainingData.push({
-                    emp_id: emp.emp_id, emp_name: emp.emp_name, course,
-                    training_pct: tpct, assessed: done, score, deadline: ddlStr,
-                    passed: score != null && score >= PASS_MARKS,
-                });
+    trainingData=[];
+    var ddl=new Date(); ddl.setDate(ddl.getDate()+15);
+    var ddlStr=ddl.toISOString().split("T")[0];
+    data.forEach(function(emp){
+        if((emp.training_percentage||0)>0||(emp.progress_percentage||0)>=50){
+            COURSES.forEach(function(course){
+                var tpct=emp.training_percentage||0, done=tpct>=100;
+                var score=done?Math.floor(12+Math.random()*13):null;
+                trainingData.push({emp_id:emp.emp_id,emp_name:emp.emp_name,course:course,training_pct:tpct,assessed:done,score:score,deadline:ddlStr,passed:score!=null&&score>=PASS_MARKS});
             });
         }
     });
-    const setSafe = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
-    setSafe("tmAssigned", trainingData.length);
-    setSafe("tmAssessed", trainingData.filter(r => r.assessed).length);
-    setSafe("tmPending",  trainingData.filter(r => !r.assessed).length);
-    setSafe("tmFailed",   trainingData.filter(r => r.assessed && !r.passed).length);
+    function set(id,val){var el=document.getElementById(id);if(el)el.textContent=val;}
+    set("tmAssigned",trainingData.length);
+    set("tmAssessed",trainingData.filter(function(r){return r.assessed;}).length);
+    set("tmPending", trainingData.filter(function(r){return !r.assessed;}).length);
+    set("tmFailed",  trainingData.filter(function(r){return r.assessed&&!r.passed;}).length);
 }
-
-let _trainingFilter = "all";
-function filterTraining(type) {
-    _trainingFilter = type;
-    document.querySelectorAll("#tab-training .kpi").forEach((el, i) => {
-        el.style.outline = ["all","assessed","pending","failed"][i] === type ? "3px solid var(--teal)" : "none";
-    });
-    renderTrainingTable();
-}
-
-function renderTrainingTable() {
-    const tbody = document.getElementById("trainingBody");
-    if (!tbody) return;
-    if (!trainingData.length) {
-        tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--muted)">No training data. Allocate training first.</td></tr>`;
-        return;
-    }
-    let filtered = trainingData;
-    if (_trainingFilter === "assessed") filtered = trainingData.filter(r => r.assessed);
-    else if (_trainingFilter === "pending") filtered = trainingData.filter(r => !r.assessed);
-    else if (_trainingFilter === "failed")  filtered = trainingData.filter(r => r.assessed && !r.passed);
-    if (!filtered.length) {
-        tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--muted)">No records match.</td></tr>`;
-        return;
-    }
-    tbody.innerHTML = filtered.map(r => {
-        const scorePct = r.score != null ? Math.round((r.score / TOTAL_MARKS) * 100) : null;
-        const passed   = scorePct != null && scorePct >= PASS_PCT;
-        const empId    = String(r.emp_id||"").replace(/'/g,"");
-        const course   = String(r.course||"").replace(/'/g,"\\'").replace(/"/g,"&quot;");
-        const empName  = String(r.emp_name||"").replace(/'/g,"\\'").replace(/"/g,"&quot;");
-        return `<tr>
-          <td style="font-weight:700">${_esc(r.emp_id)}</td>
-          <td>${_esc(r.emp_name)}</td>
-          <td style="max-width:160px;white-space:normal;font-size:11px">${_esc(r.course)}</td>
-          <td><div class="prog-bar"><div class="prog-fill" style="width:${r.training_pct}%"></div></div>
-              <span style="font-size:10px;color:var(--muted);margin-left:4px">${r.training_pct}%</span></td>
-          <td><span class="badge ${r.assessed?"b-done":"b-pending"}">${r.assessed?"Done":"Pending"}</span></td>
-          <td>${r.score!=null?`${r.score}/${TOTAL_MARKS} (${scorePct}%)`:"—"}</td>
-          <td>${r.score!=null?`<div class="score-bar"><div class="${passed?"score-fill-pass":"score-fill-fail"}" style="width:${scorePct}%"></div></div>`:"—"}</td>
-          <td><span class="badge ${passed?"b-done":r.assessed?"b-high":"b-pending"}">${passed?"✓ Pass":r.assessed?"✗ Fail":"Pending"}</span></td>
-          <td style="font-size:11px;color:var(--muted)">${_esc(r.deadline)}</td>
-          <td>
-            ${!r.passed?`<button class="action-btn" style="background:#ede9fe;color:#5b21b6"
-              onclick="reassignCourse('${empId}','${course}',${r.score||0})">🔄</button>`:""}
-            <button class="action-btn" style="background:#e0f2fe;color:#0369a1"
-              onclick="sendCourseEmail('${empId}','${empName}','${course}')">📧</button>
-          </td>
-        </tr>`;
+var _trainingFilter="all";
+function filterTraining(type){_trainingFilter=type;document.querySelectorAll("#tab-training .kpi").forEach(function(el,i){el.style.outline=["all","assessed","pending","failed"][i]===type?"3px solid var(--teal)":"none";});renderTrainingTable();}
+function renderTrainingTable(){
+    var tbody=document.getElementById("trainingBody"); if(!tbody) return;
+    if(!trainingData.length){tbody.innerHTML='<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--muted)">Allocate training first.</td></tr>';return;}
+    var filtered=trainingData;
+    if(_trainingFilter==="assessed") filtered=trainingData.filter(function(r){return r.assessed;});
+    else if(_trainingFilter==="pending") filtered=trainingData.filter(function(r){return !r.assessed;});
+    else if(_trainingFilter==="failed")  filtered=trainingData.filter(function(r){return r.assessed&&!r.passed;});
+    if(!filtered.length){tbody.innerHTML='<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--muted)">No records.</td></tr>';return;}
+    tbody.innerHTML=filtered.map(function(r){
+        var sp=r.score!=null?Math.round((r.score/TOTAL_MARKS)*100):null;
+        var passed=sp!=null&&sp>=PASS_PCT;
+        var id=String(r.emp_id||"").replace(/'/g,""), course=String(r.course||"").replace(/'/g,"\\'"), nm=String(r.emp_name||"").replace(/'/g,"\\'");
+        return "<tr><td style='font-weight:700'>"+_esc(r.emp_id)+"</td><td>"+_esc(r.emp_name)+"</td>"+
+            "<td style='max-width:160px;white-space:normal;font-size:11px'>"+_esc(r.course)+"</td>"+
+            "<td><div class='prog-bar'><div class='prog-fill' style='width:"+r.training_pct+"%'></div></div><span style='font-size:10px;color:var(--muted);margin-left:4px'>"+r.training_pct+"%</span></td>"+
+            "<td><span class='badge "+(r.assessed?"b-done":"b-pending")+"'>"+(r.assessed?"Done":"Pending")+"</span></td>"+
+            "<td>"+(r.score!=null?r.score+"/"+TOTAL_MARKS+" ("+sp+"%)":"—")+"</td>"+
+            "<td>"+(r.score!=null?"<div class='score-bar'><div class='"+(passed?"score-fill-pass":"score-fill-fail")+"' style='width:"+sp+"%'></div></div>":"—")+"</td>"+
+            "<td><span class='badge "+(passed?"b-done":r.assessed?"b-high":"b-pending")+"'>"+(passed?"✓ Pass":r.assessed?"✗ Fail":"Pending")+"</span></td>"+
+            "<td style='font-size:11px;color:var(--muted)'>"+_esc(r.deadline)+"</td>"+
+            "<td>"+(!r.passed?"<button class='action-btn' style='background:#ede9fe;color:#5b21b6' onclick=\"reassignCourse('\"+id+\"','\"+course+\"',\"+(r.score||0)+\")\">🔄</button>":"")+
+            "<button class='action-btn' style='background:#e0f2fe;color:#0369a1' onclick=\"sendCourseEmail('\"+id+\"','\"+nm+\"','\"+course+\"')\">📧</button></td></tr>";
     }).join("");
 }
-
-async function reassignCourse(empId, course, score = 0) {
-    const emp = allEmployees.find(e => String(e.emp_id) === String(empId));
-    if (!emp) { toast("Employee not found", "amber"); return; }
-    showConfirm({
-        title: "Re-assign Course", type: "warning",
-        message: `Re-assign <b>"${_esc(course)}"</b> to <b>${_esc(emp.emp_name||empId)}</b>?`,
-        detail:  `Score: <b>${score}/25</b> · Failure email will be sent.`,
-        confirmLabel: "🔄 Re-assign", cancelLabel: "Cancel",
-        onConfirm: async () => {
-            toast(`🔄 Re-assigning…`, "amber");
-            try {
-                const res  = await apiFetch(_BASE + "/api/pmo/reassign-course", {
-                    method: "POST", headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ pmo_email: rm_email, emp_id: String(empId),
-                        emp_name: emp.emp_name||"", emp_email: emp.email||"",
-                        course_name: course, score, total_marks: 25, pass_marks: 20 })
-                });
-                const data = await res.json();
-                if (data.success) toast(`✅ Re-assigned · ${data.email_sent?"Email sent":"No email on file"}`, "green");
-                else toast("Failed: " + _esc(data.message||"error"), "red");
-            } catch(e) { toast("Backend error", "red"); }
-        }
+async function reassignCourse(empId, course, score) {
+    var emp=allEmployees.find(function(e){return String(e.emp_id)===String(empId);}); if(!emp){toast("Employee not found","amber");return;}
+    showConfirm({title:"Re-assign Course",type:"warning",message:"Re-assign <b>\""+_esc(course)+"\"</b> to <b>"+_esc(emp.emp_name||empId)+"</b>?",confirmLabel:"🔄 Re-assign",cancelLabel:"Cancel",
+        onConfirm:async function(){try{var res=await apiFetch(_BASE+"/api/pmo/reassign-course",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({pmo_email:rm_email,emp_id:String(empId),emp_name:emp.emp_name||"",emp_email:emp.email||"",course_name:course,score:score||0,total_marks:25,pass_marks:20})});var d=await res.json();if(d.success)toast("✅ Re-assigned","green");else toast("Failed: "+_esc(d.message||""),"red");}catch(e){toast("Backend error","red");}}
     });
 }
-
 async function sendCourseEmail(empId, empName, course) {
-    const emp = allEmployees.find(e => String(e.emp_id) === String(empId));
-    if (!emp?.email?.includes("@")) { toast(`⚠️ No email for ${_esc(empName)}`, "amber"); return; }
-    showConfirm({
-        title: "Send Reminder", type: "info",
-        message: `Send reminder to <b>${_esc(empName)}</b> for <b>"${_esc(course)}"</b>?`,
-        confirmLabel: "📧 Send", cancelLabel: "Cancel",
-        onConfirm: async () => {
-            try {
-                const res  = await apiFetch(_BASE + "/api/pmo/send-reminder", {
-                    method: "POST", headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ pmo_email: rm_email, emp_name: empName,
-                        emp_email: emp.email, course_name: course, days_left: 3 })
-                });
-                const data = await res.json();
-                if (data.success) toast(`✅ Reminder sent to ${_esc(empName)}`, "green");
-                else toast("Failed: " + _esc(data.message||"error"), "red");
-            } catch(e) { toast("Backend error", "red"); }
-        }
+    var emp=allEmployees.find(function(e){return String(e.emp_id)===String(empId);});
+    if(!emp||!emp.email||emp.email.indexOf("@")<0){toast("⚠️ No email for "+_esc(empName),"amber");return;}
+    showConfirm({title:"Send Reminder",type:"info",message:"Send reminder to <b>"+_esc(empName)+"</b>?",confirmLabel:"📧 Send",cancelLabel:"Cancel",
+        onConfirm:async function(){try{var res=await apiFetch(_BASE+"/api/pmo/send-reminder",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({pmo_email:rm_email,emp_name:empName,emp_email:emp.email,course_name:course,days_left:3})});var d=await res.json();if(d.success)toast("✅ Sent to "+_esc(empName),"green");else toast("Failed","red");}catch(e){toast("Backend error","red");}}
     });
 }
-
 async function sendReminders() {
-    const pending = allEmployees.filter(e =>
-        (e.training_percentage||0) < 100 && (e.progress_percentage||0) >= 20 &&
-        e.email?.includes("@")
-    );
-    if (!pending.length) { toast("No pending training employees found", "amber"); return; }
-    showConfirm({
-        title: "Send Reminders", type: "warning",
-        message: `Send reminders to <b>${pending.length} employees</b>?`,
-        detail:  `~${pending.length * COURSES.length} emails total · Cannot be undone.`,
-        confirmLabel: `📧 Send to ${pending.length}`, cancelLabel: "Cancel",
-        onConfirm: async () => {
-            const btn = document.querySelector("[onclick=\"sendReminders()\"]");
-            if (btn) { btn.disabled = true; btn.textContent = "⏳ Sending…"; }
-            toast(`📧 Sending to ${pending.length}…`, "amber");
-            const employees = [];
-            pending.forEach(emp => COURSES.forEach(course => employees.push({
-                emp_name: emp.emp_name||"Employee", emp_email: emp.email||"",
-                course_name: course, days_left: 3
-            })));
-            try {
-                const res  = await apiFetch(_BASE + "/api/pmo/send-bulk-reminders", {
-                    method: "POST", headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ pmo_email: rm_email, employees })
-                });
-                const data = await res.json();
-                if (data.success) toast(`✅ Sent:${data.sent} Failed:${data.failed} Skipped:${data.skipped}`, "green");
-                else toast("Failed: " + _esc(data.message||"error"), "red");
-            } catch(e) { toast("Backend error", "red"); }
-            finally { if (btn) { btn.disabled = false; btn.textContent = "📧 Send Reminders"; } }
+    var pending=allEmployees.filter(function(e){return(e.training_percentage||0)<100&&(e.progress_percentage||0)>=20&&e.email&&e.email.indexOf("@")>=0;});
+    if(!pending.length){toast("No pending training employees","amber");return;}
+    showConfirm({title:"Send Reminders",type:"warning",message:"Send reminders to <b>"+pending.length+" employees</b>?",detail:"~"+(pending.length*COURSES.length)+" emails total.",confirmLabel:"📧 Send "+pending.length,cancelLabel:"Cancel",
+        onConfirm:async function(){
+            var btn=document.querySelector("[onclick=\"sendReminders()\"]");if(btn){btn.disabled=true;btn.textContent="⏳ Sending…";}
+            var employees=[];pending.forEach(function(emp){COURSES.forEach(function(course){employees.push({emp_name:emp.emp_name||"Employee",emp_email:emp.email||"",course_name:course,days_left:3});});});
+            try{var res=await apiFetch(_BASE+"/api/pmo/send-bulk-reminders",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({pmo_email:rm_email,employees:employees})});var d=await res.json();if(d.success)toast("✅ Sent:"+d.sent+" Failed:"+d.failed,"green");else toast("Failed","red");}catch(e){toast("Backend error","red");}
+            finally{if(btn){btn.disabled=false;btn.textContent="📧 Send Reminders";}}
         }
     });
 }
 
-/* ─────────────────────────────────────────────────────────────
-   14. PENDING ACTIONS
-───────────────────────────────────────────────────────────── */
+/* ── Pending actions ─────────────────────────────────────────── */
 function renderPendingActions() {
-    const noTrain  = allEmployees.filter(e => !(e.training_percentage||0) && (e.progress_percentage||0) >= 30).slice(0,5);
-    const highRisk = allEmployees.filter(e => (e.risk_level||"").toUpperCase() === "HIGH").slice(0,4);
-    const noInd    = allEmployees.filter(e => (e.progress_percentage||0) < 20).slice(0,3);
-    const items = [
-        ...noTrain.map(e => ({ icon:"🎓", color:"#ede9fe", border:"#c084fc",
-            title: `Assign training to ${_esc(e.emp_name||e.emp_id)}`,
-            desc:  `${_esc(e.emp_id)} · ${_esc(e.designation||"—")} · No courses assigned`,
-            action:`quickAllocate('${String(e.emp_id||"").replace(/'/g,"")}','${String(e.emp_name||"").replace(/'/g,"\\'")}')` })),
-        ...highRisk.map(e => ({ icon:"🚨", color:"#fef2f2", border:"#f87171",
-            title: `High risk: ${_esc(e.emp_name||e.emp_id)}`,
-            desc:  `${_esc(e.emp_id)} · Training: ${e.training_percentage||0}%`,
-            action:`promptEmployeeId('${String(e.emp_id||"").replace(/'/g,"")}')` })),
-        ...noInd.map(e => ({ icon:"📅", color:"#fff7ed", border:"#fcd34d",
-            title: `Schedule induction for ${_esc(e.emp_name||e.emp_id)}`,
-            desc:  `${_esc(e.emp_id)} · Newly onboarded`,
-            action:`openModal('inductionModal')` })),
-    ];
-    const el = document.getElementById("pendingActions");
-    if (!el) return;
-    el.innerHTML = items.length ? items.map(item => `
-        <div style="background:${item.color};border:1px solid ${item.border};border-radius:12px;
-            padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;
-            justify-content:space-between;gap:12px">
-          <div style="display:flex;align-items:flex-start;gap:10px">
-            <span style="font-size:18px;flex-shrink:0">${item.icon}</span>
-            <div>
-              <div style="font-size:12px;font-weight:700;color:var(--navy)">${item.title}</div>
-              <div style="font-size:11px;color:var(--muted);margin-top:2px">${item.desc}</div>
-            </div>
-          </div>
-          <button class="btn" style="background:var(--navy);color:#fff;height:32px;font-size:11px;flex-shrink:0"
-            onclick="${item.action}">Take Action</button>
-        </div>`)
-        .join("") : `<div style="text-align:center;padding:20px;color:var(--muted);font-size:12px">✅ No pending actions</div>`;
+    var noTrain=allEmployees.filter(function(e){return!(e.training_percentage||0)&&(e.progress_percentage||0)>=30;}).slice(0,5);
+    var highRisk=allEmployees.filter(function(e){return(e.risk_level||"").toUpperCase()==="HIGH";}).slice(0,4);
+    var noInd=allEmployees.filter(function(e){return(e.progress_percentage||0)<20;}).slice(0,3);
+    var items=noTrain.map(function(e){return{icon:"🎓",color:"#ede9fe",border:"#c084fc",title:"Assign training to "+_esc(e.emp_name||e.emp_id),desc:_esc(e.emp_id)+" · No courses assigned",action:"quickAllocate('"+String(e.emp_id||"").replace(/'/g,"")+"','"+String(e.emp_name||"").replace(/'/g,"\\'")+"')"};}  )
+        .concat(highRisk.map(function(e){return{icon:"🚨",color:"#fef2f2",border:"#f87171",title:"High risk: "+_esc(e.emp_name||e.emp_id),desc:_esc(e.emp_id)+" · Training: "+(e.training_percentage||0)+"%",action:"promptEmployeeId('"+String(e.emp_id||"").replace(/'/g,"")+"')"};}) )
+        .concat(noInd.map(function(e){return{icon:"📅",color:"#fff7ed",border:"#fcd34d",title:"Schedule induction for "+_esc(e.emp_name||e.emp_id),desc:_esc(e.emp_id)+" · Newly onboarded",action:"openModal('inductionModal')"};}) );
+    var el=document.getElementById("pendingActions"); if(!el) return;
+    el.innerHTML=items.length?items.map(function(item){
+        return "<div style='background:"+item.color+";border:1px solid "+item.border+";border-radius:12px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:12px'><div style='display:flex;align-items:flex-start;gap:10px'><span style='font-size:18px;flex-shrink:0'>"+item.icon+"</span><div><div style='font-size:12px;font-weight:700;color:var(--navy)'>"+item.title+"</div><div style='font-size:11px;color:var(--muted);margin-top:2px'>"+item.desc+"</div></div></div><button class='btn' style='background:var(--navy);color:#fff;height:32px;font-size:11px;flex-shrink:0' onclick=\""+item.action+"\">Take Action</button></div>";
+    }).join(""):"<div style='text-align:center;padding:20px;color:var(--muted);font-size:12px'>✅ No pending actions</div>";
 }
 
-/* ─────────────────────────────────────────────────────────────
-   15. QUICK ACTIONS
-───────────────────────────────────────────────────────────── */
+/* ── Quick actions ───────────────────────────────────────────── */
 function quickAllocate(empId, empName) {
-    showConfirm({
-        title: "Allocate Training", type: "info",
-        message: `Assign 5 HMSA courses to <b>${_esc(empName||empId)}</b>?`,
-        confirmLabel: "🎓 Allocate", cancelLabel: "Cancel",
-        onConfirm: () => {
-            toast(`🎓 Allocating…`, "amber");
-            apiFetch(_BASE + "/api/pmo/schedule-induction", {
-                method: "POST", headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ pmo_email: rm_email, title: "Training Allocation",
-                    date: new Date().toISOString().split("T")[0], time: "10:00",
-                    duration_min: 60, agenda: "",
-                    attendees: [{ emp_id: empId, name: empName, email: "" }],
-                    cc_rms: [], courses: COURSES })
-            }).then(() => { toast(`✅ Courses assigned to ${_esc(empName||empId)}`, "green"); setTimeout(loadDashboard, 1500); })
-              .catch(() => { toast(`✅ Courses assigned to ${_esc(empName||empId)}`, "green"); });
-        }
+    showConfirm({title:"Allocate Training",type:"info",message:"Assign 5 HMSA courses to <b>"+_esc(empName||empId)+"</b>?",confirmLabel:"🎓 Allocate",cancelLabel:"Cancel",
+        onConfirm:function(){toast("🎓 Allocating…","amber");apiFetch(_BASE+"/api/pmo/schedule-induction",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({pmo_email:rm_email,title:"Training Allocation",date:new Date().toISOString().split("T")[0],time:"10:00",duration_min:60,agenda:"",attendees:[{emp_id:empId,name:empName,email:""}],cc_rms:[],courses:COURSES})}).then(function(){toast("✅ Assigned to "+_esc(empName||empId),"green");setTimeout(loadDashboard,1500);}).catch(function(){toast("✅ Assigned to "+_esc(empName||empId),"green");});}
     });
 }
-
-function quickInduction(empId, empName) {
-    openModal("inductionModal");
-    addBotMsg(`📅 Opening induction scheduler for <b>${_esc(empName)}</b>. Fill in the date and click Schedule.`);
-}
-
+function quickInduction(empId, empName) { openModal("inductionModal"); addBotMsg("📅 Opening induction for <b>"+_esc(empName)+"</b>. Fill in the date and click Schedule."); }
 async function scheduleInduction() {
-    const date = document.getElementById("ind_date")?.value;
-    const time = document.getElementById("ind_time")?.value;
-    if (!date || !time) { toast("Please select a date and time", "amber"); return; }
-    const newJ = allEmployees.filter(e =>
-        (e.progress_percentage||0) < 50 || (e.onboarding_status||"").toLowerCase().includes("pending")
-    );
-    showConfirm({
-        title: "Schedule Induction", type: "warning",
-        message: `Send invites to <b>${newJ.length} employees</b>?`,
-        detail: `📅 Date: <b>${_esc(date)}</b> · Time: <b>${_esc(time)}</b><br>RMs CC'd · Cannot be undone.`,
-        confirmLabel: `📩 Send to ${newJ.length}`, cancelLabel: "Cancel",
-        onConfirm: async () => {
-            try {
-                await apiFetch(_BASE + "/api/pmo/schedule-induction", {
-                    method: "POST", headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        pmo_email: rm_email,
-                        title: _WAF.sanitize(document.getElementById("ind_title")?.value||"",100),
-                        date, time, duration_min: parseInt(document.getElementById("ind_dur")?.value||60),
-                        agenda: _WAF.sanitize(document.getElementById("ind_agenda")?.value||"",500),
-                        attendees: newJ.map(e => ({ emp_id: e.emp_id, name: e.emp_name, email: e.email })),
-                        cc_rms: [...new Set(newJ.map(e => e.reporting_manager_email).filter(Boolean))],
-                        courses: COURSES
-                    })
-                });
-                toast(`✅ Scheduled for ${newJ.length} employees`, "green");
-            } catch(e) { toast(`✅ Scheduled for ${newJ.length} employees`, "green"); }
-            closeModal("inductionModal");
-        }
+    var date=document.getElementById("ind_date")?.value, time=document.getElementById("ind_time")?.value;
+    if(!date||!time){toast("Select date and time","amber");return;}
+    var newJ=allEmployees.filter(function(e){return(e.progress_percentage||0)<50||(e.onboarding_status||"").toLowerCase().indexOf("pending")>=0;});
+    showConfirm({title:"Schedule Induction",type:"warning",message:"Send invites to <b>"+newJ.length+" employees</b>?",confirmLabel:"📩 Send "+newJ.length,cancelLabel:"Cancel",
+        onConfirm:async function(){try{await apiFetch(_BASE+"/api/pmo/schedule-induction",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({pmo_email:rm_email,title:_WAF.sanitize(document.getElementById("ind_title")?.value||"",100),date:date,time:time,duration_min:parseInt(document.getElementById("ind_dur")?.value||60),agenda:_WAF.sanitize(document.getElementById("ind_agenda")?.value||"",500),attendees:newJ.map(function(e){return{emp_id:e.emp_id,name:e.emp_name,email:e.email};}),cc_rms:[...new Set(newJ.map(function(e){return e.reporting_manager_email;}).filter(Boolean))],courses:COURSES})});toast("✅ Scheduled for "+newJ.length+" employees","green");}catch(e){toast("✅ Scheduled for "+newJ.length+" employees","green");}closeModal("inductionModal");}
     });
 }
-
 async function allocateTraining() {
-    const target   = document.getElementById("allocTarget")?.value || "all";
-    const deadline = document.getElementById("allocDeadline")?.value || "";
-    let targets = allEmployees;
-    if (target === "pending")    targets = allEmployees.filter(e => (e.onboarding_status||"").toLowerCase().includes("pending"));
-    if (target === "inprogress") targets = allEmployees.filter(e => (e.onboarding_status||"").toLowerCase().includes("progress"));
-    showConfirm({
-        title: "Allocate Training", type: "warning",
-        message: `Assign 5 HMSA courses to <b>${targets.length} employees</b>?`,
-        detail: `📧 Training emails sent · Deadline: <b>${_esc(deadline||"15 days")}</b>`,
-        confirmLabel: `🎓 Assign to ${targets.length}`, cancelLabel: "Cancel",
-        onConfirm: async () => {
-            closeModal("allocTrainingModal");
-            toast(`🎓 Assigning…`, "amber");
-            for (const emp of targets.slice(0, 10)) {
-                try {
-                    await apiFetch(_BASE + "/api/pmo/schedule-induction", {
-                        method: "POST", headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ pmo_email: rm_email, title: "Training Allocation",
-                            date: deadline || new Date().toISOString().split("T")[0],
-                            time: "10:00", duration_min: 60, agenda: "",
-                            attendees: [{ emp_id: emp.emp_id, name: emp.emp_name, email: emp.email }],
-                            cc_rms: [], courses: COURSES })
-                    });
-                } catch(_) {}
-            }
-            toast(`✅ Assigned to ${targets.length} employees`, "green");
-            setTimeout(loadDashboard, 1500);
-        }
+    var target=document.getElementById("allocTarget")?.value||"all", deadline=document.getElementById("allocDeadline")?.value||"";
+    var targets=allEmployees;
+    if(target==="pending") targets=allEmployees.filter(function(e){return(e.onboarding_status||"").toLowerCase().indexOf("pending")>=0;});
+    if(target==="inprogress") targets=allEmployees.filter(function(e){return(e.onboarding_status||"").toLowerCase().indexOf("progress")>=0;});
+    showConfirm({title:"Allocate Training",type:"warning",message:"Assign 5 HMSA courses to <b>"+targets.length+" employees</b>?",confirmLabel:"🎓 Assign "+targets.length,cancelLabel:"Cancel",
+        onConfirm:async function(){closeModal("allocTrainingModal");toast("🎓 Assigning…","amber");for(var i=0;i<Math.min(targets.length,10);i++){try{await apiFetch(_BASE+"/api/pmo/schedule-induction",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({pmo_email:rm_email,title:"Training Allocation",date:deadline||new Date().toISOString().split("T")[0],time:"10:00",duration_min:60,agenda:"",attendees:[{emp_id:targets[i].emp_id,name:targets[i].emp_name,email:targets[i].email}],cc_rms:[],courses:COURSES})});}catch(e){}}toast("✅ Assigned to "+targets.length+" employees","green");setTimeout(loadDashboard,1500);}
     });
 }
 
-/* ─────────────────────────────────────────────────────────────
-   16. MAIL TEMPLATES
-───────────────────────────────────────────────────────────── */
-const MAIL = {
-  induction:(emp,date,time,agenda)=>({subject:`[HMSA Induction] Welcome — ${date}`,body:`<div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:24px auto;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.10)"><div style="background:linear-gradient(135deg,#0f2044,#1a3a6b);padding:28px 32px"><h2 style="color:#fff;margin:0;font-size:20px;font-weight:800">📅 HMSA Induction Program</h2><p style="color:rgba(255,255,255,.75);margin:8px 0 0;font-size:13px">IntelliOnboard · Infinite Computer Solutions</p></div><div style="padding:30px 32px"><p>Dear <b>${_esc(emp.name||"New Joiner")}</b>,</p><p>You are invited to the <b>HMSA Account Induction Program</b>.</p><div style="background:#f0f4ff;border-radius:12px;padding:18px;margin:16px 0;border-top:4px solid #5059c9"><b>📅 ${_esc(date)}</b> &nbsp;⏰ <b>${_esc(time)}</b> &nbsp;📹 Microsoft Teams</div>${agenda?`<div style="background:#fff8e1;border-radius:12px;padding:14px;border-top:4px solid #f59e0b;margin-bottom:16px"><b>Agenda:</b><br>${_esc(agenda).replace(/\n/g,"<br>")}</div>`:""}<div style="background:#ede9fe;border-radius:12px;padding:14px;border-top:4px solid #7c3aed"><b>🎓 5 HMSA Mandatory Courses assigned to your LMS · 15-day deadline · 80% pass threshold</b></div><p style="margin-top:16px;font-size:12px;color:#94a3b8">IntelliOnboard · Infinite Computer Solutions</p></div></div>`}),
-  training:(emp,deadline)=>({subject:`[Action Required] Mandatory Training — ${deadline}`,body:`<div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:24px auto;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.10)"><div style="background:linear-gradient(135deg,#4c1d95,#7c3aed);padding:28px 32px"><h2 style="color:#fff;margin:0;font-size:20px">🎓 Mandatory Training Assigned</h2></div><div style="padding:30px 32px"><p>Dear <b>${_esc(emp.name||"Employee")}</b>,</p><div style="background:#fef3c7;border-radius:12px;padding:14px;border-top:4px solid #f59e0b;margin:16px 0"><b>⏰ Deadline: ${_esc(deadline)} · Pass: 80% (20/25 marks)</b></div>${COURSES.map((c,i)=>`<div style="padding:10px 0;${i>0?"border-top:1px solid #f1f5f9":""}">${i+1}. <b>${_esc(c)}</b></div>`).join("")}<p style="margin-top:16px;font-size:12px;color:#94a3b8">IntelliOnboard · Infinite Computer Solutions</p></div></div>`}),
-  reminder:(emp,course,daysLeft)=>({subject:`[${daysLeft<=1?"🚨 URGENT":"⏰"} Reminder] ${course}`,body:`<div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:24px auto;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.10)"><div style="background:linear-gradient(135deg,${daysLeft<=1?"#b91c1c,#ef4444":"#d97706,#f59e0b"});padding:28px 32px"><h2 style="color:#fff;margin:0">${daysLeft<=1?"🚨 Urgent ":"⏰ "}Assessment Reminder</h2></div><div style="padding:30px 32px"><p>Dear <b>${_esc(emp.name||"Employee")}</b>,</p><div style="background:${daysLeft<=1?"#fef2f2":"#fff7ed"};border-radius:12px;padding:14px;border-top:4px solid ${daysLeft<=1?"#ef4444":"#f59e0b"};margin:16px 0"><b>${_esc(course)}</b> · Pass: 80% required · ${daysLeft<=1?"DUE TODAY":daysLeft+" days left"}</div><p>Log into IntelliOnboard LMS and complete the assessment.</p><p style="font-size:12px;color:#94a3b8">IntelliOnboard · Infinite Computer Solutions</p></div></div>`}),
-  failed:(emp,course,score)=>({subject:`[Re-assignment] Not Passed — ${course}`,body:`<div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:24px auto;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.10)"><div style="background:linear-gradient(135deg,#7f1d1d,#dc2626);padding:28px 32px"><h2 style="color:#fff;margin:0">❌ Assessment Re-assignment</h2></div><div style="padding:30px 32px"><p>Dear <b>${_esc(emp.name||"Employee")}</b>,</p><div style="background:#fef2f2;border-radius:12px;padding:14px;border-top:4px solid #ef4444;margin:16px 0"><b>${_esc(course)}</b><br>Score: <b style="color:#dc2626">${score}/${TOTAL_MARKS}</b> · Required: <b style="color:#16a34a">20/${TOTAL_MARKS}</b></div><p>Course + assessment re-assigned in LMS. New deadline: 7 days.</p><p style="font-size:12px;color:#94a3b8">IntelliOnboard · Infinite Computer Solutions</p></div></div>`}),
-  escalation:(emp,issue,daysOver)=>({subject:`[Escalation] ${emp.name||emp.emp_id} — ${issue}`,body:`<div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:24px auto;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.10)"><div style="background:linear-gradient(135deg,#1e1b4b,#4338ca);padding:28px 32px"><h2 style="color:#fff;margin:0">🚨 Escalation — Immediate Action</h2></div><div style="padding:30px 32px"><div style="background:#fef2f2;border-radius:12px;padding:14px;border-top:4px solid #ef4444;margin-bottom:16px"><b>${_esc(emp.name||emp.emp_id)}</b> (${_esc(emp.emp_id)})<br>Issue: <b style="color:#dc2626">${_esc(issue)}</b> · ${daysOver} days overdue</div><p>Immediate Account PMO intervention required.</p><p style="font-size:12px;color:#94a3b8">IntelliOnboard · Infinite Computer Solutions</p></div></div>`}),
-};
-
+/* ── Mail templates ──────────────────────────────────────────── */
 function openMailPreview(type) {
-    const emp = { name: "New Joiner", emp_id: "EMP001", location: "Hyderabad" };
-    const date = new Date().toDateString(), time = "10:00 AM";
-    const ddl = new Date(Date.now() + 15*86400000).toDateString();
-    const map = {
-        induction: () => MAIL.induction(emp, date, time, "1. Welcome\n2. HMSA Overview\n3. HIPAA"),
-        training:  () => MAIL.training(emp, ddl),
-        reminder:  () => MAIL.reminder(emp, "HMSA Service Request Management", 3),
-        failed:    () => MAIL.failed(emp, "HIPAA Compliance", 16),
-        escalation:() => MAIL.escalation(emp, "Training not completed", 5),
+    var emp={name:"New Joiner",emp_id:"EMP001",location:"Hyderabad"};
+    var date=new Date().toDateString(), time="10:00 AM", ddl=new Date(Date.now()+15*86400000).toDateString();
+    var templates={
+        induction:{subject:"[HMSA Induction] Welcome — "+date,body:"<div style='font-family:Arial,sans-serif;max-width:600px;margin:24px auto;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.1)'><div style='background:linear-gradient(135deg,#0f2044,#1a3a6b);padding:28px 32px'><h2 style='color:#fff;margin:0;font-size:20px'>📅 HMSA Induction Program</h2></div><div style='padding:30px 32px'><p>Dear <b>New Joiner</b>,</p><p>You are invited to the <b>HMSA Account Induction Program</b>.</p><div style='background:#f0f4ff;border-radius:12px;padding:18px;margin:16px 0;border-top:4px solid #5059c9'><b>📅 "+date+"</b> · <b>⏰ "+time+"</b> · <b>📹 Microsoft Teams</b></div><div style='background:#ede9fe;border-radius:12px;padding:14px;border-top:4px solid #7c3aed'><b>🎓 5 HMSA Mandatory Courses · 15-day deadline · 80% pass threshold</b></div><p style='font-size:12px;color:#94a3b8;margin-top:16px'>IntelliOnboard · Infinite Computer Solutions</p></div></div>"},
+        training:{subject:"[Action Required] Training — "+ddl,body:"<div style='font-family:Arial,sans-serif;max-width:600px;margin:24px auto;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.1)'><div style='background:linear-gradient(135deg,#4c1d95,#7c3aed);padding:28px 32px'><h2 style='color:#fff;margin:0'>🎓 Mandatory Training Assigned</h2></div><div style='padding:30px 32px'><p>Dear <b>Employee</b>,</p><div style='background:#fef3c7;border-radius:12px;padding:14px;border-top:4px solid #f59e0b;margin:16px 0'><b>⏰ Deadline: "+ddl+" · Pass: 80% (20/25 marks)</b></div>"+COURSES.map(function(c,i){return"<div style='padding:10px 0;"+(i>0?"border-top:1px solid #f1f5f9":"")+"'>"+(i+1)+". <b>"+_esc(c)+"</b></div>";}).join("")+"<p style='font-size:12px;color:#94a3b8'>IntelliOnboard · Infinite Computer Solutions</p></div></div>"},
+        reminder:{subject:"⏰ Reminder — HMSA Assessment",body:"<div style='font-family:Arial,sans-serif;max-width:600px;margin:24px auto;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.1)'><div style='background:linear-gradient(135deg,#d97706,#f59e0b);padding:28px 32px'><h2 style='color:#fff;margin:0'>⏰ Assessment Reminder</h2></div><div style='padding:30px 32px'><p>Dear <b>Employee</b>,</p><div style='background:#fff7ed;border-radius:12px;padding:14px;border-top:4px solid #f59e0b;margin:16px 0'><b>HMSA Service Request Management</b> · 3 days left · Pass: 80%</div><p>Log into IntelliOnboard LMS and complete the assessment.</p><p style='font-size:12px;color:#94a3b8'>IntelliOnboard · Infinite Computer Solutions</p></div></div>"},
+        failed:{subject:"[Re-assignment] Assessment Not Passed",body:"<div style='font-family:Arial,sans-serif;max-width:600px;margin:24px auto;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.1)'><div style='background:linear-gradient(135deg,#7f1d1d,#dc2626);padding:28px 32px'><h2 style='color:#fff;margin:0'>❌ Re-assignment</h2></div><div style='padding:30px 32px'><p>Dear <b>Employee</b>,</p><div style='background:#fef2f2;border-radius:12px;padding:14px;border-top:4px solid #ef4444;margin:16px 0'><b>HIPAA Compliance</b><br>Score: <b style='color:#dc2626'>16/25</b> · Required: <b style='color:#16a34a'>20/25</b></div><p>Course re-assigned. New deadline: 7 days.</p><p style='font-size:12px;color:#94a3b8'>IntelliOnboard · Infinite Computer Solutions</p></div></div>"},
+        escalation:{subject:"[Escalation] Immediate Action Required",body:"<div style='font-family:Arial,sans-serif;max-width:600px;margin:24px auto;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.1)'><div style='background:linear-gradient(135deg,#1e1b4b,#4338ca);padding:28px 32px'><h2 style='color:#fff;margin:0'>🚨 Escalation</h2></div><div style='padding:30px 32px'><div style='background:#fef2f2;border-radius:12px;padding:14px;border-top:4px solid #ef4444;margin-bottom:16px'><b>New Joiner</b> (EMP001) · Training not completed · <b style='color:#dc2626'>5 days overdue</b></div><p>Immediate Account PMO intervention required.</p><p style='font-size:12px;color:#94a3b8'>IntelliOnboard · Infinite Computer Solutions</p></div></div>"},
     };
-    const tmpl = map[type]?.();
-    if (!tmpl) return;
-    const subEl  = document.getElementById("mailSubject");
-    const bodyEl = document.getElementById("mailBody");
-    if (subEl)  subEl.textContent = tmpl.subject;
-    if (bodyEl) bodyEl.innerHTML  = tmpl.body;
+    var tmpl=templates[type]; if(!tmpl) return;
+    var subEl=document.getElementById("mailSubject"), bodyEl=document.getElementById("mailBody");
+    if(subEl) subEl.textContent=tmpl.subject;
+    if(bodyEl) bodyEl.innerHTML=tmpl.body;
     openModal("mailPreviewModal");
 }
 
-/* ─────────────────────────────────────────────────────────────
-   17. MISSING FUNCTIONS
-───────────────────────────────────────────────────────────── */
+/* ── Missing functions ───────────────────────────────────────── */
 async function logout() {
-    showConfirm({
-        title: "Logout", type: "warning",
-        message: "Are you sure you want to log out?",
-        confirmLabel: "🚪 Logout", cancelLabel: "Stay",
-        onConfirm: async () => {
-            try { await apiFetch(_BASE + "/api/auth/logout", { method: "POST" }); } catch(_) {}
-            localStorage.clear(); sessionStorage.clear();
-            window.location.replace("https://intellionboard.vercel.app/?manual=true");
-        }
+    showConfirm({title:"Logout",type:"warning",message:"Are you sure?",confirmLabel:"🚪 Logout",cancelLabel:"Stay",
+        onConfirm:async function(){try{await apiFetch(_BASE+"/api/auth/logout",{method:"POST"});}catch(e){}localStorage.clear();sessionStorage.clear();window.location.replace("https://intellionboard.vercel.app/?manual=true");}
     });
 }
-
 function promptEmployeeId(empId) {
-    if (!agentOpen) toggleAgent();
-    const body = document.getElementById("agentBody");
-    if (!body) return;
-    const d = document.createElement("div");
-    d.className = "msg bot";
-    d.innerHTML = `<div style="background:linear-gradient(135deg,#f0f9ff,#e0f2fe);border:1px solid #bae6fd;border-radius:12px;padding:12px 14px">
-        <div style="font-size:12px;font-weight:700;color:#0c4a6e;margin-bottom:6px">🔍 Check Employee</div>
-        <input style="width:100%;border:1px solid #bae6fd;border-radius:8px;padding:8px 12px;font-size:12px;outline:none;font-family:inherit"
-            id="_empLookup" type="text" placeholder="Employee ID…" value="${_esc(empId||"")}"
-            onkeydown="if(event.key==='Enter'){agentCmd('check '+this.value);}">
-        <button onclick="agentCmd('check '+document.getElementById('_empLookup').value)"
-            style="margin-top:8px;width:100%;background:var(--navy);color:#fff;border:none;border-radius:8px;padding:8px;font-size:12px;font-weight:700;cursor:pointer">
-            🔍 Search
-        </button>
-    </div></div>`;
-    body.appendChild(d); body.scrollTop = body.scrollHeight;
+    if(!agentOpen) toggleAgent();
+    var body=document.getElementById("agentBody"); if(!body) return;
+    var d=document.createElement("div"); d.className="msg bot";
+    d.innerHTML='<div style="background:linear-gradient(135deg,#f0f9ff,#e0f2fe);border:1px solid #bae6fd;border-radius:12px;padding:12px 14px">'+
+        '<div style="font-size:12px;font-weight:700;color:#0c4a6e;margin-bottom:6px">🔍 Check Employee</div>'+
+        '<input style="width:100%;border:1px solid #bae6fd;border-radius:8px;padding:8px 12px;font-size:12px;outline:none;font-family:inherit" id="_empLookup" type="text" placeholder="Employee ID…" value="'+_esc(empId||"")+'" onkeydown="if(event.key===\'Enter\'){agentCmd(\'check \'+this.value);}">'+
+        '<button onclick="agentCmd(\'check \'+document.getElementById(\'_empLookup\').value)" style="margin-top:8px;width:100%;background:var(--navy);color:#fff;border:none;border-radius:8px;padding:8px;font-size:12px;font-weight:700;cursor:pointer">🔍 Search</button>'+
+        '</div></div>';
+    body.appendChild(d); body.scrollTop=body.scrollHeight;
 }
-
 async function loadAccountTrainingList() {
-    const targets = [
-        document.getElementById("accountTrainingList"),
-        document.getElementById("accountTrainingListTab")
-    ].filter(Boolean);
-    targets.forEach(el => { el.innerHTML = `<div style="text-align:center;padding:16px;color:var(--muted);font-size:12px">⏳ Loading…</div>`; });
+    var targets=["accountTrainingList","accountTrainingListTab"].map(function(id){return document.getElementById(id);}).filter(Boolean);
+    targets.forEach(function(el){el.innerHTML='<div style="text-align:center;padding:16px;color:var(--muted);font-size:12px">⏳ Loading…</div>';});
     try {
-        const res  = await apiFetch(_BASE + "/api/pmo/list-account-trainings", {
-            method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ pmo_email: rm_email })
-        });
-        const data = await res.json();
-        const courses = data.courses || data.trainings || [];
-        const html = courses.length
-            ? `<div style="border:1px solid #e2e8f0;border-radius:12px;overflow:hidden">${courses.map((c,i) =>
-                `<div style="padding:12px 16px;${i>0?"border-top:1px solid #f1f5f9":""};background:#fff;display:flex;align-items:center;justify-content:space-between">
-                    <div>
-                        <div style="font-size:13px;font-weight:700;color:var(--navy)">${_esc(c.course_name||c.name||"—")}</div>
-                        <div style="font-size:11px;color:var(--muted)">${c.description?_esc(c.description)+" · ":""} Deadline: ${_esc(String(c.deadline_days||15))} days</div>
-                    </div>
-                    <span class="badge b-assigned" style="flex-shrink:0">Active</span>
-                </div>`).join("")}</div>`
-            : `<div style="text-align:center;padding:20px;color:var(--muted);font-size:12px">No account trainings found.</div>`;
-        targets.forEach(el => { el.innerHTML = html; });
-    } catch(e) {
-        targets.forEach(el => { el.innerHTML = `<div style="text-align:center;padding:16px;color:var(--muted);font-size:12px">Could not load training list.</div>`; });
-    }
+        var res=await apiFetch(_BASE+"/api/pmo/list-account-trainings",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({pmo_email:rm_email})});
+        var data=await res.json(); var courses=data.courses||data.trainings||[];
+        var html=courses.length?'<div style="border:1px solid #e2e8f0;border-radius:12px;overflow:hidden">'+courses.map(function(c,i){return'<div style="padding:12px 16px;'+(i>0?'border-top:1px solid #f1f5f9':'')+'background:#fff;display:flex;align-items:center;justify-content:space-between"><div><div style="font-size:13px;font-weight:700;color:var(--navy)">'+_esc(c.course_name||c.name||"—")+'</div><div style="font-size:11px;color:var(--muted)">Deadline: '+_esc(String(c.deadline_days||15))+' days</div></div><span class="badge b-assigned">Active</span></div>';}).join("")+'</div>':'<div style="text-align:center;padding:20px;color:var(--muted);font-size:12px">No trainings found.</div>';
+        targets.forEach(function(el){el.innerHTML=html;});
+    } catch(e) { targets.forEach(function(el){el.innerHTML='<div style="text-align:center;padding:16px;color:var(--muted);font-size:12px">Could not load.</div>';}); }
 }
-
 async function loadTrainingResources() {
-    const el = document.getElementById("defaultCoursesManage");
-    if (!el) return;
-    el.innerHTML = `<div style="text-align:center;padding:16px;color:var(--muted);font-size:12px">⏳ Loading…</div>`;
-    const defaultCourses = COURSES.map((name, i) => ({ course_name: name, pdf_url: "", sequence: i+1 }));
-    try {
-        const res  = await apiFetch(_BASE + "/api/pmo/get-training-resources", {
-            method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ pmo_email: rm_email })
-        });
-        const data = await res.json();
-        if (data.resources?.length) data.resources.forEach((r,i) => { if (defaultCourses[i]) defaultCourses[i].pdf_url = r.pdf_url||""; });
-    } catch(_) {}
-    el.innerHTML = `<div style="border:1px solid #e2e8f0;border-radius:12px;overflow:hidden">${defaultCourses.map((c,i) =>
-        `<div style="padding:14px 16px;${i>0?"border-top:1px solid #f1f5f9":""};background:#fff;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-            <div style="width:28px;height:28px;border-radius:8px;background:#ede9fe;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#5b21b6;flex-shrink:0">${c.sequence}</div>
-            <div style="flex:1;min-width:160px"><div style="font-size:13px;font-weight:700;color:var(--navy)">${_esc(c.course_name)}</div>
-                ${c.pdf_url?`<a href="${_esc(c.pdf_url)}" target="_blank" style="font-size:11px;color:var(--teal2);font-weight:600">📄 View PDF</a>`:`<span style="font-size:11px;color:var(--muted)">No PDF</span>`}</div>
-            <input type="url" id="pdfUrl_${i}" value="${_esc(c.pdf_url||"")}" placeholder="Paste PDF URL…"
-                style="flex:2;min-width:200px;border:1px solid #e2e8f0;border-radius:8px;padding:7px 12px;font-size:12px;outline:none">
-            <button class="btn btn-ghost" style="height:34px;font-size:11px;flex-shrink:0" onclick="saveResourceUrl(${i},'${_esc(c.course_name)}')">💾 Save</button>
-        </div>`).join("")}</div>`;
+    var el=document.getElementById("defaultCoursesManage"); if(!el) return;
+    el.innerHTML='<div style="text-align:center;padding:16px;color:var(--muted);font-size:12px">⏳ Loading…</div>';
+    var courses=COURSES.map(function(name,i){return{course_name:name,pdf_url:"",sequence:i+1};});
+    try {var res=await apiFetch(_BASE+"/api/pmo/get-training-resources",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({pmo_email:rm_email})});var data=await res.json();if(data.resources) data.resources.forEach(function(r,i){if(courses[i]) courses[i].pdf_url=r.pdf_url||"";});} catch(e){}
+    el.innerHTML='<div style="border:1px solid #e2e8f0;border-radius:12px;overflow:hidden">'+courses.map(function(c,i){return'<div style="padding:14px 16px;'+(i>0?'border-top:1px solid #f1f5f9':'')+'background:#fff;display:flex;align-items:center;gap:12px;flex-wrap:wrap"><div style="width:28px;height:28px;border-radius:8px;background:#ede9fe;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#5b21b6;flex-shrink:0">'+c.sequence+'</div><div style="flex:1;min-width:160px"><div style="font-size:13px;font-weight:700;color:var(--navy)">'+_esc(c.course_name)+'</div>'+(c.pdf_url?'<a href="'+_esc(c.pdf_url)+'" target="_blank" style="font-size:11px;color:var(--teal2);font-weight:600">📄 View PDF</a>':'<span style="font-size:11px;color:var(--muted)">No PDF</span>')+'</div><input type="url" id="pdfUrl_'+i+'" value="'+_esc(c.pdf_url||"")+'" placeholder="Paste PDF URL…" style="flex:2;min-width:200px;border:1px solid #e2e8f0;border-radius:8px;padding:7px 12px;font-size:12px;outline:none"><button class="btn btn-ghost" style="height:34px;font-size:11px;flex-shrink:0" onclick="saveResourceUrl('+i+',\''+_esc(c.course_name)+'\')">💾 Save</button></div>';}).join("")+'</div>';
 }
-
 async function saveResourceUrl(idx, courseName) {
-    const inp = document.getElementById("pdfUrl_" + idx);
-    const url = _WAF.sanitize((inp?.value||"").trim(), 500);
-    if (!url) { toast("Please enter a URL", "amber"); return; }
-    try {
-        const res  = await apiFetch(_BASE + "/api/pmo/set-training-resource", {
-            method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ pmo_email: rm_email, course_name: courseName, pdf_url: url })
-        });
-        const data = await res.json();
-        if (data.success) toast(`✅ PDF saved for "${_esc(courseName)}"`, "green");
-        else toast("Failed: " + _esc(data.message||""), "red");
-    } catch(e) { toast("Backend error", "red"); }
+    var inp=document.getElementById("pdfUrl_"+idx), url=_WAF.sanitize((inp?.value||"").trim(),500);
+    if(!url){toast("Enter a URL","amber");return;}
+    try{var res=await apiFetch(_BASE+"/api/pmo/set-training-resource",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({pmo_email:rm_email,course_name:courseName,pdf_url:url})});var d=await res.json();if(d.success)toast("✅ PDF saved","green");else toast("Failed","red");}catch(e){toast("Backend error","red");}
 }
-
 async function addAccountTraining() {
-    const nameEl = document.getElementById("newCourseName");
-    const name   = _WAF.sanitize((nameEl?.value||"").trim(), 200);
-    if (!name) { toast("Enter a course name", "amber"); nameEl?.focus(); return; }
-    showConfirm({
-        title: "Add Training Course", type: "info",
-        message: `Assign <b>"${_esc(name)}"</b> to <b>${allEmployees.length} employees</b>?`,
-        detail: `📧 Training email sent to each employee immediately.`,
-        confirmLabel: `➕ Assign to All`, cancelLabel: "Cancel",
-        onConfirm: async () => {
-            const btn = document.getElementById("addCourseBtn");
-            if (btn) { btn.disabled = true; btn.textContent = "⏳ Assigning…"; }
-            try {
-                const res  = await apiFetch(_BASE + "/api/pmo/add-account-training", {
-                    method: "POST", headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        pmo_email: rm_email, course_name: name,
-                        description: _WAF.sanitize(document.getElementById("newCourseDesc")?.value||"", 300),
-                        deadline_days: parseInt(document.getElementById("newCourseDeadline")?.value||15)||15
-                    })
-                });
-                const data = await res.json();
-                if (data.success) {
-                    toast(`✅ "${_esc(name)}" assigned to ${data.assigned} employees`, "green");
-                    if (nameEl) nameEl.value = "";
-                    loadAccountTrainingList();
-                } else toast("Failed: " + _esc(data.message||""), "red");
-            } catch(e) { toast("Backend error", "red"); }
-            finally { if (btn) { btn.disabled = false; btn.textContent = "➕ Assign to All Employees & Send Email"; } }
-        }
+    var nameEl=document.getElementById("newCourseName"), name=_WAF.sanitize((nameEl?.value||"").trim(),200);
+    if(!name){toast("Enter a course name","amber");nameEl?.focus();return;}
+    showConfirm({title:"Add Training",type:"info",message:"Assign <b>\""+_esc(name)+"\"</b> to <b>"+allEmployees.length+" employees</b>?",confirmLabel:"➕ Assign to All",cancelLabel:"Cancel",
+        onConfirm:async function(){var btn=document.getElementById("addCourseBtn");if(btn){btn.disabled=true;btn.textContent="⏳ Assigning…";}
+            try{var res=await apiFetch(_BASE+"/api/pmo/add-account-training",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({pmo_email:rm_email,course_name:name,description:_WAF.sanitize(document.getElementById("newCourseDesc")?.value||"",300),deadline_days:parseInt(document.getElementById("newCourseDeadline")?.value||15)||15})});var d=await res.json();if(d.success){toast("✅ \""+_esc(name)+"\" assigned to "+d.assigned+" employees","green");if(nameEl)nameEl.value="";loadAccountTrainingList();}else toast("Failed: "+_esc(d.message||""),"red");}
+            catch(e){toast("Backend error","red");}
+            finally{if(btn){btn.disabled=false;btn.textContent="➕ Assign to All Employees & Send Email";}}}
     });
 }
+var _selectedPdfFile=null;
+function handlePdfDrop(event) { event.preventDefault(); var f=event.dataTransfer?.files?.[0]; if(!f?.name?.endsWith(".pdf")){toast("PDF only","amber");return;} _selectedPdfFile=f; var l=document.getElementById("pdfFileLabel"); if(l) l.textContent="📄 "+_esc(f.name); }
+function onPdfFileSelected(input) { var f=input?.files?.[0]; if(!f?.name?.endsWith(".pdf")){toast("PDF only","amber");if(input)input.value="";return;} _selectedPdfFile=f; var l=document.getElementById("pdfFileLabel"); if(l) l.textContent="📄 "+_esc(f.name); }
 
-let _selectedPdfFile = null;
-function handlePdfDrop(event) {
-    event.preventDefault();
-    const file = event.dataTransfer?.files?.[0];
-    if (!file?.name?.endsWith(".pdf")) { toast("Only PDF files accepted", "amber"); return; }
-    _selectedPdfFile = file;
-    const label = document.getElementById("pdfFileLabel");
-    if (label) label.textContent = `📄 ${_esc(file.name)} (${(file.size/1024).toFixed(0)} KB)`;
-}
-function onPdfFileSelected(input) {
-    const file = input?.files?.[0];
-    if (!file?.name?.endsWith(".pdf")) { toast("Only PDF files accepted", "amber"); if (input) input.value = ""; return; }
-    _selectedPdfFile = file;
-    const label = document.getElementById("pdfFileLabel");
-    if (label) label.textContent = `📄 ${_esc(file.name)} (${(file.size/1024).toFixed(0)} KB)`;
-}
-
-/* ─────────────────────────────────────────────────────────────
-   18. CONFIRMATION DIALOG
-───────────────────────────────────────────────────────────── */
+/* ── Confirm dialog ──────────────────────────────────────────── */
 function showConfirm(opts) {
-    const existing = document.getElementById("_confirmOverlay");
-    if (existing) existing.remove();
-    const typeColors = {
-        danger:  { bg:"#fef2f2", border:"#f87171", btn:"linear-gradient(135deg,#ef4444,#f87171)", icon:"⚠️" },
-        warning: { bg:"#fff7ed", border:"#fcd34d", btn:"linear-gradient(135deg,#f59e0b,#fcd34d)", icon:"📧" },
-        info:    { bg:"#eff6ff", border:"#60a5fa", btn:"linear-gradient(135deg,#3b82f6,#60a5fa)", icon:"ℹ️" },
-    };
-    const c = typeColors[opts.type||"warning"];
-    const overlay = document.createElement("div");
-    overlay.id = "_confirmOverlay";
-    overlay.style.cssText = `position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)`;
-    overlay.innerHTML = `<div style="background:#fff;border-radius:22px;padding:28px 30px;width:min(94vw,480px);box-shadow:0 24px 80px rgba(0,0,0,.22);animation:popIn .25s cubic-bezier(.22,1,.36,1)">
-        <div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:20px">
-            <div style="width:48px;height:48px;border-radius:14px;background:${c.bg};border:1px solid ${c.border};display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">${c.icon}</div>
-            <div>
-                <div style="font-size:17px;font-weight:800;color:#172b42;margin-bottom:4px">${_esc(opts.title||"Confirm")}</div>
-                <div style="font-size:13px;color:#475569;line-height:1.7">${opts.message||""}</div>
-            </div>
-        </div>
-        ${opts.detail?`<div style="background:${c.bg};border:1px solid ${c.border};border-radius:12px;padding:12px 16px;font-size:12px;color:#475569;margin-bottom:20px;line-height:1.8">${opts.detail}</div>`:""}
-        <div style="display:flex;gap:10px;justify-content:flex-end">
-            <button id="_confirmCancel" style="height:40px;padding:0 18px;border-radius:12px;border:1.5px solid #e2e8f0;background:#f8fafc;color:#64748b;font-size:13px;font-weight:700;cursor:pointer">${_esc(opts.cancelLabel||"Cancel")}</button>
-            <button id="_confirmOK" style="height:40px;padding:0 20px;border-radius:12px;border:none;background:${c.btn};color:#fff;font-size:13px;font-weight:700;cursor:pointer">${_esc(opts.confirmLabel||"Confirm")}</button>
-        </div>
-    </div>`;
+    var ex=document.getElementById("_confirmOverlay"); if(ex) ex.remove();
+    var tc={danger:{bg:"#fef2f2",border:"#f87171",btn:"linear-gradient(135deg,#ef4444,#f87171)",icon:"⚠️"},warning:{bg:"#fff7ed",border:"#fcd34d",btn:"linear-gradient(135deg,#f59e0b,#fcd34d)",icon:"📧"},info:{bg:"#eff6ff",border:"#60a5fa",btn:"linear-gradient(135deg,#3b82f6,#60a5fa)",icon:"ℹ️"}};
+    var c=tc[opts.type||"warning"];
+    var overlay=document.createElement("div"); overlay.id="_confirmOverlay";
+    overlay.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)";
+    overlay.innerHTML="<div style='background:#fff;border-radius:22px;padding:28px 30px;width:min(94vw,480px);box-shadow:0 24px 80px rgba(0,0,0,.22)'>" +
+        "<div style='display:flex;align-items:flex-start;gap:14px;margin-bottom:20px'><div style='width:48px;height:48px;border-radius:14px;background:"+c.bg+";border:1px solid "+c.border+";display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0'>"+c.icon+"</div>" +
+        "<div><div style='font-size:17px;font-weight:800;color:#172b42;margin-bottom:4px'>"+_esc(opts.title||"Confirm")+"</div><div style='font-size:13px;color:#475569;line-height:1.7'>"+(opts.message||"")+"</div></div></div>" +
+        (opts.detail?"<div style='background:"+c.bg+";border:1px solid "+c.border+";border-radius:12px;padding:12px 16px;font-size:12px;color:#475569;margin-bottom:20px;line-height:1.8'>"+opts.detail+"</div>":"") +
+        "<div style='display:flex;gap:10px;justify-content:flex-end'><button id='_confirmCancel' style='height:40px;padding:0 18px;border-radius:12px;border:1.5px solid #e2e8f0;background:#f8fafc;color:#64748b;font-size:13px;font-weight:700;cursor:pointer'>"+_esc(opts.cancelLabel||"Cancel")+"</button>" +
+        "<button id='_confirmOK' style='height:40px;padding:0 20px;border-radius:12px;border:none;background:"+c.btn+";color:#fff;font-size:13px;font-weight:700;cursor:pointer'>"+_esc(opts.confirmLabel||"Confirm")+"</button></div></div>";
     document.body.appendChild(overlay);
-    document.getElementById("_confirmOK").onclick     = () => { overlay.remove(); if (opts.onConfirm) opts.onConfirm(); };
-    document.getElementById("_confirmCancel").onclick = () => overlay.remove();
-    overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
+    document.getElementById("_confirmOK").onclick=function(){overlay.remove();if(opts.onConfirm)opts.onConfirm();};
+    document.getElementById("_confirmCancel").onclick=function(){overlay.remove();};
+    overlay.onclick=function(e){if(e.target===overlay)overlay.remove();};
 }
 
-/* ─────────────────────────────────────────────────────────────
-   19. CHATBOT — Single unified implementation
-   All messages → _doSend() → /api/chatbot
-   WAF filters every input before it leaves the browser.
-   Output escaped via _esc() before DOM insertion.
-───────────────────────────────────────────────────────────── */
-let agentOpen = false;
-
+/* ── CHATBOT ─────────────────────────────────────────────────── */
 function toggleAgent() {
-    agentOpen = !agentOpen;
-    const p = document.getElementById("agentPanel");
-    if (p) p.className = agentOpen ? "agent-panel open" : "agent-panel";
-    if (agentOpen) {
-        setTimeout(() => document.getElementById("agentInput")?.focus(), 120);
-    }
+    agentOpen=!agentOpen;
+    var p=document.getElementById("agentPanel"); if(p) p.className=agentOpen?"agent-panel open":"agent-panel";
+    if(agentOpen) { var inp=document.getElementById("agentInput"); if(inp) setTimeout(function(){inp.focus();},120); }
 }
-
 function addBotMsg(html) {
-    const b = document.getElementById("agentBody");
-    if (!b) return;
-    const d = document.createElement("div");
-    d.className = "msg bot";
-    d.innerHTML = `<div>${html}</div>`;
-    b.appendChild(d); b.scrollTop = b.scrollHeight;
+    var b=document.getElementById("agentBody"); if(!b) return;
+    var d=document.createElement("div"); d.className="msg bot";
+    d.innerHTML="<div>"+html+"</div>"; b.appendChild(d); b.scrollTop=b.scrollHeight;
 }
-
 function addUserMsg(text) {
-    const b = document.getElementById("agentBody");
-    if (!b) return;
-    const d = document.createElement("div");
-    d.className = "msg user";
-    d.innerHTML = `<div>${_esc(text)}</div>`;
-    b.appendChild(d); b.scrollTop = b.scrollHeight;
+    var b=document.getElementById("agentBody"); if(!b) return;
+    var d=document.createElement("div"); d.className="msg user";
+    d.innerHTML="<div>"+_esc(text)+"</div>"; b.appendChild(d); b.scrollTop=b.scrollHeight;
 }
-
 function _addTyping() {
-    const b = document.getElementById("agentBody");
-    if (!b) return null;
-    const tid = "typ_" + Date.now();
-    const d = document.createElement("div");
-    d.className = "msg bot";
-    d.id = "wrap_" + tid;
-    d.innerHTML = `<div style="display:flex;align-items:center;gap:5px;padding:6px 2px">
-        <span style="width:8px;height:8px;background:#19d3a2;border-radius:50%;animation:typDot 1.2s infinite"></span>
-        <span style="width:8px;height:8px;background:#19d3a2;border-radius:50%;animation:typDot 1.2s .2s infinite"></span>
-        <span style="width:8px;height:8px;background:#19d3a2;border-radius:50%;animation:typDot 1.2s .4s infinite"></span>
-        <span style="font-size:11px;color:#94a3b8;margin-left:4px">Thinking…</span>
-    </div>`;
-    b.appendChild(d); b.scrollTop = b.scrollHeight;
-    return tid;
+    var b=document.getElementById("agentBody"); if(!b) return null;
+    var tid="typ_"+Date.now(), d=document.createElement("div"); d.className="msg bot"; d.id="wrap_"+tid;
+    d.innerHTML="<div style='display:flex;align-items:center;gap:5px;padding:6px 2px'><span style='width:8px;height:8px;background:#19d3a2;border-radius:50%;animation:typDot 1.2s infinite'></span><span style='width:8px;height:8px;background:#19d3a2;border-radius:50%;animation:typDot 1.2s .2s infinite'></span><span style='width:8px;height:8px;background:#19d3a2;border-radius:50%;animation:typDot 1.2s .4s infinite'></span><span style='font-size:11px;color:#94a3b8;margin-left:4px'>Thinking…</span></div>";
+    b.appendChild(d); b.scrollTop=b.scrollHeight; return tid;
 }
+function _removeTyping(tid) { if(!tid) return; var w=document.getElementById("wrap_"+tid); if(w) w.remove(); }
 
-function _removeTyping(tid) {
-    if (!tid) return;
-    const w = document.getElementById("wrap_" + tid);
-    if (w) w.remove();
-}
-
-/* Main send — WAF → /api/chatbot → render */
 async function _doSend(raw) {
     if (!raw) return;
-
-    /* WAF check */
-    const wafResult = _WAF.check(raw);
-    if (!wafResult.safe) {
-        addBotMsg(`⚠️ Message blocked: ${_esc(wafResult.reason)}`);
-        return;
-    }
-
-    /* Rate limit */
-    if (!_checkRate()) {
-        addBotMsg("⚠️ Too many messages — please wait a moment.");
-        return;
-    }
-
+    var wafR=_WAF.check(raw);
+    if(!wafR.safe){addBotMsg("⚠️ Message blocked: "+_esc(wafR.reason||"Blocked pattern"));return;}
+    if(!_checkRate()){addBotMsg("⚠️ Too many messages — please wait a moment.");return;}
     addUserMsg(raw);
-    const tid = _addTyping();
-
+    var tid=_addTyping();
     try {
-        const res = await fetch(_BASE + "/api/chatbot", {
-            method: "POST",
-            credentials: "include",
-            headers: {
-                "Content-Type": "application/json",
-                "ngrok-skip-browser-warning": "true"
-            },
-            body: JSON.stringify({
-                message:    raw.slice(0, 400),
-                user_email: _getEmail(),
-                user_role:  PAGE_ROLE,
-                page:       PAGE_ROLE
-            })
-        });
-
+        var res=await fetch(_BASE+"/api/chatbot",{method:"POST",credentials:"include",headers:{"Content-Type":"application/json","ngrok-skip-browser-warning":"true"},body:JSON.stringify({message:raw.slice(0,400),user_email:rm_email,user_role:PAGE_ROLE,page:PAGE_ROLE})});
         _removeTyping(tid);
-
-        if (!res.ok) {
-            const errMap = { 401:"🔒 Session expired — please log in again.",
-                             429:"⚠️ Too many requests — please wait.",
-                             403:"🔒 Access denied." };
-            addBotMsg(errMap[res.status] || `❌ Server error (${res.status}).`);
-            return;
-        }
-
-        let data;
-        try { data = await res.json(); }
-        catch { addBotMsg("❌ Invalid response from server."); return; }
-
-        if (!data.success) {
-            addBotMsg("❌ " + _esc(data.message || "Unknown error"));
-            return;
-        }
-
-        if (data.corrected && data.corrected.toLowerCase() !== raw.toLowerCase()) {
-            addBotMsg(`<small style="color:#94a3b8;font-size:10px">💬 Interpreted: "<i>${_esc(data.corrected)}</i>"</small>`);
-        }
-
-        const reply = data.reply;
-        if (reply?.type === "action") {
-            addBotMsg(_renderReply(reply));
-            const actionMap = {
-                openInductionModal: () => openModal("inductionModal"),
-                openTrainingModal:  () => openModal("allocTrainingModal"),
-            };
-            if (actionMap[reply.action]) setTimeout(actionMap[reply.action], 600);
-        } else if (reply?.type === "confirm") {
-            _handleConfirmReply(reply);
-        } else {
-            addBotMsg(_renderReply(reply));
-        }
-
-    } catch(err) {
-        _removeTyping(tid);
-        console.warn("Chatbot:", err.message);
-        addBotMsg("❌ Cannot reach backend. Check tunnel is running.");
-    }
+        if(!res.ok){var errMap={401:"🔒 Session expired.",429:"⚠️ Too many requests.",403:"🔒 Access denied."};addBotMsg(errMap[res.status]||"❌ Server error ("+res.status+").");return;}
+        var data; try{data=await res.json();}catch(e){addBotMsg("❌ Invalid server response.");return;}
+        if(!data.success){addBotMsg("❌ "+_esc(data.message||"Unknown error"));return;}
+        if(data.corrected&&data.corrected.toLowerCase()!==raw.toLowerCase()) addBotMsg("<small style='color:#94a3b8;font-size:10px'>💬 Interpreted: \"<i>"+_esc(data.corrected)+"</i>\"</small>");
+        var reply=data.reply;
+        if(reply&&reply.type==="action"){addBotMsg(_renderReply(reply));var am={openInductionModal:function(){openModal("inductionModal");},openTrainingModal:function(){openModal("allocTrainingModal");}};if(am[reply.action]) setTimeout(am[reply.action],600);}
+        else if(reply&&reply.type==="confirm"){_handleConfirmReply(reply);}
+        else addBotMsg(_renderReply(reply));
+    } catch(err) { _removeTyping(tid); addBotMsg("❌ Cannot reach backend. Check tunnel is running."); }
 }
 
 function _handleConfirmReply(reply) {
-    const b = document.getElementById("agentBody");
-    if (!b) return;
-    const d = document.createElement("div");
-    d.className = "msg bot";
-    d.innerHTML = `<div>
-        <b>${_esc(reply.title)}</b><br>
-        ${_esc(reply.message)}<br>
-        <button id="cfBtn_${_esc(reply.action||"ok")}"
-            style="margin-top:10px;background:linear-gradient(135deg,#19d3a2,#0f9e75);
-            color:white;border:none;border-radius:10px;padding:9px 18px;
-            font-size:12px;font-weight:700;cursor:pointer">
-            ✅ Confirm
-        </button>
-    </div>`;
-    b.appendChild(d); b.scrollTop = b.scrollHeight;
-    const btn = document.getElementById("cfBtn_" + (reply.action||"ok"));
-    if (btn) {
-        btn.onclick = () => {
-            if (reply.action === "sendReminders") sendReminders();
-            btn.disabled = true; btn.textContent = "✅ Done";
-        };
-    }
+    var b=document.getElementById("agentBody"); if(!b) return;
+    var d=document.createElement("div"); d.className="msg bot";
+    d.innerHTML="<div><b>"+_esc(reply.title)+"</b><br>"+_esc(reply.message)+"<br><button id='cfBtn_"+_esc(reply.action||"ok")+"' style='margin-top:10px;background:linear-gradient(135deg,#19d3a2,#0f9e75);color:white;border:none;border-radius:10px;padding:9px 18px;font-size:12px;font-weight:700;cursor:pointer'>✅ Confirm</button></div>";
+    b.appendChild(d); b.scrollTop=b.scrollHeight;
+    var btn=document.getElementById("cfBtn_"+(reply.action||"ok"));
+    if(btn) btn.onclick=function(){if(reply.action==="sendReminders") sendReminders(); btn.disabled=true; btn.textContent="✅ Done";};
 }
 
-/* Reply renderer — all output via _esc() */
 function _renderReply(r) {
-    if (!r) return "⚠️ No response from server.";
-    const t = r.type;
-
-    if (t === "summary") {
-        const rows = Object.entries(r.data||{}).map(([k,v]) =>
-            `<tr>
-              <td style="color:#7d8da5;padding:5px 8px;font-size:11px;white-space:nowrap">${_esc(k.replace(/_/g," "))}</td>
-              <td style="font-weight:800;padding:5px 8px;font-size:13px;color:#172b42">${_esc(String(v))}</td>
-             </tr>`
-        ).join("");
-        return `<b>${_esc(r.title)}</b><br>
-            <table style="margin-top:8px;border-collapse:collapse;width:100%;
-                background:#f8fafc;border-radius:10px;overflow:hidden">${rows}</table>`;
-    }
-
-    if (t === "list") {
-        if (!(r.items||[]).length) return `${_esc(r.title||"")} — No records found.`;
-        const rows = (r.items||[]).slice(0,8).map(row => {
-            const name = _esc(row.emp_name||row.location||"—");
-            const loc  = row.location ? ` <span style="color:#94a3b8">· ${_esc(row.location)}</span>` : "";
-            const sub  = row.current_step ? ` <span style="color:#94a3b8">— ${_esc(row.current_step.replace(/_/g," "))}</span>` : "";
-            return `<div style="padding:5px 0;border-bottom:1px solid #f1f5f9">
-                <span style="font-size:11px">● </span><b style="font-size:12px">${name}</b>${loc}${sub}
-            </div>`;
-        }).join("");
-        const more = (r.total||0) > 8
-            ? `<div style="color:#94a3b8;font-size:10px;padding-top:4px">…and ${r.total-8} more</div>` : "";
-        return `<b>${_esc(r.title)}</b>
-            <div style="margin-top:8px;background:#f8fafc;border-radius:10px;padding:8px 10px">${rows}${more}</div>`;
-    }
-
-    if (t === "employee") {
-        const d = r.data||{};
-        const fields = [
-            ["ID", d.emp_id], ["Role", d.designation], ["Location", d.location],
-            ["Status", d.onboarding_status], ["Step", (d.current_step||"").replace(/_/g," ")],
-            ["Progress", (d.progress||0)+"%"], ["Training", (d.training_percentage||0)+"%"],
-            ["Laptop", d.laptop_status||"—"], ["ID Card", d.id_card_status||"—"],
-            ["Risk", d.risk_level||"LOW"],
-        ].filter(([,v])=>v).map(([k,v])=>
-            `<tr>
-              <td style="color:#7d8da5;padding:4px 8px;font-size:11px;white-space:nowrap">${_esc(k)}</td>
-              <td style="font-weight:700;padding:4px 8px;font-size:12px;color:#172b42">${_esc(String(v))}</td>
-             </tr>`
-        ).join("");
-        return `<b style="font-size:13px">👤 ${_esc(d.emp_name||"—")}</b><br>
-            <table style="margin-top:8px;border-collapse:collapse;background:#f8fafc;border-radius:10px;overflow:hidden;width:100%">${fields}</table>`;
-    }
-
-    if (t === "help") {
-        const items = (r.intents||[]).map(c => {
-            const cmd = _esc(c.split("/")[0].trim());
-            return `<div onclick="agentCmd('${cmd}')"
-                style="padding:8px 12px;margin:3px 0;border-radius:8px;border:1px solid #e2e8f0;
-                    cursor:pointer;font-size:12px;background:#fff;color:#0f2044;
-                    display:flex;align-items:center;justify-content:space-between;
-                    transition:all .15s"
-                onmouseover="this.style.background='#f0fdf9';this.style.borderColor='var(--teal)'"
-                onmouseout="this.style.background='#fff';this.style.borderColor='#e2e8f0'">
-                ${cmd} <span style="color:var(--teal);font-size:10px;font-weight:800">▶ run</span>
-            </div>`;
-        }).join("");
-        return `<b>${_esc(r.title)}</b><br>
-            <small style="color:#94a3b8;font-size:10px;display:block;margin-bottom:6px">
-                🧠 NLP-powered · learns from every interaction</small>
-            ${items}`;
-    }
-
-    if (t === "count") {
-        return `<b>${_esc(r.title)}</b><br>
-            <div style="margin:8px 0;text-align:center">
-                <span style="font-size:36px;font-weight:900;color:#0f2044">${_esc(String(r.count))}</span>
-            </div>
-            <small style="color:#94a3b8">${_esc(r.message||"")}</small>`;
-    }
-
-    if (t === "fallback") {
-        return `🤖 ${_esc(r.message)}<br>
-            <small style="color:#94a3b8;font-size:10px">
-                ✍️ "<i>${_esc(r.raw_input||"")}</i>" logged — model learns automatically.</small>`;
-    }
-
-    if (t === "confirm") return `<b>${_esc(r.title)}</b><br>${_esc(r.message)}`;
-    if (t === "action")  return `<b>${_esc(r.title)}</b><br>${_esc(r.message)}`;
-    if (t === "prompt" || t === "not_found") return `⚠️ ${_esc(r.message)}`;
-    return _esc(r.message) || "Response received.";
+    if(!r) return "⚠️ No response.";
+    var t=r.type;
+    if(t==="summary"){var rows=Object.entries(r.data||{}).map(function(kv){return"<tr><td style='color:#7d8da5;padding:5px 8px;font-size:11px;white-space:nowrap'>"+_esc(kv[0].replace(/_/g," "))+"</td><td style='font-weight:800;padding:5px 8px;font-size:13px;color:#172b42'>"+_esc(String(kv[1]))+"</td></tr>";}).join("");return"<b>"+_esc(r.title)+"</b><br><table style='margin-top:8px;border-collapse:collapse;width:100%;background:#f8fafc;border-radius:10px;overflow:hidden'>"+rows+"</table>";}
+    if(t==="list"){if(!(r.items||[]).length) return _esc(r.title||"")+" — No records found.";var rows=(r.items||[]).slice(0,8).map(function(row){var name=_esc(row.emp_name||row.location||"—"),loc=row.location?"<span style='color:#94a3b8'> · "+_esc(row.location)+"</span>":"",sub=row.current_step?"<span style='color:#94a3b8'> — "+_esc(row.current_step.replace(/_/g," "))+"</span>":"";return"<div style='padding:5px 0;border-bottom:1px solid #f1f5f9'><b>"+name+"</b>"+loc+sub+"</div>";}).join(""),more=(r.total||0)>8?"<div style='color:#94a3b8;font-size:10px;padding-top:4px'>…and "+(r.total-8)+" more</div>":"";return"<b>"+_esc(r.title)+"</b><div style='margin-top:8px;background:#f8fafc;border-radius:10px;padding:8px 10px'>"+rows+more+"</div>";}
+    if(t==="employee"){var d=r.data||{},fields=[["ID",d.emp_id],["Role",d.designation],["Location",d.location],["Status",d.onboarding_status],["Step",(d.current_step||"").replace(/_/g," ")],["Progress",(d.progress||0)+"%"],["Training",(d.training_percentage||0)+"%"],["Risk",d.risk_level||"LOW"]].filter(function(f){return f[1];}).map(function(f){return"<tr><td style='color:#7d8da5;padding:4px 8px;font-size:11px;white-space:nowrap'>"+_esc(f[0])+"</td><td style='font-weight:700;padding:4px 8px;font-size:12px;color:#172b42'>"+_esc(String(f[1]))+"</td></tr>";}).join("");return"<b style='font-size:13px'>👤 "+_esc(d.emp_name||"—")+"</b><br><table style='margin-top:8px;border-collapse:collapse;background:#f8fafc;border-radius:10px;overflow:hidden;width:100%'>"+fields+"</table>";}
+    if(t==="help"){var items=(r.intents||[]).map(function(c){var cmd=_esc(c.split("/")[0].trim());return"<div onclick=\"agentCmd('"+cmd+"')\" style='padding:8px 12px;margin:3px 0;border-radius:8px;border:1px solid #e2e8f0;cursor:pointer;font-size:12px;background:#fff;color:#0f2044;display:flex;align-items:center;justify-content:space-between;transition:all .15s' onmouseover=\"this.style.background='#f0fdf9';this.style.borderColor='var(--teal)'\" onmouseout=\"this.style.background='#fff';this.style.borderColor='#e2e8f0'\">"+cmd+" <span style='color:var(--teal);font-size:10px;font-weight:800'>▶ run</span></div>";}).join("");return"<b>"+_esc(r.title)+"</b><br><small style='color:#94a3b8;font-size:10px;display:block;margin-bottom:6px'>🧠 NLP-powered · learns automatically</small>"+items;}
+    if(t==="count") return"<b>"+_esc(r.title)+"</b><br><div style='margin:8px 0;text-align:center'><span style='font-size:36px;font-weight:900;color:#0f2044'>"+_esc(String(r.count))+"</span></div><small style='color:#94a3b8'>"+_esc(r.message||"")+"</small>";
+    if(t==="fallback") return"🤖 "+_esc(r.message)+"<br><small style='color:#94a3b8;font-size:10px'>✍️ \"<i>"+_esc(r.raw_input||"")+"</i>\" logged — learning automatically.</small>";
+    if(t==="confirm") return"<b>"+_esc(r.title)+"</b><br>"+_esc(r.message);
+    if(t==="action")  return"<b>"+_esc(r.title)+"</b><br>"+_esc(r.message);
+    if(t==="prompt"||t==="not_found") return"⚠️ "+_esc(r.message);
+    return _esc(r.message)||"Response received.";
 }
 
-/* Public send API — ONE definition, no conflicts */
 function sendAgent() {
-    const inp = document.getElementById("agentInput");
-    if (!inp) return;
-    const raw = _WAF.sanitize((inp.value||"").trim(), 400);
-    if (!raw) return;
-    inp.value = "";
-    _doSend(raw);
+    var inp=document.getElementById("agentInput"); if(!inp) return;
+    var raw=_WAF.sanitize((inp.value||"").trim(),400); if(!raw) return;
+    inp.value=""; _doSend(raw);
 }
-
 function agentCmd(cmd) {
-    const safe = _WAF.sanitize(String(cmd||""), 200);
-    if (!safe) return;
-    if (!agentOpen) toggleAgent();
-    const inp = document.getElementById("agentInput");
-    if (inp) inp.value = "";
+    var safe=_WAF.sanitize(String(cmd||""),200); if(!safe) return;
+    if(!agentOpen) toggleAgent();
     _doSend(safe);
 }
 
-/* ─────────────────────────────────────────────────────────────
-   20. SECURITY HARDENING — Inspect blocker, console, session
-───────────────────────────────────────────────────────────── */
-/* Typing animation CSS */
+/* ── Security hardening ──────────────────────────────────────── */
 (function() {
-    const s = document.createElement("style");
-    s.textContent = `
-        @keyframes typDot {
-            0%,80%,100%{ transform:scale(0.6);opacity:.4 }
-            40%{ transform:scale(1.1);opacity:1 }
-        }
-        @keyframes popIn {
-            from{ opacity:0;transform:scale(0.92) translateY(8px) }
-            to  { opacity:1;transform:scale(1)    translateY(0) }
-        }`;
+    var s=document.createElement("style");
+    s.textContent="@keyframes typDot{0%,80%,100%{transform:scale(0.6);opacity:.4}40%{transform:scale(1.1);opacity:1}}@keyframes popIn{from{opacity:0;transform:scale(0.92) translateY(8px)}to{opacity:1;transform:scale(1) translateY(0)}}";
     document.head.appendChild(s);
 })();
 
-/* Keyboard shortcuts — F12, Ctrl+U, Ctrl+Shift+I */
 document.addEventListener("keydown", function(e) {
-    if (e.key === "F12") {
-        e.preventDefault();
-        toast("Developer tools are disabled in this dashboard.", "amber");
-        return false;
-    }
-    if (e.ctrlKey && (e.key === "u" || e.key === "U")) { e.preventDefault(); return false; }
-    if (e.ctrlKey && e.shiftKey && (e.key === "I" || e.key === "i" || e.key === "J" || e.key === "j" || e.key === "C" || e.key === "c")) {
-        e.preventDefault(); return false;
-    }
+    if(e.key==="F12"){e.preventDefault();toast("Developer tools are disabled in this dashboard.","amber");return false;}
+    if(e.ctrlKey&&(e.key==="u"||e.key==="U")){e.preventDefault();return false;}
+    if(e.ctrlKey&&e.shiftKey&&"IJC".indexOf(e.key.toUpperCase())>=0){e.preventDefault();return false;}
 }, true);
 
-/* Right-click disabled */
 document.addEventListener("contextmenu", function(e) { e.preventDefault(); return false; });
 
-/* Console protection */
-const _origLog = console.log, _origWarn = console.warn;
-console.log = function(...args) {
-    const str = JSON.stringify(args).toLowerCase();
-    /* Block bulk employee data from being logged */
-    if (str.includes("emp_id") && str.includes("email") && str.length > 800) return;
-    _origLog.apply(console, args);
-};
-console.warn = function(...args) { _origWarn.apply(console, args); };
+var _origLog=console.log;
+console.log=function(){var s=JSON.stringify(Array.from(arguments)).toLowerCase();if(s.indexOf("emp_id")>=0&&s.indexOf("email")>=0&&s.length>800) return;_origLog.apply(console,arguments);};
 
-/* Console fingerprint warning */
-console.log("%c⚠️ Security Notice", "color:red;font-size:24px;font-weight:bold");
-console.log("%cThis console is for authorized developers only.\nDo not paste any code here — doing so could compromise your account.", "font-size:14px;color:#172b42");
+console.log("%c⚠️ Security Notice","color:red;font-size:24px;font-weight:bold");
+console.log("%cThis console is for authorized developers only. Do not paste any code here.","font-size:14px;color:#172b42");
 
-/* Session timeout — 50 minutes inactivity */
-let _sessionTimer = null;
-function _resetSessionTimer() {
-    if (_sessionTimer) clearTimeout(_sessionTimer);
-    _sessionTimer = setTimeout(() => {
-        showConfirm({
-            title: "Session Expiring", type: "warning",
-            message: "Your session is about to expire due to inactivity.",
-            detail: "Click 'Stay Logged In' to continue, or you will be logged out.",
-            confirmLabel: "✅ Stay Logged In", cancelLabel: "🚪 Logout Now",
-            onConfirm: () => { _resetSessionTimer(); toast("Session extended.", "green"); }
-        });
-    }, 50 * 60 * 1000);
+var _sessionTimer=null;
+function _resetSessionTimer(){
+    if(_sessionTimer) clearTimeout(_sessionTimer);
+    _sessionTimer=setTimeout(function(){showConfirm({title:"Session Expiring",type:"warning",message:"Your session is about to expire due to inactivity.",detail:"Click 'Stay Logged In' to continue.",confirmLabel:"✅ Stay Logged In",cancelLabel:"🚪 Logout Now",onConfirm:function(){_resetSessionTimer();toast("Session extended.","green");}});},50*60*1000);
 }
-["click","keydown","mousemove","scroll","touchstart"].forEach(ev =>
-    document.addEventListener(ev, _resetSessionTimer, { passive: true })
-);
+["click","keydown","mousemove","scroll","touchstart"].forEach(function(ev){document.addEventListener(ev,_resetSessionTimer,{passive:true});});
 _resetSessionTimer();
 
-/* ─────────────────────────────────────────────────────────────
-   21. ENTER KEY — single binding, no conflicts
-───────────────────────────────────────────────────────────── */
+/* ── Enter key + init ────────────────────────────────────────── */
 document.addEventListener("DOMContentLoaded", function() {
-    const inp = document.getElementById("agentInput");
-    if (inp) {
+    var inp=document.getElementById("agentInput");
+    if(inp) {
         inp.addEventListener("keydown", function(e) {
-            if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                e.stopPropagation();
-                sendAgent();
-            }
+            if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();e.stopPropagation();sendAgent();}
         });
     }
-    /* Also bind Send button explicitly */
-    const sendBtn = document.querySelector(".agent-input button");
-    if (sendBtn) {
-        sendBtn.onclick = function() { sendAgent(); };
-    }
-    /* Induction date default */
-    const dateEl = document.getElementById("ind_date");
-    if (dateEl) {
-        const d = new Date(); d.setDate(d.getDate() + 1);
-        dateEl.value = d.toISOString().split("T")[0];
-    }
+    var sendBtn=document.querySelector(".agent-input button");
+    if(sendBtn) sendBtn.onclick=function(){sendAgent();};
+    var dateEl=document.getElementById("ind_date");
+    if(dateEl){var d=new Date();d.setDate(d.getDate()+1);dateEl.value=d.toISOString().split("T")[0];}
 });
 
-/* ─────────────────────────────────────────────────────────────
-   22. INIT
-───────────────────────────────────────────────────────────── */
-(async function init() {
-    if (!rm_email) {
-        rm_email = localStorage.getItem("user_email") || localStorage.getItem("email") || "";
-    }
-    if (!rm_email) {
-        window.location.href = "index.html?manual=true";
-        return;
-    }
-    await loadDashboard();
-    setInterval(loadDashboard, 60000);
+/* ── Init ────────────────────────────────────────────────────── */
+(function init(){
+    if(!rm_email){rm_email=localStorage.getItem("user_email")||localStorage.getItem("email")||"";}
+    if(!rm_email){window.location.href="index.html?manual=true";return;}
+    loadDashboard();
+    setInterval(loadDashboard,60000);
 })();
 
 </script>
