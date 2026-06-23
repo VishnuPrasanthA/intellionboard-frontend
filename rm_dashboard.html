@@ -221,7 +221,7 @@ tbody tr:hover td{box-shadow:0 10px 24px rgba(22,199,154,.05);}
     <div class="header-right">
         <div><strong id="rmName"></strong></div>
         <div id="liveStatus" style="background:#dcfce7;padding:8px 14px;border-radius:20px;font-size:12px;font-weight:700;color:#166534;">🟢 LIVE</div>
-        <button class="logout-btn" onclick="logout()">Logout</button>
+        <button class="logout-btn" onclick="if(confirm('Log out of IntelliOnboard?'))logout()">Logout</button>
     </div>
 </div>
 
@@ -314,6 +314,7 @@ tbody tr:hover td{box-shadow:0 10px 24px rgba(22,199,154,.05);}
 
 <script>
 const API      = "https://lxlt6hvb-5332.inc1.devtunnels.ms/api/rm";
+const _BASE    = API.replace("/api/rm","").replace(/\/+$/,""); // strip /api/rm for auth routes
 
 // ── ngrok bypass ─────────────────────────────────────────
 function apiFetch(url, opts = {}) {
@@ -1172,21 +1173,29 @@ async function sendChat(){
 
 /* ── logout ───────────────────────────────────────── */
 async function logout(){
-    try{
-        const res=await apiFetch("https://manatee-dislike-lifting.ngrok-free.dev/api/auth/logout",{method:"POST"});
-        if(!res.ok) console.warn("Logout API not OK");
-    }catch(err){console.error("Logout API Error:",err);}
-    finally{
-        localStorage.clear();sessionStorage.clear();
+    // Always clear local state and redirect — even if API call fails
+    function _doLogout(){
+        localStorage.clear();
+        sessionStorage.clear();
         document.cookie.split(";").forEach(function(c){
-            document.cookie=c.replace(/^ +/,"").replace(/=.*/,"=;expires="+new Date().toUTCString()+";path=/");
+            document.cookie=c.replace(/^ +/,"").replace(/=.*/,
+                "=;expires="+new Date(0).toUTCString()+";path=/;SameSite=None;Secure");
         });
-        window.location.replace("https://intellionboard.vercel.app/");
+        window.location.replace("https://intellionboard.vercel.app/?manual=true");
     }
+    try{
+        await Promise.race([
+            apiFetch(_BASE+"/api/auth/logout",{method:"POST"}),
+            new Promise((_,rej)=>setTimeout(()=>rej(new Error("timeout")),4000))
+        ]);
+    }catch(err){
+        console.warn("Logout API:", err.message);
+    }
+    _doLogout(); // always redirect regardless of API result
 }
 
 /* ── auto refresh ─────────────────────────────────── */
-setInterval(loadDashboard,10000);
+setInterval(loadDashboard,60000); // 60s — prevents table flicker
 loadDashboard();
 </script>
 </body>
