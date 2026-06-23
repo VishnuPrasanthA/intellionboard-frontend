@@ -1,0 +1,19 @@
+User-agent: *
+Disallow: /account_pmo_dashboard.html
+Disallow: /pmo_dashboard_pro.html
+Disallow: /leadership_dashboard.html
+Disallow: /admin_dashboard.html
+Disallow: /admin_portal.html
+Disallow: /hr_dashboard.html
+Disallow: /healthcare_pmo_dashboard.html
+Disallow: /itsg_dashboard.html
+Disallow: /employee_dashboard.html
+Disallow: /rm_dashboard.html
+Disallow: /hm_dashboard.html
+Disallow: /dashboard.html
+
+# Allow only the login page
+Allow: /index.html
+Allow: /login.html
+
+Sitemap: https://intellionboard.vercel.app/sitemap.xml
