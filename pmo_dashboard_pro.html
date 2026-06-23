@@ -1669,7 +1669,7 @@ async function _doSend(raw) {
     var tid=_addTyping();
     try {
         var _ac=new AbortController();
-        var _to=setTimeout(function(){_ac.abort();},15000); // 15s timeout
+        var _to=setTimeout(function(){_ac.abort();},30000); // 30s timeout
         var res;
         try { res=await fetch(_BASE+"/api/chatbot",{method:"POST",credentials:"include",signal:_ac.signal,headers:{"Content-Type":"application/json","ngrok-skip-browser-warning":"true"},body:JSON.stringify({message:raw.slice(0,400),user_email:rm_email,user_role:PAGE_ROLE,page:PAGE_ROLE})});}
         finally { clearTimeout(_to); }
