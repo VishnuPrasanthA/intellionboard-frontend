@@ -710,27 +710,63 @@ function playTopic(index, reviewMode=false){
     document.getElementById("watchTimer").textContent=`${m}:${s}`;
   }
   // Video
-  const videoWrap=document.getElementById("videoWrap");
-  const oldFrame=document.getElementById("spVideoFrame");
+  // Video — detect SharePoint/Stream URLs and use iframe instead of video tag
+  const videoWrap = document.getElementById("videoWrap");
+  const oldFrame  = document.getElementById("spVideoFrame");
   if(oldFrame) oldFrame.remove();
-  const videoUrl=(topic.video_url||"").trim();
-  if(videoUrl){
-    player.style.display="block";
+  const videoUrl  = (topic.video_url || "").trim();
+
+  function isEmbedUrl(url) {
+    return url.includes("sharepoint.com") ||
+           url.includes("microsoftstream") ||
+           url.includes("stream.office") ||
+           url.includes("teams.microsoft") ||
+           url.includes("embed.aspx") ||
+           url.includes("youtube.com/embed") ||
+           url.includes("youtu.be");
+  }
+
+  if(videoUrl && isEmbedUrl(videoUrl)) {
+    // SharePoint / Stream — must use iframe
     player.pause(); player.removeAttribute("src"); player.load();
-    player.src=videoUrl; player.preload="metadata"; player.load();
-    player.play().catch(err=>{ if(err.name!=="NotAllowedError") console.warn("Video:",err); });
-    videoWrap.style.display="block";
+    player.style.display = "none";
+    const iframe = document.createElement("iframe");
+    iframe.id    = "spVideoFrame";
+    iframe.src   = videoUrl;
+    iframe.allow = "autoplay; fullscreen; picture-in-picture";
+    iframe.allowFullscreen = true;
+    iframe.style.cssText   =
+      "width:100%;height:340px;border:none;background:#000;display:block";
+    videoWrap.appendChild(iframe);
+    videoWrap.style.display = "block";
+    // iframe can't fire onplay/onpause — start timer manually
+    startTimer();
+    const s = document.getElementById("timerStatus");
+    if(s) s.innerHTML = '<span style="color:#19d3a2">▶ Recording</span>';
+    if(autoSaveInterval) clearInterval(autoSaveInterval);
+    autoSaveInterval = setInterval(saveWatchProgress, 30000);
+
+  } else if(videoUrl) {
+    // Normal mp4 / direct video URL
+    player.style.display = "block";
+    player.pause(); player.removeAttribute("src"); player.load();
+    player.src = videoUrl; player.preload = "metadata"; player.load();
+    player.play().catch(err => {
+      if(err.name !== "NotAllowedError") console.warn("Video:", err);
+    });
+    videoWrap.style.display = "block";
+
   } else {
+    // No video at all
     player.pause(); player.removeAttribute("src"); player.load();
-    player.style.display="none";
-    videoWrap.innerHTML=`<div style="display:flex;flex-direction:column;align-items:center;
+    player.style.display = "none";
+    videoWrap.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;
       justify-content:center;height:160px;color:#94a3b8;font-size:13px;background:#f8fafc">
       <div style="font-size:40px;margin-bottom:10px">📭</div>
       <p>No video available for this topic</p>
     </div>`;
-    videoWrap.style.display="block";
+    videoWrap.style.display = "block";
   }
-
   // ── PDF RESOURCE PANEL ──────────────────────────────────
   // topic.pdf_url: full URL if backend serves it
   // topic.pdf_name: filename for display
@@ -955,6 +991,9 @@ async function renderHoursChart(trainings){
 function closeModal(){
   const player=document.getElementById("videoPlayer");
   player.pause();
+  const spFrame = document.getElementById("spVideoFrame");
+  if(spFrame) spFrame.remove();
+  player.style.display = "block"; 
   if(autoSaveInterval){ clearInterval(autoSaveInterval); autoSaveInterval=null; }
   saveWatchProgress();
   setTimeout(refreshHoursCard,1200);
