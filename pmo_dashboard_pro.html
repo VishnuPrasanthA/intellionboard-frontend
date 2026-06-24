@@ -1640,19 +1640,40 @@ function detectUrlType(input, badgeId){
 }
 
 async function saveResourceUrl(idx, courseName, type) {
-    type = type||"pdf";
-    var inputId = (type==="video") ? "vidUrl_"+idx : "pdfUrl_"+idx;
-    var inp=document.getElementById(inputId), url=_WAF.sanitize((inp?.value||"").trim(),500);
-    if(!url){toast("Enter a URL","amber");return;}
-    try{
-      var field = (type==="video") ? "video_url" : "pdf_url";
-      var payload = {pmo_email:rm_email, course_name:courseName};
-      payload[field] = url;
-      var res=await apiFetch(_BASE+"/api/pmo/set-training-resource",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
-      var d=await res.json();
-      if(d.success) toast("✅ "+(type==="video"?"Video":"PDF")+" saved for "+courseName,"green");
-      else toast("Failed: "+(d.message||""),"red");
-    }catch(e){toast("Backend error","red");}
+    type = type || "pdf";
+    var inputId = (type === "video") ? "vidUrl_" + idx : "pdfUrl_" + idx;
+    var inp = document.getElementById(inputId);
+    var url = _WAF.sanitize((inp?.value || "").trim(), 500);
+    if (!url) { toast("Enter a URL", "amber"); return; }
+
+    var payload = {
+        pmo_email:     rm_email,
+        training_name: courseName,   // ← was course_name, backend needs training_name
+        course_name:   courseName,   // keep both for safety
+    };
+    if (type === "video") {
+        payload.video_url = url;
+        payload.pdf_url   = "";
+    } else {
+        payload.pdf_url   = url;
+        payload.video_url = "";
+    }
+
+    try {
+        var res = await apiFetch(_BASE + "/api/pmo/set-training-resource", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+        var d = await res.json();
+        if (d.success) {
+            toast("✅ " + (type === "video" ? "Video" : "PDF") + " saved for " + courseName, "green");
+        } else {
+            toast("Failed: " + (d.message || ""), "red");
+        }
+    } catch (e) {
+        toast("Backend error", "red");
+    }
 }
 async function addAccountTraining() {
     var nameEl=document.getElementById("newCourseName"), name=_WAF.sanitize((nameEl?.value||"").trim(),200);
