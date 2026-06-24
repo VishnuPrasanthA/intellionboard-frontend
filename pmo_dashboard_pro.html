@@ -1594,14 +1594,65 @@ async function loadAccountTrainingList() {
 async function loadTrainingResources() {
     var el=document.getElementById("defaultCoursesManage"); if(!el) return;
     el.innerHTML='<div style="text-align:center;padding:16px;color:var(--muted);font-size:12px">⏳ Loading…</div>';
-    var courses=COURSES.map(function(name,i){return{course_name:name,pdf_url:"",sequence:i+1};});
-    try {var res=await apiFetch(_BASE+"/api/pmo/get-training-resources",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({pmo_email:rm_email})});var data=await res.json();if(data.resources) data.resources.forEach(function(r,i){if(courses[i]) courses[i].pdf_url=r.pdf_url||"";});} catch(e){}
-    el.innerHTML='<div style="border:1px solid #e2e8f0;border-radius:12px;overflow:hidden">'+courses.map(function(c,i){return'<div style="padding:14px 16px;'+(i>0?'border-top:1px solid #f1f5f9':'')+'background:#fff;display:flex;align-items:center;gap:12px;flex-wrap:wrap"><div style="width:28px;height:28px;border-radius:8px;background:#ede9fe;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#5b21b6;flex-shrink:0">'+c.sequence+'</div><div style="flex:1;min-width:160px"><div style="font-size:13px;font-weight:700;color:var(--navy)">'+_esc(c.course_name)+'</div>'+(c.pdf_url?'<a href="'+_esc(c.pdf_url)+'" target="_blank" style="font-size:11px;color:var(--teal2);font-weight:600">📄 View PDF</a>':'<span style="font-size:11px;color:var(--muted)">No PDF</span>')+'</div><input type="url" id="pdfUrl_'+i+'" value="'+_esc(c.pdf_url||"")+'" placeholder="Paste PDF URL…" style="flex:2;min-width:200px;border:1px solid #e2e8f0;border-radius:8px;padding:7px 12px;font-size:12px;outline:none"><button class="btn btn-ghost" style="height:34px;font-size:11px;flex-shrink:0" onclick="saveResourceUrl('+i+',\''+_esc(c.course_name)+'\')">💾 Save</button></div>';}).join("")+'</div>';
+    var courses=COURSES.map(function(name,i){return{course_name:name,pdf_url:"",video_url:"",sequence:i+1};});
+    try {var res=await apiFetch(_BASE+"/api/pmo/get-training-resources",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({pmo_email:rm_email})});var data=await res.json();if(data.resources) data.resources.forEach(function(r,i){if(courses[i]){courses[i].pdf_url=r.pdf_url||"";courses[i].video_url=r.video_url||"";}});} catch(e){}
+    el.innerHTML='<div style="border:1px solid #e2e8f0;border-radius:12px;overflow:hidden">'+courses.map(function(c,i){
+      var pdfTag   = c.pdf_url   ? '<a href="'+_esc(c.pdf_url)+'" target="_blank" style="font-size:11px;color:#0ea5e9;font-weight:600;margin-right:8px">📄 View PDF</a>' : '<span style="font-size:11px;color:var(--muted)">No PDF</span>';
+      var vidTag   = c.video_url ? '<a href="'+_esc(c.video_url)+'" target="_blank" style="font-size:11px;color:#a855f7;font-weight:600;margin-left:8px">▶ View Video</a>' : '';
+      return '<div style="padding:16px;'+(i>0?'border-top:1px solid #f1f5f9':'')+';background:#fff">'+
+        '<div style="display:flex;align-items:flex-start;gap:12px">'+
+          '<div style="width:28px;height:28px;border-radius:8px;background:#ede9fe;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#5b21b6;flex-shrink:0;margin-top:3px">'+c.sequence+'</div>'+
+          '<div style="flex:1">'+
+            '<div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:6px">'+_esc(c.course_name)+'</div>'+
+            '<div style="margin-bottom:4px">'+pdfTag+vidTag+'</div>'+
+            // PDF row
+            '<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap">'+
+              '<span style="font-size:10px;font-weight:800;color:#0ea5e9;width:52px;flex-shrink:0">📄 PDF</span>'+
+              '<input type="url" id="pdfUrl_'+i+'" value="'+_esc(c.pdf_url||"")+'" placeholder="Paste SharePoint / OneDrive PDF URL…" style="flex:1;min-width:180px;border:1px solid #bae6fd;border-radius:8px;padding:7px 12px;font-size:12px;outline:none;color:#0c4a6e" oninput="detectUrlType(this,\'pdf_badge_'+i+'\')" >'+
+              '<span id="pdf_badge_'+i+'" style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;background:#f0f9ff;color:#0ea5e9;flex-shrink:0"></span>'+
+              '<button class="btn btn-ghost" style="height:32px;font-size:11px;flex-shrink:0;border-color:#bae6fd;color:#0ea5e9" onclick="saveResourceUrl('+i+',\''+_esc(c.course_name)+'\',\'pdf\')">💾 Save</button>'+
+            '</div>'+
+            // Video row
+            '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">'+
+              '<span style="font-size:10px;font-weight:800;color:#a855f7;width:52px;flex-shrink:0">▶ Video</span>'+
+              '<input type="url" id="vidUrl_'+i+'" value="'+_esc(c.video_url||"")+'" placeholder="Paste SharePoint / Stream / YouTube video URL…" style="flex:1;min-width:180px;border:1px solid #e9d5ff;border-radius:8px;padding:7px 12px;font-size:12px;outline:none;color:#581c87" oninput="detectUrlType(this,\'vid_badge_'+i+'\')" >'+
+              '<span id="vid_badge_'+i+'" style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;background:#faf5ff;color:#a855f7;flex-shrink:0"></span>'+
+              '<button class="btn btn-ghost" style="height:32px;font-size:11px;flex-shrink:0;border-color:#e9d5ff;color:#a855f7" onclick="saveResourceUrl('+i+',\''+_esc(c.course_name)+'\',\'video\')">💾 Save</button>'+
+            '</div>'+
+          '</div>'+
+        '</div>'+
+      '</div>';
+    }).join('')+'</div>';
 }
-async function saveResourceUrl(idx, courseName) {
-    var inp=document.getElementById("pdfUrl_"+idx), url=_WAF.sanitize((inp?.value||"").trim(),500);
+function detectUrlType(input, badgeId){
+    var url=(input.value||"").trim().toLowerCase();
+    var badge=document.getElementById(badgeId); if(!badge) return;
+    if(!url){badge.textContent="";return;}
+    var cfg=url.includes("sharepoint.com")||url.includes("/sharepoint/")?["SharePoint","#e0f2fe","#0369a1"]:
+            url.includes("1drv.ms")||url.includes("onedrive.live")?["OneDrive","#eff6ff","#1d4ed8"]:
+            url.includes("youtube.com")||url.includes("youtu.be")?["YouTube","#fef2f2","#dc2626"]:
+            url.includes("microsoftstream")||url.includes("stream.office")?["MS Stream","#faf5ff","#7c3aed"]:
+            url.includes("teams.microsoft")?["MS Teams","#eff6ff","#1d4ed8"]:
+            url.endsWith(".pdf")?["PDF file","#f0fdf4","#15803d"]:
+            url.endsWith(".mp4")||url.endsWith(".webm")||url.endsWith(".mov")?["Video","#faf5ff","#7c3aed"]:
+            ["URL","#f1f5f9","#475569"];
+    badge.textContent=cfg[0]; badge.style.background=cfg[1]; badge.style.color=cfg[2];
+}
+
+async function saveResourceUrl(idx, courseName, type) {
+    type = type||"pdf";
+    var inputId = (type==="video") ? "vidUrl_"+idx : "pdfUrl_"+idx;
+    var inp=document.getElementById(inputId), url=_WAF.sanitize((inp?.value||"").trim(),500);
     if(!url){toast("Enter a URL","amber");return;}
-    try{var res=await apiFetch(_BASE+"/api/pmo/set-training-resource",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({pmo_email:rm_email,course_name:courseName,pdf_url:url})});var d=await res.json();if(d.success)toast("✅ PDF saved","green");else toast("Failed","red");}catch(e){toast("Backend error","red");}
+    try{
+      var field = (type==="video") ? "video_url" : "pdf_url";
+      var payload = {pmo_email:rm_email, course_name:courseName};
+      payload[field] = url;
+      var res=await apiFetch(_BASE+"/api/pmo/set-training-resource",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+      var d=await res.json();
+      if(d.success) toast("✅ "+(type==="video"?"Video":"PDF")+" saved for "+courseName,"green");
+      else toast("Failed: "+(d.message||""),"red");
+    }catch(e){toast("Backend error","red");}
 }
 async function addAccountTraining() {
     var nameEl=document.getElementById("newCourseName"), name=_WAF.sanitize((nameEl?.value||"").trim(),200);
