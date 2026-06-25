@@ -718,10 +718,18 @@ function playTopic(index, reviewMode=false){
   // Convert SharePoint/OneDrive share links to streamable URLs where possible
   function getStreamableUrl(url){
     if(!url) return url;
-    // OneDrive personal share links — try direct streaming by adding download=1
-    // e.g. infics-my.sharepoint.com/:v:/r/personal/...mp4
-    if(url.includes("-my.sharepoint.com") && (url.includes("/:v:/") || url.endsWith(".mp4"))){
-      // These can stream directly with the video tag
+    // Convert SharePoint /:v:/ viewer links to direct streaming URLs
+    // infics-my.sharepoint.com/:v:/r/personal/.../file.mp4
+    // → infics-my.sharepoint.com/:u:/r/personal/.../file.mp4?csf=1&web=1&e=
+    // The :u: variant forces direct download/stream
+    if(url.includes("sharepoint.com") && url.includes("/:v:/")) {
+      // Replace the viewer shortcode :v: with :f: (file) for direct access
+      url = url.replace("/:v:/", "/:f:/");
+      // Add streaming parameters
+      url += (url.includes("?") ? "&" : "?") + "csf=1&web=1";
+      return url;
+    }
+    if(url.includes("-my.sharepoint.com") && url.endsWith(".mp4")){
       return url.includes("?") ? url+"&download=0" : url+"?download=0";
     }
     return url;
@@ -740,8 +748,8 @@ function playTopic(index, reviewMode=false){
 
   function isDirectVideo(url){
     return url.endsWith(".mp4") || url.endsWith(".webm") || url.endsWith(".ogg") ||
-           url.endsWith(".mov") || url.includes("/:v:/") ||
-           url.includes("-my.sharepoint.com") ||
+           url.endsWith(".mov") || url.includes("/:v:/") || url.includes("/:f:/") ||
+           url.includes("-my.sharepoint.com") || url.includes("sharepoint.com/personal/") ||
            url.includes("download=1") || url.includes("download=0");
   }
 
@@ -776,11 +784,22 @@ function playTopic(index, reviewMode=false){
     // Try to play — if it fails due to CORS/auth, show a helpful message
     player.onerror=function(){
       player.style.display="none";
-      videoWrap.innerHTML+='<div id="videoErrMsg" style="background:#1e293b;color:#94a3b8;'
-        +'font-size:12px;padding:14px 18px;text-align:center;line-height:1.8">'
-        +'⚠️ Video could not load — it may require authentication.<br>'
-        +'<a href="'+videoUrl+'" target="_blank" style="color:#19d3a2;font-weight:700">'
-        +'▶ Open video in SharePoint</a> then come back and mark complete.</div>';
+      // Remove previous error if any
+      const old=document.getElementById("videoErrMsg"); if(old) old.remove();
+      const errDiv=document.createElement("div");
+      errDiv.id="videoErrMsg";
+      errDiv.style.cssText="background:#1e293b;color:#e2e8f0;font-size:13px;padding:20px 24px;text-align:center;line-height:2;border-radius:0";
+      errDiv.innerHTML=
+        "<div style='font-size:32px;margin-bottom:8px'>🔐</div>"+
+        "<div style='font-weight:700;margin-bottom:6px'>Sign in required to watch this video</div>"+
+        "<div style='font-size:12px;color:#94a3b8;margin-bottom:14px'>This video is stored in your organisation's SharePoint.<br>Open it in a new tab to watch — then come back and mark complete.</div>"+
+        "<a href='"+videoUrl+"' target='_blank' rel='noopener noreferrer' "+
+          "style='display:inline-block;background:linear-gradient(135deg,#19d3a2,#0ea5e9);"+
+          "color:#fff;font-weight:700;font-size:13px;padding:11px 24px;border-radius:12px;text-decoration:none'>"+
+          "▶ Open Video in SharePoint</a>"+
+        "<div style='font-size:11px;color:#64748b;margin-top:10px'>"+
+          "Already watching? Click <b>▶ Start Timer</b> below to record your watch time.</div>";
+      videoWrap.appendChild(errDiv);
     };
     // ⚠️ Timer only starts when user actually clicks play (onVideoPlay event)
     // NOT here — onVideoPlay() is already wired to startTimer()
@@ -1037,60 +1056,50 @@ function showVideoFallback(url, topicName){
 
 /* CLOSE MODAL */
 function closeModal(){
-  // ── Stop video / iframe ──────────────────────────────────
+  // ── Stop & reset video player ────────────────────────────
   const player=document.getElementById("videoPlayer");
-  if(player){ player.pause(); player.removeAttribute("src"); player.load(); }
+  if(player){
+    player.pause();
+    player.removeAttribute("src");
+    player.load();
+    player.style.display="block"; // ensure it's visible for next open
+  }
 
-  // Remove any SharePoint/YouTube iframe
+  // ── Remove iframe (SharePoint/YouTube) ───────────────────
   const spFrame=document.getElementById("spVideoFrame");
   if(spFrame) spFrame.remove();
 
-  // Stop timer and save progress
+  // ── Remove timer button if added for iframe ───────────────
+  const timerBtns=document.querySelectorAll("[onclick*='startIframeTimer']");
+  timerBtns.forEach(function(b){ if(b.parentNode) b.parentNode.remove(); });
+
+  // ── Remove video error message ────────────────────────────
+  const errMsg=document.getElementById("videoErrMsg");
+  if(errMsg) errMsg.remove();
+
+  // ── Reset videoWrap display ───────────────────────────────
+  const vw=document.getElementById("videoWrap");
+  if(vw) vw.style.display="block";
+
+  // ── Stop timer + save ─────────────────────────────────────
   pauseTimer();
   if(autoSaveInterval){ clearInterval(autoSaveInterval); autoSaveInterval=null; }
   saveWatchProgress();
   setTimeout(refreshHoursCard,1200);
 
-  // Reset videoWrap to default state (show <video> element again)
-  const vw=document.getElementById("videoWrap");
-  if(vw){
-    vw.style.display="block";
-    vw.innerHTML=""; // clear any error messages or fallback content
-    // Re-create the video element (cleanest reset)
-    const newVid=document.createElement("video");
-    newVid.id="videoPlayer";
-    newVid.controls=true;
-    newVid.playsInline=true;
-    newVid.preload="metadata";
-    newVid.setAttribute("controlslist","nodownload noremoteplayback");
-    newVid.setAttribute("disablepictureinpicture","");
-    newVid.setAttribute("oncontextmenu","return false");
-    newVid.setAttribute("onplay","onVideoPlay()");
-    newVid.setAttribute("onpause","onVideoPause()");
-    newVid.setAttribute("onended","onVideoEnded()");
-    newVid.setAttribute("ontimeupdate","onVideoTimeUpdate()");
-    newVid.style.cssText="width:100%;height:220px;display:block;object-fit:contain;background:#000";
-    vw.appendChild(newVid);
-    // Re-add the no-download shield
-    const shield=document.createElement("div");
-    shield.className="video-nodl-shield";
-    shield.setAttribute("oncontextmenu","return false");
-    vw.appendChild(shield);
-  }
-
-  // Reset timer display
+  // ── Reset timer display ───────────────────────────────────
   resetTimer();
   tWords=[]; tLastIdx=-1;
 
-  // Save last position for resume
+  // ── Save resume position ──────────────────────────────────
   if(currentTraining&&currentTopicIndex>=0)
     localStorage.setItem(`resume_${emp_id}_${currentTraining}`,currentTopicIndex);
 
-  // Hide modal
+  // ── Hide modal ────────────────────────────────────────────
   const modal=document.getElementById("trainingModal");
   if(modal) modal.style.display="none";
 
-  // Reset PDF panel
+  // ── Reset PDF panel ───────────────────────────────────────
   const pp=document.getElementById("pdfPanel");
   if(pp) pp.className="pdf-panel";
   const pc=document.getElementById("pdfContent");
