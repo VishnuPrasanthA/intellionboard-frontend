@@ -8,7 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/socket.io-client@4.7.2/dist/socket.io.min.js" crossorigin="anonymous"></script>
 <style>
 :root{
     --primary:#19d3a2;--primary-dark:#0fa77f;--primary-light:#eafff8;
@@ -670,7 +670,7 @@ async function submitIdProvided(){
 function initSocket(){
     try{
         if(typeof io==="undefined") return;
-        socket=io("https://intellionboard.onrender.com",{
+        socket=io("https://lxlt6hvb-5332.inc1.devtunnels.ms",{
             transports:["polling"],reconnection:true,reconnectionAttempts:5
         });
         socket.on("connect",()=>showToast("🟢 Live sync connected","#19d3a2"));
