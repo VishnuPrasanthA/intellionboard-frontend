@@ -200,6 +200,21 @@ tbody tr:hover{background:linear-gradient(90deg,rgba(25,211,162,.04),rgba(89,184
 </style>
 </head>
 <body>
+<script>
+// Standalone logout — defined early so onclick="logout()" always works
+async function logout(){
+    try{
+        await fetch("https://lxlt6hvb-5332.inc1.devtunnels.ms/api/auth/logout",
+                    {method:"POST",credentials:"include",
+                     headers:{"ngrok-skip-browser-warning":"true","x-tunnel-authorization":"anonymous"}});
+    }catch(_){}
+    finally{
+        localStorage.clear();
+        sessionStorage.clear();
+        window.location.replace("https://intellionboard.vercel.app/?manual=true");
+    }
+}
+</script>
 
 <!-- HEADER -->
 <div class="header glass">
@@ -889,18 +904,9 @@ async function sendBotMsg(){
 
 document.getElementById("chatInput").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();sendBotMsg();}});
 
-/* ── LOGOUT ──────────────────────────────────────── */
-async async function logout(){
-    try{
-        await apiFetch("https://lxlt6hvb-5332.inc1.devtunnels.ms/api/auth/logout",
-                       {method:"POST", credentials:"include"});
-    }catch(_){}
-    finally{
-        localStorage.clear();
-        sessionStorage.clear();
-        window.location.replace("https://intellionboard.vercel.app/?manual=true");
-    }
-}
+/* ── LOGOUT ── defined early in <body> above ─────── */
+// logout() is already defined in the standalone <script> block
+// at the top of <body> — no redefinition needed here
 
 
 /* ════ chatbot_widget.js ════ */
